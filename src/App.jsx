@@ -763,8 +763,10 @@ export default function App(){
 
   var getInc=uc(function(id,y,m2){return incentives[id+"_"+y+"_"+m2]||0;},[incentives]);
 
-  var isPaid=org.plan==="paid";
+  var OWNER_EMAIL="authorhalik@gmail.com";
+  var isPaid=org.plan==="paid"||(gUser&&gUser.email===OWNER_EMAIL);
   var isFree=!isPaid;
+  var isAdmin=(gUser&&gUser.email===OWNER_EMAIL)||false;
   function needPaid(){showT("This feature requires Paid Plan. Upgrade to access.","err");}
   var actEmps=emps.filter(function(e){return e.status==="active";});
   var trmEmps=emps.filter(function(e){return e.status==="terminated"||e.status==="resigned";});
@@ -1851,7 +1853,12 @@ export default function App(){
       h("div",{style:{background:CARD,padding:"44px 18px 14px",borderBottom:"1px solid "+BDR,position:"sticky",top:0,zIndex:50}},
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
           h("div",{style:{display:"flex",alignItems:"center",gap:11}},
-            logoSVG(38),
+            h("div",{onClick:function(){
+              var OWNER_EMAIL="authorhalik@gmail.com";
+              if(gUser&&gUser.email===OWNER_EMAIL){
+                setShowAdmin(true);loadAdminUsers();
+              }
+            },style:{cursor:"pointer"}},logoSVG(38)),
             h("div",null,
               h("div",{style:{fontSize:9,color:GRY,letterSpacing:1.8,textTransform:"uppercase",fontWeight:600}},"Admin HR"),
               h("div",{style:{fontSize:18,fontWeight:700,color:NVY,marginTop:1,letterSpacing:-.2}},tab==="dashboard"?"Dashboard":tab==="employees"?"Team":tab==="attendance"?"Attendance":tab==="payroll"?"Payroll":"Settings")
