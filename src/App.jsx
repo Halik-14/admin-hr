@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
+var _sb=createClient("https://lthqbzpbldqthvgdwjrm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0aHFienBibGRxdGh2Z2R3anJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4Njc2MjgsImV4cCI6MjA5MjQ0MzYyOH0.tai_EmQIPZBdHmyXfeYOlc3tThqc3CGBbSlzumaL1vE");
 
 var h=React.createElement;
 
@@ -766,18 +768,17 @@ export default function App(){
     if(!authEmail.trim())return setAuthErr("Enter your email");
     if(!authPwd)return setAuthErr("Enter your password");
     setAuthLoading(true);setAuthErr("");
-    setTimeout(function(){
-      var email=authEmail.trim().toLowerCase();
-      var stored=lsGet("hr_user_"+email,null);
-      if(!stored){setAuthErr("No account found with this email. Please sign up.");setAuthLoading(false);return;}
-      if(stored.pwd!==hashPwd(authPwd)){setAuthErr("Incorrect password. Please try again.");setAuthLoading(false);return;}
-      var gu={name:stored.name||email.split("@")[0],email:email,photo:""};
-      setGUser(gu);
+    _sb.auth.signInWithPassword({email:authEmail.trim().toLowerCase(),password:authPwd})
+    .then(function(res){
+      if(res.error){setAuthErr(res.error.message);setAuthLoading(false);return;}
+      var email=res.data.user.email;
+      var gu={name:email.split("@")[0],email:email,photo:""};
+      setGUser(gu);lsSet("hr_guser",gu);
       var savedOrg=lsGet("hr_org_"+email,null);
-      if(savedOrg&&savedOrg.name){setOrg(savedOrg);setScreen("app");showT("Welcome back, "+gu.name+"!");}
+      if(savedOrg&&savedOrg.name){setOrg(savedOrg);setScreen("app");showT("Welcome back!");}
       else setScreen("setup");
       setAuthLoading(false);
-    },600);
+    }).catch(function(e){setAuthErr(e.message||"Sign in failed");setAuthLoading(false);});
   }
 
   function handleSignUp(){
@@ -787,16 +788,15 @@ export default function App(){
     if(authPwd.length<6)return setAuthErr("Password must be at least 6 characters");
     if(authPwd!==authPwd2)return setAuthErr("Passwords do not match");
     setAuthLoading(true);setAuthErr("");
-    setTimeout(function(){
-      var email=authEmail.trim().toLowerCase();
-      var existing=lsGet("hr_user_"+email,null);
-      if(existing){setAuthErr("An account already exists with this email. Please sign in.");setAuthLoading(false);return;}
-      lsSet("hr_user_"+email,{email:email,pwd:hashPwd(authPwd),name:email.split("@")[0],createdAt:new Date().toISOString()});
+    _sb.auth.signUp({email:authEmail.trim().toLowerCase(),password:authPwd})
+    .then(function(res){
+      if(res.error){setAuthErr(res.error.message);setAuthLoading(false);return;}
+      var email=res.data.user.email;
       var gu={name:email.split("@")[0],email:email,photo:""};
-      setGUser(gu);
+      setGUser(gu);lsSet("hr_guser",gu);
       setScreen("setup");
       setAuthLoading(false);
-    },600);
+    }).catch(function(e){setAuthErr(e.message||"Sign up failed");setAuthLoading(false);});
   }
 
   var makeInIndiaBadge=h("div",{style:{textAlign:"center",padding:"0 0 20px",marginTop:"auto"}},
@@ -1563,7 +1563,7 @@ export default function App(){
           ),
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderTop:"1px solid "+BDR}},
             h("div",{style:{fontSize:11,color:GRY}},"Signed in"),
-            h("button",{onClick:function(){setGUser(null);lsSet("hr_guser",null);setScreen("login");setProf(false);},style:{background:T.PILL_DANGER_BG,border:"1px solid "+RED+"44",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},"Sign Out")
+            h("button",{onClick:function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);setScreen("login");setProf(false);},style:{background:T.PILL_DANGER_BG,border:"1px solid "+RED+"44",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},"Sign Out")
           )
         )),
         
@@ -1708,7 +1708,7 @@ export default function App(){
               h("div",{style:{padding:"7px 11px",borderBottom:"1px solid "+BDR,marginBottom:3}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:org.position),h("div",{style:{fontSize:11,color:GRY}},org.name),h("div",{style:{fontSize:10,color:GRY}},gUser?gUser.email:"")),
               [["Settings",function(){setTab("settings");setSettTab("profile");setProf(false);}]].map(function(item){return h("button",{key:item[0],onClick:item[1],style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:NVY,cursor:"pointer"}},item[0]);}),
               h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
-                h("button",{onClick:function(){setGUser(null);lsSet("hr_guser",null);setScreen("login");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
+                h("button",{onClick:function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);setScreen("login");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
               )
             ):null
           )
