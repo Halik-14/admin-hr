@@ -563,6 +563,22 @@ export default function App(){
   var CSS_LIVE=buildCSS(); // Rebuild CSS string for current theme
 
   var sS=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?"app":"login";}),screen=sS[0],setScreen=sS[1];
+  var sUPD=st(false),showUpdate=sUPD[0],setShowUpdate=sUPD[1];
+  var sADM=st(false),isAdmin=sADM[0],setIsAdmin=sADM[1];
+  var sADMUSERS=st([]),adminUsers=sADMUSERS[0],setAdminUsers=sADMUSERS[1];
+  var sADMTAB=st("users"),adminTab=sADMTAB[0],setAdminTab=sADMTAB[1];
+  var sShowAdmin=st(false),showAdmin=sShowAdmin[0],setShowAdmin=sShowAdmin[1];
+  se(function(){
+    if(!("serviceWorker" in navigator))return;
+    navigator.serviceWorker.addEventListener("message",function(e){
+      if(e.data&&e.data.type==="NEW_VERSION")setShowUpdate(true);
+    });
+    window.addEventListener("focus",function(){
+      navigator.serviceWorker.getRegistrations().then(function(regs){
+        regs.forEach(function(reg){reg.update();});
+      });
+    });
+  },[]);
   var sT=st("dashboard"),tab=sT[0],setTab=sT[1];
   var sE=st(function(){return lsGet("hr_emps",EMPS);}),emps=sE[0],setEmps=sE[1];
   var sA=st(function(){return lsGet("hr_att",{});}),att=sA[0],setAtt=sA[1];
@@ -796,6 +812,17 @@ export default function App(){
     setEmps(function(p){return p.map(function(e){return e.id===offE.id?Object.assign({},e,{status:offData.type,terminatedOn:todayStr,resignDate:offData.resignDate,terminationData:Object.assign({},offData)}):e;});});
     setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);showT("Offboarded.");
   }
+  function loadAdminUsers(){
+    _sb.from("admin_user_overview").select("email,plan,is_admin,activated_on,expires_on,notes,joined_at,last_sign_in_at,email_confirmed_at")
+    .then(function(res){
+      if(res.data)setAdminUsers(res.data);
+      else if(res.error)showT("Error loading users: "+res.error.message,"err");
+    });
+  }
+  function setUserPlan(email,plan){
+    _sb.from("user_plans").upsert({email:email,plan:plan,activated_on:plan==="paid"?new Date().toISOString().split("T")[0]:null},{onConflict:"email"})
+    .then(function(){loadAdminUsers();showT(email.split("@")[0]+" set to "+plan);});
+  }
   function removeEmp(id){setEmps(function(p){return p.filter(function(e){return e.id!==id;});});showT("Deleted.");}
 
   function sharePayslip(emp,d,m2,y){
@@ -839,9 +866,11 @@ export default function App(){
       setGUser(gu);lsSet("hr_guser",gu);
       var savedOrg=lsGet("hr_org_"+email,null)||{};
       // Fetch plan from Supabase user_plans table
-      _sb.from("user_plans").select("plan").eq("email",email).maybeSingle()
+      _sb.from("user_plans").select("plan,is_admin").eq("email",email).maybeSingle()
       .then(function(planRes){
         var plan=(planRes.data&&planRes.data.plan)||"free";
+        var admin=(planRes.data&&planRes.data.is_admin)||false;
+        setIsAdmin(admin);
         var updatedOrg=Object.assign({},savedOrg,{plan:plan});
         lsSet("hr_org_"+email,updatedOrg);
         if(updatedOrg.name){setOrg(updatedOrg);setScreen("app");showT("Welcome back!");}
@@ -1834,6 +1863,7 @@ export default function App(){
             prof?h("div",{style:{position:"absolute",top:42,right:0,background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:6,minWidth:185,boxShadow:T.SHADOW_LG,zIndex:200}},
               h("div",{style:{padding:"7px 11px",borderBottom:"1px solid "+BDR,marginBottom:3}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:org.position),h("div",{style:{fontSize:11,color:GRY}},org.name),h("div",{style:{fontSize:10,color:GRY}},gUser?gUser.email:"")),
               [["Settings",function(){setTab("settings");setSettTab("profile");setProf(false);}]].map(function(item){return h("button",{key:item[0],onClick:item[1],style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:NVY,cursor:"pointer"}},item[0]);}),
+              isAdmin?h("button",{onClick:function(){setShowAdmin(true);setProf(false);loadAdminUsers();},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
               h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
                 h("button",{onClick:function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);setScreen("login");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
               )
@@ -1894,8 +1924,56 @@ export default function App(){
     );
   }
 
+  function renderAdminPanel(){
+    return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowAdmin(false);}},
+      h("div",{style:{width:"100%",maxWidth:430,background:CARD,borderRadius:"20px 20px 0 0",maxHeight:"85vh",display:"flex",flexDirection:"column"}},
+        h("div",{style:{padding:"16px 16px 0",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid "+BDR,paddingBottom:12}},
+          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Admin Panel"),
+          h("button",{onClick:function(){setShowAdmin(false);},style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:GRY}},"×")
+        ),
+        h("div",{style:{overflowY:"auto",padding:14,flex:1}},
+          h("div",{style:{display:"flex",gap:8,marginBottom:14}},
+            h("button",{onClick:function(){loadAdminUsers();},style:{background:NVY,border:"none",borderRadius:8,padding:"7px 14px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Refresh"),
+            h("div",{style:{fontSize:11,color:GRY,display:"flex",alignItems:"center"}},adminUsers.length+" users")
+          ),
+          adminUsers.length===0?h("div",{style:{textAlign:"center",padding:24,color:GRY}},"No users yet. Click Refresh."):
+          adminUsers.map(function(u){
+            var joined=u.joined_at?new Date(u.joined_at).toLocaleDateString("en-IN"):"";
+            var lastLogin=u.last_sign_in_at?new Date(u.last_sign_in_at).toLocaleDateString("en-IN"):"Never";
+            var confirmed=!!u.email_confirmed_at;
+            return h("div",{key:u.email,style:{background:SFT,borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid "+BDR}},
+              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
+                h("div",{style:{fontSize:12,fontWeight:700,color:NVY,flex:1,marginRight:8,wordBreak:"break-all"}},u.email),
+                h("div",{style:{fontSize:10,fontWeight:700,color:u.plan==="paid"?GRN:GRY,background:(u.plan==="paid"?GRN:GRY)+"18",borderRadius:20,padding:"2px 8px",flexShrink:0}},u.plan==="paid"?"PAID":"FREE")
+              ),
+              h("div",{style:{display:"flex",gap:8,marginBottom:6,flexWrap:"wrap"}},
+                h("div",{style:{fontSize:9,color:confirmed?GRN:AMB,background:(confirmed?GRN:AMB)+"18",borderRadius:4,padding:"1px 6px"}},confirmed?"✓ Verified":"⚠ Unverified"),
+                h("div",{style:{fontSize:9,color:GRY}},"Joined: "+joined),
+                h("div",{style:{fontSize:9,color:GRY}},"Last login: "+lastLogin)
+              ),
+              u.activated_on?h("div",{style:{fontSize:10,color:GRY,marginBottom:6}},"Paid since: "+u.activated_on+(u.expires_on?" | Expires: "+u.expires_on:"")):null,
+              u.notes&&u.notes!=="Auto-created on signup"?h("div",{style:{fontSize:10,color:GRY,marginBottom:6}},"Note: "+u.notes):null,
+              h("div",{style:{display:"flex",gap:6}},
+                u.plan!=="paid"
+                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid");},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"6px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
+                  :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"6px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Free")
+              )
+            );
+          })
+        )
+      )
+    );
+  }
+
   return h("div",{style:{fontFamily:"Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",background:PAGE,minHeight:"100vh",display:"flex",justifyContent:"center",transition:"background .25s"}},
     h("style",{dangerouslySetInnerHTML:{__html:CSS_LIVE}}),
-    h("div",{style:{width:"100%",maxWidth:430,minHeight:"100vh",position:"relative",display:"flex",flexDirection:"column"}},appContent)
+    h("div",{style:{width:"100%",maxWidth:430,minHeight:"100vh",position:"relative",display:"flex",flexDirection:"column"}},
+      showUpdate?h("div",{style:{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,zIndex:9999,background:"#0F172A",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,boxShadow:"0 2px 12px rgba(0,0,0,.3)"}},
+        h("div",{style:{fontSize:12,color:"#fff",fontWeight:600}},"\u2728 New update available!"),
+        h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
+      ):null,
+      showAdmin?renderAdminPanel():null,
+      appContent
+    )
   );
 }
