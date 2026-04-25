@@ -573,9 +573,29 @@ export default function App(){
     navigator.serviceWorker.addEventListener("message",function(e){
       if(e.data&&e.data.type==="NEW_VERSION")setShowUpdate(true);
     });
+    // Refresh plan every time user comes back to the app
     window.addEventListener("focus",function(){
       navigator.serviceWorker.getRegistrations().then(function(regs){
         regs.forEach(function(reg){reg.update();});
+      });
+      // Re-fetch plan from Supabase silently
+      _sb.auth.getUser().then(function(res){
+        if(!res.data||!res.data.user)return;
+        var email=res.data.user.email;
+        _sb.from("user_plans").select("plan,emp_limit,expires_on").eq("email",email).maybeSingle()
+        .then(function(planRes){
+          if(planRes.data){
+            setOrg(function(o){
+              var updated=Object.assign({},o,{
+                plan:planRes.data.plan||"free",
+                emp_limit:planRes.data.emp_limit||null,
+                expires_on:planRes.data.expires_on||null
+              });
+              lsSet("hr_org_"+email,updated);
+              return updated;
+            });
+          }
+        });
       });
     });
   },[]);
@@ -823,17 +843,17 @@ export default function App(){
     setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);showT("Offboarded.");
   }
   function loadAdminUsers(){
-    _sb.from("admin_user_overview").select("email,plan,is_admin,activated_on,expires_on,notes,joined_at,last_sign_in_at,email_confirmed_at,emp_limit")
+    _sb.from("admin_user_overview").select("*")
     .then(function(res){
-      if(res.data)setAdminUsers(res.data);
-      else if(res.error)showT("Error loading users: "+res.error.message,"err");
+      if(res.error){showT("Load error: "+res.error.message,"err");return;}
+      setAdminUsers(res.data||[]);
     });
   }
   function setUserPlan(email,plan,extraData){
     var payload=Object.assign({email:email,plan:plan,activated_on:plan==="paid"?new Date().toISOString().split("T")[0]:null},extraData||{});
     _sb.from("user_plans").upsert(payload,{onConflict:"email"})
     .then(function(res){
-      if(res.error){showT("Error: "+res.error.message,"err");console.error(res.error);return;}
+      if(res.error){showT("Error: "+res.error.message,"err");return;}
       loadAdminUsers();
       showT(email.split("@")[0]+" set to "+plan);
     });
