@@ -666,8 +666,8 @@ export default function App(){
   var edn=sr(null),edm=sr(null),edem=sr(null),edei=sr(null),edro=sr(null),edctc=sr(null),edhi=sr(null),edpa=sr(null),edua=sr(null);
 
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
+  se(function(){if(window.__hideSplash)window.__hideSplash();},[]);
   se(function(){
-    // Restore Supabase session on load (handles email confirmation redirect)
     _sb.auth.getSession().then(function(res){
       if(res.data&&res.data.session&&res.data.session.user){
         var user=res.data.session.user;
@@ -829,9 +829,14 @@ export default function App(){
       else if(res.error)showT("Error loading users: "+res.error.message,"err");
     });
   }
-  function setUserPlan(email,plan){
-    _sb.from("user_plans").upsert({email:email,plan:plan,activated_on:plan==="paid"?new Date().toISOString().split("T")[0]:null},{onConflict:"email"})
-    .then(function(){loadAdminUsers();showT(email.split("@")[0]+" set to "+plan);});
+  function setUserPlan(email,plan,extraData){
+    var payload=Object.assign({email:email,plan:plan,activated_on:plan==="paid"?new Date().toISOString().split("T")[0]:null},extraData||{});
+    _sb.from("user_plans").upsert(payload,{onConflict:"email"})
+    .then(function(res){
+      if(res.error){showT("Error: "+res.error.message,"err");console.error(res.error);return;}
+      loadAdminUsers();
+      showT(email.split("@")[0]+" set to "+plan);
+    });
   }
   function removeEmp(id){setEmps(function(p){return p.filter(function(e){return e.id!==id;});});showT("Deleted.");}
 
@@ -1545,7 +1550,7 @@ export default function App(){
         h("button",{onClick:function(){setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[todayDate+"_"+e.id]="present";});return o;});showT("All marked Present");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:GRN+"14",border:"1px solid "+GRN+"55",borderRadius:10,padding:"9px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("check_circle",GRN,15),"Mark All Present"),
         h("button",{onClick:function(){markHolidayAll(todayDate);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"14",border:"1px solid "+AMB+"55",borderRadius:10,padding:"9px",color:AMB,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.sun,AMB,15),"Mark All Holiday")
       ),
-      isPaid?dlPair("Attendance Report",function(){makeAttPDF(null,attY,attM,function(){var allRecs={};emps.forEach(function(e){Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+e.id)&&kv[0].startsWith(attY+"-"+String(attM+1).padStart(2,"0"));}).forEach(function(kv){allRecs[kv[0].split("_")[0]+"_"+e.name]=kv[1];});});return allRecs;}(),org.name,org.email,org.position,LOGO_SRC);},function(){makeAttCSV(att,emps);}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Attendance PDF — Paid Plan Only"),
+      isPaid?dlBtn("Download Attendance PDF",function(){makeAttPDF(null,attY,attM,function(){var allRecs={};emps.forEach(function(e){Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+e.id)&&kv[0].startsWith(attY+"-"+String(attM+1).padStart(2,"0"));}).forEach(function(kv){allRecs[kv[0].split("_")[0]+"_"+e.name]=kv[1];});});return allRecs;}(),org.name,org.email,org.position,LOGO_SRC);}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance PDF — Paid Plan"),
       card(h("div",null,
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
         actEmps.map(function(e,i){
@@ -2057,8 +2062,8 @@ export default function App(){
                 h("input",{type:"date",value:expInput,onChange:function(e){setExpInput(e.target.value);},style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"6px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
                 h("button",{onClick:function(){
                   if(!expInput)return showT("Select a date","err");
-                  _sb.from("user_plans").upsert({email:u.email,plan:"paid",expires_on:expInput,activated_on:u.activated_on||new Date().toISOString().split("T")[0]},{onConflict:"email"})
-                  .then(function(){loadAdminUsers();setEditExpEmail(null);setExpInput("");showT("Expiry set for "+u.email.split("@")[0]);});
+                  setUserPlan(u.email,"paid",{expires_on:expInput,activated_on:u.activated_on||new Date().toISOString().split("T")[0]});
+                  setEditExpEmail(null);setExpInput("");
                 },style:{background:GRN,border:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save"),
                 h("button",{onClick:function(){setEditExpEmail(null);setExpInput("");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"6px 10px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
               ):null,
@@ -2068,7 +2073,7 @@ export default function App(){
                   ?h("button",{onClick:function(){setUserPlan(u.email,"paid");},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
                   :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Free"),
                 h("button",{onClick:function(){setEditExpEmail(isEditingExp?null:u.email);setExpInput(u.expires_on||"");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},isEditingExp?"Cancel Exp":"Set Expiry"),
-                h("button",{onClick:function(){var lim=window.prompt("Employee limit for "+u.email.split("@")[0]+" (leave blank = unlimited):",u.emp_limit||"");if(lim===null)return;var limNum=lim?parseInt(lim)||999:null;_sb.from("user_plans").upsert({email:u.email,plan:u.plan,emp_limit:limNum},{onConflict:"email"}).then(function(){loadAdminUsers();showT("Limit set: "+(limNum||"unlimited"));});},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Emp Limit")
+                h("button",{onClick:function(){var lim=window.prompt("Employee limit for "+u.email.split("@")[0]+"\n(enter number, blank = unlimited):",u.emp_limit||"");if(lim===null)return;var limNum=lim.trim()?parseInt(lim)||999:null;setUserPlan(u.email,u.plan,{emp_limit:limNum});showT("Limit: "+(limNum?"max "+limNum:"unlimited"));},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Emp Limit")
               )
             );
           })
