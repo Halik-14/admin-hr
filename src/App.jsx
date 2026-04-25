@@ -766,6 +766,7 @@ export default function App(){
   var OWNER_EMAIL="authorhalik@gmail.com";
   var isPaid=org.plan==="paid"||(gUser&&gUser.email===OWNER_EMAIL);
   var isFree=!isPaid;
+  var EMP_LIMIT=org.emp_limit||(isPaid?org.emp_limit||999:5); // free=5, paid=set by admin
   var isAdmin=(gUser&&gUser.email===OWNER_EMAIL)||false;
   function needPaid(){showT("This feature requires Paid Plan. Upgrade to access.","err");}
   var actEmps=emps.filter(function(e){return e.status==="active";});
@@ -784,7 +785,14 @@ export default function App(){
     showT("Holiday marked for all");
   }
 
+  function checkEmpLimit(){
+    if(gUser&&gUser.email===OWNER_EMAIL)return true; // owner unlimited
+    var limit=org.emp_limit||(isPaid?999:5);
+    if(actEmps.length>=limit){showT("Employee limit reached ("+limit+"). "+(isPaid?"Contact support to increase.":"Upgrade to Paid for more."),"err");return false;}
+    return true;
+  }
   function saveEmp(){
+    if(!checkEmpLimit())return;
     var name=(n1.current&&n1.current.value)||"";if(!name)return showT("Name required","err");
     var ctc=Number(e3.current&&e3.current.value)||0;if(!ctc)return showT("Monthly CTC required","err");
     var bd=brkSal(ctc);
@@ -815,7 +823,7 @@ export default function App(){
     setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);showT("Offboarded.");
   }
   function loadAdminUsers(){
-    _sb.from("admin_user_overview").select("email,plan,is_admin,activated_on,expires_on,notes,joined_at,last_sign_in_at,email_confirmed_at")
+    _sb.from("admin_user_overview").select("email,plan,is_admin,activated_on,expires_on,notes,joined_at,last_sign_in_at,email_confirmed_at,emp_limit")
     .then(function(res){
       if(res.data)setAdminUsers(res.data);
       else if(res.error)showT("Error loading users: "+res.error.message,"err");
@@ -868,12 +876,14 @@ export default function App(){
       setGUser(gu);lsSet("hr_guser",gu);
       var savedOrg=lsGet("hr_org_"+email,null)||{};
       // Fetch plan from Supabase user_plans table
-      _sb.from("user_plans").select("plan,is_admin").eq("email",email).maybeSingle()
+      _sb.from("user_plans").select("plan,is_admin,expires_on").eq("email",email).maybeSingle()
       .then(function(planRes){
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var admin=(planRes.data&&planRes.data.is_admin)||false;
+        var empLimit=(planRes.data&&planRes.data.emp_limit)||null;
+        var expiresOn=(planRes.data&&planRes.data.expires_on)||null;
         setIsAdmin(admin);
-        var updatedOrg=Object.assign({},savedOrg,{plan:plan});
+        var updatedOrg=Object.assign({},savedOrg,{plan:plan,expires_on:expiresOn});
         lsSet("hr_org_"+email,updatedOrg);
         if(updatedOrg.name){setOrg(updatedOrg);setScreen("app");showT("Welcome back!");}
         else setScreen("setup");
@@ -1048,6 +1058,41 @@ export default function App(){
   ));
 
   function renderDashboard(){
+    // Live countdown ticker for expiry
+    var sDTick=st(0),setDTick=sDTick[1];
+    se(function(){
+      if(!org.expires_on)return;
+      var t=setInterval(function(){setDTick(function(v){return v+1;});},1000);
+      return function(){clearInterval(t);};
+    },[org.expires_on]);
+
+    function expiryCountdown(){
+      if(!org.expires_on||!isPaid)return null;
+      var now=new Date();
+      var end=new Date(org.expires_on);
+      end.setHours(23,59,59,999);
+      var diff=end-now;
+      var isExp=diff<=0;
+      var dd=Math.max(0,Math.floor(diff/86400000));
+      var hh=Math.max(0,Math.floor((diff%86400000)/3600000));
+      var mm=Math.max(0,Math.floor((diff%3600000)/60000));
+      var ss=Math.max(0,Math.floor((diff%60000)/1000));
+      var color=isExp?RED:dd<=3?RED:dd<=7?AMB:GRN;
+      var bg=isExp?RED+"15":dd<=3?RED+"12":dd<=7?AMB+"12":GRN+"12";
+      return h("div",{style:{background:bg,border:"1px solid "+color+"44",borderRadius:12,padding:"10px 14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        h("div",null,
+          h("div",{style:{fontSize:10,color:color,fontWeight:700,letterSpacing:.5}},"SUBSCRIPTION "+(isExp?"EXPIRED":"EXPIRES IN")),
+          h("div",{style:{fontSize:11,color:GRY,marginTop:1}},isExp?"Please contact support to renew":new Date(org.expires_on).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}))
+        ),
+        isExp
+          ?h("div",{style:{fontSize:12,fontWeight:800,color:RED}},"EXPIRED")
+          :h("div",{style:{fontFamily:"monospace",fontSize:14,fontWeight:800,color:color,letterSpacing:1}},
+            String(dd).padStart(2,"0")+":"+String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0")
+          ),
+          h("div",{style:{fontSize:8,color:color,textAlign:"right",letterSpacing:.5,marginTop:1}},dd>0?"DD:HH:MM:SS":"HH:MM:SS")
+      );
+    }
+
     var statCards=[
       {l:"Total Team",v:actEmps.length,ico:"group",c:NVY,s:trmEmps.length+" offboarded"},
       {l:"Present Today",v:actEmps.filter(function(e){return getTAtt(e.id)==="present";}).length,ico:"check_circle",c:GRN,s:actEmps.filter(function(e){return getTAtt(e.id)==="absent";}).length+" absent"},
@@ -1070,6 +1115,7 @@ export default function App(){
         h("div",{style:{fontSize:22,fontWeight:600,color:CARD,letterSpacing:-.3}},greet),
         h("div",{style:{fontSize:11,color:CARD,opacity:.7,marginTop:3,fontWeight:500}},org.position+" \u2022 "+org.name)
       ),
+      expiryCountdown(),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
         statCards.map(function(s,i){
           return h("div",{key:i,style:{
@@ -1932,38 +1978,105 @@ export default function App(){
   }
 
   function renderAdminPanel(){
-    return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowAdmin(false);}},
-      h("div",{style:{width:"100%",maxWidth:430,background:CARD,borderRadius:"20px 20px 0 0",maxHeight:"85vh",display:"flex",flexDirection:"column"}},
-        h("div",{style:{padding:"16px 16px 0",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid "+BDR,paddingBottom:12}},
-          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Admin Panel"),
-          h("button",{onClick:function(){setShowAdmin(false);},style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:GRY}},"×")
-        ),
-        h("div",{style:{overflowY:"auto",padding:14,flex:1}},
-          h("div",{style:{display:"flex",gap:8,marginBottom:14}},
-            h("button",{onClick:function(){loadAdminUsers();},style:{background:NVY,border:"none",borderRadius:8,padding:"7px 14px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Refresh"),
-            h("div",{style:{fontSize:11,color:GRY,display:"flex",alignItems:"center"}},adminUsers.length+" users")
+    var sSearch=st(""),adminSearch=sSearch[0],setAdminSearch=sSearch[1];
+    var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
+    var sExpInput=st(""),expInput=sExpInput[0],setExpInput=sExpInput[1];
+
+    function countdown(expiresOn){
+      if(!expiresOn)return null;
+      var now=new Date();
+      var end=new Date(expiresOn);
+      end.setHours(23,59,59,999);
+      var diff=end-now;
+      if(diff<=0)return h("div",{style:{fontSize:10,color:RED,fontWeight:700}},"EXPIRED");
+      var dd=Math.floor(diff/86400000);
+      var hh=Math.floor((diff%86400000)/3600000);
+      var mm=Math.floor((diff%3600000)/60000);
+      var ss=Math.floor((diff%60000)/1000);
+      var color=dd<=3?RED:dd<=7?AMB:GRN;
+      return h("div",{style:{fontSize:10,fontWeight:700,color:color,fontFamily:"monospace",letterSpacing:.5}},
+        String(dd).padStart(2,"0")+"d "+String(hh).padStart(2,"0")+"h "+String(mm).padStart(2,"0")+"m "+String(ss).padStart(2,"0")+"s"
+      );
+    }
+
+    // Live countdown tick
+    var sTick=st(0),setTick=sTick[1];
+    se(function(){
+      var t=setInterval(function(){setTick(function(v){return v+1;});},1000);
+      return function(){clearInterval(t);};
+    },[]);
+
+    var filtered=adminUsers.filter(function(u){
+      if(!adminSearch)return true;
+      return u.email.toLowerCase().includes(adminSearch.toLowerCase());
+    });
+
+    return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.7)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget){setShowAdmin(false);setAdminSearch("");}}},
+      h("div",{style:{width:"100%",maxWidth:430,background:CARD,borderRadius:"20px 20px 0 0",maxHeight:"88vh",display:"flex",flexDirection:"column"}},
+        // Header
+        h("div",{style:{padding:"16px 16px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid "+BDR,flexShrink:0}},
+          h("div",null,
+            h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Admin Panel"),
+            h("div",{style:{fontSize:10,color:GRY,marginTop:2}},adminUsers.length+" total users")
           ),
-          adminUsers.length===0?h("div",{style:{textAlign:"center",padding:24,color:GRY}},"No users yet. Click Refresh."):
-          adminUsers.map(function(u){
+          h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+            h("button",{onClick:function(){loadAdminUsers();showT("Refreshed");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Refresh"),
+            h("button",{onClick:function(){setShowAdmin(false);setAdminSearch("");},style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:GRY}},"×")
+          )
+        ),
+        // Search
+        h("div",{style:{padding:"10px 14px",borderBottom:"1px solid "+BDR,flexShrink:0}},
+          h("input",{value:adminSearch,onChange:function(e){setAdminSearch(e.target.value);},placeholder:"Search by email...",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"9px 12px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}})
+        ),
+        // Users list
+        h("div",{style:{overflowY:"auto",padding:14,flex:1}},
+          filtered.length===0?h("div",{style:{textAlign:"center",padding:24,color:GRY}},adminUsers.length===0?"No users yet. Click Refresh.":"No users match your search."):
+          filtered.map(function(u){
             var joined=u.joined_at?new Date(u.joined_at).toLocaleDateString("en-IN"):"";
             var lastLogin=u.last_sign_in_at?new Date(u.last_sign_in_at).toLocaleDateString("en-IN"):"Never";
             var confirmed=!!u.email_confirmed_at;
-            return h("div",{key:u.email,style:{background:SFT,borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid "+BDR}},
-              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}},
-                h("div",{style:{fontSize:12,fontWeight:700,color:NVY,flex:1,marginRight:8,wordBreak:"break-all"}},u.email),
+            var isOwner=u.email===OWNER_EMAIL;
+            var isEditingExp=editExpEmail===u.email;
+            return h("div",{key:u.email,style:{background:SFT,borderRadius:12,padding:"11px 12px",marginBottom:10,border:"1px solid "+(u.plan==="paid"?GRN+"44":BDR)}},
+              // Email + plan badge
+              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
+                h("div",{style:{fontSize:12,fontWeight:700,color:NVY,flex:1,marginRight:8,wordBreak:"break-all"}},u.email,isOwner?h("span",{style:{fontSize:9,color:AMB,fontWeight:600,marginLeft:6}},"OWNER"):null),
                 h("div",{style:{fontSize:10,fontWeight:700,color:u.plan==="paid"?GRN:GRY,background:(u.plan==="paid"?GRN:GRY)+"18",borderRadius:20,padding:"2px 8px",flexShrink:0}},u.plan==="paid"?"PAID":"FREE")
               ),
-              h("div",{style:{display:"flex",gap:8,marginBottom:6,flexWrap:"wrap"}},
+              // Meta info
+              h("div",{style:{display:"flex",gap:6,marginBottom:6,flexWrap:"wrap"}},
                 h("div",{style:{fontSize:9,color:confirmed?GRN:AMB,background:(confirmed?GRN:AMB)+"18",borderRadius:4,padding:"1px 6px"}},confirmed?"✓ Verified":"⚠ Unverified"),
                 h("div",{style:{fontSize:9,color:GRY}},"Joined: "+joined),
-                h("div",{style:{fontSize:9,color:GRY}},"Last login: "+lastLogin)
+                h("div",{style:{fontSize:9,color:GRY}},"Last: "+lastLogin),
+                h("div",{style:{fontSize:9,color:TEL,background:TEL+"15",borderRadius:4,padding:"1px 6px"}},"Emp: "+(u.emp_limit||(u.plan==="paid"?"Unlimited":"5")))
               ),
-              u.activated_on?h("div",{style:{fontSize:10,color:GRY,marginBottom:6}},"Paid since: "+u.activated_on+(u.expires_on?" | Expires: "+u.expires_on:"")):null,
-              u.notes&&u.notes!=="Auto-created on signup"?h("div",{style:{fontSize:10,color:GRY,marginBottom:6}},"Note: "+u.notes):null,
+              // Expiry countdown
+              u.plan==="paid"?h("div",{style:{background:CARD,borderRadius:8,padding:"7px 10px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+                h("div",null,
+                  h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"EXPIRES"),
+                  u.expires_on
+                    ?h("div",{style:{fontSize:10,color:GRY}},new Date(u.expires_on).toLocaleDateString("en-IN"))
+                    :h("div",{style:{fontSize:10,color:GRY}},"No expiry set")
+                ),
+                u.expires_on?(function(){var now=new Date(),end=new Date(u.expires_on);end.setHours(23,59,59,999);var diff=end-now;var isExp=diff<=0;var dd2=Math.max(0,Math.floor(diff/86400000));var hh2=Math.max(0,Math.floor((diff%86400000)/3600000));var mm2=Math.max(0,Math.floor((diff%3600000)/60000));var ss2=Math.max(0,Math.floor((diff%60000)/1000));var col2=isExp?RED:dd2<=3?RED:dd2<=7?AMB:GRN;return h("div",{style:{textAlign:"right"}},h("div",{style:{fontFamily:"monospace",fontSize:12,fontWeight:800,color:col2,letterSpacing:1}},isExp?"EXPIRED":String(dd2).padStart(2,"0")+":"+String(hh2).padStart(2,"0")+":"+String(mm2).padStart(2,"0")+":"+String(ss2).padStart(2,"0")),h("div",{style:{fontSize:8,color:col2,letterSpacing:.5}},"DD:HH:MM:SS"));}()):h("div",{style:{fontSize:10,color:GRN,fontWeight:700}},"Lifetime")
+              ):null,
+              // Set expiry input
+              isEditingExp?h("div",{style:{display:"flex",gap:6,marginBottom:8}},
+                h("input",{type:"date",value:expInput,onChange:function(e){setExpInput(e.target.value);},style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"6px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+                h("button",{onClick:function(){
+                  if(!expInput)return showT("Select a date","err");
+                  _sb.from("user_plans").upsert({email:u.email,plan:"paid",expires_on:expInput,activated_on:u.activated_on||new Date().toISOString().split("T")[0]},{onConflict:"email"})
+                  .then(function(){loadAdminUsers();setEditExpEmail(null);setExpInput("");showT("Expiry set for "+u.email.split("@")[0]);});
+                },style:{background:GRN,border:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save"),
+                h("button",{onClick:function(){setEditExpEmail(null);setExpInput("");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"6px 10px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
+              ):null,
+              // Action buttons
               h("div",{style:{display:"flex",gap:6}},
                 u.plan!=="paid"
-                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid");},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"6px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
-                  :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"6px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Free")
+                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid");},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
+                  :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Free"),
+                h("button",{onClick:function(){setEditExpEmail(isEditingExp?null:u.email);setExpInput(u.expires_on||"");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},isEditingExp?"Cancel Exp":"Set Expiry"),
+                h("button",{onClick:function(){var lim=window.prompt("Employee limit for "+u.email.split("@")[0]+" (leave blank = unlimited):",u.emp_limit||"");if(lim===null)return;var limNum=lim?parseInt(lim)||999:null;_sb.from("user_plans").upsert({email:u.email,plan:u.plan,emp_limit:limNum},{onConflict:"email"}).then(function(){loadAdminUsers();showT("Limit set: "+(limNum||"unlimited"));});},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Emp Limit")
               )
             );
           })
