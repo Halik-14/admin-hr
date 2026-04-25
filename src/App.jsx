@@ -678,10 +678,20 @@ export default function App(){
   var sShiftOpen=st(false),shiftOpen=sShiftOpen[0],setShiftOpen=sShiftOpen[1];
 
 
-  var n1=sr(""),n2=sr(""),n3=sr(""),n4=sr(""),n5=sr("");
-  var e1=sr(""),e2=sr(""),e3=sr("");
-  var id1=sr(""),id2=sr(""),id3=sr("");
-  var hiR=sr(""),cnR=sr(null),caR=sr(null);
+  // Add employee form - controlled state (refs lost on re-render)
+  var sN1=st(""),fName=sN1[0],setFName=sN1[1];
+  var sN2=st(""),fDob=sN2[0],setFDob=sN2[1];
+  var sN3=st(""),fMob=sN3[0],setFMob=sN3[1];
+  var sN4=st(""),fEmail=sN4[0],setFEmail=sN4[1];
+  var sN5=st(""),fJoin=sN5[0],setFJoin=sN5[1];
+  var sE1=st(""),fEid=sE1[0],setFEid=sE1[1];
+  var sE2=st(""),fRole=sE2[0],setFRole=sE2[1];
+  var sE3=st(""),fCtc=sE3[0],setFCtc=sE3[1];
+  var sId1=st(""),fAadhar=sId1[0],setFAadhar=sId1[1];
+  var sId2=st(""),fPan=sId2[0],setFPan=sId2[1];
+  var sId3=st(""),fUan=sId3[0],setFUan=sId3[1];
+  var sHi=st(""),fHi=sHi[0],setFHi=sHi[1];
+  var cnR=sr(null),caR=sr(null);
   var revCtcR=sr(null),revDateR=sr(null),revNoteR=sr(null);
   var edn=sr(null),edm=sr(null),edem=sr(null),edei=sr(null),edro=sr(null),edctc=sr(null),edhi=sr(null),edpa=sr(null),edua=sr(null);
 
@@ -813,12 +823,13 @@ export default function App(){
   }
   function saveEmp(){
     if(!checkEmpLimit())return;
-    var name=(n1.current&&n1.current.value)||"";if(!name)return showT("Name required","err");
-    var ctc=Number(e3.current&&e3.current.value)||0;if(!ctc)return showT("Monthly CTC required","err");
+    var name=fName.trim();if(!name)return showT("Name required","err");
+    var ctc=Number(fCtc)||0;if(!ctc)return showT("Monthly CTC required","err");
     var bd=brkSal(ctc);
-    var emp={id:Date.now(),name:name,dob:(n2.current&&n2.current.value)||"",mob:(n3.current&&n3.current.value)||"",email:(n4.current&&n4.current.value)||"",eid:(e1.current&&e1.current.value)||"",role:(e2.current&&e2.current.value)||"",dept:dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,joined:(n5.current&&n5.current.value)||todayStr,pan:(id2.current&&id2.current.value)||"",uan:(id3.current&&id3.current.value)||"",aadhar:(id1.current&&id1.current.value)||"",pf:pf,pfMode:pfMode,esi:esi,pt:pt,tds:tds,hi:Number((hiR.current&&hiR.current.value))||0,customs:customs,av:name.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase(),col:COLS[emps.length%COLS.length],status:"active"};
+    var emp={id:Date.now(),name:name,dob:fDob,mob:fMob,email:fEmail,eid:fEid,role:fRole,dept:dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,joined:fJoin||todayStr,pan:fPan,uan:fUan,aadhar:fAadhar,pf:pf,pfMode:pfMode,esi:esi,pt:pt,tds:tds,hi:Number(fHi)||0,customs:customs,av:name.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase(),col:COLS[emps.length%COLS.length],status:"active"};
     setEmps(function(p){return p.concat([emp]);});
-    [n1,n2,n3,n4,n5,e1,e2,e3,id1,id2,id3,hiR].forEach(function(r){if(r&&r.current)r.current.value="";});
+    setFName("");setFDob("");setFMob("");setFEmail("");setFJoin("");
+    setFEid("");setFRole("");setFCtc("");setFAadhar("");setFPan("");setFUan("");setFHi("");
     setDept("");setPf(true);setPfMode("capped");setEsi(false);setPt(true);setTds(true);setCustoms([]);
     setStep(1);setAddOpen(false);showT(name+" added!");
   }
@@ -1869,30 +1880,30 @@ export default function App(){
         ),
         h("div",{style:{fontSize:14,fontWeight:800,color:NVY,marginBottom:1}},step===1?"Personal":step===2?"Employment":step===3?"Identity":"Tax and Deductions"),
         h("div",{style:{fontSize:11,color:GRY,marginBottom:13}},"Step "+step+" of 4"),
-        step===1?h("div",null,lbl("FULL NAME *"),inpEl(n1,"e.g. Priya Sharma"),lbl("DATE OF BIRTH"),inpEl(n2,"","date"),lbl("MOBILE"),inpEl(n3,"10-digit","tel"),lbl("EMAIL"),inpEl(n4,"emp@company.com","email"),lbl("JOINING DATE"),inpEl(n5,"","date")):null,
+        step===1?h("div",null,lbl("FULL NAME *"),h("input",{value:fName,onChange:function(e){setFName(e.target.value);},placeholder:"e.g. Priya Sharma",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("DATE OF BIRTH"),h("input",{type:"date",value:fDob,onChange:function(e){setFDob(e.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("MOBILE"),h("input",{type:"tel",value:fMob,onChange:function(e){setFMob(e.target.value);},placeholder:"10-digit",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("EMAIL"),h("input",{type:"email",value:fEmail,onChange:function(e){setFEmail(e.target.value);},placeholder:"emp@company.com",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("JOINING DATE"),h("input",{type:"date",value:fJoin,onChange:function(e){setFJoin(e.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})):null,
         step===2?h("div",null,
-          lbl("EMPLOYEE ID"),inpEl(e1,"e.g. EMP006"),
+          lbl("EMPLOYEE ID"),h("input",{value:fEid,onChange:function(e){setFEid(e.target.value);},placeholder:"e.g. EMP006",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
           lbl("ROLE / DESIGNATION *"),
-          h("select",{ref:e2,defaultValue:"",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
+          h("select",{value:fRole,onChange:function(e){setFRole(e.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
             h("option",{value:""},"Select role"),
             getRoles(org.type).map(function(r){return h("option",{key:r,value:r},r);})
           ),
           lbl("DEPARTMENT"),
-          h("select",{value:dept,onChange:function(ev){setDept(ev.target.value);}},
+          h("select",{value:dept,onChange:function(ev){setDept(ev.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
             h("option",{value:""},"Select department"),
             getDepts(org.type).map(function(d2){return h("option",{key:d2},d2);})
           ),
-          lbl("MONTHLY CTC (Rs.) *"),inpEl(e3,"e.g. 50000","number"),
+          lbl("MONTHLY CTC (Rs.) *"),h("input",{type:"number",value:fCtc,onChange:function(e){setFCtc(e.target.value);},placeholder:"e.g. 50000",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
           h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Auto-split: 50% Basic, 20% HRA, 30% Allowance")
         ):null,
-        step===3?h("div",null,lbl("PAN"),inpEl(id2,"ABCDE1234F"),lbl("UAN (PF Account)"),inpEl(id3,"Universal Account No."),lbl("AADHAR"),inpEl(id1,"XXXX-XXXX-XXXX")):null,
+        step===3?h("div",null,lbl("PAN"),h("input",{value:fPan,onChange:function(e){setFPan(e.target.value);},placeholder:"ABCDE1234F",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("UAN (PF Account)"),h("input",{value:fUan,onChange:function(e){setFUan(e.target.value);},placeholder:"Universal Account No.",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("AADHAR"),h("input",{value:fAadhar,onChange:function(e){setFAadhar(e.target.value);},placeholder:"XXXX-XXXX-XXXX",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})):null,
         step===4?h("div",null,
           togEl("EPF / PF","12% emp + 12% employer",pf,setPf),
           pf?h("div",{style:{padding:"8px 0",borderBottom:"1px solid "+BDR}},lbl("PF Mode"),h("div",{style:{display:"flex",gap:7}},[["capped","Capped Rs.1800"],["actual","Actual Basic"]].map(function(item){return h("button",{key:item[0],onClick:function(){setPfMode(item[0]);},style:{flex:1,background:pfMode===item[0]?NVY:SFT,border:"1.5px solid "+(pfMode===item[0]?NVY:BDR),borderRadius:9,padding:"8px",color:pfMode===item[0]?"#fff":GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);}))):null,
           togEl("ESI","0.75% emp if gross up to Rs.21K",esi,setEsi),
           togEl("Professional Tax","Rs.200/mo if above Rs.15K",pt,setPt),
           togEl("TDS","FY 2025-26 new regime",tds,setTds),
-          h("div",{style:{marginTop:11}},lbl("HEALTH INSURANCE (Rs./mo)"),inpEl(hiR,"e.g. 500","number")),
+          h("div",{style:{marginTop:11}},lbl("HEALTH INSURANCE (Rs./mo)"),h("input",{type:"number",value:fHi,onChange:function(e){setFHi(e.target.value);},placeholder:"e.g. 500",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})),
           h("div",null,
             h("div",{style:{fontSize:11,color:GRY,marginBottom:6,fontWeight:600}},"CUSTOM DEDUCTIONS"),
             customs.map(function(c2,i){return h("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",background:SFT,borderRadius:7,padding:"5px 9px",marginBottom:5}},h("span",{style:{fontSize:12,color:NVY}},c2.name),h("div",{style:{display:"flex",gap:7,alignItems:"center"}},h("span",{style:{fontSize:12,fontWeight:600,color:RED}},fmt(c2.amt)),h("button",{onClick:function(){setCustoms(function(p){return p.filter(function(_,j){return j!==i;});});},style:{background:T.PILL_DANGER_BG,border:"none",borderRadius:5,padding:"2px 6px",color:RED,fontSize:10,cursor:"pointer"}},"X")));})  ,
@@ -1904,8 +1915,8 @@ export default function App(){
           )
         ):null,
         h("div",{style:{display:"flex",gap:8,marginTop:14}},
-          h("button",{onClick:function(){if(step>1)setStep(function(s){return s-1;});else{setAddOpen(false);setStep(1);}},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:11,color:GRY,fontSize:12,cursor:"pointer"}},step===1?"Cancel":"Back"),
-          h("button",{onClick:function(){if(step===1&&!n1.current)return showT("Name required","err");if(step===2&&!e3.current)return showT("CTC required","err");if(step<4)setStep(function(s){return s+1;});else saveEmp();},style:{flex:2,background:NVY,border:"none",borderRadius:10,padding:11,color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},step===4?"Save Employee":"Next")
+          h("button",{onClick:function(){if(step>1)setStep(function(s){return s-1;});else{setAddOpen(false);setStep(1);setFName("");setFDob("");setFMob("");setFEmail("");setFJoin("");setFEid("");setFRole("");setFCtc("");setFAadhar("");setFPan("");setFUan("");setFHi("");setDept("");}},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:11,color:GRY,fontSize:12,cursor:"pointer"}},step===1?"Cancel":"Back"),
+          h("button",{onClick:function(){if(step===1&&!fName.trim())return showT("Name required","err");if(step===2&&!fCtc)return showT("CTC required","err");if(step<4)setStep(function(s){return s+1;});else saveEmp();},style:{flex:2,background:NVY,border:"none",borderRadius:10,padding:11,color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},step===4?"Save Employee":"Next")
         )
       )
     );
