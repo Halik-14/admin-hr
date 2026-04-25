@@ -1057,14 +1057,16 @@ export default function App(){
     )
   ));
 
+  var sASearch=st(""),adminSearch=sASearch[0],setAdminSearch=sASearch[1];
+  var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
+  var sExpInput=st(""),expInput=sExpInput[0],setExpInput=sExpInput[1];
+  var sDTick=st(0),setDTick=sDTick[1];
+  se(function(){
+    var t=setInterval(function(){setDTick(function(v){return v+1;});},1000);
+    return function(){clearInterval(t);};
+  },[]);
+
   function renderDashboard(){
-    // Live countdown ticker for expiry
-    var sDTick=st(0),setDTick=sDTick[1];
-    se(function(){
-      if(!org.expires_on)return;
-      var t=setInterval(function(){setDTick(function(v){return v+1;});},1000);
-      return function(){clearInterval(t);};
-    },[org.expires_on]);
 
     function expiryCountdown(){
       if(!org.expires_on||!isPaid)return null;
@@ -1978,9 +1980,6 @@ export default function App(){
   }
 
   function renderAdminPanel(){
-    var sSearch=st(""),adminSearch=sSearch[0],setAdminSearch=sSearch[1];
-    var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
-    var sExpInput=st(""),expInput=sExpInput[0],setExpInput=sExpInput[1];
 
     function countdown(expiresOn){
       if(!expiresOn)return null;
@@ -1998,13 +1997,6 @@ export default function App(){
         String(dd).padStart(2,"0")+"d "+String(hh).padStart(2,"0")+"h "+String(mm).padStart(2,"0")+"m "+String(ss).padStart(2,"0")+"s"
       );
     }
-
-    // Live countdown tick
-    var sTick=st(0),setTick=sTick[1];
-    se(function(){
-      var t=setInterval(function(){setTick(function(v){return v+1;});},1000);
-      return function(){clearInterval(t);};
-    },[]);
 
     var filtered=adminUsers.filter(function(u){
       if(!adminSearch)return true;
