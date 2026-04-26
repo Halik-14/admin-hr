@@ -1802,11 +1802,20 @@ export default function App(){
         isFree?card(h("div",null,
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Upgrade to Paid Plan"),
           h("div",{style:{fontSize:11,color:GRY,marginBottom:12}},"Unlock PDF downloads, CSV exports and all reports"),
-          h("div",{style:{position:"relative",overflow:"hidden",borderRadius:13,padding:2,background:"linear-gradient(120deg,#7C5C00,#FCD34D,#B8860B,#FCD34D,#7C5C00)",backgroundSize:"300% 100%",animation:"goldShine 3s linear infinite"}},
-            h("style",{dangerouslySetInnerHTML:{__html:"@keyframes goldShine{0%{background-position:200% center}100%{background-position:-200% center}}"}}),
-            h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade Admin HR to Paid Plan."),"_blank");},style:{width:"100%",background:"#0F172A",border:"none",borderRadius:11,padding:"14px",color:"#FCD34D",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3}},
-              h("div",{style:{display:"flex",alignItems:"center",gap:8,fontSize:15,fontWeight:800}},ic("workspace_premium","#FCD34D",18),"Upgrade Now \u2014 \u20B9999/month"),
-              h("div",{style:{fontSize:11,color:"rgba(252,211,77,.75)"}},"Contact us on WhatsApp to activate")
+          h("div",{style:{position:"relative",overflow:"hidden",borderRadius:13,padding:3,background:"linear-gradient(120deg,#3D2900,#FCD34D,#FF9900,#FFF0A0,#FCD34D,#B8860B,#3D2900)",backgroundSize:"400% 100%",animation:"goldShine 2s linear infinite"}},
+            h("style",{dangerouslySetInnerHTML:{__html:"@keyframes goldShine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes shimmer{0%,100%{opacity:.7}50%{opacity:1}}@keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}"}}),
+            h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade Admin HR to Paid Plan."),"_blank");},style:{width:"100%",background:"linear-gradient(135deg,#0F172A 0%,#1E1B4B 100%)",border:"none",borderRadius:11,padding:"16px 14px",color:"#FCD34D",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}},
+              h("div",{style:{animation:"floatUp 2s ease-in-out infinite",display:"flex",alignItems:"center",justifyContent:"center",width:44,height:44,borderRadius:"50%",background:"rgba(252,211,77,.15)",border:"1.5px solid rgba(252,211,77,.4)",marginBottom:2}},
+                h("svg",{width:26,height:26,viewBox:"0 0 24 24",fill:"#FCD34D"},
+                  h("path",{d:"M5 7l2-3h10l2 3-7 12L5 7zm2.5 0h9L12 16.5 7.5 7zm1.5-2l-1 2h8l-1-2H9z"})
+                )
+              ),
+              h("div",{style:{fontSize:15,fontWeight:800,letterSpacing:.3,animation:"shimmer 2s ease-in-out infinite"}},"Upgrade to Premium"),
+              h("div",{style:{fontSize:11,color:"rgba(252,211,77,.7)",fontWeight:500}},"Contact us on WhatsApp to activate"),
+              h("div",{style:{marginTop:4,display:"flex",alignItems:"center",gap:5,background:"rgba(252,211,77,.1)",borderRadius:20,padding:"3px 12px"}},
+                h("div",{style:{width:6,height:6,borderRadius:"50%",background:"#4ADE80"}}),
+                h("div",{style:{fontSize:10,color:"rgba(252,211,77,.8)",fontWeight:600}},"Instant activation after payment")
+              )
             )
           )
         )):card(h("div",null,
