@@ -1801,23 +1801,24 @@ export default function App(){
         )),
         isFree?card(h("div",null,
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Upgrade to Paid Plan"),
-          h("div",{style:{fontSize:11,color:GRY,marginBottom:12}},"Unlock PDF downloads, CSV exports and all reports"),
-          h("div",{style:{position:"relative",overflow:"hidden",borderRadius:13,padding:3,background:"linear-gradient(120deg,#3D2900,#FCD34D,#FF9900,#FFF0A0,#FCD34D,#B8860B,#3D2900)",backgroundSize:"400% 100%",animation:"goldShine 2s linear infinite"}},
-            h("style",{dangerouslySetInnerHTML:{__html:"@keyframes goldShine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes shimmer{0%,100%{opacity:.7}50%{opacity:1}}@keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}"}}),
-            h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade Admin HR to Paid Plan."),"_blank");},style:{width:"100%",background:"linear-gradient(135deg,#0F172A 0%,#1E1B4B 100%)",border:"none",borderRadius:11,padding:"16px 14px",color:"#FCD34D",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:6}},
-              h("div",{style:{animation:"floatUp 2s ease-in-out infinite",display:"flex",alignItems:"center",justifyContent:"center",width:44,height:44,borderRadius:"50%",background:"rgba(252,211,77,.15)",border:"1.5px solid rgba(252,211,77,.4)",marginBottom:2}},
-                h("svg",{width:26,height:26,viewBox:"0 0 24 24",fill:"#FCD34D"},
-                  h("path",{d:"M5 7l2-3h10l2 3-7 12L5 7zm2.5 0h9L12 16.5 7.5 7zm1.5-2l-1 2h8l-1-2H9z"})
-                )
-              ),
-              h("div",{style:{fontSize:15,fontWeight:800,letterSpacing:.3,animation:"shimmer 2s ease-in-out infinite"}},"Upgrade to Premium"),
-              h("div",{style:{fontSize:11,color:"rgba(252,211,77,.7)",fontWeight:500}},"Contact us on WhatsApp to activate"),
-              h("div",{style:{marginTop:4,display:"flex",alignItems:"center",gap:5,background:"rgba(252,211,77,.1)",borderRadius:20,padding:"3px 12px"}},
-                h("div",{style:{width:6,height:6,borderRadius:"50%",background:"#4ADE80"}}),
-                h("div",{style:{fontSize:10,color:"rgba(252,211,77,.8)",fontWeight:600}},"Instant activation after payment")
+          h("div",{style:{fontSize:11,color:GRY,marginBottom:16}},"Unlock PDF downloads, CSV exports and all reports"),
+          h("style",{dangerouslySetInnerHTML:{__html:"@keyframes goldShine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes glitter{0%,100%{box-shadow:0 0 8px #FCD34D88,0 0 20px #FCD34D44}50%{box-shadow:0 0 18px #FCD34Dcc,0 0 40px #FCD34D66,0 0 60px #FF990033}}"}}),
+          h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:18,gap:10}},
+            h("div",{style:{animation:"floatUp 2s ease-in-out infinite",display:"flex",alignItems:"center",justifyContent:"center",width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#FCD34D,#FF9900)",animation:"floatUp 2s ease-in-out infinite, glitter 2s ease-in-out infinite"}},
+              h("svg",{width:30,height:30,viewBox:"0 0 24 24",fill:"#0F172A"},
+                h("path",{d:"M12 1L9.5 7H3l5 4.5-2 7L12 15l6 3.5-2-7L21 7h-6.5L12 1z"})
               )
+            ),
+            h("div",{style:{textAlign:"center"}},
+              h("div",{style:{fontSize:14,fontWeight:700,color:NVY,marginBottom:2}},"Go Premium"),
+              h("div",{style:{fontSize:11,color:GRY}},"Contact us on WhatsApp to activate instantly")
+            ),
+            h("div",{style:{display:"flex",alignItems:"center",gap:5,background:GRN+"15",borderRadius:20,padding:"4px 12px",border:"1px solid "+GRN+"44"}},
+              h("div",{style:{width:6,height:6,borderRadius:"50%",background:GRN}}),
+              h("div",{style:{fontSize:10,color:GRN,fontWeight:600}},"Instant activation after payment")
             )
-          )
+          ),
+          h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade Admin HR to Paid Plan."),"_blank");},style:{width:"100%",background:"linear-gradient(120deg,#3D2900,#FCD34D,#FF9900,#FFF0A0,#FCD34D,#B8860B,#3D2900)",backgroundSize:"400% 100%",animation:"goldShine 1.8s linear infinite",border:"none",borderRadius:12,padding:"15px",color:"#0F172A",cursor:"pointer",fontSize:14,fontWeight:800,letterSpacing:.3,boxShadow:"0 4px 20px #FCD34D55"}},"✦ Upgrade Now ✦")
         )):card(h("div",null,
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}),
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Active Subscription"),
@@ -1969,7 +1970,16 @@ export default function App(){
           ),
           h("div",{style:{display:"flex",alignItems:"center",gap:8,position:"relative"}},
             h("button",{onClick:function(){var nx=themeMode==="light"?"dark":"light";setThemeMode(nx);showT(nx==="light"?"Light mode":"Dark mode");},style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s"},title:"Toggle theme"},ic(themeMode==="light"?"dark_mode":"light_mode",NVY,19)),
-            h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:38,height:38,borderRadius:11,background:NVY,border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",padding:0}},gUser&&gUser.photo?h("img",{src:gUser.photo,width:38,height:38,style:{borderRadius:11,display:"block"}}):ic(ICONS.user,CARD,19)),
+            h("div",{style:{position:"relative",flexShrink:0}},
+              h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:38,height:38,borderRadius:11,background:NVY,border:isPaid?"2.5px solid #FCD34D":"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",padding:0,boxShadow:isPaid?"0 0 8px #FCD34D88":"none"}},
+                gUser&&gUser.photo?h("img",{src:gUser.photo,width:38,height:38,style:{borderRadius:9,display:"block"}}):ic(ICONS.user,CARD,19)
+              ),
+              isPaid?h("div",{style:{position:"absolute",bottom:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"linear-gradient(135deg,#FCD34D,#FF9900)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid "+CARD,zIndex:2}},
+                h("svg",{width:9,height:9,viewBox:"0 0 24 24",fill:"#0F172A"},
+                  h("path",{d:"M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"})
+                )
+              ):null
+            ),
             prof?h("div",{style:{position:"absolute",top:42,right:0,background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:6,minWidth:185,boxShadow:T.SHADOW_LG,zIndex:200}},
               h("div",{style:{padding:"7px 11px",borderBottom:"1px solid "+BDR,marginBottom:3}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:org.position),h("div",{style:{fontSize:11,color:GRY}},org.name),h("div",{style:{fontSize:10,color:GRY}},gUser?gUser.email:"")),
               [["Settings",function(){setTab("settings");setSettTab("profile");setProf(false);}]].map(function(item){return h("button",{key:item[0],onClick:item[1],style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:NVY,cursor:"pointer"}},item[0]);}),
