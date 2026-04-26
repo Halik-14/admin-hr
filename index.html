@@ -3,46 +3,46 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0F172A" />
+    <meta name="theme-color" content="#F1F5F9" />
     <meta name="description" content="Admin HR — Smart HR for Indian Businesses" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Admin HR" />
     <link rel="manifest" href="/manifest.json" />
     <title>Admin HR</title>
     <style>
       *{margin:0;padding:0;box-sizing:border-box;}
-      html,body{background:#0F172A;height:100%;width:100%;}
+      html,body{background:#F1F5F9;height:100%;width:100%;}
       #root{height:100%;}
       #splash{
-        position:fixed;inset:0;background:#0F172A;
+        position:fixed;inset:0;background:#F1F5F9;
         display:flex;flex-direction:column;
         align-items:center;justify-content:center;
         z-index:9999;transition:opacity .4s ease;
       }
       #splash.hide{opacity:0;pointer-events:none;}
       #splash-logo{
-        width:56px;height:56px;border-radius:14px;
-        background:#FCD34D;display:flex;align-items:center;
-        justify-content:center;margin-bottom:16px;
-        animation:pulse 1.5s ease-in-out infinite;
+        width:52px;height:52px;border-radius:13px;
+        overflow:hidden;margin-bottom:14px;
+        box-shadow:0 4px 16px rgba(15,23,42,.12);
       }
-      #splash-logo span{font-size:26px;font-weight:900;color:#0F172A;font-family:Arial,sans-serif;}
-      #splash h1{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px;font-family:Arial,sans-serif;}
-      #splash p{font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;font-family:Arial,sans-serif;}
+      #splash-logo img{width:52px;height:52px;display:block;}
+      #splash h1{font-size:20px;font-weight:800;color:#0F172A;letter-spacing:-.3px;font-family:-apple-system,Arial,sans-serif;}
+      #splash p{font-size:12px;color:#64748B;margin-top:5px;font-family:-apple-system,Arial,sans-serif;}
       #splash-dots{display:flex;gap:6px;margin-top:28px;}
-      #splash-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);}
+      #splash-dots span{width:6px;height:6px;border-radius:50%;background:#CBD5E1;}
       #splash-dots span:nth-child(1){animation:dot 1.2s .0s infinite;}
       #splash-dots span:nth-child(2){animation:dot 1.2s .2s infinite;}
       #splash-dots span:nth-child(3){animation:dot 1.2s .4s infinite;}
-      @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
-      @keyframes dot{0%,100%{background:rgba(255,255,255,.25);}50%{background:#FCD34D;}}
+      @keyframes dot{0%,100%{background:#CBD5E1;}50%{background:#0F172A;}}
     </style>
   </head>
   <body>
     <div id="splash">
-      <div id="splash-logo"><span>A</span></div>
+      <div id="splash-logo">
+        <img id="splash-img" src="" alt="Admin HR" />
+      </div>
       <h1>Admin HR</h1>
       <p>Smart HR for Indian Businesses</p>
       <div id="splash-dots">
@@ -57,10 +57,13 @@
           navigator.serviceWorker.register("/sw.js");
         });
       }
-      // Hide splash when React is ready
-      window.__hideSplash=function(){
+      window.__hideSplash=function(logoSrc){
+        if(logoSrc){
+          var img=document.getElementById("splash-img");
+          if(img)img.src=logoSrc;
+        }
         var s=document.getElementById("splash");
-        if(s){s.classList.add("hide");setTimeout(function(){s.style.display="none";},400);}
+        if(s){setTimeout(function(){s.classList.add("hide");setTimeout(function(){s.style.display="none";},400);},300);}
       };
     </script>
   </body>

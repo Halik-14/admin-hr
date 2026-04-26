@@ -588,7 +588,7 @@ export default function App(){
             setOrg(function(o){
               var updated=Object.assign({},o,{
                 plan:planRes.data.plan||"free",
-                emp_limit:planRes.data.emp_limit||null,
+                emp_limit:(planRes.data.emp_limit!==undefined&&planRes.data.emp_limit!==null)?planRes.data.emp_limit:null,
                 expires_on:planRes.data.expires_on||null
               });
               lsSet("hr_org_"+email,updated);
@@ -696,7 +696,7 @@ export default function App(){
   var edn=sr(null),edm=sr(null),edem=sr(null),edei=sr(null),edro=sr(null),edctc=sr(null),edhi=sr(null),edpa=sr(null),edua=sr(null);
 
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
-  se(function(){if(window.__hideSplash)window.__hideSplash();},[]);
+  se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
   se(function(){
     _sb.auth.getSession().then(function(res){
       if(res.data&&res.data.session&&res.data.session.user){
@@ -816,9 +816,12 @@ export default function App(){
   }
 
   function checkEmpLimit(){
-    if(gUser&&gUser.email===OWNER_EMAIL)return true; // owner unlimited
-    var limit=org.emp_limit||(isPaid?999:5);
-    if(actEmps.length>=limit){showT("Employee limit reached ("+limit+"). "+(isPaid?"Contact support to increase.":"Upgrade to Paid for more."),"err");return false;}
+    if(gUser&&gUser.email===OWNER_EMAIL)return true;
+    var limit=org.emp_limit!=null?Number(org.emp_limit):(isPaid?999:5);
+    if(actEmps.length>=limit){
+      showT("Employee limit reached ("+limit+" max). "+(isPaid?"Contact support to increase.":"Upgrade to Paid for more."),"err");
+      return false;
+    }
     return true;
   }
   function saveEmp(){
@@ -866,7 +869,15 @@ export default function App(){
     .then(function(res){
       if(res.error){showT("Error: "+res.error.message,"err");return;}
       loadAdminUsers();
-      showT(email.split("@")[0]+" set to "+plan);
+      showT(email.split("@")[0]+" updated to "+plan);
+      // If updating own account, also update local org state
+      if(gUser&&email===gUser.email){
+        setOrg(function(o){
+          var updated=Object.assign({},o,{plan:plan},extraData||{});
+          lsSet("hr_org_"+email,updated);
+          return updated;
+        });
+      }
     });
   }
   function removeEmp(id){setEmps(function(p){return p.filter(function(e){return e.id!==id;});});showT("Deleted.");}
@@ -912,20 +923,20 @@ export default function App(){
       setGUser(gu);lsSet("hr_guser",gu);
       var savedOrg=lsGet("hr_org_"+email,null)||{};
       // Fetch plan from Supabase user_plans table
-      _sb.from("user_plans").select("plan,is_admin,expires_on").eq("email",email).maybeSingle()
+      _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",email).maybeSingle()
       .then(function(planRes){
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var admin=(planRes.data&&planRes.data.is_admin)||false;
-        var empLimit=(planRes.data&&planRes.data.emp_limit)||null;
+        var empLimit=(planRes.data&&planRes.data.emp_limit!==undefined&&planRes.data.emp_limit!==null)?planRes.data.emp_limit:null;
         var expiresOn=(planRes.data&&planRes.data.expires_on)||null;
         setIsAdmin(admin);
-        var updatedOrg=Object.assign({},savedOrg,{plan:plan,expires_on:expiresOn});
+        var updatedOrg=Object.assign({},savedOrg,{plan:plan,expires_on:expiresOn,emp_limit:empLimit});
         lsSet("hr_org_"+email,updatedOrg);
-        if(updatedOrg.name){setOrg(updatedOrg);setScreen("app");showT("Welcome back!");}
+        if(updatedOrg.name){setOrg(updatedOrg);setScreen("app");showT("Welcome back, "+gu.name.split("@")[0]+"!");}
         else setScreen("setup");
         setAuthLoading(false);
       }).catch(function(){
-        if(savedOrg.name){setOrg(savedOrg);setScreen("app");showT("Welcome back!");}
+        if(savedOrg.name){setOrg(savedOrg);setScreen("app");showT("Welcome!");}
         else setScreen("setup");
         setAuthLoading(false);
       });
@@ -1934,7 +1945,7 @@ export default function App(){
     else tabContent=renderSettings();
 
     appContent=h("div",null,
-      h("div",{style:{background:CARD,padding:"44px 18px 14px",borderBottom:"1px solid "+BDR,position:"sticky",top:0,zIndex:50}},
+      h("div",{style:{background:CARD,padding:"14px 16px 12px",borderBottom:"1px solid "+BDR,position:"sticky",top:0,zIndex:50}},
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
           h("div",{style:{display:"flex",alignItems:"center",gap:11}},
             h("div",{onClick:function(){
@@ -2101,7 +2112,7 @@ export default function App(){
               // Action buttons
               h("div",{style:{display:"flex",gap:6}},
                 u.plan!=="paid"
-                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid");},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
+                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid",{activated_on:new Date().toISOString().split("T")[0]});},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
                   :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Free"),
                 h("button",{onClick:function(){setEditExpEmail(isEditingExp?null:u.email);setExpInput(u.expires_on||"");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},isEditingExp?"Cancel Exp":"Set Expiry"),
                 h("button",{onClick:function(){var lim=window.prompt("Employee limit for "+u.email.split("@")[0]+"\n(enter number, blank = unlimited):",u.emp_limit||"");if(lim===null)return;var limNum=lim.trim()?parseInt(lim)||999:null;setUserPlan(u.email,u.plan,{emp_limit:limNum});showT("Limit: "+(limNum?"max "+limNum:"unlimited"));},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Emp Limit")
