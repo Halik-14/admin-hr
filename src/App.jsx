@@ -794,7 +794,7 @@ export default function App(){
   var getInc=uc(function(id,y,m2){return incentives[id+"_"+y+"_"+m2]||0;},[incentives]);
 
   var OWNER_EMAIL="authorhalik@gmail.com";
-  var isPaid=org.plan==="paid"||(gUser&&gUser.email===OWNER_EMAIL);
+  var isPaid=org.plan==="paid";
   var isFree=!isPaid;
   var EMP_LIMIT=org.emp_limit||(isPaid?org.emp_limit||999:5); // free=5, paid=set by admin
   var isAdmin=(gUser&&gUser.email===OWNER_EMAIL)||false;
@@ -816,8 +816,7 @@ export default function App(){
   }
 
   function checkEmpLimit(){
-    if(gUser&&gUser.email===OWNER_EMAIL)return true;
-    var limit=org.emp_limit!=null?Number(org.emp_limit):(isPaid?999:5);
+    var limit=gUser&&gUser.email===OWNER_EMAIL?999:(org.emp_limit!=null?Number(org.emp_limit):(isPaid?999:5));
     if(actEmps.length>=limit){
       showT("Employee limit reached ("+limit+" max). "+(isPaid?"Contact support to increase.":"Upgrade to Paid for more."),"err");
       return false;
@@ -869,12 +868,12 @@ export default function App(){
     .then(function(res){
       if(res.error){showT("Error: "+res.error.message,"err");return;}
       loadAdminUsers();
-      showT(email.split("@")[0]+" updated to "+plan);
-      // If updating own account, also update local org state
+      showT(email.split("@")[0]+" set to "+plan);
+      // If updating own account, update local org state immediately
       if(gUser&&email===gUser.email){
         setOrg(function(o){
-          var updated=Object.assign({},o,{plan:plan},extraData||{});
-          lsSet("hr_org_"+email,updated);
+          var updated=Object.assign({},o,Object.assign({plan:plan},extraData||{}));
+          lsSet("hr_org_"+gUser.email,updated);
           return updated;
         });
       }
