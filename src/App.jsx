@@ -846,8 +846,9 @@ export default function App(){
     },60);
   }
   function saveEdit(){
-    var ctc=Number(edctc.current?edctc.current.value:"")||editE.monthlyCTC,bd=brkSal(ctc);
-    setEmps(function(p){return p.map(function(e){if(e.id!==editE.id)return e;return Object.assign({},e,{name:edn.current?edn.current.value||e.name:e.name,mob:edm.current?edm.current.value:e.mob,email:edem.current?edem.current.value:e.email,eid:edei.current?edei.current.value:e.eid,role:edro.current?edro.current.value:e.role,dept:eDept||e.dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,hi:Number(edhi.current?edhi.current.value:"")||e.hi,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds});});});
+    var ctc=Number(editE.monthlyCTC)||0;if(!ctc)return showT("CTC required","err");
+    var bd=brkSal(ctc);
+    setEmps(function(p){return p.map(function(e){if(e.id!==editE.id)return e;return Object.assign({},e,{name:editE.name||e.name,mob:editE.mob||"",email:editE.email||"",eid:editE.eid||"",role:editE.role||e.role,dept:eDept||editE.dept||e.dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,hi:Number(editE.hi)||0,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds});});});
     setEditE(null);setSelE(null);showT("Employee updated!");
   }
   function confirmOff(){
@@ -1496,18 +1497,35 @@ export default function App(){
   }
 
   function renderEditEmp(){
+    if(!editE)return null;
+    function edInp(key,type,ph){
+      return h("input",{type:type||"text",defaultValue:editE[key]||"",onChange:function(e){setEditE(function(prev){return Object.assign({},prev,Object.fromEntries([[key,e.target.value]]));});},placeholder:ph||"",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}});
+    }
     return h("div",{className:"fd"},
       h("button",{onClick:function(){setEditE(null);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"5px 10px",color:NVY,fontSize:11,fontWeight:600,cursor:"pointer",marginBottom:10}},"Cancel"),
-      h("div",{style:{fontSize:14,fontWeight:800,color:NVY,marginBottom:13}},"Edit - "+editE.name),
+      h("div",{style:{fontSize:14,fontWeight:800,color:NVY,marginBottom:13}},"Edit — "+editE.name),
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Personal"),
-        [["FULL NAME",edn],["MOBILE",edm,"tel"],["EMAIL",edem,"email"],["EMPLOYEE ID",edei],["ROLE",edro]].map(function(f){return h("div",{key:f[0]},lbl(f[0]),inpEl(f[1],"",f[2]||"text"));})
+        lbl("FULL NAME"),edInp("name","text","Full name"),
+        lbl("MOBILE"),edInp("mob","tel","Mobile number"),
+        lbl("EMAIL"),edInp("email","email","Email address"),
+        lbl("EMPLOYEE ID"),edInp("eid","text","e.g. EMP006"),
+        lbl("ROLE / DESIGNATION"),
+        h("select",{defaultValue:editE.role||"",onChange:function(e){setEditE(function(p){return Object.assign({},p,{role:e.target.value});});},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
+          h("option",{value:""},"Select role"),
+          getRoles(org.type).map(function(r){return h("option",{key:r,value:r},r);})
+        ),
+        lbl("DEPARTMENT"),
+        h("select",{defaultValue:editE.dept||"",onChange:function(e){setEDept(e.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
+          h("option",{value:""},"Select department"),
+          getDepts(org.type).map(function(d){return h("option",{key:d,value:d},d);})
+        )
       )),
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Salary"),
-        lbl("MONTHLY CTC (Rs.)"),inpEl(edctc,"e.g. 50000","number"),
+        lbl("MONTHLY CTC (Rs.)"),edInp("monthlyCTC","number","e.g. 50000"),
         h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Auto-split: 50% Basic, 20% HRA, 30% Allow"),
-        lbl("HEALTH INS. (Rs./mo)"),inpEl(edhi,"","number")
+        lbl("HEALTH INS. (Rs./mo)"),edInp("hi","number","e.g. 500")
       )),
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Tax"),
@@ -1803,22 +1821,12 @@ export default function App(){
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Upgrade to Paid Plan"),
           h("div",{style:{fontSize:11,color:GRY,marginBottom:16}},"Unlock PDF downloads, CSV exports and all reports"),
           h("style",{dangerouslySetInnerHTML:{__html:"@keyframes goldShine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes glitter{0%,100%{box-shadow:0 0 8px #FCD34D88,0 0 20px #FCD34D44}50%{box-shadow:0 0 18px #FCD34Dcc,0 0 40px #FCD34D66,0 0 60px #FF990033}}"}}),
-          h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:18,gap:10}},
-            h("div",{style:{animation:"floatUp 2s ease-in-out infinite",display:"flex",alignItems:"center",justifyContent:"center",width:56,height:56,borderRadius:"50%",background:"linear-gradient(135deg,#FCD34D,#FF9900)",animation:"floatUp 2s ease-in-out infinite, glitter 2s ease-in-out infinite"}},
-              h("svg",{width:30,height:30,viewBox:"0 0 24 24",fill:"#0F172A"},
-                h("path",{d:"M12 1L9.5 7H3l5 4.5-2 7L12 15l6 3.5-2-7L21 7h-6.5L12 1z"})
-              )
-            ),
-            h("div",{style:{textAlign:"center"}},
-              h("div",{style:{fontSize:14,fontWeight:700,color:NVY,marginBottom:2}},"Go Premium"),
-              h("div",{style:{fontSize:11,color:GRY}},"Contact us on WhatsApp to activate instantly")
-            ),
-            h("div",{style:{display:"flex",alignItems:"center",gap:5,background:GRN+"15",borderRadius:20,padding:"4px 12px",border:"1px solid "+GRN+"44"}},
-              h("div",{style:{width:6,height:6,borderRadius:"50%",background:GRN}}),
-              h("div",{style:{fontSize:10,color:GRN,fontWeight:600}},"Instant activation after payment")
-            )
+          h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:16,gap:8}},
+            h("div",{style:{background:"linear-gradient(120deg,#3D2900,#FCD34D,#FF9900,#FFF0A0,#FCD34D,#B8860B,#3D2900)",backgroundSize:"400% 100%",animation:"goldShine 1.8s linear infinite",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",fontSize:26,fontWeight:900,letterSpacing:-.5,textAlign:"center",lineHeight:1.1}},"Go Premium"),
+            h("div",{style:{fontSize:11,color:GRY,textAlign:"center"}})
           ),
-          h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade Admin HR to Paid Plan."),"_blank");},style:{width:"100%",background:"linear-gradient(120deg,#3D2900,#FCD34D,#FF9900,#FFF0A0,#FCD34D,#B8860B,#3D2900)",backgroundSize:"400% 100%",animation:"goldShine 1.8s linear infinite",border:"none",borderRadius:12,padding:"15px",color:"#0F172A",cursor:"pointer",fontSize:14,fontWeight:800,letterSpacing:.3,boxShadow:"0 4px 20px #FCD34D55"}},"✦ Upgrade Now ✦")
+          h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade Admin HR to Paid Plan."),"_blank");},style:{width:"100%",background:"linear-gradient(120deg,#3D2900,#FCD34D,#FF9900,#FFF0A0,#FCD34D,#B8860B,#3D2900)",backgroundSize:"400% 100%",animation:"goldShine 1.8s linear infinite",border:"none",borderRadius:12,padding:"15px",color:"#0F172A",cursor:"pointer",fontSize:14,fontWeight:800,letterSpacing:.3,boxShadow:"0 4px 20px #FCD34D55",marginBottom:8}},"✦ Upgrade Now ✦"),
+          h("div",{style:{textAlign:"right",fontSize:9,color:GRY,paddingRight:2}},"Instant activation after payment")
         )):card(h("div",null,
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}),
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Active Subscription"),
