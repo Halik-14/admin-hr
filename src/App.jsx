@@ -703,9 +703,13 @@ export default function App(){
         var user=res.data.session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        var savedOrg=lsGet("hr_org_"+user.email,null);
-        if(savedOrg&&savedOrg.name){setOrg(savedOrg);setScreen("app");}
-        else if(screen==="login")setScreen("setup");
+        var cachedOrg=lsGet("hr_org_"+user.email,null);
+        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
+        else if(screen==="login"){
+          _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle()
+          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:user.email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+user.email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
+          .catch(function(){setScreen("setup");});
+        }
       }
     });
     // Listen for auth changes (email confirmation)
@@ -714,9 +718,11 @@ export default function App(){
         var user=session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        var savedOrg=lsGet("hr_org_"+user.email,null);
-        if(savedOrg&&savedOrg.name){setOrg(savedOrg);setScreen("app");showT("Welcome back!");}
-        else setScreen("setup");
+        var cachedOrg=lsGet("hr_org_"+user.email,null);
+        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
+        else{_sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle()
+          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:user.email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+user.email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
+          .catch(function(){setScreen("setup");});}
       }
     });
     return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
@@ -741,10 +747,12 @@ export default function App(){
       var email=session.user.email;
       var gu={name:email.split("@")[0],email:email,photo:""};
       setGUser(gu);
-      var savedOrg=lsGet("hr_org_"+email,null);
+      var cachedOrg=lsGet("hr_org_"+email,null);
       if(screen==="login"){
-        if(savedOrg&&savedOrg.name){setOrg(savedOrg);setScreen("app");}
-        else setScreen("setup");
+        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
+        else{_sb.from("user_orgs").select("*").eq("email",email).maybeSingle()
+          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
+          .catch(function(){setScreen("setup");});}
       }
     });
     // Listen for auth state changes (logout from another tab, token expiry, user deleted)
@@ -921,22 +929,30 @@ export default function App(){
       var email=res.data.user.email;
       var gu={name:email.split("@")[0],email:email,photo:""};
       setGUser(gu);lsSet("hr_guser",gu);
-      var savedOrg=lsGet("hr_org_"+email,null)||{};
-      // Fetch plan from Supabase user_plans table
-      _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",email).maybeSingle()
-      .then(function(planRes){
+      // Fetch org AND plan from Supabase simultaneously - works across devices
+      Promise.all([
+        _sb.from("user_orgs").select("*").eq("email",email).maybeSingle(),
+        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",email).maybeSingle()
+      ]).then(function(results){
+        var orgRes=results[0],planRes=results[1];
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var admin=(planRes.data&&planRes.data.is_admin)||false;
-        var empLimit=(planRes.data&&planRes.data.emp_limit!==undefined&&planRes.data.emp_limit!==null)?planRes.data.emp_limit:null;
+        var empLimit=(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null;
         var expiresOn=(planRes.data&&planRes.data.expires_on)||null;
         setIsAdmin(admin);
-        var updatedOrg=Object.assign({},savedOrg,{plan:plan,expires_on:expiresOn,emp_limit:empLimit});
-        lsSet("hr_org_"+email,updatedOrg);
-        if(updatedOrg.name){setOrg(updatedOrg);setScreen("app");showT("Welcome back, "+gu.name.split("@")[0]+"!");}
-        else setScreen("setup");
+        var sbOrg=orgRes.data;
+        if(sbOrg&&sbOrg.org_name){
+          var updatedOrg={name:sbOrg.org_name,email:email,position:sbOrg.position||"",type:sbOrg.org_type||"",plan:plan,expires_on:expiresOn,emp_limit:empLimit};
+          lsSet("hr_org_"+email,updatedOrg);
+          setOrg(updatedOrg);setScreen("app");
+          showT("Welcome back, "+gu.name.split("@")[0]+"!");
+        } else {
+          setScreen("setup");
+        }
         setAuthLoading(false);
       }).catch(function(){
-        if(savedOrg.name){setOrg(savedOrg);setScreen("app");showT("Welcome!");}
+        var cachedOrg=lsGet("hr_org_"+email,null);
+        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");showT("Welcome back!");}
         else setScreen("setup");
         setAuthLoading(false);
       });
@@ -1077,9 +1093,19 @@ export default function App(){
       if(!setupCompany.trim())return showT("Enter company name","err");
       if(!setupOrgType)return showT("Select organisation type","err");
       if(!setupPosition)return showT("Select your position","err");
-      var newOrg={name:setupCompany.trim(),email:gUser?gUser.email:"",position:setupPosition,type:setupOrgType,plan:"free"};
+      var email=gUser?gUser.email:"";
+      var newOrg={name:setupCompany.trim(),email:email,position:setupPosition,type:setupOrgType,plan:"free"};
+      // Save to Supabase first so it works across devices
+      _sb.from("user_orgs").upsert({
+        email:email,
+        org_name:setupCompany.trim(),
+        org_type:setupOrgType,
+        position:setupPosition
+      },{onConflict:"email"}).then(function(res){
+        if(res.error)console.error("Org save error:",res.error.message);
+      });
       setOrg(newOrg);
-      lsSet("hr_org_"+(gUser?gUser.email:"demo"),newOrg);
+      lsSet("hr_org_"+email,newOrg);
       setScreen("app");
       showT("Welcome to Admin HR!");
     },style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer"}},"Get Started")
