@@ -564,17 +564,6 @@ export default function App(){
 
   var sS=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?"app":"login";}),screen=sS[0],setScreen=sS[1];
   var sUPD=st(false),showUpdate=sUPD[0],setShowUpdate=sUPD[1];
-  var sRPW=st(false),showResetPw=sRPW[0],setShowResetPw=sRPW[1];
-  var sREM=st(""),resetEmail=sREM[0],setResetEmail=sREM[1];
-  var sRES=st(""),resetSent=sRES[0],setResetSent=sRES[1];
-  var sNPW=st(""),newPwd=sNPW[0],setNewPwd=sNPW[1];
-  var sNPW2=st(""),newPwd2=sNPW2[0],setNewPwd2=sNPW2[1];
-  var sNPWE=st(""),newPwdErr=sNPWE[0],setNewPwdErr=sNPWE[1];
-  var sNPWS=st(false),showNewPw=sNPWS[0],setShowNewPw=sNPWS[1];
-  var sIsReset=st(false),isPasswordReset=sIsReset[0],setIsPasswordReset=sIsReset[1];
-  var sSyncing=st(false),isSyncing=sSyncing[0],setIsSyncing=sSyncing[1];
-  var sLastSync=st(null),lastSync=sLastSync[0],setLastSync=sLastSync[1];
-  var sLoginTime=st(lsGet("hr_login_time",null)),loginTime=sLoginTime[0],setLoginTime=sLoginTime[1];
   var sADM=st(false),isAdmin=sADM[0],setIsAdmin=sADM[1];
   var sADMUSERS=st([]),adminUsers=sADMUSERS[0],setAdminUsers=sADMUSERS[1];
   var sADMTAB=st("users"),adminTab=sADMTAB[0],setAdminTab=sADMTAB[1];
@@ -584,29 +573,9 @@ export default function App(){
     navigator.serviceWorker.addEventListener("message",function(e){
       if(e.data&&e.data.type==="NEW_VERSION")setShowUpdate(true);
     });
-    // Refresh plan every time user comes back to the app
     window.addEventListener("focus",function(){
       navigator.serviceWorker.getRegistrations().then(function(regs){
         regs.forEach(function(reg){reg.update();});
-      });
-      // Re-fetch plan from Supabase silently
-      _sb.auth.getUser().then(function(res){
-        if(!res.data||!res.data.user)return;
-        var email=res.data.user.email;
-        _sb.from("user_plans").select("plan,emp_limit,expires_on").eq("email",email).maybeSingle()
-        .then(function(planRes){
-          if(planRes.data){
-            setOrg(function(o){
-              var updated=Object.assign({},o,{
-                plan:planRes.data.plan||"free",
-                emp_limit:(planRes.data.emp_limit!==undefined&&planRes.data.emp_limit!==null)?planRes.data.emp_limit:null,
-                expires_on:planRes.data.expires_on||null
-              });
-              lsSet("hr_org_"+email,updated);
-              return updated;
-            });
-          }
-        });
       });
     });
   },[]);
@@ -689,90 +658,24 @@ export default function App(){
   var sShiftOpen=st(false),shiftOpen=sShiftOpen[0],setShiftOpen=sShiftOpen[1];
 
 
-  // Add employee form - controlled state (refs lost on re-render)
-  var sN1=st(""),fName=sN1[0],setFName=sN1[1];
-  var sN2=st(""),fDob=sN2[0],setFDob=sN2[1];
-  var sN3=st(""),fMob=sN3[0],setFMob=sN3[1];
-  var sN4=st(""),fEmail=sN4[0],setFEmail=sN4[1];
-  var sN5=st(""),fJoin=sN5[0],setFJoin=sN5[1];
-  var sE1=st(""),fEid=sE1[0],setFEid=sE1[1];
-  var sE2=st(""),fRole=sE2[0],setFRole=sE2[1];
-  var sE3=st(""),fCtc=sE3[0],setFCtc=sE3[1];
-  var sId1=st(""),fAadhar=sId1[0],setFAadhar=sId1[1];
-  var sId2=st(""),fPan=sId2[0],setFPan=sId2[1];
-  var sId3=st(""),fUan=sId3[0],setFUan=sId3[1];
-  var sHi=st(""),fHi=sHi[0],setFHi=sHi[1];
-  var cnR=sr(null),caR=sr(null);
+  var n1=sr(""),n2=sr(""),n3=sr(""),n4=sr(""),n5=sr("");
+  var e1=sr(""),e2=sr(""),e3=sr("");
+  var id1=sr(""),id2=sr(""),id3=sr("");
+  var hiR=sr(""),cnR=sr(null),caR=sr(null);
   var revCtcR=sr(null),revDateR=sr(null),revNoteR=sr(null);
   var edn=sr(null),edm=sr(null),edem=sr(null),edei=sr(null),edro=sr(null),edctc=sr(null),edhi=sr(null),edpa=sr(null),edua=sr(null);
 
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
-  se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
-
-  // ── Detect password reset from email link ──
   se(function(){
-    var hash=window.location.hash;
-    if(hash&&hash.includes("type=recovery")){
-      setIsPasswordReset(true);setScreen("login");
-    }
-    // Also check for access_token in URL (Supabase redirect)
-    _sb.auth.onAuthStateChange(function(event){
-      if(event==="PASSWORD_RECOVERY"){setIsPasswordReset(true);setScreen("login");}
-    });
-  },[]);
-
-  // ── 6-hour session expiry ──
-  se(function(){
-    function checkSession(){
-      var lt=lsGet("hr_login_time",null);
-      if(!lt)return;
-      var elapsed=(Date.now()-new Date(lt).getTime())/1000/60/60;
-      if(elapsed>=6){
-        _sb.auth.signOut();
-        setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);
-        setScreen("login");setLoginTime(null);
-        showT("Session expired. Please sign in again.","err");
-      }
-    }
-    checkSession();
-    var interval=setInterval(checkSession,60000); // check every minute
-    window.addEventListener("focus",checkSession);
-    return function(){clearInterval(interval);window.removeEventListener("focus",checkSession);};
-  },[]);
-  var SESSION_HRS=6;
-  se(function(){
-    if(screen!=="app")return;
-    // Record login time
-    if(!lsGet("hr_login_ts",null))lsSet("hr_login_ts",Date.now());
-    // Check session every minute
-    var t=setInterval(function(){
-      var ts=lsGet("hr_login_ts",null);
-      if(!ts)return;
-      var hrs=(Date.now()-ts)/3600000;
-      if(hrs>=SESSION_HRS){
-        clearInterval(t);
-        lsSet("hr_login_ts",null);
-        _sb.auth.signOut();
-        setGUser(null);lsSet("hr_guser",null);
-        setScreen("login");
-        showT("Session expired. Please sign in again.","err");
-      }
-    },60000);
-    return function(){clearInterval(t);};
-  },[screen]);
-  se(function(){
+    // Restore Supabase session on load (handles email confirmation redirect)
     _sb.auth.getSession().then(function(res){
       if(res.data&&res.data.session&&res.data.session.user){
         var user=res.data.session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        var cachedOrg=lsGet("hr_org_"+user.email,null);
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
-        else if(screen==="login"){
-          _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle()
-          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:user.email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+user.email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
-          .catch(function(){setScreen("setup");});
-        }
+        var savedOrg=lsGet("hr_org_"+user.email,null);
+        if(savedOrg&&savedOrg.name){setOrg(savedOrg);setScreen("app");}
+        else if(screen==="login")setScreen("setup");
       }
     });
     // Listen for auth changes (email confirmation)
@@ -781,11 +684,9 @@ export default function App(){
         var user=session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        var cachedOrg=lsGet("hr_org_"+user.email,null);
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
-        else{_sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle()
-          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:user.email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+user.email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
-          .catch(function(){setScreen("setup");});}
+        var savedOrg=lsGet("hr_org_"+user.email,null);
+        if(savedOrg&&savedOrg.name){setOrg(savedOrg);setScreen("app");showT("Welcome back!");}
+        else setScreen("setup");
       }
     });
     return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
@@ -810,12 +711,10 @@ export default function App(){
       var email=session.user.email;
       var gu={name:email.split("@")[0],email:email,photo:""};
       setGUser(gu);
-      var cachedOrg=lsGet("hr_org_"+email,null);
+      var savedOrg=lsGet("hr_org_"+email,null);
       if(screen==="login"){
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
-        else{_sb.from("user_orgs").select("*").eq("email",email).maybeSingle()
-          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
-          .catch(function(){setScreen("setup");});}
+        if(savedOrg&&savedOrg.name){setOrg(savedOrg);setScreen("app");}
+        else setScreen("setup");
       }
     });
     // Listen for auth state changes (logout from another tab, token expiry, user deleted)
@@ -828,23 +727,14 @@ export default function App(){
     });
     return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
   },[]);
-  se(function(){
-    lsSet("hr_emps",emps);
-    if(gUser&&gUser.email&&screen==="app"){
-      // Debounce sync - wait 2s after last change
-      var t=setTimeout(function(){
-        syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
-      },2000);
-      return function(){clearTimeout(t);};
-    }
-  },[emps,att,incentives,shifts,reminders,notices,revisions]);
-
-
+  se(function(){lsSet("hr_emps",emps);},[emps]);
+  se(function(){lsSet("hr_att",att);},[att]);
+  se(function(){lsSet("hr_inc",incentives);},[incentives]);
   se(function(){lsSet("hr_org",org);},[org]);
-
-
-
-
+  se(function(){lsSet("hr_revisions",revisions);},[revisions]);
+  se(function(){lsSet("hr_notices",notices);},[notices]);
+  se(function(){lsSet("hr_reminders",reminders);},[reminders]);
+  se(function(){lsSet("hr_shifts",shifts);},[shifts]);
   se(function(){
     var td=new Date(),tdDate=new Date(td.getFullYear(),td.getMonth(),td.getDate());
     var upcoming=emps.filter(function(e){return e.status==="active"&&e.dob&&!skipB.includes(e.id);}).filter(function(e){
@@ -874,9 +764,8 @@ export default function App(){
   var getInc=uc(function(id,y,m2){return incentives[id+"_"+y+"_"+m2]||0;},[incentives]);
 
   var OWNER_EMAIL="authorhalik@gmail.com";
-  var isPaid=org.plan==="paid";
+  var isPaid=org.plan==="paid"||(gUser&&gUser.email===OWNER_EMAIL);
   var isFree=!isPaid;
-  var EMP_LIMIT=org.emp_limit||(isPaid?org.emp_limit||999:5); // free=5, paid=set by admin
   var isAdmin=(gUser&&gUser.email===OWNER_EMAIL)||false;
   function needPaid(){showT("This feature requires Paid Plan. Upgrade to access.","err");}
   var actEmps=emps.filter(function(e){return e.status==="active";});
@@ -895,23 +784,13 @@ export default function App(){
     showT("Holiday marked for all");
   }
 
-  function checkEmpLimit(){
-    var limit=gUser&&gUser.email===OWNER_EMAIL?999:(org.emp_limit!=null?Number(org.emp_limit):(isPaid?999:5));
-    if(actEmps.length>=limit){
-      showT("Employee limit reached ("+limit+" max). "+(isPaid?"Contact support to increase.":"Upgrade to Paid for more."),"err");
-      return false;
-    }
-    return true;
-  }
   function saveEmp(){
-    if(!checkEmpLimit())return;
-    var name=fName.trim();if(!name)return showT("Name required","err");
-    var ctc=Number(fCtc)||0;if(!ctc)return showT("Monthly CTC required","err");
+    var name=(n1.current&&n1.current.value)||"";if(!name)return showT("Name required","err");
+    var ctc=Number(e3.current&&e3.current.value)||0;if(!ctc)return showT("Monthly CTC required","err");
     var bd=brkSal(ctc);
-    var emp={id:Date.now(),name:name,dob:fDob,mob:fMob,email:fEmail,eid:fEid,role:fRole,dept:dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,joined:fJoin||todayStr,pan:fPan,uan:fUan,aadhar:fAadhar,pf:pf,pfMode:pfMode,esi:esi,pt:pt,tds:tds,hi:Number(fHi)||0,customs:customs,av:name.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase(),col:COLS[emps.length%COLS.length],status:"active"};
+    var emp={id:Date.now(),name:name,dob:(n2.current&&n2.current.value)||"",mob:(n3.current&&n3.current.value)||"",email:(n4.current&&n4.current.value)||"",eid:(e1.current&&e1.current.value)||"",role:(e2.current&&e2.current.value)||"",dept:dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,joined:(n5.current&&n5.current.value)||todayStr,pan:(id2.current&&id2.current.value)||"",uan:(id3.current&&id3.current.value)||"",aadhar:(id1.current&&id1.current.value)||"",pf:pf,pfMode:pfMode,esi:esi,pt:pt,tds:tds,hi:Number((hiR.current&&hiR.current.value))||0,customs:customs,av:name.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase(),col:COLS[emps.length%COLS.length],status:"active"};
     setEmps(function(p){return p.concat([emp]);});
-    setFName("");setFDob("");setFMob("");setFEmail("");setFJoin("");
-    setFEid("");setFRole("");setFCtc("");setFAadhar("");setFPan("");setFUan("");setFHi("");
+    [n1,n2,n3,n4,n5,e1,e2,e3,id1,id2,id3,hiR].forEach(function(r){if(r&&r.current)r.current.value="";});
     setDept("");setPf(true);setPfMode("capped");setEsi(false);setPt(true);setTds(true);setCustoms([]);
     setStep(1);setAddOpen(false);showT(name+" added!");
   }
@@ -926,9 +805,8 @@ export default function App(){
     },60);
   }
   function saveEdit(){
-    var ctc=Number(editE.monthlyCTC)||0;if(!ctc)return showT("CTC required","err");
-    var bd=brkSal(ctc);
-    setEmps(function(p){return p.map(function(e){if(e.id!==editE.id)return e;return Object.assign({},e,{name:editE.name||e.name,mob:editE.mob||"",email:editE.email||"",eid:editE.eid||"",role:editE.role||e.role,dept:eDept||editE.dept||e.dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,hi:Number(editE.hi)||0,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds});});});
+    var ctc=Number(edctc.current?edctc.current.value:"")||editE.monthlyCTC,bd=brkSal(ctc);
+    setEmps(function(p){return p.map(function(e){if(e.id!==editE.id)return e;return Object.assign({},e,{name:edn.current?edn.current.value||e.name:e.name,mob:edm.current?edm.current.value:e.mob,email:edem.current?edem.current.value:e.email,eid:edei.current?edei.current.value:e.eid,role:edro.current?edro.current.value:e.role,dept:eDept||e.dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,hi:Number(edhi.current?edhi.current.value:"")||e.hi,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds});});});
     setEditE(null);setSelE(null);showT("Employee updated!");
   }
   function confirmOff(){
@@ -937,130 +815,16 @@ export default function App(){
     setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);showT("Offboarded.");
   }
   function loadAdminUsers(){
-    _sb.from("admin_user_overview").select("*")
+    _sb.from("admin_user_overview").select("email,plan,is_admin,activated_on,expires_on,notes,joined_at,last_sign_in_at,email_confirmed_at")
     .then(function(res){
-      if(res.error){showT("Load error: "+res.error.message,"err");return;}
-      setAdminUsers(res.data||[]);
+      if(res.data)setAdminUsers(res.data);
+      else if(res.error)showT("Error loading users: "+res.error.message,"err");
     });
   }
-  function setUserPlan(email,plan,extraData){
-    var payload=Object.assign({email:email,plan:plan,activated_on:plan==="paid"?new Date().toISOString().split("T")[0]:null},extraData||{});
-    _sb.from("user_plans").upsert(payload,{onConflict:"email"})
-    .then(function(res){
-      if(res.error){showT("Error: "+res.error.message,"err");return;}
-      loadAdminUsers();
-      showT(email.split("@")[0]+" set to "+plan);
-      // If updating own account, update local org state immediately
-      if(gUser&&email===gUser.email){
-        setOrg(function(o){
-          var updated=Object.assign({},o,Object.assign({plan:plan},extraData||{}));
-          lsSet("hr_org_"+gUser.email,updated);
-          return updated;
-        });
-      }
-    });
+  function setUserPlan(email,plan){
+    _sb.from("user_plans").upsert({email:email,plan:plan,activated_on:plan==="paid"?new Date().toISOString().split("T")[0]:null},{onConflict:"email"})
+    .then(function(){loadAdminUsers();showT(email.split("@")[0]+" set to "+plan);});
   }
-  // ── DATA SYNC ──────────────────────────────────────────────────────────────
-  function syncToSupabase(empData,attData,incData,shiftsData,remData,notData,revData){
-    if(!gUser||!gUser.email)return;
-    setIsSyncing(true);
-    var payload={
-      email:gUser.email,
-      emps_json:JSON.stringify(empData||[]),
-      att_json:JSON.stringify(attData||{}),
-      inc_json:JSON.stringify(incData||{}),
-      shifts_json:JSON.stringify(shiftsData||{}),
-      reminders_json:JSON.stringify(remData||[]),
-      notices_json:JSON.stringify(notData||[]),
-      revisions_json:JSON.stringify(revData||{})
-    };
-    _sb.from("user_data").upsert(payload,{onConflict:"email"})
-    .then(function(res){
-      setIsSyncing(false);
-      if(!res.error){setLastSync(new Date());lsSet("hr_last_sync",new Date().toISOString());}
-    }).catch(function(){setIsSyncing(false);});
-  }
-
-  function loadFromSupabase(email,cb){
-    _sb.from("user_data").select("*").eq("email",email).maybeSingle()
-    .then(function(res){
-      if(res.data){
-        try{
-          var d={
-            emps:JSON.parse(res.data.emps_json||"[]"),
-            att:JSON.parse(res.data.att_json||"{}"),
-            inc:JSON.parse(res.data.inc_json||"{}"),
-            shifts:JSON.parse(res.data.shifts_json||"{}"),
-            reminders:JSON.parse(res.data.reminders_json||"[]"),
-            notices:JSON.parse(res.data.notices_json||"[]"),
-            revisions:JSON.parse(res.data.revisions_json||"{}"),
-            updated_at:res.data.updated_at
-          };
-          if(cb)cb(d);
-        }catch(e){if(cb)cb(null);}
-      } else {if(cb)cb(null);}
-    }).catch(function(){if(cb)cb(null);});
-  }
-
-  function downloadBackup(){
-    var backup={
-      version:1,exported:new Date().toISOString(),email:gUser?gUser.email:"",
-      org:org,emps:emps,att:att,incentives:incentives,
-      shifts:shifts,reminders:reminders,notices:notices,revisions:revisions
-    };
-    var blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
-    var a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="AdminHR-Backup-"+(new Date().toISOString().split("T")[0])+".json";
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-    showT("Backup downloaded!");
-  }
-
-  function uploadBackup(file){
-    var reader=new FileReader();
-    reader.onload=function(e){
-      try{
-        var data=JSON.parse(e.target.result);
-        if(!data.version||!data.emps)return showT("Invalid backup file","err");
-        if(window.confirm("This will REPLACE all current data with the backup. Continue?")){
-          if(data.emps)setEmps(data.emps);
-          if(data.att)setAtt(data.att);
-          if(data.incentives)setIncentives(data.incentives);
-          if(data.shifts)setShifts(data.shifts);
-          if(data.reminders)setReminders(data.reminders);
-          if(data.notices)setNotices(data.notices);
-          if(data.revisions)setRevisions(data.revisions);
-          showT("Backup restored successfully!");
-          // Also sync to Supabase
-          syncToSupabase(data.emps,data.att,data.incentives,data.shifts,data.reminders,data.notices,data.revisions);
-        }
-      }catch(ex){showT("Could not read backup file","err");}
-    };
-    reader.readAsText(file);
-  }
-
-  function handleResetPassword(){
-    if(!resetEmail.trim())return showT("Enter your email","err");
-    _sb.auth.resetPasswordForEmail(resetEmail.trim().toLowerCase(),{
-      redirectTo:"https://admin-hr-28l1.vercel.app"
-    }).then(function(res){
-      if(res.error){showT(res.error.message,"err");return;}
-      setResetSent("Password reset link sent to "+resetEmail+". Check your email!");
-    });
-  }
-
-  function handleSetNewPassword(){
-    if(!newPwd)return setNewPwdErr("Enter new password");
-    if(newPwd.length<6)return setNewPwdErr("Minimum 6 characters");
-    if(newPwd!==newPwd2)return setNewPwdErr("Passwords do not match");
-    setNewPwdErr("");
-    _sb.auth.updateUser({password:newPwd}).then(function(res){
-      if(res.error){setNewPwdErr(res.error.message);return;}
-      setIsPasswordReset(false);showT("Password updated! Please sign in.");
-      _sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);setScreen("login");
-    });
-  }
-
   function removeEmp(id){setEmps(function(p){return p.filter(function(e){return e.id!==id;});});showT("Deleted.");}
 
   function sharePayslip(emp,d,m2,y){
@@ -1102,31 +866,21 @@ export default function App(){
       var email=res.data.user.email;
       var gu={name:email.split("@")[0],email:email,photo:""};
       setGUser(gu);lsSet("hr_guser",gu);
-      var loginT=new Date().toISOString();lsSet("hr_login_time",loginT);setLoginTime(loginT);
-      // Fetch org AND plan from Supabase simultaneously - works across devices
-      Promise.all([
-        _sb.from("user_orgs").select("*").eq("email",email).maybeSingle(),
-        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",email).maybeSingle()
-      ]).then(function(results){
-        var orgRes=results[0],planRes=results[1];
+      var savedOrg=lsGet("hr_org_"+email,null)||{};
+      // Fetch plan from Supabase user_plans table
+      _sb.from("user_plans").select("plan,is_admin,expires_on").eq("email",email).maybeSingle()
+      .then(function(planRes){
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var admin=(planRes.data&&planRes.data.is_admin)||false;
-        var empLimit=(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null;
         var expiresOn=(planRes.data&&planRes.data.expires_on)||null;
         setIsAdmin(admin);
-        var sbOrg=orgRes.data;
-        if(sbOrg&&sbOrg.org_name){
-          var updatedOrg={name:sbOrg.org_name,email:email,position:sbOrg.position||"",type:sbOrg.org_type||"",plan:plan,expires_on:expiresOn,emp_limit:empLimit};
-          lsSet("hr_org_"+email,updatedOrg);
-          setOrg(updatedOrg);setScreen("app");
-          lsSet("hr_login_ts",Date.now());showT("Welcome back, "+gu.name.split("@")[0]+"!");
-        } else {
-          setScreen("setup");
-        }
+        var updatedOrg=Object.assign({},savedOrg,{plan:plan,expires_on:expiresOn});
+        lsSet("hr_org_"+email,updatedOrg);
+        if(updatedOrg.name){setOrg(updatedOrg);setScreen("app");showT("Welcome back!");}
+        else setScreen("setup");
         setAuthLoading(false);
       }).catch(function(){
-        var cachedOrg=lsGet("hr_org_"+email,null);
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");showT("Welcome back!");}
+        if(savedOrg.name){setOrg(savedOrg);setScreen("app");showT("Welcome back!");}
         else setScreen("setup");
         setAuthLoading(false);
       });
@@ -1176,44 +930,6 @@ export default function App(){
     h("div",{style:{width:"100%",maxWidth:380}},makeInIndiaBadge)
   );};
 
-  // ── Forgot password screen ──
-  var forgotScreen=authWrap(h("div",{key:"forgot",style:{textAlign:"center"}},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
-      logoSVG(52),
-      h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Reset Password"),
-      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:3}},"We'll send a reset link to your email")
-    ),
-    resetSent?h("div",null,
-      h("div",{style:{background:GRN+"18",border:"1px solid "+GRN+"44",borderRadius:12,padding:"16px",marginBottom:20,fontSize:13,color:GRN,fontWeight:600,lineHeight:1.6}},resetSent),
-      h("button",{onClick:function(){setResetSent("");setResetEmail("");setAuthMode("signin");},style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer"}},"Back to Sign In")
-    ):h("div",null,
-      h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"YOUR EMAIL"),
-      h("input",{type:"email",value:resetEmail,onChange:function(e){setResetEmail(e.target.value);},placeholder:"you@company.com",autoComplete:"email",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:16}}),
-      h("button",{onClick:handleResetPassword,style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:16}},"Send Reset Link"),
-      h("div",{style:{textAlign:"center",fontSize:12,color:T.AUTH_LABEL}},
-        h("span",{style:{color:T.AUTH_TEXT,cursor:"pointer",fontWeight:600},onClick:function(){setAuthMode("signin");}},"Back to Sign In")
-      )
-    )
-  ));
-
-  // ── Set new password screen (after clicking reset link) ──
-  var setPasswordScreen=authWrap(h("div",{key:"setpw",style:{textAlign:"center"}},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
-      logoSVG(52),
-      h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Set New Password"),
-      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:3}},"Choose a strong password")
-    ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600,textAlign:"left"}},"NEW PASSWORD"),
-    h("div",{style:{position:"relative",marginBottom:10}},
-      h("input",{type:showNewPw?"text":"password",value:newPwd,onChange:function(e){setNewPwd(e.target.value);setNewPwdErr("");},placeholder:"Min. 6 characters",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 44px 13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit"}}),
-      h("button",{onClick:function(){setShowNewPw(function(v){return !v;});},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:11,padding:2}},showNewPw?"Hide":"Show")
-    ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600,textAlign:"left"}},"CONFIRM PASSWORD"),
-    h("input",{type:showNewPw?"text":"password",value:newPwd2,onChange:function(e){setNewPwd2(e.target.value);setNewPwdErr("");},placeholder:"Re-enter password",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(newPwdErr&&newPwd!==newPwd2?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:10}}),
-    newPwdErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},newPwdErr):null,
-    h("button",{onClick:handleSetNewPassword,style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer",marginTop:6}},"Update Password")
-  ));
-
   var loginScreen=authWrap(h("div",{key:"login"},
     h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:32}},
       logoSVG(64),
@@ -1233,11 +949,7 @@ export default function App(){
     ),
     h("div",{style:{textAlign:"center",marginTop:18,fontSize:12,color:T.AUTH_LABEL}},
       "Forgot password? ",
-      h("span",{style:{color:T.AUTH_TEXT,cursor:"pointer",fontWeight:600},onClick:function(){setAuthMode("forgot");setResetEmail(authEmail.trim());setResetSent("");}},
-        "Reset Password"
-      ),
-      h("span",{style:{color:T.AUTH_LABEL,margin:"0 6px"}},"|"),
-      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need help with my Admin HR account. Email: "+authEmail.trim()),"_blank");}},
+      h("span",{style:{color:T.AUTH_TEXT,cursor:"pointer",fontWeight:600},onClick:function(){showT("Contact support to reset your password");}},
         "Contact Support"
       )
     ),
@@ -1309,19 +1021,9 @@ export default function App(){
       if(!setupCompany.trim())return showT("Enter company name","err");
       if(!setupOrgType)return showT("Select organisation type","err");
       if(!setupPosition)return showT("Select your position","err");
-      var email=gUser?gUser.email:"";
-      var newOrg={name:setupCompany.trim(),email:email,position:setupPosition,type:setupOrgType,plan:"free"};
-      // Save to Supabase first so it works across devices
-      _sb.from("user_orgs").upsert({
-        email:email,
-        org_name:setupCompany.trim(),
-        org_type:setupOrgType,
-        position:setupPosition
-      },{onConflict:"email"}).then(function(res){
-        if(res.error)console.error("Org save error:",res.error.message);
-      });
+      var newOrg={name:setupCompany.trim(),email:gUser?gUser.email:"",position:setupPosition,type:setupOrgType,plan:"free"};
       setOrg(newOrg);
-      lsSet("hr_org_"+email,newOrg);
+      lsSet("hr_org_"+(gUser?gUser.email:"demo"),newOrg);
       setScreen("app");
       showT("Welcome to Admin HR!");
     },style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer"}},"Get Started")
@@ -1346,16 +1048,14 @@ export default function App(){
     )
   ));
 
-  var sASearch=st(""),adminSearch=sASearch[0],setAdminSearch=sASearch[1];
-  var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
-  var sExpInput=st(""),expInput=sExpInput[0],setExpInput=sExpInput[1];
-  var sDTick=st(0),setDTick=sDTick[1];
-  se(function(){
-    var t=setInterval(function(){setDTick(function(v){return v+1;});},1000);
-    return function(){clearInterval(t);};
-  },[]);
-
   function renderDashboard(){
+    // Live countdown ticker for expiry
+    var sDTick=st(0),setDTick=sDTick[1];
+    se(function(){
+      if(!org.expires_on)return;
+      var t=setInterval(function(){setDTick(function(v){return v+1;});},1000);
+      return function(){clearInterval(t);};
+    },[org.expires_on]);
 
     function expiryCountdown(){
       if(!org.expires_on||!isPaid)return null;
@@ -1377,10 +1077,9 @@ export default function App(){
         ),
         isExp
           ?h("div",{style:{fontSize:12,fontWeight:800,color:RED}},"EXPIRED")
-          :h("div",{style:{fontFamily:"monospace",fontSize:14,fontWeight:800,color:color,letterSpacing:1}},
-            String(dd).padStart(2,"0")+":"+String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0")
-          ),
-          h("div",{style:{fontSize:8,color:color,textAlign:"right",letterSpacing:.5,marginTop:1}},dd>0?"DD:HH:MM:SS":"HH:MM:SS")
+          :h("div",{style:{fontFamily:"monospace",fontSize:13,fontWeight:800,color:color,letterSpacing:.5}},
+            String(dd).padStart(2,"0")+"d "+String(hh).padStart(2,"0")+"h "+String(mm).padStart(2,"0")+"m "+String(ss).padStart(2,"0")+"s"
+          )
       );
     }
 
@@ -1739,35 +1438,18 @@ export default function App(){
   }
 
   function renderEditEmp(){
-    if(!editE)return null;
-    function edInp(key,type,ph){
-      return h("input",{type:type||"text",defaultValue:editE[key]||"",onChange:function(e){setEditE(function(prev){return Object.assign({},prev,Object.fromEntries([[key,e.target.value]]));});},placeholder:ph||"",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}});
-    }
     return h("div",{className:"fd"},
       h("button",{onClick:function(){setEditE(null);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"5px 10px",color:NVY,fontSize:11,fontWeight:600,cursor:"pointer",marginBottom:10}},"Cancel"),
-      h("div",{style:{fontSize:14,fontWeight:800,color:NVY,marginBottom:13}},"Edit — "+editE.name),
+      h("div",{style:{fontSize:14,fontWeight:800,color:NVY,marginBottom:13}},"Edit - "+editE.name),
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Personal"),
-        lbl("FULL NAME"),edInp("name","text","Full name"),
-        lbl("MOBILE"),edInp("mob","tel","Mobile number"),
-        lbl("EMAIL"),edInp("email","email","Email address"),
-        lbl("EMPLOYEE ID"),edInp("eid","text","e.g. EMP006"),
-        lbl("ROLE / DESIGNATION"),
-        h("select",{defaultValue:editE.role||"",onChange:function(e){setEditE(function(p){return Object.assign({},p,{role:e.target.value});});},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
-          h("option",{value:""},"Select role"),
-          getRoles(org.type).map(function(r){return h("option",{key:r,value:r},r);})
-        ),
-        lbl("DEPARTMENT"),
-        h("select",{defaultValue:editE.dept||"",onChange:function(e){setEDept(e.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
-          h("option",{value:""},"Select department"),
-          getDepts(org.type).map(function(d){return h("option",{key:d,value:d},d);})
-        )
+        [["FULL NAME",edn],["MOBILE",edm,"tel"],["EMAIL",edem,"email"],["EMPLOYEE ID",edei],["ROLE",edro]].map(function(f){return h("div",{key:f[0]},lbl(f[0]),inpEl(f[1],"",f[2]||"text"));})
       )),
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Salary"),
-        lbl("MONTHLY CTC (Rs.)"),edInp("monthlyCTC","number","e.g. 50000"),
+        lbl("MONTHLY CTC (Rs.)"),inpEl(edctc,"e.g. 50000","number"),
         h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Auto-split: 50% Basic, 20% HRA, 30% Allow"),
-        lbl("HEALTH INS. (Rs./mo)"),edInp("hi","number","e.g. 500")
+        lbl("HEALTH INS. (Rs./mo)"),inpEl(edhi,"","number")
       )),
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Tax"),
@@ -1851,7 +1533,7 @@ export default function App(){
         h("button",{onClick:function(){setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[todayDate+"_"+e.id]="present";});return o;});showT("All marked Present");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:GRN+"14",border:"1px solid "+GRN+"55",borderRadius:10,padding:"9px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("check_circle",GRN,15),"Mark All Present"),
         h("button",{onClick:function(){markHolidayAll(todayDate);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"14",border:"1px solid "+AMB+"55",borderRadius:10,padding:"9px",color:AMB,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.sun,AMB,15),"Mark All Holiday")
       ),
-      isPaid?dlBtn("Download Attendance PDF",function(){makeAttPDF(null,attY,attM,function(){var allRecs={};emps.forEach(function(e){Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+e.id)&&kv[0].startsWith(attY+"-"+String(attM+1).padStart(2,"0"));}).forEach(function(kv){allRecs[kv[0].split("_")[0]+"_"+e.name]=kv[1];});});return allRecs;}(),org.name,org.email,org.position,LOGO_SRC);}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance PDF — Paid Plan"),
+      isPaid?dlPair("Attendance Report",function(){makeAttPDF(null,attY,attM,function(){var allRecs={};emps.forEach(function(e){Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+e.id)&&kv[0].startsWith(attY+"-"+String(attM+1).padStart(2,"0"));}).forEach(function(kv){allRecs[kv[0].split("_")[0]+"_"+e.name]=kv[1];});});return allRecs;}(),org.name,org.email,org.position,LOGO_SRC);},function(){makeAttCSV(att,emps);}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Attendance PDF — Paid Plan Only"),
       card(h("div",null,
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
         actEmps.map(function(e,i){
@@ -2056,25 +1738,19 @@ export default function App(){
           ),
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderTop:"1px solid "+BDR}},
             h("div",{style:{fontSize:11,color:GRY}},"Signed in"),
-            h("button",{onClick:function(){
-              syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
-              setTimeout(function(){
-                _sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);setScreen("login");
-              },1200);
-              showT("Syncing & signing out...");
-            },style:{background:T.PILL_DANGER_BG,border:"1px solid "+RED+"44",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},"Sign Out")
+            h("button",{onClick:function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);setScreen("login");setProf(false);},style:{background:T.PILL_DANGER_BG,border:"1px solid "+RED+"44",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},"Sign Out")
           )
         )),
         isFree?card(h("div",null,
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Upgrade to Paid Plan"),
-          h("div",{style:{fontSize:11,color:GRY,marginBottom:16}},"Unlock PDF downloads, CSV exports and all reports"),
-          h("style",{dangerouslySetInnerHTML:{__html:"@keyframes goldShine{0%{background-position:200% center}100%{background-position:-200% center}}@keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes glitter{0%,100%{box-shadow:0 0 8px #FCD34D88,0 0 20px #FCD34D44}50%{box-shadow:0 0 18px #FCD34Dcc,0 0 40px #FCD34D66,0 0 60px #FF990033}}"}}),
-          h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:16,gap:8}},
-            h("div",{style:{background:"linear-gradient(120deg,#3D2900,#FCD34D,#FF9900,#FFF0A0,#FCD34D,#B8860B,#3D2900)",backgroundSize:"400% 100%",animation:"goldShine 1.8s linear infinite",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",fontSize:26,fontWeight:900,letterSpacing:-.5,textAlign:"center",lineHeight:1.1}},"Go Premium"),
-            h("div",{style:{fontSize:11,color:GRY,textAlign:"center"}})
-          ),
-          h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade Admin HR to Paid Plan."),"_blank");},style:{width:"100%",background:"linear-gradient(120deg,#3D2900,#FCD34D,#FF9900,#FFF0A0,#FCD34D,#B8860B,#3D2900)",backgroundSize:"400% 100%",animation:"goldShine 1.8s linear infinite",border:"none",borderRadius:12,padding:"15px",color:"#0F172A",cursor:"pointer",fontSize:14,fontWeight:800,letterSpacing:.3,boxShadow:"0 4px 20px #FCD34D55",marginBottom:8}},"✦ Upgrade Now ✦"),
-          h("div",{style:{textAlign:"right",fontSize:9,color:GRY,paddingRight:2}},"Instant activation after payment")
+          h("div",{style:{fontSize:11,color:GRY,marginBottom:12}},"Unlock PDF downloads, CSV exports and all reports"),
+          h("div",{style:{position:"relative",overflow:"hidden",borderRadius:13,padding:2,background:"linear-gradient(120deg,#7C5C00,#FCD34D,#B8860B,#FCD34D,#7C5C00)",backgroundSize:"300% 100%",animation:"goldShine 3s linear infinite"}},
+            h("style",{dangerouslySetInnerHTML:{__html:"@keyframes goldShine{0%{background-position:200% center}100%{background-position:-200% center}}"}}),
+            h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade Admin HR to Paid Plan."),"_blank");},style:{width:"100%",background:"#0F172A",border:"none",borderRadius:11,padding:"14px",color:"#FCD34D",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3}},
+              h("div",{style:{display:"flex",alignItems:"center",gap:8,fontSize:15,fontWeight:800}},ic("workspace_premium","#FCD34D",18),"Upgrade Now \u2014 \u20B9999/month"),
+              h("div",{style:{fontSize:11,color:"rgba(252,211,77,.75)"}},"Contact us on WhatsApp to activate")
+            )
+          )
         )):card(h("div",null,
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}}),
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Active Subscription"),
@@ -2086,23 +1762,7 @@ export default function App(){
         )),
         
         card(h("div",null,
-          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-            h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Data Management"),
-            isSyncing
-              ?h("div",{style:{fontSize:10,color:TEL,fontWeight:600,display:"flex",alignItems:"center",gap:4}},ic("sync",TEL,12),"Syncing...")
-              :lastSync?h("div",{style:{fontSize:10,color:GRN,fontWeight:600,display:"flex",alignItems:"center",gap:4}},ic("cloud_done",GRN,12),"Synced "+new Date(lastSync).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})):
-              h("div",{style:{fontSize:10,color:GRY}},"Not synced yet")
-          ),
-          h("div",{style:{display:"flex",gap:8,marginBottom:12}},
-            h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);showT("Syncing to cloud...");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:TEL,border:"none",borderRadius:9,padding:"9px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},ic("cloud_upload","#fff",14),"Sync Now"),
-            h("button",{onClick:downloadBackup,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px",color:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic("download",NVY,14),"Backup JSON")
-          ),
-          h("label",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px",color:NVY,fontSize:11,fontWeight:700,cursor:"pointer",marginBottom:12}},
-            ic("upload",NVY,14),"Restore from JSON",
-            h("input",{type:"file",accept:".json",style:{display:"none"},onChange:function(e){if(e.target.files[0])uploadBackup(e.target.files[0]);}})
-          ),
-          h("div",{style:{fontSize:10,color:GRY,marginBottom:12,textAlign:"center"}},"Data auto-syncs to cloud on every change"),
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Download Reports"),
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Data Management"),
           h("div",{style:{fontSize:11,color:GRY,marginBottom:12}},"Export your data or reset the app."),
           h("div",{style:{display:"flex",flexDirection:"column",gap:7,marginBottom:12}},
             h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 13px"}},
@@ -2172,30 +1832,30 @@ export default function App(){
         ),
         h("div",{style:{fontSize:14,fontWeight:800,color:NVY,marginBottom:1}},step===1?"Personal":step===2?"Employment":step===3?"Identity":"Tax and Deductions"),
         h("div",{style:{fontSize:11,color:GRY,marginBottom:13}},"Step "+step+" of 4"),
-        step===1?h("div",null,lbl("FULL NAME *"),h("input",{value:fName,onChange:function(e){setFName(e.target.value);},placeholder:"e.g. Priya Sharma",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("DATE OF BIRTH"),h("input",{type:"date",value:fDob,onChange:function(e){setFDob(e.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("MOBILE"),h("input",{type:"tel",value:fMob,onChange:function(e){setFMob(e.target.value);},placeholder:"10-digit",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("EMAIL"),h("input",{type:"email",value:fEmail,onChange:function(e){setFEmail(e.target.value);},placeholder:"emp@company.com",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("JOINING DATE"),h("input",{type:"date",value:fJoin,onChange:function(e){setFJoin(e.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})):null,
+        step===1?h("div",null,lbl("FULL NAME *"),inpEl(n1,"e.g. Priya Sharma"),lbl("DATE OF BIRTH"),inpEl(n2,"","date"),lbl("MOBILE"),inpEl(n3,"10-digit","tel"),lbl("EMAIL"),inpEl(n4,"emp@company.com","email"),lbl("JOINING DATE"),inpEl(n5,"","date")):null,
         step===2?h("div",null,
-          lbl("EMPLOYEE ID"),h("input",{value:fEid,onChange:function(e){setFEid(e.target.value);},placeholder:"e.g. EMP006",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
+          lbl("EMPLOYEE ID"),inpEl(e1,"e.g. EMP006"),
           lbl("ROLE / DESIGNATION *"),
-          h("select",{value:fRole,onChange:function(e){setFRole(e.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
+          h("select",{ref:e2,defaultValue:"",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
             h("option",{value:""},"Select role"),
             getRoles(org.type).map(function(r){return h("option",{key:r,value:r},r);})
           ),
           lbl("DEPARTMENT"),
-          h("select",{value:dept,onChange:function(ev){setDept(ev.target.value);},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10}},
+          h("select",{value:dept,onChange:function(ev){setDept(ev.target.value);}},
             h("option",{value:""},"Select department"),
             getDepts(org.type).map(function(d2){return h("option",{key:d2},d2);})
           ),
-          lbl("MONTHLY CTC (Rs.) *"),h("input",{type:"number",value:fCtc,onChange:function(e){setFCtc(e.target.value);},placeholder:"e.g. 50000",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
+          lbl("MONTHLY CTC (Rs.) *"),inpEl(e3,"e.g. 50000","number"),
           h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Auto-split: 50% Basic, 20% HRA, 30% Allowance")
         ):null,
-        step===3?h("div",null,lbl("PAN"),h("input",{value:fPan,onChange:function(e){setFPan(e.target.value);},placeholder:"ABCDE1234F",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("UAN (PF Account)"),h("input",{value:fUan,onChange:function(e){setFUan(e.target.value);},placeholder:"Universal Account No.",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("AADHAR"),h("input",{value:fAadhar,onChange:function(e){setFAadhar(e.target.value);},placeholder:"XXXX-XXXX-XXXX",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})):null,
+        step===3?h("div",null,lbl("PAN"),inpEl(id2,"ABCDE1234F"),lbl("UAN (PF Account)"),inpEl(id3,"Universal Account No."),lbl("AADHAR"),inpEl(id1,"XXXX-XXXX-XXXX")):null,
         step===4?h("div",null,
           togEl("EPF / PF","12% emp + 12% employer",pf,setPf),
           pf?h("div",{style:{padding:"8px 0",borderBottom:"1px solid "+BDR}},lbl("PF Mode"),h("div",{style:{display:"flex",gap:7}},[["capped","Capped Rs.1800"],["actual","Actual Basic"]].map(function(item){return h("button",{key:item[0],onClick:function(){setPfMode(item[0]);},style:{flex:1,background:pfMode===item[0]?NVY:SFT,border:"1.5px solid "+(pfMode===item[0]?NVY:BDR),borderRadius:9,padding:"8px",color:pfMode===item[0]?"#fff":GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);}))):null,
           togEl("ESI","0.75% emp if gross up to Rs.21K",esi,setEsi),
           togEl("Professional Tax","Rs.200/mo if above Rs.15K",pt,setPt),
           togEl("TDS","FY 2025-26 new regime",tds,setTds),
-          h("div",{style:{marginTop:11}},lbl("HEALTH INSURANCE (Rs./mo)"),h("input",{type:"number",value:fHi,onChange:function(e){setFHi(e.target.value);},placeholder:"e.g. 500",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})),
+          h("div",{style:{marginTop:11}},lbl("HEALTH INSURANCE (Rs./mo)"),inpEl(hiR,"e.g. 500","number")),
           h("div",null,
             h("div",{style:{fontSize:11,color:GRY,marginBottom:6,fontWeight:600}},"CUSTOM DEDUCTIONS"),
             customs.map(function(c2,i){return h("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",background:SFT,borderRadius:7,padding:"5px 9px",marginBottom:5}},h("span",{style:{fontSize:12,color:NVY}},c2.name),h("div",{style:{display:"flex",gap:7,alignItems:"center"}},h("span",{style:{fontSize:12,fontWeight:600,color:RED}},fmt(c2.amt)),h("button",{onClick:function(){setCustoms(function(p){return p.filter(function(_,j){return j!==i;});});},style:{background:T.PILL_DANGER_BG,border:"none",borderRadius:5,padding:"2px 6px",color:RED,fontSize:10,cursor:"pointer"}},"X")));})  ,
@@ -2207,15 +1867,15 @@ export default function App(){
           )
         ):null,
         h("div",{style:{display:"flex",gap:8,marginTop:14}},
-          h("button",{onClick:function(){if(step>1)setStep(function(s){return s-1;});else{setAddOpen(false);setStep(1);setFName("");setFDob("");setFMob("");setFEmail("");setFJoin("");setFEid("");setFRole("");setFCtc("");setFAadhar("");setFPan("");setFUan("");setFHi("");setDept("");}},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:11,color:GRY,fontSize:12,cursor:"pointer"}},step===1?"Cancel":"Back"),
-          h("button",{onClick:function(){if(step===1&&!fName.trim())return showT("Name required","err");if(step===2&&!fCtc)return showT("CTC required","err");if(step<4)setStep(function(s){return s+1;});else saveEmp();},style:{flex:2,background:NVY,border:"none",borderRadius:10,padding:11,color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},step===4?"Save Employee":"Next")
+          h("button",{onClick:function(){if(step>1)setStep(function(s){return s-1;});else{setAddOpen(false);setStep(1);}},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:11,color:GRY,fontSize:12,cursor:"pointer"}},step===1?"Cancel":"Back"),
+          h("button",{onClick:function(){if(step===1&&!n1.current)return showT("Name required","err");if(step===2&&!e3.current)return showT("CTC required","err");if(step<4)setStep(function(s){return s+1;});else saveEmp();},style:{flex:2,background:NVY,border:"none",borderRadius:10,padding:11,color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},step===4?"Save Employee":"Next")
         )
       )
     );
   }
 
   var appContent;
-  if(screen==="login")appContent=isPasswordReset?setPasswordScreen:(authMode==="signup"?signupScreen:(authMode==="confirm"?confirmScreen:(authMode==="forgot"?forgotScreen:loginScreen)));
+  if(screen==="login")appContent=authMode==="signup"?signupScreen:authMode==="confirm"?confirmScreen:loginScreen;
   else if(screen==="setup")appContent=setupScreen;
   else{
     var tabContent;
@@ -2226,7 +1886,7 @@ export default function App(){
     else tabContent=renderSettings();
 
     appContent=h("div",null,
-      h("div",{style:{background:CARD,padding:"14px 16px 12px",borderBottom:"1px solid "+BDR,position:"sticky",top:0,zIndex:50}},
+      h("div",{style:{background:CARD,padding:"44px 18px 14px",borderBottom:"1px solid "+BDR,position:"sticky",top:0,zIndex:50}},
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
           h("div",{style:{display:"flex",alignItems:"center",gap:11}},
             h("div",{onClick:function(){
@@ -2242,22 +1902,13 @@ export default function App(){
           ),
           h("div",{style:{display:"flex",alignItems:"center",gap:8,position:"relative"}},
             h("button",{onClick:function(){var nx=themeMode==="light"?"dark":"light";setThemeMode(nx);showT(nx==="light"?"Light mode":"Dark mode");},style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s"},title:"Toggle theme"},ic(themeMode==="light"?"dark_mode":"light_mode",NVY,19)),
-            h("div",{style:{position:"relative",flexShrink:0}},
-              h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:38,height:38,borderRadius:11,background:NVY,border:isPaid?"2.5px solid #FCD34D":"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",padding:0,boxShadow:isPaid?"0 0 8px #FCD34D88":"none"}},
-                gUser&&gUser.photo?h("img",{src:gUser.photo,width:38,height:38,style:{borderRadius:9,display:"block"}}):ic(ICONS.user,CARD,19)
-              ),
-              isPaid?h("div",{style:{position:"absolute",bottom:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"linear-gradient(135deg,#FCD34D,#FF9900)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid "+CARD,zIndex:2}},
-                h("svg",{width:9,height:9,viewBox:"0 0 24 24",fill:"#0F172A"},
-                  h("path",{d:"M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"})
-                )
-              ):null
-            ),
+            h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:38,height:38,borderRadius:11,background:NVY,border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",padding:0}},gUser&&gUser.photo?h("img",{src:gUser.photo,width:38,height:38,style:{borderRadius:11,display:"block"}}):ic(ICONS.user,CARD,19)),
             prof?h("div",{style:{position:"absolute",top:42,right:0,background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:6,minWidth:185,boxShadow:T.SHADOW_LG,zIndex:200}},
               h("div",{style:{padding:"7px 11px",borderBottom:"1px solid "+BDR,marginBottom:3}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:org.position),h("div",{style:{fontSize:11,color:GRY}},org.name),h("div",{style:{fontSize:10,color:GRY}},gUser?gUser.email:"")),
               [["Settings",function(){setTab("settings");setSettTab("profile");setProf(false);}]].map(function(item){return h("button",{key:item[0],onClick:item[1],style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:NVY,cursor:"pointer"}},item[0]);}),
               isAdmin?h("button",{onClick:function(){setShowAdmin(true);setProf(false);loadAdminUsers();},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
               h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
-                h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);setTimeout(function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);setScreen("login");setProf(false);},1200);showT("Syncing & signing out...");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
+                h("button",{onClick:function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);setScreen("login");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
               )
             ):null
           )
@@ -2317,6 +1968,9 @@ export default function App(){
   }
 
   function renderAdminPanel(){
+    var sSearch=st(""),adminSearch=sSearch[0],setAdminSearch=sSearch[1];
+    var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
+    var sExpInput=st(""),expInput=sExpInput[0],setExpInput=sExpInput[1];
 
     function countdown(expiresOn){
       if(!expiresOn)return null;
@@ -2334,6 +1988,13 @@ export default function App(){
         String(dd).padStart(2,"0")+"d "+String(hh).padStart(2,"0")+"h "+String(mm).padStart(2,"0")+"m "+String(ss).padStart(2,"0")+"s"
       );
     }
+
+    // Live countdown tick
+    var sTick=st(0),setTick=sTick[1];
+    se(function(){
+      var t=setInterval(function(){setTick(function(v){return v+1;});},1000);
+      return function(){clearInterval(t);};
+    },[]);
 
     var filtered=adminUsers.filter(function(u){
       if(!adminSearch)return true;
@@ -2376,8 +2037,7 @@ export default function App(){
               h("div",{style:{display:"flex",gap:6,marginBottom:6,flexWrap:"wrap"}},
                 h("div",{style:{fontSize:9,color:confirmed?GRN:AMB,background:(confirmed?GRN:AMB)+"18",borderRadius:4,padding:"1px 6px"}},confirmed?"✓ Verified":"⚠ Unverified"),
                 h("div",{style:{fontSize:9,color:GRY}},"Joined: "+joined),
-                h("div",{style:{fontSize:9,color:GRY}},"Last: "+lastLogin),
-                h("div",{style:{fontSize:9,color:TEL,background:TEL+"15",borderRadius:4,padding:"1px 6px"}},"Emp: "+(u.emp_limit||(u.plan==="paid"?"Unlimited":"5")))
+                h("div",{style:{fontSize:9,color:GRY}},"Last: "+lastLogin)
               ),
               // Expiry countdown
               u.plan==="paid"?h("div",{style:{background:CARD,borderRadius:8,padding:"7px 10px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}},
@@ -2387,25 +2047,24 @@ export default function App(){
                     ?h("div",{style:{fontSize:10,color:GRY}},new Date(u.expires_on).toLocaleDateString("en-IN"))
                     :h("div",{style:{fontSize:10,color:GRY}},"No expiry set")
                 ),
-                u.expires_on?(function(){var now=new Date(),end=new Date(u.expires_on);end.setHours(23,59,59,999);var diff=end-now;var isExp=diff<=0;var dd2=Math.max(0,Math.floor(diff/86400000));var hh2=Math.max(0,Math.floor((diff%86400000)/3600000));var mm2=Math.max(0,Math.floor((diff%3600000)/60000));var ss2=Math.max(0,Math.floor((diff%60000)/1000));var col2=isExp?RED:dd2<=3?RED:dd2<=7?AMB:GRN;return h("div",{style:{textAlign:"right"}},h("div",{style:{fontFamily:"monospace",fontSize:12,fontWeight:800,color:col2,letterSpacing:1}},isExp?"EXPIRED":String(dd2).padStart(2,"0")+":"+String(hh2).padStart(2,"0")+":"+String(mm2).padStart(2,"0")+":"+String(ss2).padStart(2,"0")),h("div",{style:{fontSize:8,color:col2,letterSpacing:.5}},"DD:HH:MM:SS"));}()):h("div",{style:{fontSize:10,color:GRN,fontWeight:700}},"Lifetime")
+                u.expires_on?countdown(u.expires_on):h("div",{style:{fontSize:10,color:GRN,fontWeight:700}},"Lifetime")
               ):null,
               // Set expiry input
               isEditingExp?h("div",{style:{display:"flex",gap:6,marginBottom:8}},
                 h("input",{type:"date",value:expInput,onChange:function(e){setExpInput(e.target.value);},style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"6px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
                 h("button",{onClick:function(){
                   if(!expInput)return showT("Select a date","err");
-                  setUserPlan(u.email,"paid",{expires_on:expInput,activated_on:u.activated_on||new Date().toISOString().split("T")[0]});
-                  setEditExpEmail(null);setExpInput("");
+                  _sb.from("user_plans").upsert({email:u.email,plan:"paid",expires_on:expInput,activated_on:u.activated_on||new Date().toISOString().split("T")[0]},{onConflict:"email"})
+                  .then(function(){loadAdminUsers();setEditExpEmail(null);setExpInput("");showT("Expiry set for "+u.email.split("@")[0]);});
                 },style:{background:GRN,border:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save"),
                 h("button",{onClick:function(){setEditExpEmail(null);setExpInput("");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"6px 10px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
               ):null,
               // Action buttons
               h("div",{style:{display:"flex",gap:6}},
                 u.plan!=="paid"
-                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid",{activated_on:new Date().toISOString().split("T")[0]});},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
-                  :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Free"),
-                h("button",{onClick:function(){setEditExpEmail(isEditingExp?null:u.email);setExpInput(u.expires_on||"");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},isEditingExp?"Cancel Exp":"Set Expiry"),
-                h("button",{onClick:function(){var lim=window.prompt("Employee limit for "+u.email.split("@")[0]+"\n(enter number, blank = unlimited):",u.emp_limit||"");if(lim===null)return;var limNum=lim.trim()?parseInt(lim)||999:null;setUserPlan(u.email,u.plan,{emp_limit:limNum});showT("Limit: "+(limNum?"max "+limNum:"unlimited"));},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Emp Limit")
+                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid");},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
+                  :h("button",{onClick:function(){if(!isOwner){setUserPlan(u.email,"free");}else showT("Cannot remove paid from Owner","err");},style:{flex:1,background:isOwner?GRY+"88":GRY,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:isOwner?"not-allowed":"pointer"}},"Set Free"),
+                h("button",{onClick:function(){setEditExpEmail(isEditingExp?null:u.email);setExpInput(u.expires_on||"");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},isEditingExp?"Cancel Exp":"Set Expiry")
               )
             );
           })
