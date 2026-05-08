@@ -832,12 +832,33 @@ export default function App(){
         var user=session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        // Always fetch fresh from Supabase for cross-device sync
-        _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle()
-        .then(function(r){
-          if(r.data&&r.data.org_name){
-            var o={name:r.data.org_name,email:user.email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};
-            lsSet("hr_org_"+user.email,o);setOrg(o);setScreen("app");
+        // Fetch all data before showing app - no blank flash
+        Promise.all([
+          _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
+          _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
+          _sb.from("user_data").select("*").eq("email",user.email).maybeSingle()
+        ]).then(function(results){
+          var orgRes=results[0],planRes=results[1],dataRes=results[2];
+          if(orgRes.data&&orgRes.data.org_name){
+            var plan=(planRes.data&&planRes.data.plan)||"free";
+            var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",
+              plan:plan,emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
+              expires_on:(planRes.data&&planRes.data.expires_on)||null};
+            lsSet("hr_org_"+user.email,o);setOrg(o);
+            setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
+            if(dataRes.data){
+              try{
+                setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
+                setAtt(JSON.parse(dataRes.data.att_json||"{}"));
+                setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
+                setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
+                setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
+                setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
+                setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+                lsSet("hr_last_sync",dataRes.data.updated_at);
+              }catch(e){}
+            }
+            setScreen("app");
           } else setScreen("setup");
         }).catch(function(){
           var c=lsGet("hr_org_"+user.email,null);
@@ -1157,12 +1178,13 @@ export default function App(){
       var gu={name:email.split("@")[0],email:email,photo:""};
       setGUser(gu);lsSet("hr_guser",gu);
       var loginT=new Date().toISOString();lsSet("hr_login_time",loginT);setLoginTime(loginT);
-      // Fetch org AND plan from Supabase simultaneously - works across devices
+      // Fetch org, plan AND hr data all at once before showing app
       Promise.all([
         _sb.from("user_orgs").select("*").eq("email",email).maybeSingle(),
-        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",email).maybeSingle()
+        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",email).maybeSingle(),
+        _sb.from("user_data").select("*").eq("email",email).maybeSingle()
       ]).then(function(results){
-        var orgRes=results[0],planRes=results[1];
+        var orgRes=results[0],planRes=results[1],dataRes=results[2];
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var admin=(planRes.data&&planRes.data.is_admin)||false;
         var empLimit=(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null;
@@ -1172,8 +1194,22 @@ export default function App(){
         if(sbOrg&&sbOrg.org_name){
           var updatedOrg={name:sbOrg.org_name,email:email,position:sbOrg.position||"",type:sbOrg.org_type||"",plan:plan,expires_on:expiresOn,emp_limit:empLimit};
           lsSet("hr_org_"+email,updatedOrg);
-          setOrg(updatedOrg);setScreen("app");
-          lsSet("hr_login_ts",Date.now());showT("Welcome back, "+gu.name.split("@")[0]+"!");
+          setOrg(updatedOrg);
+          // Load HR data BEFORE showing app screen
+          if(dataRes.data){
+            try{
+              setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
+              setAtt(JSON.parse(dataRes.data.att_json||"{}"));
+              setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
+              setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
+              setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
+              setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
+              setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+              lsSet("hr_last_sync",dataRes.data.updated_at);
+            }catch(e){}
+          }
+          setScreen("app");
+          showT("Welcome back, "+gu.name.split("@")[0]+"!");
         } else {
           setScreen("setup");
         }
@@ -2270,7 +2306,13 @@ export default function App(){
   }
 
   var appContent;
-  if(screen==="login")appContent=isPasswordReset?setPasswordScreen:(authMode==="signup"?signupScreen:(authMode==="confirm"?confirmScreen:(authMode==="forgot"?forgotScreen:loginScreen)));
+  if(screen==="login")appContent=authLoading?h("div",{style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}},
+    logoSVG(48),
+    h("div",{style:{display:"flex",gap:6}},
+      [0,1,2].map(function(i){return h("div",{key:i,style:{width:6,height:6,borderRadius:"50%",background:NVY,opacity:.3,animation:"dot 1.2s "+(i*0.2)+"s infinite"}});})
+    ),
+    h("div",{style:{fontSize:12,color:T.AUTH_LABEL}})
+  ):(isPasswordReset?setPasswordScreen:(authMode==="signup"?signupScreen:(authMode==="confirm"?confirmScreen:(authMode==="forgot"?forgotScreen:loginScreen))));
   else if(screen==="setup")appContent=setupScreen;
   else{
     var tabContent;
