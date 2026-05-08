@@ -560,7 +560,7 @@ export default function App(){
   var initTheme="light";try{var saved=localStorage.getItem("hr_theme");if(saved==="dark"||saved==="light")initTheme=saved;}catch(e){}
   var sTh=st(initTheme),themeMode=sTh[0],setThemeMode=sTh[1];
   applyTheme(themeMode);  // Sync module-level colors to current theme on every render
-  var CSS_LIVE=buildCSS(); // Rebuild CSS string for current theme
+  var CSS_SPIN="@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}"; var CSS_LIVE=buildCSS(); // Rebuild CSS string for current theme
 
   var sS=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?"app":"login";}),screen=sS[0],setScreen=sS[1];
   var sUPD=st(false),showUpdate=sUPD[0],setShowUpdate=sUPD[1];
@@ -593,18 +593,40 @@ export default function App(){
       _sb.auth.getUser().then(function(res){
         if(!res.data||!res.data.user)return;
         var email=res.data.user.email;
-        _sb.from("user_plans").select("plan,emp_limit,expires_on").eq("email",email).maybeSingle()
-        .then(function(planRes){
+        // Refresh plan AND data from Supabase on focus
+        Promise.all([
+          _sb.from("user_plans").select("plan,emp_limit,expires_on").eq("email",email).maybeSingle(),
+          _sb.from("user_data").select("*").eq("email",email).maybeSingle()
+        ]).then(function(results){
+          var planRes=results[0],dataRes=results[1];
           if(planRes.data){
             setOrg(function(o){
               var updated=Object.assign({},o,{
                 plan:planRes.data.plan||"free",
-                emp_limit:(planRes.data.emp_limit!==undefined&&planRes.data.emp_limit!==null)?planRes.data.emp_limit:null,
+                emp_limit:(planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
                 expires_on:planRes.data.expires_on||null
               });
               lsSet("hr_org_"+email,updated);
               return updated;
             });
+          }
+          // Also refresh HR data from Supabase
+          if(dataRes.data){
+            try{
+              var sbUpdated=new Date(dataRes.data.updated_at).getTime();
+              var lsUpdated=lsGet("hr_last_sync",null)?new Date(lsGet("hr_last_sync",null)).getTime():0;
+              // Only override if Supabase has newer data
+              if(sbUpdated>lsUpdated){
+                setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
+                setAtt(JSON.parse(dataRes.data.att_json||"{}"));
+                setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
+                setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
+                setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
+                setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
+                setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+                lsSet("hr_last_sync",dataRes.data.updated_at);
+              }
+            }catch(e){}
           }
         });
       });
@@ -728,6 +750,7 @@ export default function App(){
       if(!lt)return;
       var elapsed=(Date.now()-new Date(lt).getTime())/1000/60/60;
       if(elapsed>=6){
+        setAuthPwd("");setAuthPwd2("");
         _sb.auth.signOut();
         setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);
         setScreen("login");setLoginTime(null);
@@ -766,12 +789,40 @@ export default function App(){
         var user=res.data.session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        var cachedOrg=lsGet("hr_org_"+user.email,null);
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
-        else if(screen==="login"){
-          _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle()
-          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:user.email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+user.email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
-          .catch(function(){setScreen("setup");});
+        if(screen==="login"){
+          // Always fetch from Supabase - never trust localStorage for multi-device
+          Promise.all([
+            _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
+            _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
+            _sb.from("user_data").select("*").eq("email",user.email).maybeSingle()
+          ]).then(function(results){
+            var orgRes=results[0],planRes=results[1],dataRes=results[2];
+            if(orgRes.data&&orgRes.data.org_name){
+              var plan=(planRes.data&&planRes.data.plan)||"free";
+              var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
+                emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
+                expires_on:(planRes.data&&planRes.data.expires_on)||null};
+              lsSet("hr_org_"+user.email,o);setOrg(o);
+              if(dataRes.data){
+                try{
+                  setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
+                  setAtt(JSON.parse(dataRes.data.att_json||"{}"));
+                  setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
+                  setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
+                  setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
+                  setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
+                  setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+                }catch(e){}
+              }
+              setScreen("app");
+            } else {
+              setScreen("setup");
+            }
+          }).catch(function(){
+            var cached=lsGet("hr_org_"+user.email,null);
+            if(cached&&cached.name){setOrg(cached);setScreen("app");}
+            else setScreen("setup");
+          });
         }
       }
     });
@@ -781,11 +832,17 @@ export default function App(){
         var user=session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        var cachedOrg=lsGet("hr_org_"+user.email,null);
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
-        else{_sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle()
-          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:user.email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+user.email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
-          .catch(function(){setScreen("setup");});}
+        // Always fetch fresh from Supabase for cross-device sync
+        _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle()
+        .then(function(r){
+          if(r.data&&r.data.org_name){
+            var o={name:r.data.org_name,email:user.email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};
+            lsSet("hr_org_"+user.email,o);setOrg(o);setScreen("app");
+          } else setScreen("setup");
+        }).catch(function(){
+          var c=lsGet("hr_org_"+user.email,null);
+          if(c&&c.name){setOrg(c);setScreen("app");}else setScreen("setup");
+        });
       }
     });
     return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
@@ -810,13 +867,7 @@ export default function App(){
       var email=session.user.email;
       var gu={name:email.split("@")[0],email:email,photo:""};
       setGUser(gu);
-      var cachedOrg=lsGet("hr_org_"+email,null);
-      if(screen==="login"){
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
-        else{_sb.from("user_orgs").select("*").eq("email",email).maybeSingle()
-          .then(function(r){if(r.data&&r.data.org_name){var o={name:r.data.org_name,email:email,position:r.data.position||"",type:r.data.org_type||"",plan:"free"};lsSet("hr_org_"+email,o);setOrg(o);setScreen("app");}else setScreen("setup");})
-          .catch(function(){setScreen("setup");});}
-      }
+      // Already handled by Promise.all above - skip duplicate check
     });
     // Listen for auth state changes (logout from another tab, token expiry, user deleted)
     var sub=_sb.auth.onAuthStateChange(function(event,session){
@@ -830,12 +881,15 @@ export default function App(){
   },[]);
   se(function(){
     lsSet("hr_emps",emps);
+    lsSet("hr_att",att);
+    lsSet("hr_inc",incentives);
+    lsSet("hr_shifts",shifts);
+    lsSet("hr_reminders",reminders);
+    lsSet("hr_notices",notices);
+    lsSet("hr_revisions",revisions);
     if(gUser&&gUser.email&&screen==="app"){
-      // Debounce sync - wait 2s after last change
-      var t=setTimeout(function(){
-        syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
-      },2000);
-      return function(){clearTimeout(t);};
+      // Sync immediately - no debounce so sign out never loses data
+      syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
     }
   },[emps,att,incentives,shifts,reminders,notices,revisions]);
 
@@ -2058,10 +2112,11 @@ export default function App(){
             h("div",{style:{fontSize:11,color:GRY}},"Signed in"),
             h("button",{onClick:function(){
               syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
+              setAuthPwd("");setAuthPwd2("");
               setTimeout(function(){
                 _sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);setScreen("login");
-              },1200);
-              showT("Syncing & signing out...");
+              },800);
+              showT("Signing out...");
             },style:{background:T.PILL_DANGER_BG,border:"1px solid "+RED+"44",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},"Sign Out")
           )
         )),
@@ -2241,6 +2296,12 @@ export default function App(){
             )
           ),
           h("div",{style:{display:"flex",alignItems:"center",gap:8,position:"relative"}},
+            h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);showT("Saving to cloud...");},title:"Save to cloud",style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}},
+              isSyncing
+                ?h("div",{style:{width:16,height:16,border:"2px solid "+BDR,borderTop:"2px solid "+TEL,borderRadius:"50%",animation:"spin .8s linear infinite"}}):
+                ic("cloud_sync",lastSync?GRN:GRY,18),
+              lastSync?h("div",{style:{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",background:GRN,border:"1px solid "+CARD}}):null
+            ),
             h("button",{onClick:function(){var nx=themeMode==="light"?"dark":"light";setThemeMode(nx);showT(nx==="light"?"Light mode":"Dark mode");},style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s"},title:"Toggle theme"},ic(themeMode==="light"?"dark_mode":"light_mode",NVY,19)),
             h("div",{style:{position:"relative",flexShrink:0}},
               h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:38,height:38,borderRadius:11,background:NVY,border:isPaid?"2.5px solid #FCD34D":"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",padding:0,boxShadow:isPaid?"0 0 8px #FCD34D88":"none"}},
@@ -2257,7 +2318,7 @@ export default function App(){
               [["Settings",function(){setTab("settings");setSettTab("profile");setProf(false);}]].map(function(item){return h("button",{key:item[0],onClick:item[1],style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:NVY,cursor:"pointer"}},item[0]);}),
               isAdmin?h("button",{onClick:function(){setShowAdmin(true);setProf(false);loadAdminUsers();},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
               h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
-                h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);setTimeout(function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);setScreen("login");setProf(false);},1200);showT("Syncing & signing out...");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
+                h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);setAuthPwd("");setAuthPwd2("");setTimeout(function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);setScreen("login");setProf(false);},800);showT("Signing out...");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
               )
             ):null
           )
@@ -2415,7 +2476,7 @@ export default function App(){
   }
 
   return h("div",{style:{fontFamily:"Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",background:PAGE,minHeight:"100vh",display:"flex",justifyContent:"center",transition:"background .25s"}},
-    h("style",{dangerouslySetInnerHTML:{__html:CSS_LIVE}}),
+    h("style",{dangerouslySetInnerHTML:{__html:CSS_SPIN+CSS_LIVE}}),
     h("div",{style:{width:"100%",maxWidth:430,minHeight:"100vh",position:"relative",display:"flex",flexDirection:"column"}},
       showUpdate?h("div",{style:{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,zIndex:9999,background:"#0F172A",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,boxShadow:"0 2px 12px rgba(0,0,0,.3)"}},
         h("div",{style:{fontSize:12,color:"#fff",fontWeight:600}},"\u2728 New update available!"),
