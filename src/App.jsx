@@ -383,89 +383,134 @@ function makeAttPDF(name,y,m,recs,orgName,orgEmail,orgPos,logoSrc){
 }
 function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc){
   loadJsPDFGlobal(function(JsPDF){
-    var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
-    var W=297,H=210,mg=14,cw=W-mg*2,rh=9;
+    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,H=297,mg=14,cw=W-mg*2,rh=10;
     var nd=new Date();
     var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"ATTENDANCE SUMMARY",MOS[m]+" "+y+" | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear());
-    var cols=["EMPLOYEE NAME","DEPT","PRESENT","ABSENT","HALF DAY","PAID LV","UNPAID","HOLIDAY","DEDUCTION"];
-    var cws=[55,38,22,22,22,20,20,22,30];
+    var daysInMonth=new Date(y,m+1,0).getDate();
+    doc.setFillColor(244,247,252);doc.roundedRect(mg,ry,cw,10,2,2,"F");
+    doc.setDrawColor(210,220,235);doc.roundedRect(mg,ry,cw,10,2,2,"S");
+    doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(80,95,115);
+    doc.text("Working days in month: "+daysInMonth,mg+4,ry+6.5);
+    doc.text("Active employees: "+emps.filter(function(e){return e.status==="active";}).length,W-mg-4,ry+6.5,{align:"right"});
+    ry+=14;
+    var cols=["EMPLOYEE","P","A","H","PL","U","HOL","DED"];
+    var cws=[62,14,14,14,14,14,14,32];
     var cx=[mg];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
-    doc.setFillColor(30,42,60);doc.rect(mg,ry,cw,rh,"F");
-    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
-    cols.forEach(function(col,i){
-      if(i<2)doc.text(col,cx[i]+3,ry+6);
-      else doc.text(col,cx[i]+cws[i]/2,ry+6,{align:"center"});
-    });
+    doc.setFillColor(30,42,60);doc.roundedRect(mg,ry,cw,rh,2,2,"F");
+    doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    doc.text(cols[0],cx[0]+3,ry+6.8);
+    var colColors=[[255,255,255],[74,222,128],[252,100,100],[252,180,70],[180,140,255],[130,120,240],[100,210,250],[255,200,100]];
+    for(var ci=1;ci<cols.length;ci++){
+      doc.setTextColor(colColors[ci][0],colColors[ci][1],colColors[ci][2]);
+      doc.text(cols[ci],cx[ci]+cws[ci]/2,ry+6.8,{align:"center"});
+    }
     ry+=rh;
     var prefix=y+"-"+String(m+1).padStart(2,"0");
+    var totP=0,totA=0,totH=0,totPL=0,totU=0,totHol=0,totDed=0;
     emps.filter(function(e){return e.status==="active";}).forEach(function(emp,ei){
       var cnts={present:0,absent:0,half:0,paid:0,unpaid:0,holiday:0};
       Object.entries(att).forEach(function(kv){
         if(kv[0].endsWith("_"+emp.id)&&kv[0].startsWith(prefix)&&cnts[kv[1]]!==undefined)cnts[kv[1]]++;
       });
       var d=calcPay(emp,cnts.absent,cnts.half,cnts.unpaid);
-      if(ei%2===0){doc.setFillColor(247,249,252);doc.rect(mg,ry,cw,rh,"F");}
-      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-      doc.text((emp.name||"").substring(0,20),cx[0]+3,ry+6);
-      doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
-      doc.text((emp.dept||"").substring(0,14),cx[1]+3,ry+6);
-      function cCell(val,ci,col){
-        doc.setTextColor(col[0],col[1],col[2]);doc.setFont("helvetica","bold");
-        doc.text(String(val),cx[ci]+cws[ci]/2,ry+6,{align:"center"});
-      }
-      cCell(cnts.present,2,[5,140,90]);
-      cCell(cnts.absent,3,[210,40,40]);
-      cCell(cnts.half,4,[200,110,0]);
-      cCell(cnts.paid,5,[120,50,230]);
-      cCell(cnts.unpaid,6,[70,60,220]);
-      cCell(cnts.holiday,7,[10,160,225]);
       var ded=d.ad+d.hd+d.ud;
+      totP+=cnts.present;totA+=cnts.absent;totH+=cnts.half;totPL+=cnts.paid;totU+=cnts.unpaid;totHol+=cnts.holiday;totDed+=ded;
+      if(ei%2===0){doc.setFillColor(248,250,253);doc.rect(mg,ry,cw,rh,"F");}
+      doc.setDrawColor(226,232,240);doc.line(mg,ry+rh,mg+cw,ry+rh);
+      doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text((emp.name||"").substring(0,24),cx[0]+3,ry+6.8);
+      doc.setFont("helvetica","normal");
+      function cc(val,ci2,col){doc.setTextColor(col[0],col[1],col[2]);doc.setFont("helvetica","bold");doc.text(String(val),cx[ci2]+cws[ci2]/2,ry+6.8,{align:"center"});}
+      cc(cnts.present,1,[5,140,90]);
+      cc(cnts.absent,2,[210,40,40]);
+      cc(cnts.half,3,[200,110,0]);
+      cc(cnts.paid,4,[120,50,230]);
+      cc(cnts.unpaid,5,[70,60,220]);
+      cc(cnts.holiday,6,[10,160,225]);
       doc.setTextColor(ded>0?210:5,ded>0?40:140,ded>0?40:90);
       doc.setFont("helvetica","bold");
-      doc.text(ded>0?"-"+fmtIN(ded):"Nil",cx[8]+cws[8]-3,ry+6,{align:"right"});
+      doc.text(ded>0?"-"+fmtIN(ded):"Nil",cx[7]+cws[7]-3,ry+6.8,{align:"right"});
       ry+=rh;
-      if(ry>H-16){doc.addPage();ry=14;}
+      if(ry>H-24){
+        doc.addPage();
+        ry=16;
+        doc.setFillColor(30,42,60);doc.rect(mg,ry,cw,rh,"F");
+        doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+        doc.text(cols[0],cx[0]+3,ry+6.8);
+        for(var k=1;k<cols.length;k++){doc.setTextColor(colColors[k][0],colColors[k][1],colColors[k][2]);doc.text(cols[k],cx[k]+cws[k]/2,ry+6.8,{align:"center"});}
+        ry+=rh;
+      }
     });
+    ry+=4;
+    doc.setFillColor(15,23,42);doc.roundedRect(mg,ry,cw,rh+2,2,2,"F");
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    doc.text("TOTALS",cx[0]+3,ry+7.5);
+    function ccT(val,ci2,col){doc.setTextColor(col[0],col[1],col[2]);doc.text(String(val),cx[ci2]+cws[ci2]/2,ry+7.5,{align:"center"});}
+    ccT(totP,1,[74,222,128]);ccT(totA,2,[252,100,100]);ccT(totH,3,[252,180,70]);
+    ccT(totPL,4,[180,140,255]);ccT(totU,5,[130,120,240]);ccT(totHol,6,[100,210,250]);
+    doc.setTextColor(totDed>0?252:74,totDed>0?100:222,totDed>0?100:128);
+    doc.text(totDed>0?"-"+fmtIN(totDed):"Nil",cx[7]+cws[7]-3,ry+7.5,{align:"right"});
     pdfFooter(doc,W,mg,H,orgName,orgEmail);
     downloadPDF(doc.output("blob"),"Attendance-Summary-"+MOS[m]+"-"+y+".pdf");
   },function(){alert("PDF library failed to load.");});
 }
-function makeEmpPDF(emps,orgName,orgEmail,orgPos,logoSrc){
+
+function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc){
   loadJsPDFGlobal(function(JsPDF){
-    var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
-    var W=297,H=210,mg=14,cw=W-mg*2,rh=9;
+    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,H=297,mg=14,cw=W-mg*2,rh=10;
     var nd=new Date();
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"EMPLOYEE RECORDS",emps.length+" Employees | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear());
-    var cols=["EMPLOYEE NAME","EMP ID","ROLE / DESIGNATION","DEPARTMENT","MOBILE","MONTHLY CTC","STATUS"];
-    var cws=[50,22,45,32,28,30,22];
-    var cx=[mg];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
-    doc.setFillColor(30,42,60);doc.rect(mg,ry,cw,rh,"F");
-    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
-    cols.forEach(function(col,i){doc.text(col,cx[i]+3,ry+6);});
-    ry+=rh;
-    emps.forEach(function(emp,ei){
-      if(ei%2===0){doc.setFillColor(247,249,252);doc.rect(mg,ry,cw,rh,"F");}
-      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-      doc.text((emp.name||"").substring(0,20),cx[0]+3,ry+6);
-      doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
-      doc.text(emp.eid||"",cx[1]+3,ry+6);
-      doc.text((emp.role||"").substring(0,22),cx[2]+3,ry+6);
-      doc.text((emp.dept||"").substring(0,16),cx[3]+3,ry+6);
-      doc.text(emp.mob||"",cx[4]+3,ry+6);
-      doc.setTextColor(5,140,90);doc.setFont("helvetica","bold");
-      doc.text(fmtIN(emp.monthlyCTC),cx[5]+cws[5]-3,ry+6,{align:"right"});
-      var sc=emp.status==="active"?[5,140,90]:[200,40,40];
-      doc.setFillColor(sc[0],sc[1],sc[2]);
-      doc.setGState(new doc.GState({opacity:0.12}));
-      doc.roundedRect(cx[6]+1,ry+1.5,cws[6]-2,rh-3,1.5,1.5,"F");
-      doc.setGState(new doc.GState({opacity:1}));
-      doc.setTextColor(sc[0],sc[1],sc[2]);
-      doc.text(emp.status==="active"?"Active":"Offboarded",cx[6]+cws[6]/2,ry+6,{align:"center"});
-      ry+=rh;
-      if(ry>H-16){doc.addPage();ry=14;}
-    });
+    var curMonth=nd.getFullYear()===y?nd.getMonth():11;
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"ATTENDANCE SUMMARY",y+" (Annual) | Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear());
+    var activeEmps=emps.filter(function(e){return e.status==="active";});
+    for(var m=0;m<=curMonth;m++){
+      var prefix=y+"-"+String(m+1).padStart(2,"0");
+      if(m>0){
+        if(ry>H-60){doc.addPage();ry=16;}
+        else ry+=8;
+      }
+      doc.setFillColor(15,23,42);doc.roundedRect(mg,ry,cw,8,2,2,"F");
+      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+      doc.text(MOS[m]+" "+y,mg+4,ry+5.5);
+      doc.setFontSize(7.5);doc.setTextColor(180,195,215);
+      doc.text("P = Present  A = Absent  H = Half  PL = Paid Leave  U = Unpaid  HOL = Holiday",W-mg-4,ry+5.5,{align:"right"});
+      ry+=8;
+      var cols=["EMPLOYEE","P","A","H","PL","U","HOL","DEDUCTION"];
+      var cws=[60,14,14,14,14,14,14,36];
+      var cx=[mg];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
+      doc.setFillColor(40,55,75);doc.rect(mg,ry,cw,8,"F");
+      doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(220,230,245);
+      doc.text(cols[0],cx[0]+3,ry+5.5);
+      for(var ci=1;ci<cols.length;ci++){
+        doc.setTextColor(200,220,245);
+        doc.text(cols[ci],cx[ci]+cws[ci]/2,ry+5.5,{align:"center"});
+      }
+      ry+=8;
+      activeEmps.forEach(function(emp,ei){
+        var cnts={present:0,absent:0,half:0,paid:0,unpaid:0,holiday:0};
+        Object.entries(att).forEach(function(kv){
+          if(kv[0].endsWith("_"+emp.id)&&kv[0].startsWith(prefix)&&cnts[kv[1]]!==undefined)cnts[kv[1]]++;
+        });
+        var d=calcPay(emp,cnts.absent,cnts.half,cnts.unpaid);
+        var ded=d.ad+d.hd+d.ud;
+        if(ei%2===0){doc.setFillColor(248,250,253);doc.rect(mg,ry,cw,rh,"F");}
+        doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+        doc.text((emp.name||"").substring(0,22),cx[0]+3,ry+6.5);
+        doc.setFont("helvetica","normal");
+        function cell(val,ci2,col){doc.setTextColor(col[0],col[1],col[2]);doc.setFont("helvetica","bold");doc.text(String(val),cx[ci2]+cws[ci2]/2,ry+6.5,{align:"center"});}
+        cell(cnts.present,1,[5,140,90]);cell(cnts.absent,2,[210,40,40]);
+        cell(cnts.half,3,[200,110,0]);cell(cnts.paid,4,[120,50,230]);
+        cell(cnts.unpaid,5,[70,60,220]);cell(cnts.holiday,6,[10,160,225]);
+        doc.setTextColor(ded>0?210:5,ded>0?40:140,ded>0?40:90);
+        doc.setFont("helvetica","bold");
+        doc.text(ded>0?"-"+fmtIN(ded):"Nil",cx[7]+cws[7]-3,ry+6.5,{align:"right"});
+        ry+=rh;
+        if(ry>H-24){doc.addPage();ry=16;}
+      });
+    }
     pdfFooter(doc,W,mg,H,orgName,orgEmail);
-    downloadPDF(doc.output("blob"),"Employees-"+nd.getFullYear()+".pdf");
+    downloadPDF(doc.output("blob"),"Attendance-Annual-"+y+".pdf");
   },function(){alert("PDF library failed to load.");});
 }
 
@@ -673,6 +718,10 @@ export default function App(){
   var sPY=st(curY),payY=sPY[0],setPayY=sPY[1];
   var sAM=st(curM),attM=sAM[0],setAttM=sAM[1];
   var sAY=st(curY),attY=sAY[0],setAttY=sAY[1];
+  var sShowAttDl=st(false),showAttDl=sShowAttDl[0],setShowAttDl=sShowAttDl[1];
+  var sAttDlM=st(curM),attDlM=sAttDlM[0],setAttDlM=sAttDlM[1];
+  var sAttDlY=st(curY),attDlY=sAttDlY[0],setAttDlY=sAttDlY[1];
+  var sAttDlAll=st(false),attDlAll=sAttDlAll[0],setAttDlAll=sAttDlAll[1];
   var sAO=st(false),addOpen=sAO[0],setAddOpen=sAO[1];
   var sST=st(1),step=sST[0],setStep=sST[1];
   var sRV=st("emp"),repV=sRV[0],setRepV=sRV[1];
@@ -1971,7 +2020,7 @@ export default function App(){
         h("button",{onClick:function(){setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[todayDate+"_"+e.id]="present";});return o;});showT("All marked Present");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:GRN+"14",border:"1px solid "+GRN+"55",borderRadius:10,padding:"9px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("check_circle",GRN,15),"Mark All Present"),
         h("button",{onClick:function(){markHolidayAll(todayDate);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"14",border:"1px solid "+AMB+"55",borderRadius:10,padding:"9px",color:AMB,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.sun,AMB,15),"Mark All Holiday")
       ),
-      isPaid?dlBtn("Download Attendance PDF",function(){makeAttPDF(null,attY,attM,function(){var allRecs={};emps.forEach(function(e){Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+e.id)&&kv[0].startsWith(attY+"-"+String(attM+1).padStart(2,"0"));}).forEach(function(kv){allRecs[kv[0].split("_")[0]+"_"+e.name]=kv[1];});});return allRecs;}(),org.name,org.email,org.position,LOGO_SRC);}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance PDF — Paid Plan"),
+      isPaid?dlBtn("Download Attendance Report",function(){makeAttSummaryPDF(actEmps,att,attM,attY,org.name,org.email,org.position,LOGO_SRC);}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance Report — Paid Plan"),
       card(h("div",null,
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
         actEmps.map(function(e,i){
@@ -2242,7 +2291,7 @@ export default function App(){
                 h("div",null,h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},"Attendance Records"),h("div",{style:{fontSize:10,color:GRY,fontWeight:400,marginTop:1}},"All months"))
               ),
               h("div",{style:{display:"flex",gap:6}},
-                h("button",{onClick:isPaid?function(){makeAttSummaryPDF(emps,att,curM,curY,org.name,org.email,org.position,LOGO_SRC);}:needPaid,style:{flex:1,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"7px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},ic(isPaid?ICONS.dl:"lock",CARD,13),"PDF"),
+                h("button",{onClick:isPaid?function(){setAttDlM(curM);setAttDlY(curY);setAttDlAll(false);setShowAttDl(true);}:needPaid,style:{flex:1,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"7px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},ic(isPaid?ICONS.dl:"lock",CARD,13),"PDF"),
                 h("button",{onClick:isPaid?function(){makeAttCSV(att,emps);}:needPaid,style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},ic(isPaid?"table_view":"lock",isPaid?NVY:GRY,13),"CSV")
               )
             ),
@@ -2547,6 +2596,44 @@ export default function App(){
     );
   }
 
+  function renderAttDlPicker(){
+    if(!showAttDl)return null;
+    return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowAttDl(false);}},
+      h("div",{style:{width:"100%",maxWidth:430,background:CARD,borderRadius:"20px 20px 0 0",padding:"20px 18px 32px"}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Download Attendance Report"),
+          h("button",{onClick:function(){setShowAttDl(false);},style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:GRY}},"x")
+        ),
+        h("div",{style:{display:"flex",gap:8,marginBottom:16}},
+          h("button",{onClick:function(){setAttDlAll(false);},style:{flex:1,background:!attDlAll?NVY:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",color:!attDlAll?CARD:GRY,fontSize:12,fontWeight:700,cursor:"pointer"}},"By Month"),
+          h("button",{onClick:function(){setAttDlAll(true);},style:{flex:1,background:attDlAll?NVY:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",color:attDlAll?CARD:GRY,fontSize:12,fontWeight:700,cursor:"pointer"}},"Entire Year")
+        ),
+        h("div",{style:{display:"flex",gap:8,marginBottom:20}},
+          !attDlAll?h("select",{value:attDlM,onChange:function(e){setAttDlM(Number(e.target.value));},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none"}},
+            MOS.map(function(mo,i){return h("option",{key:i,value:i},mo);})
+          ):null,
+          h("select",{value:attDlY,onChange:function(e){setAttDlY(Number(e.target.value));},style:{flex:attDlAll?1:0,minWidth:90,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none"}},
+            pastYears().map(function(y){return h("option",{key:y,value:y},y);})
+          )
+        ),
+        h("div",{style:{fontSize:11,color:GRY,marginBottom:16,textAlign:"center"}},
+          attDlAll
+            ?"Downloading all 12 months of "+attDlY+" as one PDF"
+            :"Downloading "+MOS[attDlM]+" "+attDlY+" attendance summary"
+        ),
+        h("button",{onClick:function(){
+          setShowAttDl(false);
+          if(attDlAll){
+            makeAttSummaryYearPDF(actEmps,att,attDlY,org.name,org.email,org.position,LOGO_SRC);
+          } else {
+            makeAttSummaryPDF(actEmps,att,attDlM,attDlY,org.name,org.email,org.position,LOGO_SRC);
+          }
+        },style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic(ICONS.dl,CARD,18),"Download PDF")
+      )
+    );
+  }
+
   return h("div",{style:{fontFamily:"Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",background:PAGE,minHeight:"100vh",display:"flex",justifyContent:"center",transition:"background .25s"}},
     h("style",{dangerouslySetInnerHTML:{__html:CSS_SPIN+CSS_LIVE}}),
     h("div",{style:{width:"100%",maxWidth:430,minHeight:"100vh",position:"relative",display:"flex",flexDirection:"column"}},
@@ -2555,6 +2642,7 @@ export default function App(){
         h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
       ):null,
       showAdmin?renderAdminPanel():null,
+      renderAttDlPicker(),
       appContent
     )
   );
