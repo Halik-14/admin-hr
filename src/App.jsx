@@ -518,6 +518,45 @@ function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc){
   },function(){alert("PDF library failed to load.");});
 }
 
+function makeEmpPDF(emps,orgName,orgEmail,orgPos,logoSrc){
+  loadJsPDFGlobal(function(JsPDF){
+    var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    var W=297,H=210,mg=14,cw=W-mg*2,rh=9;
+    var nd=new Date();
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"EMPLOYEE RECORDS",emps.length+" Employees | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear());
+    var cols=["EMPLOYEE NAME","EMP ID","ROLE / DESIGNATION","DEPARTMENT","MOBILE","MONTHLY CTC","STATUS"];
+    var cws=[50,22,45,32,28,30,22];
+    var cx=[mg];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
+    doc.setFillColor(30,42,60);doc.rect(mg,ry,cw,rh,"F");
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    cols.forEach(function(col,i){doc.text(col,cx[i]+3,ry+6);});
+    ry+=rh;
+    emps.forEach(function(emp,ei){
+      if(ei%2===0){doc.setFillColor(247,249,252);doc.rect(mg,ry,cw,rh,"F");}
+      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text((emp.name||"").substring(0,20),cx[0]+3,ry+6);
+      doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
+      doc.text(emp.eid||"",cx[1]+3,ry+6);
+      doc.text((emp.role||"").substring(0,22),cx[2]+3,ry+6);
+      doc.text((emp.dept||"").substring(0,16),cx[3]+3,ry+6);
+      doc.text(emp.mob||"",cx[4]+3,ry+6);
+      doc.setTextColor(5,140,90);doc.setFont("helvetica","bold");
+      doc.text(fmtIN(emp.monthlyCTC),cx[5]+cws[5]-3,ry+6,{align:"right"});
+      var sc=emp.status==="active"?[5,140,90]:[200,40,40];
+      doc.setFillColor(sc[0],sc[1],sc[2]);
+      doc.setGState(new doc.GState({opacity:0.12}));
+      doc.roundedRect(cx[6]+1,ry+1.5,cws[6]-2,rh-3,1.5,1.5,"F");
+      doc.setGState(new doc.GState({opacity:1}));
+      doc.setTextColor(sc[0],sc[1],sc[2]);
+      doc.text(emp.status==="active"?"Active":"Offboarded",cx[6]+cws[6]/2,ry+6,{align:"center"});
+      ry+=rh;
+      if(ry>H-16){doc.addPage();ry=14;}
+    });
+    pdfFooter(doc,W,mg,H,orgName,orgEmail);
+    downloadPDF(doc.output("blob"),"Employees-"+nd.getFullYear()+".pdf");
+  },function(){alert("PDF library failed to load. Check internet connection.");});
+}
+
 function makePayrollCSV(emps,m,y,mAttFn,incFn){
   var header=["Name","Dept","Gross","Absent Ded","Half Ded","Unpaid Ded","PF Emp","ESI Emp","Prof Tax","TDS","Health Ins","Custom","Net Pay","Er PF","Er ESI","Total CTC"];
   var rows=emps.map(function(emp){
@@ -770,7 +809,7 @@ export default function App(){
   var sEPT=st(true),ePt=sEPT[0],setEPt=sEPT[1];
   var sETD=st(true),eTds=sETD[0],setETds=sETD[1];
   var sGU=st(function(){return lsGet("hr_guser",null);}),gUser=sGU[0],setGUser=sGU[1];
-  var sAEM=st(""),authEmail=sAEM[0],setAuthEmail=sAEM[1];
+  var sAEM=st(lsGet("hr_last_email","")),authEmail=sAEM[0],setAuthEmail=sAEM[1];
   var sAPW=st(""),authPwd=sAPW[0],setAuthPwd=sAPW[1];
   var sAPW2=st(""),authPwd2=sAPW2[0],setAuthPwd2=sAPW2[1];
   var sAMD=st("signin"),authMode=sAMD[0],setAuthMode=sAMD[1];
@@ -830,25 +869,7 @@ export default function App(){
     });
   },[]);
 
-  // ── 6-hour session expiry ──
-  se(function(){
-    function checkSession(){
-      var lt=lsGet("hr_login_time",null);
-      if(!lt)return;
-      var elapsed=(Date.now()-new Date(lt).getTime())/1000/60/60;
-      if(elapsed>=6){
-        setAuthPwd("");setAuthPwd2("");
-        _sb.auth.signOut();
-        setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);
-        setScreen("login");setLoginTime(null);
-        showT("Session expired. Please sign in again.","err");
-      }
-    }
-    checkSession();
-    var interval=setInterval(checkSession,60000); // check every minute
-    window.addEventListener("focus",checkSession);
-    return function(){clearInterval(interval);window.removeEventListener("focus",checkSession);};
-  },[]);
+  // Supabase handles session refresh automatically - no manual timer needed
   var SESSION_HRS=6;
   se(function(){
     if(screen!=="app")return;
@@ -1264,6 +1285,7 @@ export default function App(){
       var email=res.data.user.email;
       var gu={name:email.split("@")[0],email:email,photo:""};
       setGUser(gu);lsSet("hr_guser",gu);
+      lsSet("hr_last_email",email);
       var loginT=new Date().toISOString();lsSet("hr_login_time",loginT);setLoginTime(loginT);
       // Fetch org, plan AND hr data all at once before showing app
       Promise.all([
@@ -2635,10 +2657,10 @@ export default function App(){
         ),
         h("div",{style:{fontSize:11,color:GRY,marginBottom:10,fontWeight:600,letterSpacing:.5}},"SELECT MONTH"),
         h("div",{style:{display:"flex",gap:8,marginBottom:20}},
-          h("select",{value:payDlM,onChange:function(e){setPayDlM(Number(e.target.value));},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none"}},
+          h("select",{value:payDlM,onChange:function(e){setPayDlM(Number(e.target.value));},style:{flex:2,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
             MOS.map(function(mo,i){return h("option",{key:i,value:i},mo);})
           ),
-          h("select",{value:payDlY,onChange:function(e){setPayDlY(Number(e.target.value));},style:{minWidth:90,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none"}},
+          h("select",{value:payDlY,onChange:function(e){setPayDlY(Number(e.target.value));},style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
             pastYears().map(function(y){return h("option",{key:y,value:y},y);})
           )
         ),
@@ -2667,10 +2689,10 @@ export default function App(){
           h("button",{onClick:function(){setAttDlAll(true);},style:{flex:1,background:attDlAll?NVY:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",color:attDlAll?CARD:GRY,fontSize:12,fontWeight:700,cursor:"pointer"}},"Entire Year")
         ),
         h("div",{style:{display:"flex",gap:8,marginBottom:20}},
-          !attDlAll?h("select",{value:attDlM,onChange:function(e){setAttDlM(Number(e.target.value));},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none"}},
+          !attDlAll?h("select",{value:attDlM,onChange:function(e){setAttDlM(Number(e.target.value));},style:{flex:2,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
             MOS.map(function(mo,i){return h("option",{key:i,value:i},mo);})
           ):null,
-          h("select",{value:attDlY,onChange:function(e){setAttDlY(Number(e.target.value));},style:{flex:attDlAll?1:0,minWidth:90,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none"}},
+          h("select",{value:attDlY,onChange:function(e){setAttDlY(Number(e.target.value));},style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
             pastYears().map(function(y){return h("option",{key:y,value:y},y);})
           )
         ),
