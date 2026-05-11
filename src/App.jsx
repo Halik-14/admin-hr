@@ -1402,13 +1402,10 @@ export default function App(){
     ),
     h("div",{style:{textAlign:"center",marginTop:18,fontSize:12,color:T.AUTH_LABEL}},
       "Forgot password? ",
-      h("span",{style:{color:T.AUTH_TEXT,cursor:"pointer",fontWeight:600},onClick:function(){setAuthMode("forgot");setResetEmail(authEmail.trim());setResetSent("");}},
-        "Reset Password"
-      ),
-      h("span",{style:{color:T.AUTH_LABEL,margin:"0 6px"}},"|"),
-      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need help with my Admin HR account. Email: "+authEmail.trim()),"_blank");}},
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I forgot my Admin HR password. My email: "+(authEmail.trim()||"(not entered)")),"_blank");}},
         "Contact Support"
-      )
+      ),
+      h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:5}},"Mon–Fri, 10 AM – 6 PM")
     ),
     h("div",{style:{borderTop:"1px solid "+T.AUTH_INPUT_BDR,marginTop:20,paddingTop:18,textAlign:"center"}},
       h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginBottom:10}},"Don't have an account?"),
@@ -1553,11 +1550,13 @@ export default function App(){
       );
     }
 
+    var presentCount=actEmps.filter(function(e){return getTAtt(e.id)==="present";}).length;
+    var absentCount=actEmps.filter(function(e){return getTAtt(e.id)==="absent";}).length;
     var statCards=[
-      {l:"Total Team",v:actEmps.length,ico:"group",c:NVY,s:trmEmps.length+" offboarded"},
-      {l:"Present Today",v:actEmps.filter(function(e){return getTAtt(e.id)==="present";}).length,ico:"check_circle",c:GRN,s:actEmps.filter(function(e){return getTAtt(e.id)==="absent";}).length+" absent"},
-      {l:"Gross Payroll",v:fmt(tGross),ico:"currency_rupee",c:AMB,s:MOS[curM]+" "+curY},
-      {l:"Net Payable",v:fmt(tNet),ico:"trending_up",c:TEL,s:"after deductions"},
+      {l:"Total Team",v:actEmps.length,ico:"group",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active"},
+      {l:"Present Today",v:presentCount,ico:"how_to_reg",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today"},
+      {l:"Gross Payroll",v:fmt(tGross),ico:"payments",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY},
+      {l:"Net Payable",v:fmt(tNet),ico:"account_balance_wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions"},
     ];
     var hr=now.getHours(),greet=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
     // Pre-compute reminder urgency
@@ -1581,30 +1580,31 @@ export default function App(){
           return h("div",{key:i,style:{
             background:CARD,
             border:"1px solid "+BDR,
-            borderRadius:14,
-            padding:"13px 13px 12px",
-            boxShadow:themeMode==="light"?"0 2px 12px rgba(15,23,42,.08)":"0 2px 12px rgba(0,0,0,.35)"
+            borderRadius:16,
+            padding:"14px 14px 13px",
+            boxShadow:themeMode==="light"?"0 2px 16px rgba(15,23,42,.07)":"0 2px 12px rgba(0,0,0,.35)",
+            position:"relative",overflow:"hidden"
           }},
+            h("div",{style:{position:"absolute",right:-10,top:-10,width:60,height:60,borderRadius:"50%",background:s.bg,opacity:.5}}),
             h("div",{style:{
-              width:38,height:38,borderRadius:11,
-              background:themeMode==="light"?"#F1F5F9":"#383737",
-              boxShadow:themeMode==="light"?"0 1px 4px rgba(15,23,42,.12)":"0 1px 4px rgba(0,0,0,.4)",
+              width:42,height:42,borderRadius:13,
+              background:s.bg,
               display:"flex",alignItems:"center",justifyContent:"center",
-              marginBottom:10
-            }},ic(s.ico,GRY,20)),
-            h("div",{style:{fontSize:String(s.v).length>8?13:20,fontWeight:800,color:NVY,letterSpacing:-.5,lineHeight:1.1}},s.v),
-            h("div",{style:{fontSize:11,fontWeight:600,color:NVY,marginTop:5,opacity:.8}},s.l),
-            h("div",{style:{fontSize:10,color:GRY,marginTop:2}},s.s)
+              marginBottom:11,flexShrink:0
+            }},ic(s.ico,s.ic,22)),
+            h("div",{style:{fontSize:String(s.v).length>8?14:22,fontWeight:900,color:NVY,letterSpacing:-.5,lineHeight:1.1,marginBottom:4}},s.v),
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,opacity:.85}},s.l),
+            h("div",{style:{fontSize:10,color:GRY,marginTop:3,fontWeight:500}},s.s)
           );
         })
       ),
-      h("button",{onClick:function(){setTab("attendance");},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:"13px 14px",display:"flex",alignItems:"center",gap:11,cursor:"pointer",marginBottom:12,boxShadow:T.SHADOW}},
-        h("div",{style:{width:38,height:38,borderRadius:10,background:SFT,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(ICONS.cal,NVY,20)),
+      h("button",{onClick:function(){setTab("attendance");},style:{width:"100%",background:NVY,border:"none",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 16px rgba(15,23,42,.25)"}},
+        h("div",{style:{width:44,height:44,borderRadius:13,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(ICONS.cal,"#fff",22)),
         h("div",{style:{flex:1,textAlign:"left"}},
-          h("div",{style:{fontSize:13,fontWeight:600,color:NVY}},"Mark Attendance"),
-          h("div",{style:{fontSize:11,color:GRY,marginTop:1}},actEmps.filter(function(e){return getTAtt(e.id)==="unmarked";}).length+" not yet marked")
+          h("div",{style:{fontSize:14,fontWeight:700,color:"#fff"}},"Mark Today's Attendance"),
+          h("div",{style:{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:2}},actEmps.filter(function(e){return getTAtt(e.id)==="unmarked";}).length+" employees not yet marked")
         ),
-        ic(ICONS.chev,GRY,18)
+        ic(ICONS.chev,"rgba(255,255,255,.7)",20)
       ),
       showRemSection?h("div",{style:{marginBottom:12}},
         bRemind.length>0?h("div",{style:{borderRadius:12,padding:12,marginBottom:8,border:"1.5px solid #FCD34D",animation:bdayUrgent?"blinkBorder 1.2s ease-in-out infinite":"none",background:T.PILL_WARN_SOFT}},
@@ -2225,6 +2225,11 @@ export default function App(){
           ),
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderTop:"1px solid "+BDR}},
             h("div",{style:{fontSize:11,color:GRY}},"Signed in"),
+            h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need support for Admin HR. My account: "+(gUser?gUser.email:"")),"_blank");},style:{background:TEL+"15",border:"1px solid "+TEL+"44",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:TEL,cursor:"pointer",display:"flex",alignItems:"center",gap:5}},ic(ICONS.wa,TEL,13),"Support")
+          ),
+          h("div",{style:{fontSize:9,color:GRY,marginTop:2,paddingLeft:1}},"Available Mon–Fri, 10 AM – 6 PM"),
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderTop:"1px solid "+BDR}},
+            h("div",{style:{fontSize:11,color:GRY}},"Signed out"),
             h("button",{onClick:function(){
               syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
               setAuthPwd("");setAuthPwd2("");
@@ -2438,6 +2443,7 @@ export default function App(){
               h("div",{style:{padding:"7px 11px",borderBottom:"1px solid "+BDR,marginBottom:3}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:org.position),h("div",{style:{fontSize:11,color:GRY}},org.name),h("div",{style:{fontSize:10,color:GRY}},gUser?gUser.email:"")),
               [["Settings",function(){setTab("settings");setSettTab("profile");setProf(false);}]].map(function(item){return h("button",{key:item[0],onClick:item[1],style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:NVY,cursor:"pointer"}},item[0]);}),
               isAdmin?h("button",{onClick:function(){setShowAdmin(true);setProf(false);loadAdminUsers();},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
+              h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need support for Admin HR. My account: "+(gUser?gUser.email:"")),"_blank");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:TEL,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},ic(ICONS.wa,TEL,14),"Contact Support"),
               h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
                 h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);setAuthPwd("");setAuthPwd2("");setTimeout(function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);setScreen("login");setProf(false);},800);showT("Signing out...");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
               )
