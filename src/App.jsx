@@ -557,6 +557,275 @@ function makeEmpPDF(emps,orgName,orgEmail,orgPos,logoSrc){
   },function(){alert("PDF library failed to load. Check internet connection.");});
 }
 
+// ── MINIMUM WAGE DATA (major Indian states, 2024-25) ──────────────────────
+var MIN_WAGE={
+  "Andhra Pradesh":{skilled:18000,semi:16000,unskilled:14000},
+  "Bihar":{skilled:12000,semi:10000,unskilled:9000},
+  "Delhi":{skilled:20903,semi:19279,unskilled:17494},
+  "Gujarat":{skilled:16000,semi:14000,unskilled:12000},
+  "Haryana":{skilled:18000,semi:16000,unskilled:14000},
+  "Karnataka":{skilled:17000,semi:15000,unskilled:13000},
+  "Kerala":{skilled:20000,semi:18000,unskilled:16000},
+  "Madhya Pradesh":{skilled:14000,semi:12000,unskilled:10000},
+  "Maharashtra":{skilled:19000,semi:17000,unskilled:15000},
+  "Punjab":{skilled:16000,semi:14000,unskilled:12000},
+  "Rajasthan":{skilled:14000,semi:12000,unskilled:10000},
+  "Tamil Nadu":{skilled:17000,semi:15000,unskilled:13000},
+  "Telangana":{skilled:18000,semi:16000,unskilled:14000},
+  "Uttar Pradesh":{skilled:13000,semi:11000,unskilled:9000},
+  "West Bengal":{skilled:14000,semi:12000,unskilled:10000}
+};
+
+// ── LEAVE ENTITLEMENT HELPERS ─────────────────────────────────────────────
+function getLeaveEntitlement(emp){return emp.leaveEntitlement||12;}
+function getLeaveUsed(emp,att,year){
+  var used=0;
+  Object.entries(att).forEach(function(kv){
+    if(kv[0].endsWith("_"+emp.id)&&kv[0].startsWith(year+"-")&&kv[1]==="paid")used++;
+  });
+  return used;
+}
+function getLeaveBalance(emp,att,year){
+  return Math.max(0,getLeaveEntitlement(emp)-getLeaveUsed(emp,att,year));
+}
+function getLeaveEncashment(emp,att,year){
+  var bal=getLeaveBalance(emp,att,year);
+  var daily=(emp.basic||0)/26;
+  return Math.round(bal*daily);
+}
+
+// ── MINIMUM WAGE CHECK ───────────────────────────────────────────────────
+function checkMinWage(salary,state,category){
+  var st=MIN_WAGE[state];if(!st)return null;
+  var min=st[category]||st.unskilled;
+  return {ok:salary>=min,min:min,state:state,category:category};
+}
+
+// ── PF/ESI SUMMARY PDF ───────────────────────────────────────────────────
+function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc){
+  loadJsPDFGlobal(function(JsPDF){
+    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,H=297,mg=14,cw=W-mg*2,rh=9;
+    var nd=new Date();
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"PF / ESI SUMMARY",MOS[m]+" "+y+" | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear());
+
+    // Info box
+    doc.setFillColor(240,244,255);doc.roundedRect(mg,ry,cw,14,2,2,"F");
+    doc.setDrawColor(180,195,235);doc.roundedRect(mg,ry,cw,14,2,2,"S");
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+    doc.text("Use these figures to file monthly PF on epfindia.gov.in and ESI on esic.in",mg+4,ry+5.5);
+    doc.setFont("helvetica","normal");doc.setTextColor(80,100,140);
+    doc.text("PF wage ceiling: Rs.15,000  |  ESI applicable if gross <= Rs.21,000  |  PF: 12%+12%  |  ESI: 0.75%+3.25%",mg+4,ry+11);
+    ry+=18;
+
+    // Table header
+    var cols=["EMPLOYEE","UAN","GROSS","PF WAGES","EMP PF","ER PF","EMP ESI","ER ESI","TOTAL"];
+    var cws=[38,24,18,20,16,16,16,16,18];
+    var cx=[mg];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
+    doc.setFillColor(30,42,60);doc.rect(mg,ry,cw,rh,"F");
+    doc.setFontSize(7);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    cols.forEach(function(col,i){doc.text(col,cx[i]+1.5,ry+5.8);});
+    ry+=rh;
+
+    var totGross=0,totPFW=0,totEmpPF=0,totErPF=0,totEmpESI=0,totErESI=0,totAll=0;
+    emps.filter(function(e){return e.status==="active"&&e.pf;}).forEach(function(emp,ei){
+      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
+      var pfWage=emp.pfMode==="actual"?d.eb:Math.min(d.eb,15000);
+      var total=d.pfE+d.pfR+(d.esiE||0)+(d.esiR||0);
+      totGross+=d.gr;totPFW+=pfWage;totEmpPF+=d.pfE;totErPF+=d.pfR;
+      totEmpESI+=d.esiE;totErESI+=d.esiR;totAll+=total;
+      if(ei%2===0){doc.setFillColor(248,250,253);doc.rect(mg,ry,cw,rh,"F");}
+      doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text((emp.name||"").substring(0,16),cx[0]+1.5,ry+5.8);
+      doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
+      doc.text(emp.uan||"-",cx[1]+1.5,ry+5.8);
+      doc.setTextColor(15,23,42);
+      doc.text(fmtIN(d.gr),cx[2]+cws[2]-1.5,ry+5.8,{align:"right"});
+      doc.text(fmtIN(pfWage),cx[3]+cws[3]-1.5,ry+5.8,{align:"right"});
+      doc.setTextColor(70,100,200);doc.text(fmtIN(d.pfE),cx[4]+cws[4]-1.5,ry+5.8,{align:"right"});
+      doc.text(fmtIN(d.pfR),cx[5]+cws[5]-1.5,ry+5.8,{align:"right"});
+      doc.setTextColor(5,140,90);doc.text(fmtIN(d.esiE),cx[6]+cws[6]-1.5,ry+5.8,{align:"right"});
+      doc.text(fmtIN(d.esiR),cx[7]+cws[7]-1.5,ry+5.8,{align:"right"});
+      doc.setTextColor(180,100,0);doc.setFont("helvetica","bold");
+      doc.text(fmtIN(total),cx[8]+cws[8]-1.5,ry+5.8,{align:"right"});
+      ry+=rh;
+      if(ry>H-28){doc.addPage();ry=14;}
+    });
+
+    // Totals
+    ry+=3;
+    doc.setFillColor(15,23,42);doc.roundedRect(mg,ry,cw,rh+2,2,2,"F");
+    doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    doc.text("TOTALS",cx[0]+1.5,ry+7);
+    doc.text(fmtIN(totGross),cx[2]+cws[2]-1.5,ry+7,{align:"right"});
+    doc.text(fmtIN(totPFW),cx[3]+cws[3]-1.5,ry+7,{align:"right"});
+    doc.setTextColor(180,210,255);
+    doc.text(fmtIN(totEmpPF),cx[4]+cws[4]-1.5,ry+7,{align:"right"});
+    doc.text(fmtIN(totErPF),cx[5]+cws[5]-1.5,ry+7,{align:"right"});
+    doc.setTextColor(150,240,200);
+    doc.text(fmtIN(totEmpESI),cx[6]+cws[6]-1.5,ry+7,{align:"right"});
+    doc.text(fmtIN(totErESI),cx[7]+cws[7]-1.5,ry+7,{align:"right"});
+    doc.setTextColor(255,220,120);
+    doc.text(fmtIN(totAll),cx[8]+cws[8]-1.5,ry+7,{align:"right"});
+    ry+=rh+8;
+
+    // Challan summary boxes
+    var bw=(cw-8)/3,bh=22;
+    function challanBox(x,y,w,label,emp,er,total,col){
+      doc.setFillColor(col[0],col[1],col[2]);
+      doc.setGState(new doc.GState({opacity:0.1}));
+      doc.roundedRect(x,y,w,bh,3,3,"F");
+      doc.setGState(new doc.GState({opacity:1}));
+      doc.setDrawColor(col[0],col[1],col[2]);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(x,y,w,bh,3,3,"S");
+      doc.setFontSize(8);doc.setFont("helvetica","bold");doc.setTextColor(col[0],col[1],col[2]);
+      doc.text(label,x+4,y+7);
+      doc.setFontSize(7);doc.setFont("helvetica","normal");doc.setTextColor(80,95,115);
+      doc.text("Employee: "+fmtIN(emp),x+4,y+13);
+      doc.text("Employer: "+fmtIN(er),x+4,y+18);
+      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(col[0],col[1],col[2]);
+      doc.text("Total: "+fmtIN(total),x+w-4,y+18,{align:"right"});
+    }
+    challanBox(mg,ry,bw,"MONTHLY PF CHALLAN",totEmpPF,totErPF,totEmpPF+totErPF,[70,100,200]);
+    challanBox(mg+bw+4,ry,bw,"MONTHLY ESI CHALLAN",totEmpESI,totErESI,totEmpESI+totErESI,[5,140,90]);
+    challanBox(mg+bw*2+8,ry,bw,"GRAND TOTAL",totEmpPF+totEmpESI,totErPF+totErESI,totAll,[180,100,0]);
+    pdfFooter(doc,W,mg,H,orgName,orgEmail);
+    downloadPDF(doc.output("blob"),"PF-ESI-Summary-"+MOS[m]+"-"+y+".pdf");
+  },function(){alert("PDF library failed to load.");});
+}
+
+// ── ECR FILE GENERATOR (EPFO ECR 2.0 format) ─────────────────────────────
+function generateECR(emps,m,y,mAttFn,incFn){
+  // ECR 2.0 format: UAN#MEMBER_NAME#GROSS_WAGES#EPF_WAGES#EPS_WAGES#EDLI_WAGES#EPF_CONTRI#EPS_CONTRI#EPF_EPS_DIFF_REMITTED#NCP_DAYS#REFUNDS
+  var lines=["#~#"];
+  emps.filter(function(e){return e.status==="active"&&e.pf&&e.uan;}).forEach(function(emp){
+    var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
+    var pfWage=emp.pfMode==="actual"?d.eb:Math.min(d.eb,15000);
+    var epsWage=Math.min(pfWage,15000);
+    var epfContri=d.pfE;
+    var epsContri=Math.round(epsWage*0.0833);
+    var epfEpsDiff=epfContri-epsContri;
+    var ncpDays=ma.absent+ma.unpaid;
+    lines.push([
+      emp.uan,
+      (emp.name||"").toUpperCase(),
+      Math.round(d.gr),
+      Math.round(pfWage),
+      Math.round(epsWage),
+      Math.round(pfWage), // EDLI wages same as EPF wages
+      Math.round(epfContri),
+      Math.round(epsContri),
+      Math.max(0,Math.round(epfEpsDiff)),
+      Math.round(ncpDays),
+      0 // refunds
+    ].join("#~#"));
+  });
+  lines.push("#~#");
+  var content=lines.join("\n");
+  var blob=new Blob([content],{type:"text/plain"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="ECR-"+MOS[m]+"-"+y+".txt";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+
+// ── SALARY REGISTER PDF (Statutory format) ────────────────────────────────
+function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc){
+  loadJsPDFGlobal(function(JsPDF){
+    var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    var W=297,H=210,mg=10,cw=W-mg*2,rh=8.5;
+    var nd=new Date();
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY REGISTER",MOS[m]+" "+y+" | Payment of Wages Act");
+    doc.setFillColor(240,244,255);doc.rect(mg,ry,cw,7,"F");
+    doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(60,80,140);
+    doc.text("Statutory salary register as per Payment of Wages Act, 1936 & Contract Labour Act. To be maintained for minimum 3 years.",mg+3,ry+4.8);
+    ry+=11;
+    var cols=["SL","NAME","DESIG","DEPT","DAYS W","DAYS P","OT HRS","BASIC","HRA","ALLOW","GROSS","PF","ESI","PT","TDS","OTHER","TOT DED","NET PAY","SIGN"];
+    var cws=[8,30,22,18,10,10,10,18,14,14,18,14,12,10,12,12,14,18,16];
+    var cx=[mg];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
+    // Double header row
+    doc.setFillColor(30,42,60);doc.rect(mg,ry,cw,rh*2,"F");
+    doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    cols.forEach(function(col,i){
+      var lines=col.split(" ");
+      if(lines.length>1){
+        doc.text(lines[0],cx[i]+1,ry+5);
+        doc.text(lines[1],cx[i]+1,ry+10);
+      } else {
+        doc.text(col,cx[i]+1,ry+7.5);
+      }
+    });
+    ry+=rh*2;
+    var totW=0,totD=0,totB=0,totH=0,totA=0,totG=0,totPF=0,totESI=0,totPT=0,totTDS=0,totOt=0,totDed=0,totNet=0;
+    emps.filter(function(e){return e.status==="active";}).forEach(function(emp,ei){
+      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
+      var daysWork=ma.present+(ma.half*0.5)+ma.paid+ma.holiday;
+      var daysPaid=26-ma.absent-ma.unpaid;
+      var otDed=d.ad+d.hd+d.ud+d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;
+      totW+=daysWork;totD+=daysPaid;totB+=d.eb;totH+=(emp.hra||0);totA+=(emp.allow||0);
+      totG+=d.gr;totPF+=d.pfE;totESI+=d.esiE;totPT+=d.pt;totTDS+=d.tds;
+      totOt+=(d.hi+d.cd);totDed+=otDed;totNet+=d.net;
+      if(ei%2===0){doc.setFillColor(247,249,252);doc.rect(mg,ry,cw,rh,"F");}
+      doc.setDrawColor(220,228,240);doc.line(mg,ry+rh,mg+cw,ry+rh);
+      doc.setFontSize(7);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);
+      function cell(val,ci,align,col){
+        if(col)doc.setTextColor(col[0],col[1],col[2]);else doc.setTextColor(15,23,42);
+        if(align==="right")doc.text(String(val),cx[ci]+cws[ci]-1.5,ry+5.8,{align:"right"});
+        else doc.text(String(val),cx[ci]+1.5,ry+5.8);
+      }
+      cell(ei+1,0,"left");
+      doc.setFont("helvetica","bold");cell((emp.name||"").substring(0,14),1,"left");
+      doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
+      cell((emp.role||"").substring(0,10),2,"left");
+      cell((emp.dept||"").substring(0,8),3,"left");
+      doc.setTextColor(15,23,42);
+      cell(Math.round(daysWork),4,"right");cell(Math.max(0,Math.round(daysPaid)),5,"right");
+      cell(0,6,"right"); // OT hours - manual entry
+      cell(fmtIN(d.eb),7,"right",[60,80,180]);
+      cell(fmtIN(emp.hra||0),8,"right");cell(fmtIN(emp.allow||0),9,"right");
+      doc.setFont("helvetica","bold");
+      cell(fmtIN(d.gr),10,"right",[15,23,42]);
+      doc.setFont("helvetica","normal");
+      cell(d.pfE>0?fmtIN(d.pfE):"-",11,"right",[70,100,200]);
+      cell(d.esiE>0?fmtIN(d.esiE):"-",12,"right",[5,140,90]);
+      cell(d.pt>0?fmtIN(d.pt):"-",13,"right",[200,110,0]);
+      cell(d.tds>0?fmtIN(d.tds):"-",14,"right",[200,40,40]);
+      cell(d.hi+d.cd>0?fmtIN(d.hi+d.cd):"-",15,"right");
+      doc.setFont("helvetica","bold");
+      cell(fmtIN(otDed),16,"right",[200,40,40]);
+      cell(fmtIN(d.net),17,"right",[5,140,90]);
+      ry+=rh;
+      if(ry>H-20){doc.addPage();ry=12;}
+    });
+    // Totals row
+    ry+=3;
+    doc.setFillColor(15,23,42);doc.rect(mg,ry,cw,rh+1,"F");
+    doc.setFontSize(7);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    doc.text("TOTALS",cx[1]+1.5,ry+6);
+    function tot(val,ci){doc.text(fmtIN(val),cx[ci]+cws[ci]-1.5,ry+6,{align:"right"});}
+    doc.setTextColor(200,215,255);
+    tot(totB,7);tot(totH,8);tot(totA,9);
+    doc.setTextColor(255,255,255);tot(totG,10);
+    doc.setTextColor(180,210,255);tot(totPF,11);tot(totESI,12);tot(totPT,13);tot(totTDS,14);
+    doc.setTextColor(200,40,40);tot(totDed,16);
+    doc.setTextColor(74,222,128);tot(totNet,17);
+    // Signature row
+    ry+=rh+12;
+    if(ry<H-25){
+      doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
+      doc.text("Certified that the wages shown above are correct and have been paid.",mg,ry);
+      ry+=12;
+      doc.line(mg,ry,mg+50,ry);doc.line(W-mg-60,ry,W-mg,ry);
+      doc.setFontSize(7.5);
+      doc.text("Date & Stamp",mg,ry+4);
+      doc.text("Signature of Employer / HR Manager",W-mg-60,ry+4);
+    }
+    pdfFooter(doc,W,mg,H,orgName,orgEmail);
+    downloadPDF(doc.output("blob"),"Salary-Register-"+MOS[m]+"-"+y+".pdf");
+  },function(){alert("PDF library failed to load.");});
+}
+
 function makePayrollCSV(emps,m,y,mAttFn,incFn){
   var header=["Name","Dept","Gross","Absent Ded","Half Ded","Unpaid Ded","PF Emp","ESI Emp","Prof Tax","TDS","Health Ins","Custom","Net Pay","Er PF","Er ESI","Total CTC"];
   var rows=emps.map(function(emp){
@@ -766,6 +1035,9 @@ export default function App(){
   var sPayDlM=st(curM),payDlM=sPayDlM[0],setPayDlM=sPayDlM[1];
   var sPayDlY=st(curY),payDlY=sPayDlY[0],setPayDlY=sPayDlY[1];
   var sPayDlType=st("emp"),payDlType=sPayDlType[0],setPayDlType=sPayDlType[1];
+  var sShowPFDl=st(false),showPFDl=sShowPFDl[0],setShowPFDl=sShowPFDl[1];
+  var sShowSalRegDl=st(false),showSalRegDl=sShowSalRegDl[0],setShowSalRegDl=sShowSalRegDl[1];
+  var sShowECRDl=st(false),showECRDl=sShowECRDl[0],setShowECRDl=sShowECRDl[1];
   var sAttDlM=st(curM),attDlM=sAttDlM[0],setAttDlM=sAttDlM[1];
   var sAttDlY=st(curY),attDlY=sAttDlY[0],setAttDlY=sAttDlY[1];
   var sAttDlAll=st(false),attDlAll=sAttDlAll[0],setAttDlAll=sAttDlAll[1];
@@ -820,6 +1092,7 @@ export default function App(){
   var sCN=st(""),setupCompany=sCN[0],setSetupCompany=sCN[1];
   var sPOS=st(""),setupPosition=sPOS[0],setSetupPosition=sPOS[1];
   var sSOT=st(""),setupOrgType=sSOT[0],setSetupOrgType=sSOT[1];
+  var sSST=st(""),setupState=sSST[0],setSetupState=sSST[1];
   var sEI=st(""),editPayInc=sEI[0],setEditPayInc=sEI[1];
   var sREV=st(function(){return lsGet("hr_revisions",{});}),revisions=sREV[0],setRevisions=sREV[1];
   var sNT=st(function(){return lsGet("hr_notices",[]);}),notices=sNT[0],setNotices=sNT[1];
@@ -850,6 +1123,7 @@ export default function App(){
   var sId2=st(""),fPan=sId2[0],setFPan=sId2[1];
   var sId3=st(""),fUan=sId3[0],setFUan=sId3[1];
   var sHi=st(""),fHi=sHi[0],setFHi=sHi[1];
+  var sFLv=st(""),fLeave=sFLv[0],setFLeave=sFLv[1];
   var cnR=sr(null),caR=sr(null);
   var revCtcR=sr(null),revDateR=sr(null),revNoteR=sr(null);
   var edn=sr(null),edm=sr(null),edem=sr(null),edei=sr(null),edro=sr(null),edctc=sr(null),edhi=sr(null),edpa=sr(null),edua=sr(null);
@@ -1091,10 +1365,10 @@ export default function App(){
     var name=fName.trim();if(!name)return showT("Name required","err");
     var ctc=Number(fCtc)||0;if(!ctc)return showT("Monthly CTC required","err");
     var bd=brkSal(ctc);
-    var emp={id:Date.now(),name:name,dob:fDob,mob:fMob,email:fEmail,eid:fEid,role:fRole,dept:dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,joined:fJoin||todayStr,pan:fPan,uan:fUan,aadhar:fAadhar,pf:pf,pfMode:pfMode,esi:esi,pt:pt,tds:tds,hi:Number(fHi)||0,customs:customs,av:name.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase(),col:COLS[emps.length%COLS.length],status:"active"};
+    var emp={id:Date.now(),name:name,dob:fDob,mob:fMob,email:fEmail,eid:fEid,role:fRole,dept:dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,joined:fJoin||todayStr,pan:fPan,uan:fUan,aadhar:fAadhar,leaveEntitlement:Number(fLeave)||12,pf:pf,pfMode:pfMode,esi:esi,pt:pt,tds:tds,hi:Number(fHi)||0,customs:customs,av:name.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase(),col:COLS[emps.length%COLS.length],status:"active"};
     setEmps(function(p){return p.concat([emp]);});
     setFName("");setFDob("");setFMob("");setFEmail("");setFJoin("");
-    setFEid("");setFRole("");setFCtc("");setFAadhar("");setFPan("");setFUan("");setFHi("");
+    setFEid("");setFRole("");setFCtc("");setFAadhar("");setFPan("");setFUan("");setFHi("");setFLeave("");
     setDept("");setPf(true);setPfMode("capped");setEsi(false);setPt(true);setTds(true);setCustoms([]);
     setStep(1);setAddOpen(false);showT(name+" added!");
   }
@@ -1500,13 +1774,18 @@ export default function App(){
       h("option",{value:""},"Select your role"),
       ["Owner","MD / Director","CEO","HR Manager","HR Executive","Admin Manager","Finance Manager","Accounts Manager","Operations Manager","General Manager"].map(function(t){return h("option",{key:t,value:t},t);})
     ),
+    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:6,fontWeight:600}},"STATE (for minimum wage check)"),
+    h("select",{value:setupState,onChange:function(e){setSetupState(e.target.value);},style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 14px",fontSize:13,color:setupState?T.AUTH_TEXT:T.AUTH_LABEL,fontFamily:"inherit",outline:"none",marginBottom:20}},
+      h("option",{value:""},"Select state (optional)"),
+      Object.keys(MIN_WAGE).map(function(s){return h("option",{key:s,value:s},s);})
+    ),
     h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginBottom:20,paddingLeft:2}},"Your role shown on payslips — cannot be changed after setup"),
     h("button",{onClick:function(){
       if(!setupCompany.trim())return showT("Enter company name","err");
       if(!setupOrgType)return showT("Select organisation type","err");
       if(!setupPosition)return showT("Select your position","err");
       var email=gUser?gUser.email:"";
-      var newOrg={name:setupCompany.trim(),email:email,position:setupPosition,type:setupOrgType,plan:"free"};
+      var newOrg={name:setupCompany.trim(),email:email,position:setupPosition,type:setupOrgType,state:setupState||"",plan:"free"};
       // Save to Supabase first so it works across devices
       _sb.from("user_orgs").upsert({
         email:email,
@@ -1787,8 +2066,20 @@ export default function App(){
   function renderEmpDetail(){
     var ma=mAtt(selE.id,curY,curM),inc=getInc(selE.id,curY,curM),d=calcPay(selE,ma.absent,ma.half,ma.unpaid,inc);
     var hasDeduct=ma.absent>0||ma.half>0||ma.unpaid>0;
+    var leaveUsed=getLeaveUsed(selE,att,curY);
+    var leaveEnt=getLeaveEntitlement(selE);
+    var leaveBal=Math.max(0,leaveEnt-leaveUsed);
+    var leaveEncash=getLeaveEncashment(selE,att,curY);
+    var minWageWarn=checkMinWage(selE.monthlyCTC,org.state||"Tamil Nadu","unskilled");
     return h("div",{className:"fd"},
       h("button",{onClick:function(){setSelE(null);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"5px 10px",color:NVY,fontSize:11,fontWeight:600,cursor:"pointer",marginBottom:10}},"Back"),
+      minWageWarn&&!minWageWarn.ok?h("div",{style:{background:AMB+"15",border:"1px solid "+AMB+"44",borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",alignItems:"center",gap:8}},
+        ic("warning",AMB,16),
+        h("div",null,
+          h("div",{style:{fontSize:12,fontWeight:700,color:AMB}},"Below Minimum Wage"),
+          h("div",{style:{fontSize:10,color:GRY}},"State minimum: "+fmtIN(minWageWarn.min)+" | Current: "+fmtIN(selE.monthlyCTC))
+        )
+      ):null,
       h("div",{style:{background:NVY,borderRadius:15,padding:15,marginBottom:10,position:"relative",overflow:"hidden"}},
         h("div",{style:{position:"absolute",right:-7,top:-7,width:60,height:60,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.04)":"rgba(0,0,0,.15)"}}),
         h("div",{style:{width:44,height:44,borderRadius:12,background:themeMode==="light"?"rgba(255,255,255,.12)":"rgba(255,255,255,.10)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:600,color:CARD,marginBottom:8}},selE.av),
@@ -1809,6 +2100,41 @@ export default function App(){
         ),
         hasDeduct?h("div",{style:{background:T.PILL_DANGER_SOFT,borderRadius:7,padding:"5px 9px",fontSize:11,color:RED,marginBottom:7}},"Deducted: "+fmt(d.ad+d.hd+d.ud)):null,
         shareRow(function(){shareAtt(selE);})
+      )),
+      card(h("div",null,
+        h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:7}},"Leave Balance — "+curY),
+        (function(){
+          var entitle=getLeaveEntitlement(selE);
+          var used=getLeaveUsed(selE,att,curY);
+          var bal=getLeaveBalance(selE,att,curY);
+          var encash=getLeaveEncashment(selE,att,curY);
+          var pct=Math.round((used/entitle)*100);
+          return h("div",null,
+            h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:10}},
+              h("div",{style:{background:"#ECFDF5",borderRadius:10,padding:"10px 6px",textAlign:"center"}},
+                h("div",{style:{fontSize:18,fontWeight:900,color:"#059669"}},entitle),
+                h("div",{style:{fontSize:9,color:GRY,fontWeight:600}},"Entitled")
+              ),
+              h("div",{style:{background:"#FEF2F2",borderRadius:10,padding:"10px 6px",textAlign:"center"}},
+                h("div",{style:{fontSize:18,fontWeight:900,color:RED}},used),
+                h("div",{style:{fontSize:9,color:GRY,fontWeight:600}},"Used")
+              ),
+              h("div",{style:{background:bal>0?"#EEF2FF":"#F1F5F9",borderRadius:10,padding:"10px 6px",textAlign:"center"}},
+                h("div",{style:{fontSize:18,fontWeight:900,color:bal>0?"#4F46E5":GRY}},bal),
+                h("div",{style:{fontSize:9,color:GRY,fontWeight:600}},"Balance")
+              )
+            ),
+            h("div",{style:{display:"flex",gap:10,marginBottom:8}},
+              h("div",{style:{fontSize:11,color:GRY,flex:1,textAlign:"center"}},"Entitled"),
+              h("div",{style:{fontSize:11,color:GRY,flex:1,textAlign:"center"}},"Used"),
+              h("div",{style:{fontSize:11,color:GRY,flex:1,textAlign:"center"}},"Balance")
+            ),
+            h("div",{style:{background:SFT,borderRadius:8,height:6,marginBottom:10,overflow:"hidden"}},
+              h("div",{style:{background:pct>80?RED:pct>50?AMB:GRN,height:"100%",width:Math.min(100,pct)+"%",borderRadius:8,transition:"width .5s"}})
+            ),
+            row("Leave Encashment Value",fmt(encash),AMB)
+          );
+        })()
       )),
       card(h("div",null,
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:7}},"Deductions"),
@@ -2313,6 +2639,38 @@ export default function App(){
             h("input",{type:"file",accept:".json",style:{display:"none"},onChange:function(e){if(e.target.files[0])uploadBackup(e.target.files[0]);}})
           ),
           h("div",{style:{fontSize:10,color:GRY,marginBottom:12,textAlign:"center"}},"Data auto-syncs to cloud on every change"),
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Statutory Compliance"),
+          h("div",{style:{fontSize:11,color:GRY,marginBottom:12}},"Monthly filings, ECR, salary register for labour compliance."),
+          h("div",{style:{display:"flex",flexDirection:"column",gap:7,marginBottom:12}},
+            h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 13px"}},
+              h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:4}},
+                h("div",{style:{width:30,height:30,borderRadius:8,background:"#4F46E5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("account_balance",CARD,15)),
+                h("div",null,h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},"PF / ESI Monthly Summary"),h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Challan amounts for EPFO & ESIC portal filing"))
+              ),
+              h("div",{style:{display:"flex",gap:6}},
+                h("button",{onClick:isPaid?function(){setPayDlM(curM);setPayDlY(curY);setShowPFDl(true);}:needPaid,style:{flex:1,background:isPaid?"#4F46E5":GRY,border:"none",borderRadius:7,padding:"7px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},ic(isPaid?ICONS.dl:"lock",CARD,13),"PDF")
+              )
+            ),
+            h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 13px"}},
+              h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:4}},
+                h("div",{style:{width:30,height:30,borderRadius:8,background:"#059669",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("description",CARD,15)),
+                h("div",null,h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},"Salary Register"),h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Statutory format — Payment of Wages Act"))
+              ),
+              h("div",{style:{display:"flex",gap:6}},
+                h("button",{onClick:isPaid?function(){setPayDlM(curM);setPayDlY(curY);setShowSalRegDl(true);}:needPaid,style:{flex:1,background:isPaid?"#059669":GRY,border:"none",borderRadius:7,padding:"7px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},ic(isPaid?ICONS.dl:"lock",CARD,13),"PDF")
+              )
+            ),
+            h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 13px"}},
+              h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:4}},
+                h("div",{style:{width:30,height:30,borderRadius:8,background:"#D97706",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("upload_file",CARD,15)),
+                h("div",null,h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},"EPF ECR File"),h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Upload directly to epfindia.gov.in"))
+              ),
+              h("div",{style:{display:"flex",gap:6}},
+                h("button",{onClick:isPaid?function(){setPayDlM(curM);setPayDlY(curY);setShowECRDl(true);}:needPaid,style:{flex:1,background:isPaid?"#D97706":GRY,border:"none",borderRadius:7,padding:"7px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},ic(isPaid?ICONS.dl:"lock",CARD,13),"ECR .txt"),
+                h("div",{style:{flex:1,fontSize:10,color:GRY,display:"flex",alignItems:"center",paddingLeft:4}},"Needs UAN for each employee")
+              )
+            )
+          ),
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"Download Reports"),
           h("div",{style:{fontSize:11,color:GRY,marginBottom:12}},"Export your data or reset the app."),
           h("div",{style:{display:"flex",flexDirection:"column",gap:7,marginBottom:12}},
@@ -2397,7 +2755,8 @@ export default function App(){
             getDepts(org.type).map(function(d2){return h("option",{key:d2},d2);})
           ),
           lbl("MONTHLY CTC (Rs.) *"),h("input",{type:"number",value:fCtc,onChange:function(e){setFCtc(e.target.value);},placeholder:"e.g. 50000",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
-          h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Auto-split: 50% Basic, 20% HRA, 30% Allowance")
+          h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Auto-split: 50% Basic, 20% HRA, 30% Allowance"),
+          fCtc&&org.state?h("div",null,(function(){var w=checkMinWage(Number(fCtc),org.state,"skilled");return w?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"33",borderRadius:8,padding:"7px 10px",fontSize:11,color:RED,fontWeight:600}},"⚠️ "+w):h("div",{style:{background:GRN+"15",border:"1px solid "+GRN+"33",borderRadius:8,padding:"7px 10px",fontSize:11,color:GRN,fontWeight:600}},"✓ Above minimum wage for "+org.state);})()):null
         ):null,
         step===3?h("div",null,lbl("PAN"),h("input",{value:fPan,onChange:function(e){setFPan(e.target.value);},placeholder:"ABCDE1234F",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("UAN (PF Account)"),h("input",{value:fUan,onChange:function(e){setFUan(e.target.value);},placeholder:"Universal Account No.",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("AADHAR"),h("input",{value:fAadhar,onChange:function(e){setFAadhar(e.target.value);},placeholder:"XXXX-XXXX-XXXX",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})):null,
         step===4?h("div",null,
@@ -2406,7 +2765,8 @@ export default function App(){
           togEl("ESI","0.75% emp if gross up to Rs.21K",esi,setEsi),
           togEl("Professional Tax","Rs.200/mo if above Rs.15K",pt,setPt),
           togEl("TDS","FY 2025-26 new regime",tds,setTds),
-          h("div",{style:{marginTop:11}},lbl("HEALTH INSURANCE (Rs./mo)"),h("input",{type:"number",value:fHi,onChange:function(e){setFHi(e.target.value);},placeholder:"e.g. 500",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})),
+          h("div",{style:{marginTop:11}},lbl("ANNUAL PAID LEAVE ENTITLEMENT (days)"),h("input",{type:"number",value:fLeave||"",onChange:function(e){setFLeave(e.target.value);},placeholder:"Default: 12 days",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
+          lbl("HEALTH INSURANCE (Rs./mo)"),h("input",{type:"number",value:fHi,onChange:function(e){setFHi(e.target.value);},placeholder:"e.g. 500",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})),
           h("div",null,
             h("div",{style:{fontSize:11,color:GRY,marginBottom:6,fontWeight:600}},"CUSTOM DEDUCTIONS"),
             customs.map(function(c2,i){return h("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",background:SFT,borderRadius:7,padding:"5px 9px",marginBottom:5}},h("span",{style:{fontSize:12,color:NVY}},c2.name),h("div",{style:{display:"flex",gap:7,alignItems:"center"}},h("span",{style:{fontSize:12,fontWeight:600,color:RED}},fmt(c2.amt)),h("button",{onClick:function(){setCustoms(function(p){return p.filter(function(_,j){return j!==i;});});},style:{background:T.PILL_DANGER_BG,border:"none",borderRadius:5,padding:"2px 6px",color:RED,fontSize:10,cursor:"pointer"}},"X")));})  ,
@@ -2418,7 +2778,7 @@ export default function App(){
           )
         ):null,
         h("div",{style:{display:"flex",gap:8,marginTop:14}},
-          h("button",{onClick:function(){if(step>1)setStep(function(s){return s-1;});else{setAddOpen(false);setStep(1);setFName("");setFDob("");setFMob("");setFEmail("");setFJoin("");setFEid("");setFRole("");setFCtc("");setFAadhar("");setFPan("");setFUan("");setFHi("");setDept("");}},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:11,color:GRY,fontSize:12,cursor:"pointer"}},step===1?"Cancel":"Back"),
+          h("button",{onClick:function(){if(step>1)setStep(function(s){return s-1;});else{setAddOpen(false);setStep(1);setFName("");setFDob("");setFMob("");setFEmail("");setFJoin("");setFEid("");setFRole("");setFCtc("");setFAadhar("");setFPan("");setFUan("");setFHi("");setFLeave("");setDept("");}},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:11,color:GRY,fontSize:12,cursor:"pointer"}},step===1?"Cancel":"Back"),
           h("button",{onClick:function(){if(step===1&&!fName.trim())return showT("Name required","err");if(step===2&&!fCtc)return showT("CTC required","err");if(step<4)setStep(function(s){return s+1;});else saveEmp();},style:{flex:2,background:NVY,border:"none",borderRadius:10,padding:11,color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},step===4?"Save Employee":"Next")
         )
       )
@@ -2638,6 +2998,75 @@ export default function App(){
     );
   }
 
+  function renderPFDlPicker(){
+    if(!showPFDl)return null;
+    return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowPFDl(false);}},
+      h("div",{style:{width:"100%",maxWidth:430,background:CARD,borderRadius:"20px 20px 0 0",padding:"20px 18px 32px"}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"PF / ESI Summary Report"),
+          h("button",{onClick:function(){setShowPFDl(false);},style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:GRY}},"x")
+        ),
+        h("div",{style:{fontSize:11,color:GRY,marginBottom:10}},"Select month to generate PF/ESI challan summary"),
+        h("div",{style:{display:"flex",gap:8,marginBottom:20}},
+          h("select",{value:payDlM,onChange:function(e){setPayDlM(Number(e.target.value));},style:{flex:2,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
+            MOS.map(function(mo,i){return h("option",{key:i,value:i},mo);})
+          ),
+          h("select",{value:payDlY,onChange:function(e){setPayDlY(Number(e.target.value));},style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
+            pastYears().map(function(y){return h("option",{key:y,value:y},y);})
+          )
+        ),
+        h("button",{onClick:function(){setShowPFDl(false);makePFESIPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC);},style:{width:"100%",background:"#4F46E5",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic(ICONS.dl,CARD,18),"Download PF/ESI Report")
+      )
+    );
+  }
+
+  function renderSalRegPicker(){
+    if(!showSalRegDl)return null;
+    return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowSalRegDl(false);}},
+      h("div",{style:{width:"100%",maxWidth:430,background:CARD,borderRadius:"20px 20px 0 0",padding:"20px 18px 32px"}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Salary Register"),
+          h("button",{onClick:function(){setShowSalRegDl(false);},style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:GRY}},"x")
+        ),
+        h("div",{style:{fontSize:11,color:GRY,marginBottom:10}},"Statutory salary register — Payment of Wages Act format"),
+        h("div",{style:{display:"flex",gap:8,marginBottom:20}},
+          h("select",{value:payDlM,onChange:function(e){setPayDlM(Number(e.target.value));},style:{flex:2,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
+            MOS.map(function(mo,i){return h("option",{key:i,value:i},mo);})
+          ),
+          h("select",{value:payDlY,onChange:function(e){setPayDlY(Number(e.target.value));},style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
+            pastYears().map(function(y){return h("option",{key:y,value:y},y);})
+          )
+        ),
+        h("button",{onClick:function(){setShowSalRegDl(false);makeSalaryRegisterPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC);},style:{width:"100%",background:"#059669",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic(ICONS.dl,CARD,18),"Download Salary Register")
+      )
+    );
+  }
+
+  function renderECRPicker(){
+    if(!showECRDl)return null;
+    return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowECRDl(false);}},
+      h("div",{style:{width:"100%",maxWidth:430,background:CARD,borderRadius:"20px 20px 0 0",padding:"20px 18px 32px"}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"EPF ECR File"),
+          h("button",{onClick:function(){setShowECRDl(false);},style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:GRY}},"x")
+        ),
+        h("div",{style:{background:AMB+"18",border:"1px solid "+AMB+"44",borderRadius:10,padding:"10px 12px",marginBottom:14,fontSize:11,color:AMB,fontWeight:600}},"Make sure all employees have their UAN number entered. Employees without UAN will be skipped."),
+        h("div",{style:{display:"flex",gap:8,marginBottom:20}},
+          h("select",{value:payDlM,onChange:function(e){setPayDlM(Number(e.target.value));},style:{flex:2,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
+            MOS.map(function(mo,i){return h("option",{key:i,value:i},mo);})
+          ),
+          h("select",{value:payDlY,onChange:function(e){setPayDlY(Number(e.target.value));},style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
+            pastYears().map(function(y){return h("option",{key:y,value:y},y);})
+          )
+        ),
+        h("button",{onClick:function(){setShowECRDl(false);generateECR(actEmps,payDlM,payDlY,mAtt,getInc);showT("ECR file downloaded!");},style:{width:"100%",background:"#D97706",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic(ICONS.dl,CARD,18),"Download ECR File")
+      )
+    );
+  }
+
   function renderPayDlPicker(){
     if(!showPayDl)return null;
     return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowPayDl(false);}},
@@ -2722,6 +3151,9 @@ export default function App(){
         h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
       ):null,
       showAdmin?renderAdminPanel():null,
+      renderPFDlPicker(),
+      renderSalRegPicker(),
+      renderECRPicker(),
       renderPayDlPicker(),
       renderAttDlPicker(),
       appContent
