@@ -93,7 +93,17 @@ var SVG_ICONS={
 "expand_more":"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z",
 "expand_less":"M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z",
 "table_view":"M4 5v13h17V5H4zm3 11H6v-2h1v2zm0-4H6v-2h1v2zm0-4H6V6h1v2zm11 8H8v-2h10v2zm0-4H8v-2h10v2zm0-4H8V6h10v2z",
-"check":"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+"check":"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
+"fact_check":"M20 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9zm7-9h-4V6h4v2z",
+"savings":"M11 18v-1.26l-1-.27V15h3l.5 2 1.5-.5-.5-2H13v-1.5c1.66 0 3-1.34 3-3S14.66 7 13 7c-1.66 0-3 1.34-3 3H8c0-2.76 2.24-5 5-5 2.76 0 5 2.24 5 5 0 1.86-1.01 3.47-2.5 4.34V18h-4zm1 3c-.55 0-1-.45-1-1h2c0 .55-.45 1-1 1zM5 7l-2 2 2 2 2-2-2-2zm0 6l-2-2-2 2 2 2 2-2zm4-7.27L7 3.73 5 6l2 2.27L9 5.73z",
+"account_balance":"M4 10v7h3v-7H4zm6 0v7h3v-7h-3zm-5 8v-2H3v2H2v2h20v-2h-1v-2h-2v2H5zm11-8v7h3v-7h-3zM11.5 1L2 6v2h19V6l-9.5-5z",
+"sync_alt":"M12 18V6l-3 3-1.4-1.4L12 3l4.4 4.6L15 9l-3-3zm3 3l-4.4-4.6L12 15l3 3 1.4-1.4L12 21l-4.4-4.6L9 18l3-3v12",
+"cloud_upload":"M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z",
+"people_alt":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.74 1.17-.52 2.61-.9 4.24-.9zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V18h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4 3.43c0-.81-.48-1.53-1.22-1.85C21.93 14.21 20.99 14 20 14c-.39 0-.76.04-1.13.1.4.68.63 1.46.63 2.29V18H24v-1.57zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z",
+"monitoring":"M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4 2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z",
+"wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28A2 2 0 0 0 22 15v-6a2 2 0 0 0-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z M16 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
+"badge":"M17 12h-5v5h5v-5zM16 1l-4 4-4-4H2v20h20V1h-6zm4 18H4V3h5.52l2.48 2.48L14.48 3H20v16z"
+
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
@@ -698,8 +708,13 @@ function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc){
 // ── ECR FILE GENERATOR (EPFO ECR 2.0 format) ─────────────────────────────
 function generateECR(emps,m,y,mAttFn,incFn){
   // ECR 2.0 format: UAN#MEMBER_NAME#GROSS_WAGES#EPF_WAGES#EPS_WAGES#EDLI_WAGES#EPF_CONTRI#EPS_CONTRI#EPF_EPS_DIFF_REMITTED#NCP_DAYS#REFUNDS
+  var eligible=emps.filter(function(e){return e.status==="active"&&e.pf&&e.uan;});
+  if(eligible.length===0){
+    alert("No employees found with UAN and PF enabled.\n\nTo generate ECR:\n1. Edit each employee\n2. Enter their UAN number\n3. Make sure PF is enabled\n\nThen try again.");
+    return;
+  }
   var lines=["#~#"];
-  emps.filter(function(e){return e.status==="active"&&e.pf&&e.uan;}).forEach(function(emp){
+  eligible.forEach(function(emp){
     var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
     var pfWage=emp.pfMode==="actual"?d.eb:Math.min(d.eb,15000);
     var epsWage=Math.min(pfWage,15000);
@@ -713,12 +728,12 @@ function generateECR(emps,m,y,mAttFn,incFn){
       Math.round(d.gr),
       Math.round(pfWage),
       Math.round(epsWage),
-      Math.round(pfWage), // EDLI wages same as EPF wages
+      Math.round(pfWage),
       Math.round(epfContri),
       Math.round(epsContri),
       Math.max(0,Math.round(epfEpsDiff)),
       Math.round(ncpDays),
-      0 // refunds
+      0
     ].join("#~#"));
   });
   lines.push("#~#");
@@ -728,6 +743,7 @@ function generateECR(emps,m,y,mAttFn,incFn){
   a.href=URL.createObjectURL(blob);
   a.download="ECR-"+MOS[m]+"-"+y+".txt";
   document.body.appendChild(a);a.click();document.body.removeChild(a);
+  return eligible.length;
 }
 
 // ── SALARY REGISTER PDF (Statutory format) ────────────────────────────────
@@ -1862,10 +1878,10 @@ export default function App(){
     var presentCount=actEmps.filter(function(e){return getTAtt(e.id)==="present";}).length;
     var absentCount=actEmps.filter(function(e){return getTAtt(e.id)==="absent";}).length;
     var statCards=[
-      {l:"Total Team",v:actEmps.length,ico:"group",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active"},
-      {l:"Present Today",v:presentCount,ico:"how_to_reg",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today"},
-      {l:"Gross Payroll",v:fmt(tGross),ico:"payments",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY},
-      {l:"Net Payable",v:fmt(tNet),ico:"account_balance_wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions"},
+      {l:"Total Team",v:actEmps.length,ico:"people_alt",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active"},
+      {l:"Present Today",v:presentCount,ico:"fact_check",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today"},
+      {l:"Gross Payroll",v:fmt(tGross),ico:"account_balance",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY},
+      {l:"Net Payable",v:fmt(tNet),ico:"wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions"},
     ];
     var hr=now.getHours(),greet=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
     // Pre-compute reminder urgency
@@ -2627,7 +2643,7 @@ export default function App(){
             h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Data Management"),
             isSyncing
               ?h("div",{style:{fontSize:10,color:TEL,fontWeight:600,display:"flex",alignItems:"center",gap:4}},ic("sync",TEL,12),"Syncing...")
-              :lastSync?h("div",{style:{fontSize:10,color:GRN,fontWeight:600,display:"flex",alignItems:"center",gap:4}},ic("cloud_done",GRN,12),"Synced "+new Date(lastSync).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})):
+              :lastSync?h("div",{style:{fontSize:10,color:GRN,fontWeight:600,display:"flex",alignItems:"center",gap:4}},ic("cloud_upload",GRN,12),"Synced "+new Date(lastSync).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})):
               h("div",{style:{fontSize:10,color:GRY}},"Not synced yet")
           ),
           h("div",{style:{display:"flex",gap:8,marginBottom:12}},
@@ -2821,7 +2837,7 @@ export default function App(){
             h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);showT("Saving to cloud...");},title:"Save to cloud",style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}},
               isSyncing
                 ?h("div",{style:{width:16,height:16,border:"2px solid "+BDR,borderTop:"2px solid "+TEL,borderRadius:"50%",animation:"spin .8s linear infinite"}}):
-                ic("cloud_sync",lastSync?GRN:GRY,18),
+                ic("cloud_upload",lastSync?GRN:GRY,18),
               lastSync?h("div",{style:{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",background:GRN,border:"1px solid "+CARD}}):null
             ),
             h("button",{onClick:function(){var nx=themeMode==="light"?"dark":"light";setThemeMode(nx);showT(nx==="light"?"Light mode":"Dark mode");},style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",transition:"all .15s"},title:"Toggle theme"},ic(themeMode==="light"?"dark_mode":"light_mode",NVY,19)),
@@ -3052,7 +3068,12 @@ export default function App(){
           h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"EPF ECR File"),
           h("button",{onClick:function(){setShowECRDl(false);},style:{background:"none",border:"none",fontSize:20,cursor:"pointer",color:GRY}},"x")
         ),
-        h("div",{style:{background:AMB+"18",border:"1px solid "+AMB+"44",borderRadius:10,padding:"10px 12px",marginBottom:14,fontSize:11,color:AMB,fontWeight:600}},"Make sure all employees have their UAN number entered. Employees without UAN will be skipped."),
+        h("div",{style:{background:AMB+"18",border:"1px solid "+AMB+"44",borderRadius:10,padding:"10px 12px",marginBottom:14}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:AMB,marginBottom:4}},"Important — UAN Required"),
+          h("div",{style:{fontSize:11,color:NVY,marginBottom:4}},(function(){var n=actEmps.filter(function(e){return e.pf&&e.uan;}).length;var t=actEmps.filter(function(e){return e.pf;}).length;return n+"/"+t+" PF employees have UAN entered";}())),
+          actEmps.filter(function(e){return e.pf&&!e.uan;}).length>0?h("div",{style:{fontSize:10,color:RED}},"Missing UAN: "+actEmps.filter(function(e){return e.pf&&!e.uan;}).map(function(e){return e.name;}).join(", ")):null,
+          h("div",{style:{fontSize:10,color:GRY,marginTop:4}},"Edit employees to add their UAN. Employees without UAN will be skipped.")
+        ),
         h("div",{style:{display:"flex",gap:8,marginBottom:20}},
           h("select",{value:payDlM,onChange:function(e){setPayDlM(Number(e.target.value));},style:{flex:2,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px 12px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",height:44}},
             MOS.map(function(mo,i){return h("option",{key:i,value:i},mo);})
@@ -3061,7 +3082,10 @@ export default function App(){
             pastYears().map(function(y){return h("option",{key:y,value:y},y);})
           )
         ),
-        h("button",{onClick:function(){setShowECRDl(false);generateECR(actEmps,payDlM,payDlY,mAtt,getInc);showT("ECR file downloaded!");},style:{width:"100%",background:"#D97706",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        h("button",{onClick:function(){
+          var count=generateECR(actEmps,payDlM,payDlY,mAtt,getInc);
+          if(count){setShowECRDl(false);showT("ECR downloaded — "+count+" employees");}
+        },style:{width:"100%",background:"#D97706",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download ECR File")
       )
     );
