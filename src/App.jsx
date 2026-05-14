@@ -1808,6 +1808,8 @@ export default function App(){
 
   var sASearch=st(""),adminSearch=sASearch[0],setAdminSearch=sASearch[1];
   var sOrgAddr=st(org.address||""),orgAddr=sOrgAddr[0],setOrgAddr=sOrgAddr[1];
+  var sTF=st(lsGet("hr_taxflags",{pf:true,esi:true,pt:true,tds:true})),taxFlags=sTF[0],setTaxFlags=sTF[1];
+  se(function(){lsSet("hr_taxflags",taxFlags);},[taxFlags]);
   var sOrgLogo=st(org.logo||""),orgLogo=sOrgLogo[0],setOrgLogo=sOrgLogo[1];
   se(function(){setOrgAddr(org.address||"");setOrgLogo(org.logo||"");},[org.address,org.logo,org.name]);
   var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
@@ -2547,7 +2549,7 @@ export default function App(){
       return h("button",{onClick:onClick,style:{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"11px 14px",background:"none",border:"none",borderBottom:"1px solid "+BDR,cursor:"pointer",textAlign:"left"}},
         h("div",{style:{width:34,height:34,borderRadius:10,background:(color||NVY)+"14",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(icon||ICONS.dl,color||NVY,17)),
         h("div",{style:{flex:1,minWidth:0}},
-          h("div",{style:{fontSize:12,fontWeight:600,color:NVY}}),label,
+          h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},label),
           h("div",{style:{fontSize:10,color:GRY,marginTop:1}},desc)
         ),
         ic(ICONS.chev,GRY,16)
@@ -2697,7 +2699,7 @@ export default function App(){
           ),
           isPaid?ic(ICONS.chev,GRY,16):ic("lock",GRY,15)
         ),
-        h("button",{onClick:isPaid?function(){setShowSalReg(true);}:needPaid,style:{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"13px 14px",background:"none",border:"none",borderBottom:"1px solid "+BDR,cursor:"pointer",textAlign:"left"}},
+        h("button",{onClick:isPaid?function(){setShowSalRegDl(true);}:needPaid,style:{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"13px 14px",background:"none",border:"none",borderBottom:"1px solid "+BDR,cursor:"pointer",textAlign:"left"}},
           h("div",{style:{width:36,height:36,borderRadius:10,background:"#ECFDF5",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("table_view",GRN,18)),
           h("div",{style:{flex:1}},
             h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},"Salary Register"),
@@ -2759,10 +2761,10 @@ export default function App(){
           )
         ),
         h("div",{style:{display:"flex",gap:8}},
-          h("button",{onClick:function(){downloadBackup(emps,att,incentives,shifts,reminders,notices,revisions);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"9px",fontSize:11,fontWeight:600,color:NVY,cursor:"pointer"}},ic(ICONS.dl,NVY,14),"Backup"),
+          h("button",{onClick:function(){downloadBackup();},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"9px",fontSize:11,fontWeight:600,color:NVY,cursor:"pointer"}},ic(ICONS.dl,NVY,14),"Backup"),
           h("label",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"9px",fontSize:11,fontWeight:600,color:NVY,cursor:"pointer"}},
             ic("add",NVY,14),"Restore",
-            h("input",{type:"file",accept:".json",style:{display:"none"},onChange:function(e){uploadBackup(e,setEmps,setAtt,setIncentives,setShifts,setReminders,setNotices,setRevisions,showT);}})
+            h("input",{type:"file",accept:".json",style:{display:"none"},onChange:function(e){if(e.target.files[0])uploadBackup(e.target.files[0]);}})
           )
         )
       ),
@@ -2823,7 +2825,7 @@ export default function App(){
           h("button",{onClick:function(){
             if(window.confirm("Delete ALL data? This cannot be undone.")){
               setEmps([]);setAtt({});setIncentives({});setShifts({});setReminders([]);setNotices([]);setRevisions({});
-              syncToSupabase([],{},{},{},{},[],[],[],{});
+              syncToSupabase([],{},{},{},{},[],[],{});
               showT("All data cleared","err");
             }
           },style:{width:"100%",background:RED+"14",border:"1px solid "+RED+"33",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:RED,cursor:"pointer"}},"Clear All Data")
@@ -2833,7 +2835,7 @@ export default function App(){
         h("div",{style:{fontSize:12,fontWeight:700,color:AMB,marginBottom:6}},"💾 Back up your data"),
         h("div",{style:{fontSize:11,color:NVY,marginBottom:10}},"Download a backup before any major changes. Restoring is easy."),
         h("div",{style:{display:"flex",gap:8}},
-          h("button",{onClick:function(){downloadBackup(emps,att,incentives,shifts,reminders,notices,revisions);setShowBkup(false);},style:{flex:1,background:AMB,border:"none",borderRadius:10,padding:"9px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Download Backup"),
+          h("button",{onClick:function(){downloadBackup();setShowBkup(false);},style:{flex:1,background:AMB,border:"none",borderRadius:10,padding:"9px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Download Backup"),
           h("button",{onClick:function(){var thisMonth=new Date().getFullYear()+"-"+(new Date().getMonth()+1);lsSet("hr_bkup_dismissed",thisMonth);setShowBkup(false);},style:{flex:1,background:"none",border:"1px solid "+BDR,borderRadius:10,padding:"9px",fontSize:12,color:GRY,cursor:"pointer"}},"Later")
         )
       ):null
