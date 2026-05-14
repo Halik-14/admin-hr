@@ -979,9 +979,9 @@ export default function App(){
   var initTheme="light";try{var saved=localStorage.getItem("hr_theme");if(saved==="dark"||saved==="light")initTheme=saved;}catch(e){}
   var sTh=st(initTheme),themeMode=sTh[0],setThemeMode=sTh[1];
   applyTheme(themeMode);  // Sync module-level colors to current theme on every render
-  var CSS_SPIN="@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}"; var CSS_LIVE=buildCSS(); // Rebuild CSS string for current theme
+  var CSS_SPIN="@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes dot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}"; var CSS_LIVE=buildCSS(); // Rebuild CSS string for current theme
 
-  var sS=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?"app":"login";}),screen=sS[0],setScreen=sS[1];
+  var sS=st("loading"),screen=sS[0],setScreen=sS[1];
   var sUPD=st(false),showUpdate=sUPD[0],setShowUpdate=sUPD[1];
   var sRPW=st(false),showResetPw=sRPW[0],setShowResetPw=sRPW[1];
   var sREM=st(""),resetEmail=sREM[0],setResetEmail=sREM[1];
@@ -1161,6 +1161,13 @@ export default function App(){
   var edn=sr(null),edm=sr(null),edem=sr(null),edei=sr(null),edro=sr(null),edctc=sr(null),edhi=sr(null),edpa=sr(null),edua=sr(null);
 
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
+  se(function(){
+    // Safety net - if still loading after 8s, go to login
+    var t=setTimeout(function(){
+      setScreen(function(s){return s==="loading"?"login":s;});
+    },8000);
+    return function(){clearTimeout(t);};
+  },[]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
 
   // ── Detect password reset from email link ──
@@ -1229,17 +1236,30 @@ export default function App(){
                 lsSet("hr_last_sync",dataRes.data.updated_at);
               }catch(e){}
             }
-            if(screen==="login")setScreen("app");
+            setScreen("app");
           } else {
-            if(screen==="login")setScreen("setup");
+            setScreen("setup");
           }
         }).catch(function(){
+          // Supabase failed - fall back to cache
           var cached=lsGet("hr_org_"+user.email,null);
-          if(cached&&cached.name){setOrg(cached);if(screen==="login")setScreen("app");}
-          else if(screen==="login")setScreen("setup");
+          if(cached&&cached.name){setOrg(cached);setScreen("app");}
+          else setScreen("setup");
         });
       } else {
-        if(lsGet("hr_guser",null)){lsSet("hr_guser",null);setGUser(null);setScreen("login");}
+        // No session - always go to login
+        lsSet("hr_guser",null);setGUser(null);setScreen("login");
+      }
+    }).catch(function(){
+      // getSession itself failed (no internet etc) - fall back to cache
+      var cachedUser=lsGet("hr_guser",null);
+      if(cachedUser&&cachedUser.email){
+        setGUser(cachedUser);
+        var cachedOrg=lsGet("hr_org_"+cachedUser.email,null);
+        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
+        else setScreen("login");
+      } else {
+        setScreen("login");
       }
     });
   },[]);
@@ -2790,15 +2810,17 @@ export default function App(){
   }
 
   var appContent;
-  if(screen==="login")appContent=authLoading?h("div",{style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}},
-    logoSVG(48),
-    h("div",{style:{display:"flex",gap:6}},
-      [0,1,2].map(function(i){return h("div",{key:i,style:{width:6,height:6,borderRadius:"50%",background:NVY,opacity:.3,animation:"dot 1.2s "+(i*0.2)+"s infinite"}});})
-    ),
-    h("div",{style:{fontSize:12,color:T.AUTH_LABEL}})
-  ):(isPasswordReset?setPasswordScreen:(authMode==="signup"?signupScreen:(authMode==="confirm"?confirmScreen:(authMode==="forgot"?forgotScreen:loginScreen))));
-  else if(screen==="setup")appContent=setupScreen;
-  else{
+  if(screen==="loading"){
+    appContent=h("div",{style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}},
+      logoSVG(48),
+      h("div",{style:{display:"flex",gap:6}},
+        [0,1,2].map(function(i){return h("div",{key:i,style:{width:6,height:6,borderRadius:"50%",background:NVY,opacity:.3,animation:"dot 1.2s "+(i*0.2)+"s infinite"}});})
+      )
+    );
+  } else if(screen==="login"){
+    appContent=isPasswordReset?setPasswordScreen:(authMode==="signup"?signupScreen:(authMode==="confirm"?confirmScreen:(authMode==="forgot"?forgotScreen:loginScreen)));
+  } else if(screen==="setup"){appContent=setupScreen;
+  } else {
     var tabContent;
     if(tab==="dashboard")tabContent=renderDashboard();
     else if(tab==="employees")tabContent=renderEmployees();
