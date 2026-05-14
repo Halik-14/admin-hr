@@ -1203,50 +1203,6 @@ export default function App(){
         var user=res.data.session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        if(screen==="login"){
-          // Always fetch from Supabase - never trust localStorage for multi-device
-          Promise.all([
-            _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
-            _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
-            _sb.from("user_data").select("*").eq("email",user.email).maybeSingle()
-          ]).then(function(results){
-            var orgRes=results[0],planRes=results[1],dataRes=results[2];
-            if(orgRes.data&&orgRes.data.org_name){
-              var plan=(planRes.data&&planRes.data.plan)||"free";
-              var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
-                emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
-                expires_on:(planRes.data&&planRes.data.expires_on)||null};
-              lsSet("hr_org_"+user.email,o);setOrg(o);
-              if(dataRes.data){
-                try{
-                  setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
-                  setAtt(JSON.parse(dataRes.data.att_json||"{}"));
-                  setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
-                  setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
-                  setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
-                  setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
-                  setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
-                }catch(e){}
-              }
-              setScreen("app");
-            } else {
-              setScreen("setup");
-            }
-          }).catch(function(){
-            var cached=lsGet("hr_org_"+user.email,null);
-            if(cached&&cached.name){setOrg(cached);setScreen("app");}
-            else setScreen("setup");
-          });
-        }
-      }
-    });
-    // Listen for auth changes (email confirmation)
-    var sub=_sb.auth.onAuthStateChange(function(event,session){
-      if(event==="SIGNED_IN"&&session){
-        var user=session.user;
-        var gu={name:user.email.split("@")[0],email:user.email,photo:""};
-        setGUser(gu);lsSet("hr_guser",gu);
-        // Fetch all data before showing app - no blank flash
         Promise.all([
           _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
           _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
@@ -1255,11 +1211,12 @@ export default function App(){
           var orgRes=results[0],planRes=results[1],dataRes=results[2];
           if(orgRes.data&&orgRes.data.org_name){
             var plan=(planRes.data&&planRes.data.plan)||"free";
-            var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",
-              plan:plan,emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
-              expires_on:(planRes.data&&planRes.data.expires_on)||null};
-            lsSet("hr_org_"+user.email,o);setOrg(o);
+            var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
+              emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
+              expires_on:(planRes.data&&planRes.data.expires_on)||null,
+              address:orgRes.data.address||"",logo:orgRes.data.logo_base64||""};
             setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
+            lsSet("hr_org_"+user.email,o);setOrg(o);
             if(dataRes.data){
               try{
                 setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
@@ -1272,15 +1229,19 @@ export default function App(){
                 lsSet("hr_last_sync",dataRes.data.updated_at);
               }catch(e){}
             }
-            setScreen("app");
-          } else setScreen("setup");
+            if(screen==="login")setScreen("app");
+          } else {
+            if(screen==="login")setScreen("setup");
+          }
         }).catch(function(){
-          var c=lsGet("hr_org_"+user.email,null);
-          if(c&&c.name){setOrg(c);setScreen("app");}else setScreen("setup");
+          var cached=lsGet("hr_org_"+user.email,null);
+          if(cached&&cached.name){setOrg(cached);if(screen==="login")setScreen("app");}
+          else if(screen==="login")setScreen("setup");
         });
+      } else {
+        if(lsGet("hr_guser",null)){lsSet("hr_guser",null);setGUser(null);setScreen("login");}
       }
     });
-    return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
   },[]);
 
   // ── Supabase session verification on app load ──────────────────────────────
