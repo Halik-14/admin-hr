@@ -9,10 +9,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Admin HR" />
-    <link rel="manifest" href="./manifest.json" />
-    <link rel="stylesheet" href="./splash.css" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="stylesheet" href="/splash.css" />
     <title>Admin HR</title>
-    <script type="module" crossorigin src="./assets/index-D00yJbBG.js"></script>
   </head>
   <body>
     <div id="splash">
@@ -22,10 +21,11 @@
       <div id="splash-dots"><span></span><span></span><span></span></div>
     </div>
     <div id="root"></div>
+    <script type="module" src="./src/main.jsx"></script>
     <script>
       if("serviceWorker" in navigator){
         window.addEventListener("load",function(){
-          navigator.serviceWorker.register("./sw.js");
+          navigator.serviceWorker.register("/sw.js");
         });
       }
       window.__hideSplash=function(logoSrc){
