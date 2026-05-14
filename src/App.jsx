@@ -1244,37 +1244,6 @@ export default function App(){
     });
   },[]);
 
-  // ── Supabase session verification on app load ──────────────────────────────
-  // Checks with Supabase if the session is still valid on every app open.
-  // If user was deleted from Supabase, this forces logout automatically.
-  se(function(){
-    _sb.auth.getSession().then(function(res){
-      var session=res.data&&res.data.session;
-      if(!session){
-        // No valid Supabase session — force logout regardless of localStorage
-        if(lsGet("hr_guser",null)){
-          lsSet("hr_guser",null);
-          setGUser(null);
-          setScreen("login");
-        }
-        return;
-      }
-      // Valid session — ensure localStorage is in sync
-      var email=session.user.email;
-      var gu={name:email.split("@")[0],email:email,photo:""};
-      setGUser(gu);
-      // Already handled by Promise.all above - skip duplicate check
-    });
-    // Listen for auth state changes (logout from another tab, token expiry, user deleted)
-    var sub=_sb.auth.onAuthStateChange(function(event,session){
-      if(event==="SIGNED_OUT"||!session){
-        lsSet("hr_guser",null);
-        setGUser(null);
-        setScreen("login");
-      }
-    });
-    return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
-  },[]);
   se(function(){
     lsSet("hr_emps",emps);
     lsSet("hr_att",att);
@@ -1283,9 +1252,12 @@ export default function App(){
     lsSet("hr_reminders",reminders);
     lsSet("hr_notices",notices);
     lsSet("hr_revisions",revisions);
-    if(gUser&&gUser.email&&screen==="app"){
-      // Sync immediately - no debounce so sign out never loses data
-      syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
+    if(gUser&&gUser.email&&screen==="app"&&emps.length>0){
+      // Small debounce to avoid sync on initial load
+      var t=setTimeout(function(){
+        syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
+      },3000);
+      return function(){clearTimeout(t);};
     }
   },[emps,att,incentives,shifts,reminders,notices,revisions]);
 
