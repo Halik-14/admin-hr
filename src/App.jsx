@@ -1405,14 +1405,13 @@ export default function App(){
     setStep(1);setAddOpen(false);showT(name+" added!");
   }
   function openEdit(emp){
-    setEditE(Object.assign({},emp));setEDept(emp.dept||"");setEPf(emp.pf);setEPfM(emp.pfMode||"capped");setEEsi(emp.esi);setEPt(emp.pt);setETds(emp.tds!==false);
-    setTimeout(function(){
-      if(edn.current)edn.current.value=emp.name||"";if(edm.current)edm.current.value=emp.mob||"";
-      if(edem.current)edem.current.value=emp.email||"";if(edei.current)edei.current.value=emp.eid||"";
-      if(edro.current)edro.current.value=emp.role||"";if(edctc.current)edctc.current.value=String(emp.monthlyCTC||"");
-      if(edhi.current)edhi.current.value=String(emp.hi||"");if(edpa.current)edpa.current.value=emp.pan||"";
-      if(edua.current)edua.current.value=emp.uan||"";
-    },60);
+    setEditE(Object.assign({},emp));
+    setEDept(emp.dept||"");
+    setEPf(emp.pf);
+    setEPfM(emp.pfMode||"capped");
+    setEEsi(emp.esi);
+    setEPt(emp.pt);
+    setETds(emp.tds!==false);
   }
   function saveEdit(){
     var ctc=Number(editE.monthlyCTC)||0;if(!ctc)return showT("CTC required","err");
@@ -2347,7 +2346,7 @@ export default function App(){
         togEl("TDS","FY 2025-26 new regime",eTds,setETds)
       ),0),
       h("div",{style:{height:10}}),
-      gradBtn("Save Changes",saveEdit,GRN,"#16A34A")
+      h("button",{onClick:saveEdit,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:GRN,border:"none",borderRadius:12,padding:"13px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,CARD,18),"Save Changes")
     );
   }
 
