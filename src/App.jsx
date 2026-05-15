@@ -1116,7 +1116,9 @@ export default function App(){
   var sAEM=st(lsGet("hr_last_email","")),authEmail=sAEM[0],setAuthEmail=sAEM[1];
   var sAPW=st(""),authPwd=sAPW[0],setAuthPwd=sAPW[1];
   var sAPW2=st(""),authPwd2=sAPW2[0],setAuthPwd2=sAPW2[1];
-  var sAMD=st("signin"),authMode=sAMD[0],setAuthMode=sAMD[1];
+  var sAMD=st("email"),authMode=sAMD[0],setAuthMode=sAMD[1];
+  var sOTP=st(""),authOtp=sOTP[0],setAuthOtp=sOTP[1];
+  var sOTPSent=st(false),otpSent=sOTPSent[0],setOtpSent=sOTPSent[1];
   var sAER=st(""),authErr=sAER[0],setAuthErr=sAER[1];
   var sALD=st(false),authLoading=sALD[0],setAuthLoading=sALD[1];
   var sShowPw=st(false),showPw=sShowPw[0],setShowPw=sShowPw[1];
@@ -1578,27 +1580,46 @@ export default function App(){
   // Simple password hash (djb2) — good enough for localStorage auth
   function hashPwd(str){var h=5381;for(var i=0;i<str.length;i++)h=((h<<5)+h)^str.charCodeAt(i);return String(h>>>0);}
 
-  function handleSignIn(){
-    if(!authEmail.trim())return setAuthErr("Enter your email");
-    if(!authPwd)return setAuthErr("Enter your password");
+
+  // ── OTP: Send email OTP ──────────────────────────────────────────────────
+  function handleSendOTP(){
+    var email=authEmail.trim().toLowerCase();
+    if(!email)return setAuthErr("Enter your email address");
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
     setAuthLoading(true);setAuthErr("");
-    _sb.auth.signInWithPassword({email:authEmail.trim().toLowerCase(),password:authPwd})
+    _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}})
     .then(function(res){
-      if(res.error){setAuthErr(res.error.message);setAuthLoading(false);return;}
-      var email=res.data.user.email;
-      var gu={name:email.split("@")[0],email:email,photo:""};
-      // Clear ALL generic keys so previous user data never leaks
-      ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-      // Reset state immediately
-      setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
-      setGUser(gu);lsSet("hr_guser",gu);
+      setAuthLoading(false);
+      if(res.error){setAuthErr(res.error.message);return;}
+      setOtpSent(true);setAuthMode("otp");
       lsSet("hr_last_email",email);
+    }).catch(function(e){setAuthErr(e.message||"Failed to send OTP");setAuthLoading(false);});
+  }
+
+  // ── OTP: Verify OTP ──────────────────────────────────────────────────────
+  function handleVerifyOTP(){
+    var email=authEmail.trim().toLowerCase();
+    var token=authOtp.trim();
+    if(!token||token.length<6)return setAuthErr("Enter the 6-digit OTP");
+    setAuthLoading(true);setAuthErr("");
+    _sb.auth.verifyOtp({email:email,token:token,type:"email"})
+    .then(function(res){
+      if(res.error){setAuthErr("Invalid or expired OTP. Try again.");setAuthLoading(false);return;}
+      var user=res.data.user;
+      if(!user){setAuthErr("Verification failed. Try again.");setAuthLoading(false);return;}
+      var em=user.email;
+      var gu={name:em.split("@")[0],email:em,photo:""};
+      // Clear stale data from any previous user
+      ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+      setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
+      setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
+      setGUser(gu);lsSet("hr_guser",gu);
       var loginT=new Date().toISOString();lsSet("hr_login_time",loginT);setLoginTime(loginT);
-      // Fetch org, plan AND hr data all at once before showing app
+      // Fetch all data before showing app
       Promise.all([
-        _sb.from("user_orgs").select("org_name,org_type,position,address,logo_base64").eq("email",email).maybeSingle(),
-        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",email).maybeSingle(),
-        _sb.from("user_data").select("*").eq("email",email).maybeSingle()
+        _sb.from("user_orgs").select("org_name,org_type,position,address,logo_base64").eq("email",em).maybeSingle(),
+        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",em).maybeSingle(),
+        _sb.from("user_data").select("*").eq("email",em).maybeSingle()
       ]).then(function(results){
         var orgRes=results[0],planRes=results[1],dataRes=results[2];
         var plan=(planRes.data&&planRes.data.plan)||"free";
@@ -1608,10 +1629,8 @@ export default function App(){
         setIsAdmin(admin);
         var sbOrg=orgRes.data;
         if(sbOrg&&sbOrg.org_name){
-          var updatedOrg={name:sbOrg.org_name,email:email,position:sbOrg.position||"",type:sbOrg.org_type||"",plan:plan,expires_on:expiresOn,emp_limit:empLimit,address:sbOrg.address||"",logo:sbOrg.logo_base64||""};
-          lsSet("hr_org_"+email,updatedOrg);
-          setOrg(updatedOrg);
-          // Load HR data BEFORE showing app screen
+          var updatedOrg={name:sbOrg.org_name,email:em,position:sbOrg.position||"",type:sbOrg.org_type||"",plan:plan,expires_on:expiresOn,emp_limit:empLimit,address:sbOrg.address||"",logo:sbOrg.logo_base64||""};
+          lsSet("hr_org_"+em,updatedOrg);setOrg(updatedOrg);
           if(dataRes.data){
             try{
               setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
@@ -1624,56 +1643,22 @@ export default function App(){
               lsSet("hr_last_sync",dataRes.data.updated_at);
             }catch(e){}
           }
-          setScreen("app");
-          showT("Welcome back, "+gu.name.split("@")[0]+"!");
+          setScreen("app");showT("Welcome back!");
         } else {
           setScreen("setup");
         }
         setAuthLoading(false);
       }).catch(function(){
-        var cachedOrg=lsGet("hr_org_"+email,null);
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");showT("Welcome back!");}
+        var cachedOrg=lsGet("hr_org_"+em,null);
+        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
         else setScreen("setup");
         setAuthLoading(false);
       });
-    }).catch(function(e){setAuthErr(e.message||"Sign in failed");setAuthLoading(false);});
+    }).catch(function(e){setAuthErr(e.message||"Verification failed");setAuthLoading(false);});
   }
 
-  function handleSignUp(){
-    if(!authEmail.trim())return setAuthErr("Enter your email");
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authEmail.trim()))return setAuthErr("Enter a valid email address");
-    if(!authPwd)return setAuthErr("Enter a password");
-    if(authPwd.length<6)return setAuthErr("Password must be at least 6 characters");
-    if(authPwd!==authPwd2)return setAuthErr("Passwords do not match");
-    setAuthLoading(true);setAuthErr("");
-    _sb.auth.signUp({email:authEmail.trim().toLowerCase(),password:authPwd})
-    .then(function(res){
-      if(res.error){setAuthErr(res.error.message);setAuthLoading(false);return;}
-      // Check if email confirmation is required
-      var user=res.data.user;
-      var confirmed=user&&user.email_confirmed_at;
-      var identities=user&&user.identities;
-      // If identities is empty, email already exists
-      if(identities&&identities.length===0){
-        setAuthErr("An account already exists with this email. Please sign in.");
-        setAuthLoading(false);return;
-      }
-      if(!confirmed){
-        // Email confirmation required - show message
-        setAuthErr("");
-        setAuthLoading(false);
-        showT("Check your email to confirm your account!");
-        setAuthMode("signin");
-        return;
-      }
-      var email=user.email;
-      var gu={name:email.split("@")[0],email:email,photo:""};
-      setGUser(gu);lsSet("hr_guser",gu);
-      setScreen("setup");
-      setAuthLoading(false);
-    }).catch(function(e){setAuthErr(e.message||"Sign up failed");setAuthLoading(false);});
-  }
 
+  // ── AUTH SCREENS ────────────────────────────────────────────────────────
   var makeInIndiaBadge=h("div",{style:{textAlign:"center",padding:"0 0 20px",marginTop:"auto"}},
     h("div",{style:{fontSize:9,color:T.AUTH_LABEL,letterSpacing:.8}},"Proudly built in India • Made for Indian Businesses")
   );
@@ -1682,27 +1667,68 @@ export default function App(){
     h("div",{style:{width:"100%",maxWidth:380}},makeInIndiaBadge)
   );};
 
-  // ── Forgot password screen ──
-  var forgotScreen=authWrap(h("div",{key:"forgot",style:{textAlign:"center"}},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
-      logoSVG(52),
-      h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Reset Password"),
-      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:3}},"We'll send a reset link to your email")
+  // Email entry screen
+  var emailScreen=authWrap(h("div",{key:"email"},
+    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:32}},
+      logoSVG(64),
+      h("div",{style:{fontSize:24,fontWeight:800,color:T.AUTH_TEXT,marginTop:16,letterSpacing:-.5}},"Admin HR"),
+      h("div",{style:{fontSize:13,color:T.AUTH_LABEL,marginTop:4,textAlign:"center"}},"Smart HR for Indian Businesses")
     ),
-    resetSent?h("div",null,
-      h("div",{style:{background:GRN+"18",border:"1px solid "+GRN+"44",borderRadius:12,padding:"16px",marginBottom:20,fontSize:13,color:GRN,fontWeight:600,lineHeight:1.6}},resetSent),
-      h("button",{onClick:function(){setResetSent("");setResetEmail("");setAuthMode("signin");},style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer"}},"Back to Sign In")
-    ):h("div",null,
-      h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"YOUR EMAIL"),
-      h("input",{type:"email",value:resetEmail,onChange:function(e){setResetEmail(e.target.value);},placeholder:"you@company.com",autoComplete:"email",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:16}}),
-      h("button",{onClick:handleResetPassword,style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:16}},"Send Reset Link"),
-      h("div",{style:{textAlign:"center",fontSize:12,color:T.AUTH_LABEL}},
-        h("span",{style:{color:T.AUTH_TEXT,cursor:"pointer",fontWeight:600},onClick:function(){setAuthMode("signin");}},"Back to Sign In")
+    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"YOUR EMAIL"),
+    h("input",{type:"email",value:authEmail,onChange:function(e){setAuthEmail(e.target.value);setAuthErr("");},
+      onKeyDown:function(e){if(e.key==="Enter")handleSendOTP();},
+      placeholder:"you@company.com",autoComplete:"email",
+      style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:10}
+    }),
+    authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
+    h("button",{onClick:handleSendOTP,disabled:authLoading,style:{width:"100%",background:authLoading?T.AUTH_LABEL:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",opacity:authLoading?.7:1}},
+      authLoading?"Sending OTP...":"Continue with OTP"
+    ),
+    h("div",{style:{textAlign:"center",marginTop:16,fontSize:11,color:T.AUTH_LABEL}},
+      "We will send a 6-digit OTP to your email"
+    ),
+    h("div",{style:{textAlign:"center",marginTop:8,fontSize:11,color:T.AUTH_LABEL}},
+      "Need help? ",
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need help with Admin HR login."),"_blank");}},
+        "Contact Support"
       )
-    )
+    ),
+    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:3,textAlign:"center"}},"Mon-Fri, 10 AM - 6 PM")
   ));
 
-  // ── Set new password screen (after clicking reset link) ──
+  // OTP verification screen
+  var otpScreen=authWrap(h("div",{key:"otp",style:{textAlign:"center"}},
+    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
+      logoSVG(52),
+      h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Check Your Email"),
+      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:5}},"OTP sent to"),
+      h("div",{style:{fontSize:13,fontWeight:700,color:T.AUTH_TEXT,marginTop:3}},authEmail)
+    ),
+    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600,textAlign:"left"}},"ENTER 6-DIGIT OTP"),
+    h("input",{
+      type:"number",value:authOtp,
+      onChange:function(e){setAuthOtp(e.target.value.slice(0,6));setAuthErr("");},
+      onKeyDown:function(e){if(e.key==="Enter")handleVerifyOTP();},
+      placeholder:"000000",
+      style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"14px",fontSize:22,color:T.AUTH_TEXT,outline:"none",fontFamily:"monospace",textAlign:"center",letterSpacing:8,marginBottom:10}
+    }),
+    authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
+    h("button",{onClick:handleVerifyOTP,disabled:authLoading,style:{width:"100%",background:authLoading?T.AUTH_LABEL:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",opacity:authLoading?.7:1}},
+      authLoading?"Verifying...":"Verify OTP"
+    ),
+    h("div",{style:{marginTop:16,fontSize:12,color:T.AUTH_LABEL,textAlign:"center"}},
+      "Didn't get it? ",
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){setAuthMode("email");setAuthOtp("");setAuthErr("");setOtpSent(false);}},
+        "Change email"
+      ),
+      " or ",
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){setAuthOtp("");setAuthErr("");handleSendOTP();}},
+        "Resend OTP"
+      )
+    ),
+    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:4}},"OTP expires in 10 minutes")
+  ));
+
   var setPasswordScreen=authWrap(h("div",{key:"setpw",style:{textAlign:"center"}},
     h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
       logoSVG(52),
@@ -1720,384 +1746,6 @@ export default function App(){
     h("button",{onClick:handleSetNewPassword,style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer",marginTop:6}},"Update Password")
   ));
 
-  var loginScreen=authWrap(h("div",{key:"login"},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:32}},
-      logoSVG(64),
-      h("div",{style:{fontSize:26,fontWeight:800,color:T.AUTH_TEXT,marginTop:16,letterSpacing:-.5}},"Welcome back"),
-      h("div",{style:{fontSize:13,color:T.AUTH_LABEL,marginTop:4}},"Sign in to your Admin HR workspace")
-    ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"EMAIL"),
-    h("input",{type:"email",value:authEmail,onChange:function(e){setAuthEmail(e.target.value);setAuthErr("");},placeholder:"you@company.com",autoComplete:"email",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr&&!authEmail?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:10}}),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"PASSWORD"),
-    h("div",{style:{position:"relative",marginBottom:0}},
-      h("input",{type:showPw?"text":"password",value:authPwd,onChange:function(e){setAuthPwd(e.target.value);setAuthErr("");},onKeyDown:function(e){if(e.key==="Enter")handleSignIn();},placeholder:"Enter your password",autoComplete:"current-password",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 44px 13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit"}}),
-      h("button",{onClick:function(){setShowPw(function(v){return !v;});},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:11,padding:2}},showPw?"Hide":"Show")
-    ),
-    authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginTop:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
-    h("button",{onClick:handleSignIn,disabled:authLoading,style:{width:"100%",background:authLoading?T.AUTH_LABEL:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",marginTop:16,opacity:authLoading?.7:1}},
-      authLoading?"Signing in...":"Sign In"
-    ),
-    h("div",{style:{textAlign:"center",marginTop:18,fontSize:12,color:T.AUTH_LABEL}},
-      "Forgot password? ",
-      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I forgot my Admin HR password. My email: "+(authEmail.trim()||"(not entered)")),"_blank");}},
-        "Contact Support"
-      ),
-      h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:5}},"Mon–Fri, 10 AM – 6 PM")
-    ),
-    h("div",{style:{borderTop:"1px solid "+T.AUTH_INPUT_BDR,marginTop:20,paddingTop:18,textAlign:"center"}},
-      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginBottom:10}},"Don't have an account?"),
-      h("button",{onClick:function(){setAuthMode("signup");setAuthErr("");setAuthPwd("");setAuthPwd2("");},style:{width:"100%",background:"transparent",border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"12px",color:T.AUTH_TEXT,fontSize:13,fontWeight:600,cursor:"pointer"}},"Create Account")
-    )
-  ));
-
-  var signupScreen=authWrap(h("div",{key:"signup"},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
-      logoSVG(52),
-      h("div",{style:{fontSize:22,fontWeight:800,color:T.AUTH_TEXT,marginTop:14,letterSpacing:-.5}},"Create Account"),
-      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:3}},"Set up your Admin HR account")
-    ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"EMAIL"),
-    h("input",{type:"email",value:authEmail,onChange:function(e){setAuthEmail(e.target.value);setAuthErr("");},placeholder:"you@company.com",autoComplete:"email",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr&&!authEmail?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:10}}),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"PASSWORD"),
-    h("div",{style:{position:"relative",marginBottom:10}},
-      h("input",{type:showPw?"text":"password",value:authPwd,onChange:function(e){setAuthPwd(e.target.value);setAuthErr("");},placeholder:"Min. 6 characters",autoComplete:"new-password",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 44px 13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit"}}),
-      h("button",{onClick:function(){setShowPw(function(v){return !v;});},style:{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:11,padding:2}},showPw?"Hide":"Show")
-    ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"CONFIRM PASSWORD"),
-    h("input",{type:showPw?"text":"password",value:authPwd2,onChange:function(e){setAuthPwd2(e.target.value);setAuthErr("");},placeholder:"Re-enter password",autoComplete:"new-password",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr&&authPwd!==authPwd2?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit"}}),
-    authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginTop:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
-    h("button",{onClick:handleSignUp,disabled:authLoading,style:{width:"100%",background:authLoading?T.AUTH_LABEL:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",marginTop:16,opacity:authLoading?.7:1}},
-      authLoading?"Creating account...":"Create Account"
-    ),
-    h("div",{style:{textAlign:"center",marginTop:18,fontSize:12,color:T.AUTH_LABEL}},
-      "Already have an account? ",
-      h("span",{style:{color:T.AUTH_TEXT,cursor:"pointer",fontWeight:700},onClick:function(){setAuthMode("signin");setAuthErr("");setAuthPwd("");setAuthPwd2("");}},
-        "Sign In"
-      )
-    )
-  ));
-
-  var setupScreen=authWrap(h("div",{key:"setup"},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
-      gUser&&gUser.photo?h("img",{src:gUser.photo,width:60,height:60,style:{borderRadius:"50%",marginBottom:12}}):h("div",{style:{width:60,height:60,borderRadius:"50%",background:ACCENT,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:ACCENT_FG,fontWeight:700,marginBottom:12}},gUser?(gUser.name||"U").charAt(0).toUpperCase():"U"),
-      h("div",{style:{fontSize:18,fontWeight:700,color:T.AUTH_TEXT}},"Welcome, "+(gUser?gUser.name.split("@")[0]:"")+"!"),
-      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:3}},"Set up your workspace — this is permanent")
-    ),
-    h("div",{style:{background:T.AUTH_INPUT_BG,border:"1px solid "+T.AUTH_INPUT_BDR,borderRadius:11,padding:"10px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}},
-      ic("lock",T.AUTH_LABEL,14),
-      h("div",null,
-        h("div",{style:{fontSize:10,color:T.AUTH_LABEL}},"Email (permanent — cannot be changed)"),
-        h("div",{style:{fontWeight:700,color:T.AUTH_TEXT,fontSize:13}},gUser?gUser.email:""),
-        h("div",{style:{fontSize:9,color:T.AUTH_LABEL,marginTop:2}},"This email is your permanent account identity")
-      )
-    ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:6,fontWeight:600}},"COMPANY NAME *"),
-    h("div",{style:{position:"relative"}},
-      h("input",{value:setupCompany,onChange:function(e){setSetupCompany(e.target.value);},placeholder:"e.g. Acme Technologies Pvt Ltd",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 44px 13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:4}}),
-      h("div",{style:{position:"absolute",right:14,top:"50%",transform:"translateY(-60%)",display:"flex",alignItems:"center"}},ic("lock",T.AUTH_LABEL,15))
-    ),
-    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginBottom:14,paddingLeft:2}},"Appears on all payslips — cannot be changed after setup"),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:6,fontWeight:600}},"ORGANISATION TYPE *"),
-    h("select",{value:setupOrgType,onChange:function(e){setSetupOrgType(e.target.value);},style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 14px",fontSize:13,color:setupOrgType?T.AUTH_TEXT:T.AUTH_LABEL,fontFamily:"inherit",outline:"none",marginBottom:14}},
-      h("option",{value:""},"Select organisation type"),
-      ["IT / Software","Institute / Education","Manufacturing","Healthcare","Retail","Finance","Logistics","NGO","Other"].map(function(t){return h("option",{key:t,value:t},t);})
-    ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:6,fontWeight:600}},"YOUR ROLE IN THE COMPANY *"),
-    h("select",{value:setupPosition,onChange:function(e){setSetupPosition(e.target.value);},style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 14px",fontSize:13,color:setupPosition?T.AUTH_TEXT:T.AUTH_LABEL,fontFamily:"inherit",outline:"none",marginBottom:4}},
-      h("option",{value:""},"Select your role"),
-      ["Owner","MD / Director","CEO","HR Manager","HR Executive","Admin Manager","Finance Manager","Accounts Manager","Operations Manager","General Manager"].map(function(t){return h("option",{key:t,value:t},t);})
-    ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:6,fontWeight:600}},"STATE (for minimum wage check)"),
-    h("select",{value:setupState,onChange:function(e){setSetupState(e.target.value);},style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 14px",fontSize:13,color:setupState?T.AUTH_TEXT:T.AUTH_LABEL,fontFamily:"inherit",outline:"none",marginBottom:20}},
-      h("option",{value:""},"Select state (optional)"),
-      Object.keys(MIN_WAGE).map(function(s){return h("option",{key:s,value:s},s);})
-    ),
-    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginBottom:20,paddingLeft:2}},"Your role shown on payslips — cannot be changed after setup"),
-    h("button",{onClick:function(){
-      if(!setupCompany.trim())return showT("Enter company name","err");
-      if(!setupOrgType)return showT("Select organisation type","err");
-      if(!setupPosition)return showT("Select your position","err");
-      var email=gUser?gUser.email:"";
-      var newOrg={name:setupCompany.trim(),email:email,position:setupPosition,type:setupOrgType,state:setupState||"",plan:"free"};
-      // Save to Supabase first so it works across devices
-      _sb.from("user_orgs").upsert({
-        email:email,
-        org_name:setupCompany.trim(),
-        org_type:setupOrgType,
-        position:setupPosition
-      },{onConflict:"email"}).then(function(res){
-        if(res.error)console.error("Org save error:",res.error.message);
-      });
-      setOrg(newOrg);
-      lsSet("hr_org_"+email,newOrg);
-      setScreen("app");
-      showT("Welcome to Admin HR!");
-    },style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer"}},"Get Started")
-  ));
-
-  var confirmScreen=authWrap(h("div",{key:"confirm",style:{textAlign:"center"}},
-    h("div",{style:{width:72,height:72,borderRadius:"50%",background:GRN+"18",border:"2px solid "+GRN+"44",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 20px"}},
-      ic("mail",GRN,32)
-    ),
-    h("div",{style:{fontSize:22,fontWeight:800,color:T.AUTH_TEXT,marginBottom:8}},"Check your email"),
-    h("div",{style:{fontSize:13,color:T.AUTH_LABEL,marginBottom:6,lineHeight:1.6}},"We sent a confirmation link to"),
-    h("div",{style:{fontSize:14,fontWeight:700,color:T.AUTH_TEXT,marginBottom:20}}),
-    h("div",{style:{background:SFT||T.AUTH_INPUT_BG,border:"1px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"14px",marginBottom:20,fontSize:12,color:T.AUTH_LABEL,lineHeight:1.7}},
-      h("div",{style:{fontWeight:600,color:T.AUTH_TEXT,marginBottom:4}},"Next steps:"),
-      "1. Open your email inbox",h("br",null),
-      "2. Click the confirmation link",h("br",null),
-      "3. Come back here and Sign In"
-    ),
-    h("button",{onClick:function(){setAuthMode("signin");setAuthErr("");setAuthPwd("");setAuthPwd2("");},style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer",marginBottom:12}},"Go to Sign In"),
-    h("div",{style:{fontSize:12,color:T.AUTH_LABEL}},"Didn't receive? Check spam folder or ",
-      h("span",{style:{color:T.AUTH_TEXT,fontWeight:600,cursor:"pointer"},onClick:function(){setAuthMode("signup");setAuthErr("");}},"try again")
-    )
-  ));
-
-  var sASearch=st(""),adminSearch=sASearch[0],setAdminSearch=sASearch[1];
-  var sOrgAddr=st(org.address||""),orgAddr=sOrgAddr[0],setOrgAddr=sOrgAddr[1];
-  var sOrgLogo=st(org.logo||""),orgLogo=sOrgLogo[0],setOrgLogo=sOrgLogo[1];
-  se(function(){setOrgAddr(org.address||"");setOrgLogo(org.logo||"");},[org.address,org.logo]);
-  var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
-  var sExpInput=st(""),expInput=sExpInput[0],setExpInput=sExpInput[1];
-  var sDTick=st(0),setDTick=sDTick[1];
-  se(function(){
-    var t=setInterval(function(){setDTick(function(v){return v+1;});},1000);
-    return function(){clearInterval(t);};
-  },[]);
-
-  function renderDashboard(){
-
-    function expiryCountdown(){
-      if(!org.expires_on||!isPaid)return null;
-      var now=new Date();
-      var end=new Date(org.expires_on);
-      end.setHours(23,59,59,999);
-      var diff=end-now;
-      var isExp=diff<=0;
-      var dd=Math.max(0,Math.floor(diff/86400000));
-      var hh=Math.max(0,Math.floor((diff%86400000)/3600000));
-      var mm=Math.max(0,Math.floor((diff%3600000)/60000));
-      var ss=Math.max(0,Math.floor((diff%60000)/1000));
-      var color=isExp?RED:dd<=3?RED:dd<=7?AMB:GRN;
-      var bg=isExp?RED+"15":dd<=3?RED+"12":dd<=7?AMB+"12":GRN+"12";
-      return h("div",{style:{background:bg,border:"1px solid "+color+"44",borderRadius:12,padding:"10px 14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}},
-        h("div",null,
-          h("div",{style:{fontSize:10,color:color,fontWeight:700,letterSpacing:.5}},"SUBSCRIPTION "+(isExp?"EXPIRED":"EXPIRES IN")),
-          h("div",{style:{fontSize:11,color:GRY,marginTop:1}},isExp?"Please contact support to renew":new Date(org.expires_on).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}))
-        ),
-        isExp
-          ?h("div",{style:{fontSize:12,fontWeight:800,color:RED}},"EXPIRED")
-          :h("div",{style:{fontFamily:"monospace",fontSize:14,fontWeight:800,color:color,letterSpacing:1}},
-            String(dd).padStart(2,"0")+":"+String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0")
-          ),
-          h("div",{style:{fontSize:8,color:color,textAlign:"right",letterSpacing:.5,marginTop:1}},dd>0?"DD:HH:MM:SS":"HH:MM:SS")
-      );
-    }
-
-    var presentCount=actEmps.filter(function(e){return getTAtt(e.id)==="present";}).length;
-    var absentCount=actEmps.filter(function(e){return getTAtt(e.id)==="absent";}).length;
-    var statCards=[
-      {l:"Total Team",v:actEmps.length,ico:"people_alt",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active"},
-      {l:"Present Today",v:presentCount,ico:"fact_check",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today"},
-      {l:"Gross Payroll",v:fmt(tGross),ico:"account_balance",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY},
-      {l:"Net Payable",v:fmt(tNet),ico:"wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions"},
-    ];
-    var hr=now.getHours(),greet=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
-    // Pre-compute reminder urgency
-    var activeRems=reminders.filter(function(r){return !r.done;});
-    var doneRems=reminders.filter(function(r){return r.done;});
-    var urgentRems=activeRems.filter(function(r){if(!r.date)return false;var diff=Math.ceil((new Date(r.date)-now)/86400000);return diff<=1;});
-    var bdayUrgent=bRemind.some(function(e){var dob=new Date(e.dob),tdDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()),bday=new Date(now.getFullYear(),dob.getMonth(),dob.getDate());if(bday<tdDate)bday.setFullYear(now.getFullYear()+1);return Math.ceil((bday-tdDate)/86400000)<=1;});
-    var showRemSection=true; // Always show reminder card so user can add reminders
-    return h("div",{className:"fd"},
-      h("div",{style:{background:NVY,borderRadius:18,padding:"18px 18px 20px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:T.SHADOW_LG}},
-        h("div",{style:{position:"absolute",right:-30,top:-30,width:120,height:120,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.05)":"rgba(0,0,0,.10)"}}),
-        h("div",{style:{position:"absolute",right:30,bottom:-40,width:80,height:80,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.04)":"rgba(0,0,0,.08)"}}),
-        h("div",{style:{position:"absolute",top:14,right:16,fontSize:11,fontWeight:600,color:CARD,opacity:.75,letterSpacing:.5,fontVariantNumeric:"tabular-nums"}},timeStr),
-        h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginBottom:3,fontWeight:500}},now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})),
-        h("div",{style:{fontSize:22,fontWeight:600,color:CARD,letterSpacing:-.3}},greet),
-        h("div",{style:{fontSize:11,color:CARD,opacity:.7,marginTop:3,fontWeight:500}},org.position+" \u2022 "+org.name)
-      ),
-      expiryCountdown(),
-      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
-        statCards.map(function(s,i){
-          return h("div",{key:i,style:{
-            background:CARD,
-            border:"1px solid "+BDR,
-            borderRadius:16,
-            padding:"14px 14px 13px",
-            boxShadow:themeMode==="light"?"0 2px 16px rgba(15,23,42,.07)":"0 2px 12px rgba(0,0,0,.35)",
-            position:"relative",overflow:"hidden"
-          }},
-            h("div",{style:{position:"absolute",right:-10,top:-10,width:60,height:60,borderRadius:"50%",background:s.bg,opacity:.5}}),
-            h("div",{style:{
-              width:42,height:42,borderRadius:13,
-              background:s.bg,
-              display:"flex",alignItems:"center",justifyContent:"center",
-              marginBottom:11,flexShrink:0
-            }},ic(s.ico,s.ic,22)),
-            h("div",{style:{fontSize:String(s.v).length>8?14:22,fontWeight:900,color:NVY,letterSpacing:-.5,lineHeight:1.1,marginBottom:4}},s.v),
-            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,opacity:.85}},s.l),
-            h("div",{style:{fontSize:10,color:GRY,marginTop:3,fontWeight:500}},s.s)
-          );
-        })
-      ),
-      h("button",{onClick:function(){setTab("attendance");},style:{width:"100%",background:NVY,border:"none",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 16px rgba(15,23,42,.25)"}},
-        h("div",{style:{width:44,height:44,borderRadius:13,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(ICONS.cal,"#fff",22)),
-        h("div",{style:{flex:1,textAlign:"left"}},
-          h("div",{style:{fontSize:14,fontWeight:700,color:CARD}},"Mark Today's Attendance"),
-          h("div",{style:{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:2}},actEmps.filter(function(e){return getTAtt(e.id)==="unmarked";}).length+" employees not yet marked")
-        ),
-        ic(ICONS.chev,"rgba(255,255,255,.7)",20)
-      ),
-      showRemSection?h("div",{style:{marginBottom:12}},
-        bRemind.length>0?h("div",{style:{borderRadius:12,padding:12,marginBottom:8,border:"1.5px solid #FCD34D",animation:bdayUrgent?"blinkBorder 1.2s ease-in-out infinite":"none",background:T.PILL_WARN_SOFT}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8}},
-            ic("cake",AMB,15),
-            h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Upcoming Birthdays")
-          ),
-          bRemind.map(function(emp){
-            var dob=new Date(emp.dob),tdDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()),bday=new Date(now.getFullYear(),dob.getMonth(),dob.getDate());
-            if(bday<tdDate)bday.setFullYear(now.getFullYear()+1);
-            var diff=Math.ceil((bday-tdDate)/86400000);
-            var urgent=diff<=1;
-            return h("div",{key:emp.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid "+BDR,animation:urgent?"blinkBg 1.2s ease-in-out infinite":"none",borderRadius:urgent?6:0,paddingLeft:urgent?6:0}},
-              h("div",{style:{display:"flex",alignItems:"center",gap:7}},
-                av(emp,26),
-                h("div",null,
-                  h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},emp.name),
-                  h("div",{style:{fontSize:10,fontWeight:600,color:urgent?RED:AMB}},diff===0?"Today! \uD83C\uDF82":diff===1?"Tomorrow!":dob.toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" ("+diff+"d)")
-                )
-              ),
-              h("button",{onClick:function(){setSkipB(function(p){return p.concat([emp.id]);});},style:{background:"none",border:"1px solid "+BDR,borderRadius:6,padding:"2px 8px",fontSize:10,color:GRY,cursor:"pointer"}},"Skip")
-            );
-          })
-        ):null,
-        h("div",{style:{background:CARD,border:"1.5px solid "+(urgentRems.length>0?RED:BDR),borderRadius:12,padding:12,animation:urgentRems.length>0?"blinkBorder 1.2s ease-in-out infinite":"none"}},
-          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:activeRems.length>0||remOpen?10:0}},
-            h("div",{style:{display:"flex",alignItems:"center",gap:6}},
-              ic("notifications",urgentRems.length>0?RED:NVY,15),
-              h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Reminders"+(activeRems.length>0?" ("+activeRems.length+")":""))
-            ),
-            h("button",{onClick:function(){setRemOpen(function(v){return !v;});},style:{background:remOpen?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"3px 9px",fontSize:11,color:remOpen?ACCENT_FG:NVY,fontWeight:600,cursor:"pointer"}},remOpen?"Cancel":"+ Add")
-          ),
-          remOpen?h("div",{style:{marginBottom:10,background:SFT,borderRadius:9,padding:10}},
-            h("input",{value:remTxt,onChange:function(e){setRemTxt(e.target.value);},placeholder:"Reminder text...",style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:7}}),
-            h("div",{style:{display:"flex",gap:7}},
-              h("input",{type:"date",value:remDate,onChange:function(e){setRemDate(e.target.value);},style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-              h("button",{onClick:function(){
-                if(!remTxt.trim())return showT("Enter reminder text","err");
-                setReminders(function(p){return p.concat([{id:Date.now(),text:remTxt.trim(),date:remDate||"",done:false}]);});
-                setRemTxt("");setRemDate("");setRemOpen(false);showT("Reminder added!");
-              },style:{background:NVY,border:"none",borderRadius:8,padding:"8px 14px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Add")
-            )
-          ):null,
-          activeRems.length===0&&!remOpen?h("div",{style:{textAlign:"center",padding:"8px 0",color:GRY,fontSize:11}},"No active reminders"):null,
-          activeRems.map(function(r){
-            var rdiff=r.date?Math.ceil((new Date(r.date)-now)/86400000):null;
-            var rurgent=rdiff!==null&&rdiff<=1;
-            return h("div",{key:r.id,style:{display:"flex",alignItems:"flex-start",gap:8,padding:"7px 0",borderBottom:"1px solid "+BDR,animation:rurgent?"blinkBg 1.2s ease-in-out infinite":"none",borderRadius:rurgent?6:0,paddingLeft:rurgent?4:0}},
-              h("button",{onClick:function(){setReminders(function(p){return p.map(function(x){return x.id===r.id?Object.assign({},x,{done:true}):x;});});},title:"Mark done",style:{width:18,height:18,borderRadius:4,border:"2px solid "+BDR,background:"none",cursor:"pointer",flexShrink:0,marginTop:1,display:"flex",alignItems:"center",justifyContent:"center"}}),
-              h("div",{style:{flex:1}},
-                h("div",{style:{fontSize:12,color:NVY,fontWeight:500,lineHeight:1.4}},r.text),
-                r.date?h("div",{style:{fontSize:10,fontWeight:600,color:rurgent?RED:GRY,marginTop:2}},rdiff===0?"Today!":rdiff===1?"Tomorrow!":rdiff<0?"Overdue by "+Math.abs(rdiff)+"d":r.date):null
-              ),
-              h("button",{onClick:function(){if(window.confirm("Delete this reminder?"))setReminders(function(p){return p.filter(function(x){return x.id!==r.id;});});},style:{background:"none",border:"none",cursor:"pointer",padding:0,flexShrink:0}},ic("close",GRY,14))
-            );
-          }),
-          doneRems.length>0?h("div",{style:{marginTop:8,paddingTop:6,borderTop:"1px dashed "+BDR}},
-            h("div",{style:{fontSize:10,color:GRY,fontWeight:600,marginBottom:4}},"COMPLETED ("+doneRems.length+")"),
-            doneRems.map(function(r){
-              return h("div",{key:r.id,style:{display:"flex",alignItems:"center",gap:8,padding:"4px 0",opacity:.55}},
-                h("div",{style:{width:18,height:18,borderRadius:4,background:GRN,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("check","#fff",12)),
-                h("div",{style:{flex:1,fontSize:11,color:GRY,textDecoration:"line-through"}},r.text),
-                h("button",{onClick:function(){setReminders(function(p){return p.filter(function(x){return x.id!==r.id;});});},style:{background:"none",border:"none",cursor:"pointer",padding:0}},ic("close",GRY,12))
-              );
-            })
-          ):null
-        )
-      ):null,
-      card(h("div",null,
-        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Attendance Snapshot"),
-          h("button",{onClick:function(){setTab("attendance");},style:{fontSize:11,color:NVY,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}},"Mark All")
-        ),
-        actEmps.slice(0,4).map(function(e,i){
-          var s=getTAtt(e.id);
-          return h("div",{key:e.id,onClick:function(){cycleAtt(todayStr,e.id);},className:"rh",style:{display:"flex",alignItems:"center",gap:8,padding:"6px 3px",borderBottom:i<3?"1px solid "+BDR:"none",cursor:"pointer",borderRadius:6}},
-            av(e,30),
-            h("div",{style:{flex:1}},h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),h("div",{style:{fontSize:10,color:GRY}},[e.role,e.dept].filter(Boolean).join(" • ")||"No designation")),
-            h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:16,background:ATC[s]+"18",color:ATC[s]}},ATL[s])
-          );
-        })
-      )),
-      card(h("div",null,
-        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Statutory Summary"),
-          h("button",{onClick:function(){setTab("settings");setSettTab("data");},style:{fontSize:11,color:NVY,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}},"Tax Slabs")
-        ),
-        (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM));a.pf+=d.pfE+d.pfR;a.esi+=d.esiE+d.esiR;a.pt+=d.pt;a.td+=d.tds;return a;},{pf:0,esi:0,pt:0,td:0});
-          var eligCount=actEmps.filter(function(e){return calcGratuity(e).eligible;}).length;
-          var totalGrat=actEmps.reduce(function(a,e){return a+calcGratuity(e).amount;},0);
-          return[["PF (Emp+Er)",fmt(tot.pf),NVY],["ESI (Emp+Er)",fmt(tot.esi),TEL],["Prof. Tax",fmt(tot.pt),AMB],["TDS",fmt(tot.td),RED],["Gratuity Accrued",fmt(totalGrat)+(eligCount>0?" ("+eligCount+" eligible)":""),GRN]].map(function(item){return row(item[0],item[1],item[2]);});
-        })()
-      ),0)
-    );
-  }
-
-  function renderEmployees(){
-    if(selE&&!editE&&!offE)return renderEmpDetail();
-    if(editE)return renderEditEmp();
-    if(offE)return renderOffboard();
-    var q=searchQ.trim().toLowerCase();
-    var filteredEmps=q?actEmps.filter(function(e){return(e.name||"").toLowerCase().includes(q)||(e.role||"").toLowerCase().includes(q)||(e.dept||"").toLowerCase().includes(q)||(e.eid||"").toLowerCase().includes(q);}):actEmps;
-    var empCountLabel=filteredEmps.length+(q?" found":" MEMBERS");
-    return h("div",{className:"fd"},
-      h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:11,padding:3,display:"flex",gap:3,marginBottom:11}},
-        [["active","Active"],["terminated","Offboarded"]].map(function(item){return h("button",{key:item[0],onClick:function(){setEmpTab(item[0]);},style:{flex:1,background:empTab===item[0]?ACCENT:"transparent",border:"none",borderRadius:9,padding:"8px",color:empTab===item[0]?ACCENT_FG:GRY,fontSize:12,fontWeight:600,cursor:"pointer"}},item[1]);})
-      ),
-      empTab==="active"?h("div",null,
-        h("div",{style:{display:"flex",gap:9,marginBottom:11}},
-          h("div",{style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:12,padding:"11px 14px",display:"flex",gap:8,alignItems:"center",boxShadow:T.SHADOW}},
-            ic("search",GRY,16),
-            h("input",{value:searchQ,onChange:function(ev){setSearchQ(ev.target.value);},placeholder:"Search by name, role, dept...",style:{flex:1,fontSize:13,color:NVY,border:"none",background:"transparent",outline:"none",fontFamily:"inherit"}}),
-            searchQ?h("button",{onClick:function(){setSearchQ("");},style:{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",padding:0}},ic("close",GRY,16)):null
-          ),
-          h("button",{onClick:function(){setAddOpen(true);setStep(1);},style:{background:NVY,border:"none",borderRadius:12,padding:"0 14px",color:CARD,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.plus,CARD,22))
-        ),
-        h("div",{style:{fontSize:11,color:GRY,marginBottom:9,fontWeight:500,letterSpacing:.3}},empCountLabel),
-        q&&filteredEmps.length===0?h("div",{style:{textAlign:"center",padding:32,color:GRY,fontSize:13}},'No results for "'+searchQ+'"'):null,
-        filteredEmps.map(function(e){
-          var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM));
-          return h("div",{key:e.id,className:"rh",onClick:function(){setSelE(e);},style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"13px 14px",display:"flex",gap:12,alignItems:"center",marginBottom:9,boxShadow:T.SHADOW,cursor:"pointer"}},
-            av(e,44),
-            h("div",{style:{flex:1,minWidth:0}},
-              h("div",{style:{fontSize:14,fontWeight:600,color:NVY,letterSpacing:-.1}},e.name),
-              h("div",{style:{fontSize:11,color:GRY,marginTop:1}},e.role+" \u2022 "+e.dept),
-              h("div",{style:{fontSize:10,color:GRY,marginTop:1,opacity:.8}},e.eid+" \u2022 Joined "+e.joined),
-              h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginTop:4}},"Net "+fmt(d.net)+" / mo")
-            ),
-            ic(ICONS.chev,GRY,16)
-          );
-        })
-      ):h("div",null,
-        h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},trmEmps.length+" offboarded"),
-        trmEmps.length===0?h("div",{style:{textAlign:"center",padding:28,color:GRY,fontSize:13}},"No offboarded employees"):null,
-        trmEmps.map(function(e){
-          return h("div",{key:e.id,style:{background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:"12px 13px",marginBottom:8}},
-            h("div",{style:{display:"flex",gap:10,alignItems:"center",marginBottom:7}},
-              av(e),
-              h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},e.name),h("div",{style:{fontSize:11,color:GRY}},e.role+" | "+e.dept),h("div",{style:{fontSize:10,color:RED,marginTop:1}},(e.status==="resigned"?"Resigned":"Terminated")+" - "+e.terminatedOn),e.resignDate?h("div",{style:{fontSize:10,color:GRY}},"Last day: "+e.resignDate):null),
-              h("div",{style:{fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:14,background:e.status==="resigned"?T.PILL_WARN_BG:T.PILL_DANGER_BG,color:e.status==="resigned"?AMB:RED}},e.status)
-            ),
-            e.terminationData?h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:8,fontSize:11,color:GRY}},h("div",null,h("b",null,"Reason: "),e.terminationData.reason),e.terminationData.note?h("div",null,h("b",null,"Note: "),e.terminationData.note):null,e.terminationData.handover&&e.terminationData.handover.length>0?h("div",null,h("b",null,"Handover: "),e.terminationData.handover.join(", ")):null):null,
-            h("button",{onClick:function(){if(window.confirm("Delete permanently?"))removeEmp(e.id);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:T.PILL_DANGER_BG,border:"1px solid "+RED,borderRadius:8,padding:"7px",color:RED,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Delete Record")
-          );
-        })
-      )
-    );
-  }
 
   function renderEmpDetail(){
     var ma=mAtt(selE.id,curY,curM),inc=getInc(selE.id,curY,curM),d=calcPay(selE,ma.absent,ma.half,ma.unpaid,inc);
@@ -2982,7 +2630,7 @@ export default function App(){
       [0,1,2].map(function(i){return h("div",{key:i,style:{width:6,height:6,borderRadius:"50%",background:NVY,opacity:.3,animation:"dot 1.2s "+(i*0.2)+"s infinite"}});})
     ),
     h("div",{style:{fontSize:12,color:T.AUTH_LABEL}})
-  ):(isPasswordReset?setPasswordScreen:(authMode==="signup"?signupScreen:(authMode==="confirm"?confirmScreen:(authMode==="forgot"?forgotScreen:loginScreen))));
+  ):(isPasswordReset?setPasswordScreen:(authMode==="otp"?otpScreen:emailScreen));
   else if(screen==="setup")appContent=setupScreen;
   else{
     var tabContent;
