@@ -1204,6 +1204,7 @@ export default function App(){
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
           setScreen("app");
+          _dataLoaded.current=false; // allow auto-sync after fresh load
         } else {
           setScreen("setup");
         }
@@ -1243,6 +1244,25 @@ export default function App(){
     if(org.logo!==undefined)setOrgLogo(org.logo||"");
     if(org.address!==undefined)setOrgAddr(org.address||"");
   },[org]);
+
+  // ── Auto-sync to Supabase on any data change (debounced 2s) ──
+  var _syncTimer=React.useRef(null);
+  var _dataLoaded=React.useRef(false);
+  se(function(){
+    if(!gUser||!gUser.email)return;
+    // Skip first render — data hasn't loaded from Supabase yet
+    if(!_dataLoaded.current){_dataLoaded.current=true;return;}
+    var _em=gUser.email;
+    lsSet("hr_emps_"+_em,emps);
+    lsSet("hr_att_"+_em,att);
+    lsSet("hr_inc_"+_em,incentives);
+    if(_syncTimer.current)clearTimeout(_syncTimer.current);
+    _syncTimer.current=setTimeout(function(){
+      if(!gUser||!gUser.email)return;
+      syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
+    },1500);
+    return function(){if(_syncTimer.current)clearTimeout(_syncTimer.current);};
+  },[emps,att,incentives,shifts,reminders,notices,revisions]);
 
 
 
@@ -1340,13 +1360,28 @@ export default function App(){
   function saveEdit(){
     var ctc=Number(editE.monthlyCTC)||0;if(!ctc)return showT("CTC required","err");
     var bd=brkSal(ctc);
-    setEmps(function(p){return p.map(function(e){if(e.id!==editE.id)return e;return Object.assign({},e,{name:editE.name||e.name,mob:editE.mob||"",email:editE.email||"",eid:editE.eid||"",role:editE.role||e.role,dept:eDept||editE.dept||e.dept,monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,hi:Number(editE.hi)||0,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds});});});
-    setEditE(null);setSelE(null);showT("Employee updated!");
+    var updated=Object.assign({},editE,{
+      monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,
+      hi:Number(editE.hi)||0,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds,
+      dept:eDept||editE.dept||""
+    });
+    var newEmps=emps.map(function(e){return e.id===editE.id?updated:e;});
+    var em=gUser&&gUser.email?gUser.email:lsGet("hr_last_email","");
+    setEmps(newEmps);
+    lsSet("hr_emps_"+(em||""),newEmps);
+    setEditE(null);setSelE(null);
+    showT("Saved!");
+    syncToSupabase(newEmps,att,incentives,shifts,reminders,notices,revisions,em);
   }
   function confirmOff(){
     if(!offData.reason)return showT("Enter reason","err");
-    setEmps(function(p){return p.map(function(e){return e.id===offE.id?Object.assign({},e,{status:offData.type,terminatedOn:todayStr,resignDate:offData.resignDate,terminationData:Object.assign({},offData)}):e;});});
-    setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);showT("Offboarded.");
+    var newEmps=emps.map(function(e){return e.id===offE.id?Object.assign({},e,{status:offData.type,terminatedOn:todayStr,resignDate:offData.resignDate,terminationData:Object.assign({},offData)}):e;});
+    var em=gUser&&gUser.email?gUser.email:lsGet("hr_last_email","");
+    setEmps(newEmps);
+    lsSet("hr_emps_"+(em||""),newEmps);
+    setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);
+    showT("Offboarded.");
+    syncToSupabase(newEmps,att,incentives,shifts,reminders,notices,revisions,em);
   }
   function loadAdminUsers(){
     _sb.from("admin_user_overview").select("*")
@@ -1373,11 +1408,12 @@ export default function App(){
     });
   }
   // ── DATA SYNC ──────────────────────────────────────────────────────────────
-  function syncToSupabase(empData,attData,incData,shiftsData,remData,notData,revData){
-    if(!gUser||!gUser.email)return;
+  function syncToSupabase(empData,attData,incData,shiftsData,remData,notData,revData,emailOverride){
+    var email=(emailOverride)||(gUser&&gUser.email)||lsGet("hr_last_email","");
+    if(!email)return;
     setIsSyncing(true);
     var payload={
-      email:gUser.email,
+      email:email,
       emps_json:JSON.stringify(empData||[]),
       att_json:JSON.stringify(attData||{}),
       inc_json:JSON.stringify(incData||{}),
@@ -1564,7 +1600,7 @@ export default function App(){
     }),
     authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
     h("button",{onClick:handleSendOTP,disabled:authLoading,style:{width:"100%",background:authLoading?T.AUTH_LABEL:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",opacity:authLoading?.7:1}},
-      authLoading?"Sending OTP...":"Continue with OTP"
+      authLoading?"Sending...":"Get OTP"
     ),
     h("div",{style:{textAlign:"center",marginTop:16,fontSize:11,color:T.AUTH_LABEL}},
       "We will send an OTP code to your email"
@@ -1596,7 +1632,7 @@ export default function App(){
     }),
     authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
     h("button",{onClick:handleVerifyOTP,disabled:authLoading,style:{width:"100%",background:authLoading?T.AUTH_LABEL:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",opacity:authLoading?.7:1}},
-      authLoading?"Verifying...":"Verify OTP"
+      authLoading?"Verifying...":"Verify & Sign In"
     ),
     h("div",{style:{marginTop:16,fontSize:12,color:T.AUTH_LABEL,textAlign:"center"}},
       "Didn't get it? ",
@@ -1715,6 +1751,7 @@ export default function App(){
         ic(ICONS.chev,"rgba(255,255,255,.7)",20)
       ),
       showRemSection?h("div",{style:{marginBottom:12}},
+        (bRemind.length>0||annivRemind.length>0)?h("div",null,
         bRemind.length>0?h("div",{style:{borderRadius:12,padding:12,marginBottom:8,border:"1.5px solid #FCD34D",animation:bdayUrgent?"blinkBorder 1.2s ease-in-out infinite":"none",background:T.PILL_WARN_SOFT}},
           h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8}},
             ic("cake",AMB,15),
@@ -1757,6 +1794,10 @@ export default function App(){
             );
           })
         ):null,
+        ):h("div",{style:{background:SFT,borderRadius:12,padding:"10px 14px",marginBottom:8,border:"1px solid "+BDR,display:"flex",alignItems:"center",gap:8}},
+          ic("event_available",GRY,15),
+          h("div",{style:{fontSize:12,color:GRY}},"No upcoming birthdays or anniversaries in the next 30 days")
+        ),
         h("div",{style:{background:CARD,border:"1.5px solid "+(urgentRems.length>0?RED:BDR),borderRadius:12,padding:12,animation:urgentRems.length>0?"blinkBorder 1.2s ease-in-out infinite":"none"}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:activeRems.length>0||remOpen?10:0}},
             h("div",{style:{display:"flex",alignItems:"center",gap:6}},
@@ -2769,7 +2810,7 @@ export default function App(){
 
   var appContent;
   if(screen==="loading")appContent=loadingScreen;
-  else if(screen==="login")appContent=authLoading?loadingScreen:(isPasswordReset?setPasswordScreen:(authMode==="otp"?otpScreen:emailScreen));
+  else if(screen==="login")appContent=isPasswordReset?setPasswordScreen:(authMode==="otp"?otpScreen:emailScreen);
   else if(screen==="setup")appContent=setupScreen;
   else{
     var tabContent;
