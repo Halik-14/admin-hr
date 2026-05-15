@@ -975,7 +975,8 @@ function av(emp,s){s=s||42;return h("div",{style:{width:s,height:s,borderRadius:
 function dInp(ref,ph,type,onChange){return h("input",{ref:ref,type:type||"text",autoComplete:"off",placeholder:ph,defaultValue:"",onChange:onChange,style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+T.AUTH_INPUT_BDR,borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:12}});}
 function inpEl(ref,ph,type){return h("input",{ref:ref,type:type||"text",autoComplete:"off",placeholder:ph,defaultValue:"",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}});}
 export default function App(){
-  var today=new Date(),todayStr=today.toISOString().split("T")[0];
+  var today=new Date();
+  var todayStr=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
   var curY=today.getFullYear(),curM=today.getMonth();
   var st=useState,sr=useRef,se=useEffect,uc=useCallback;
 
@@ -1008,6 +1009,12 @@ export default function App(){
   var sAdmSrch=st(""),adminSearch=sAdmSrch[0],setAdminSearch=sAdmSrch[1];
   var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
   var sExpInp=st(""),expInput=sExpInp[0],setExpInput=sExpInp[1];
+  var sEmlChg=st(null),emailChangeTarget=sEmlChg[0],setEmailChangeTarget=sEmlChg[1]; // {oldEmail, newEmail, step:"input"|"otp", otp:""}
+  var sEmlNew=st(""),emailChangeNew=sEmlNew[0],setEmailChangeNew=sEmlNew[1];
+  var sEmlOtp=st(""),emailChangeOtp=sEmlOtp[0],setEmailChangeOtp=sEmlOtp[1];
+  var sEmlErr=st(""),emailChangeErr=sEmlErr[0],setEmailChangeErr=sEmlErr[1];
+  var sEmlStep=st("input"),emailChangeStep=sEmlStep[0],setEmailChangeStep=sEmlStep[1];
+  var sEmlLoading=st(false),emailChangeLoading=sEmlLoading[0],setEmailChangeLoading=sEmlLoading[1];
   se(function(){
     if(!("serviceWorker" in navigator))return;
     navigator.serviceWorker.addEventListener("message",function(e){
@@ -1108,6 +1115,11 @@ export default function App(){
   var sAR=st([]),annivRemind=sAR[0],setAnnivRemind=sAR[1];
   var sESort=st("name"),empSort=sESort[0],setEmpSort=sESort[1];
   var sESDir=st("asc"),empSortDir=sESDir[0],setEmpSortDir=sESDir[1];
+  var sEChg=st(false),showEmailChange=sEChg[0],setShowEmailChange=sEChg[1];
+  var sNewEm=st(""),newEmailVal=sNewEm[0],setNewEmailVal=sNewEm[1];
+  var sEmStp=st(1),emailChangeStep=sEmStp[0],setEmailChangeStep=sEmStp[1];
+  var sEmErr=st(""),emailChangeErr=sEmErr[0],setEmailChangeErr=sEmErr[1];
+  var sEmLd=st(false),emailChangeLoading=sEmLd[0],setEmailChangeLoading=sEmLd[1];
   var sOR=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?lsGet("hr_org_"+gu.email,{name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""}):{};}),org=sOR[0],setOrg=sOR[1];
   var sOL=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.logo||"";}),orgLogo=sOL[0],setOrgLogo=sOL[1];
   var sOA=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.address||"";}),orgAddr=sOA[0],setOrgAddr=sOA[1];
@@ -1398,6 +1410,21 @@ export default function App(){
     setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);
     showT("Offboarded.");
     syncToSupabase(newEmps,att,incentives,shifts,reminders,notices,revisions,em);
+  }
+  function handleEmailChange(){
+    var newEm=newEmailVal.trim().toLowerCase();
+    if(!newEm)return setEmailChangeErr("Enter new email address");
+    if(newEm===(gUser&&gUser.email))return setEmailChangeErr("This is already your current email");
+    setEmailChangeLoading(true);setEmailChangeErr("");
+    _sb.auth.updateUser({email:newEm}).then(function(res){
+      setEmailChangeLoading(false);
+      if(res.error){setEmailChangeErr(res.error.message);return;}
+      setEmailChangeStep(2);
+      showT("Confirmation sent to "+newEm);
+    }).catch(function(e){setEmailChangeErr(e.message||"Failed");setEmailChangeLoading(false);});
+  }
+  function cancelEmailChange(){
+    setShowEmailChange(false);setNewEmailVal("");setEmailChangeStep(1);setEmailChangeErr("");
   }
   function loadAdminUsers(){
     _sb.from("admin_user_overview").select("*")
@@ -2647,6 +2674,31 @@ export default function App(){
             h("div",{style:{fontSize:11,color:GRY,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},gUser?gUser.email:"")
           )
         ),
+        // ── Change email row ──
+        showEmailChange?h("div",{style:{background:SFT,borderRadius:12,padding:12,marginBottom:12,border:"1px solid "+BDR}},
+          emailChangeStep===1?h("div",null,
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:6}},"Change Email Address"),
+            h("div",{style:{fontSize:11,color:GRY,marginBottom:10}},"A confirmation will be sent to your new email. You will be signed out once confirmed."),
+            h("input",{type:"email",value:newEmailVal,onChange:function(e){setNewEmailVal(e.target.value);setEmailChangeErr("");},placeholder:"Enter new email address",style:{width:"100%",background:CARD,border:"1.5px solid "+(emailChangeErr?RED:BDR),borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:emailChangeErr?4:8,boxSizing:"border-box"}}),
+            emailChangeErr?h("div",{style:{fontSize:11,color:RED,marginBottom:8}},emailChangeErr):null,
+            h("div",{style:{display:"flex",gap:7}},
+              h("button",{onClick:cancelEmailChange,style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px",fontSize:12,color:GRY,fontWeight:600,cursor:"pointer"}},"Cancel"),
+              h("button",{onClick:handleEmailChange,disabled:emailChangeLoading,style:{flex:2,background:NVY,border:"none",borderRadius:9,padding:"9px",fontSize:12,color:CARD,fontWeight:700,cursor:emailChangeLoading?"not-allowed":"pointer",opacity:emailChangeLoading?.7:1}},emailChangeLoading?"Sending...":"Send Confirmation")
+            )
+          ):h("div",{style:{textAlign:"center",padding:"4px 0"}},
+            h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:4}},"Confirmation Sent"),
+            h("div",{style:{fontSize:11,color:GRY,marginBottom:4}},"Check: "+newEmailVal),
+            h("div",{style:{fontSize:11,color:GRY,marginBottom:12}},"Click the link in the email. You will be signed out automatically."),
+            h("button",{onClick:cancelEmailChange,style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"7px 16px",fontSize:12,color:GRY,fontWeight:600,cursor:"pointer"}},"Cancel")
+          )
+        ):h("div",{onClick:function(){setShowEmailChange(true);setEmailChangeStep(1);setNewEmailVal("");setEmailChangeErr("");},style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid "+BDR,cursor:"pointer"}},
+          h("div",null,
+            h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},"Change Email"),
+            h("div",{style:{fontSize:10,color:GRY,marginTop:2}},"Update your login email address")
+          ),
+          ic("chevron_right",GRY,16)
+        ),
+        h("div",{style:{height:10}}),
         sectionTitle("PLAN"),
         h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid "+BDR}},
           h("div",null,
@@ -3106,13 +3158,94 @@ export default function App(){
                 h("button",{onClick:function(){setEditExpEmail(null);setExpInput("");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"6px 10px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
               ):null,
               // Action buttons
-              h("div",{style:{display:"flex",gap:6}},
+              h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
                 u.plan!=="paid"
                   ?h("button",{onClick:function(){setUserPlan(u.email,"paid",{activated_on:new Date().toISOString().split("T")[0]});},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Set Paid")
                   :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Set Free"),
                 h("button",{onClick:function(){setEditExpEmail(isEditingExp?null:u.email);setExpInput(u.expires_on||"");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},isEditingExp?"Cancel Exp":"Set Expiry"),
-                h("button",{onClick:function(){var lim=window.prompt("Employee limit for "+u.email.split("@")[0]+"\n(enter number, blank = unlimited):",u.emp_limit||"");if(lim===null)return;var limNum=lim.trim()?parseInt(lim)||999:null;setUserPlan(u.email,u.plan,{emp_limit:limNum});showT("Limit: "+(limNum?"max "+limNum:"unlimited"));},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Emp Limit")
-              )
+                h("button",{onClick:function(){var lim=window.prompt("Employee limit for "+u.email.split("@")[0]+"\n(enter number, blank = unlimited):",u.emp_limit||"");if(lim===null)return;var limNum=lim.trim()?parseInt(lim)||999:null;setUserPlan(u.email,u.plan,{emp_limit:limNum});showT("Limit: "+(limNum?"max "+limNum:"unlimited"));},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Emp Limit"),
+                !isOwner?h("button",{onClick:function(){
+                  setEmailChangeTarget(u.email);
+                  setEmailChangeNew("");setEmailChangeOtp("");
+                  setEmailChangeErr("");setEmailChangeStep("input");
+                },style:{background:AMB+"18",border:"1px solid "+AMB+"44",borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:AMB,cursor:"pointer"}},"Change Email"):null
+              ),
+              // ── Email change panel ──
+              emailChangeTarget===u.email?h("div",{style:{background:CARD,borderRadius:10,padding:12,marginTop:8,border:"1.5px solid "+AMB+"55"}},
+                emailChangeStep==="input"?h("div",null,
+                  h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:6}},"Change Email — Step 1 of 2"),
+                  h("div",{style:{fontSize:10,color:GRY,marginBottom:8}},"An OTP will be sent to the new email to verify it is real."),
+                  h("input",{type:"email",value:emailChangeNew,onChange:function(e){setEmailChangeNew(e.target.value);setEmailChangeErr("");},placeholder:"Enter new email address",style:{width:"100%",background:SFT,border:"1.5px solid "+(emailChangeErr?RED:BDR),borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6}}),
+                  emailChangeErr?h("div",{style:{fontSize:11,color:RED,marginBottom:6}},emailChangeErr):null,
+                  h("div",{style:{display:"flex",gap:6}},
+                    h("button",{onClick:function(){
+                      var newEm=emailChangeNew.trim().toLowerCase();
+                      if(!newEm||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEm))return setEmailChangeErr("Enter a valid email");
+                      if(newEm===u.email)return setEmailChangeErr("New email is same as current");
+                      // Check if new email already exists
+                      setEmailChangeLoading(true);setEmailChangeErr("");
+                      _sb.from("user_plans").select("email").eq("email",newEm).maybeSingle()
+                      .then(function(res){
+                        if(res.data){setEmailChangeErr("This email is already registered in the app");setEmailChangeLoading(false);return;}
+                        // Send OTP to new email
+                        return _sb.auth.signInWithOtp({email:newEm,options:{shouldCreateUser:false}})
+                        .then(function(r){
+                          setEmailChangeLoading(false);
+                          if(r.error){
+                            // shouldCreateUser:false fails if email doesn't exist in auth
+                            // Try with shouldCreateUser:true to send OTP to any email
+                            return _sb.auth.signInWithOtp({email:newEm,options:{shouldCreateUser:true}})
+                            .then(function(r2){
+                              if(r2.error){setEmailChangeErr("Failed to send OTP: "+r2.error.message);return;}
+                              setEmailChangeStep("otp");showT("OTP sent to new email");
+                            });
+                          }
+                          setEmailChangeStep("otp");showT("OTP sent to new email");
+                        });
+                      }).catch(function(e){setEmailChangeErr(e.message||"Error");setEmailChangeLoading(false);});
+                    },disabled:emailChangeLoading,style:{flex:2,background:AMB,border:"none",borderRadius:8,padding:"8px",fontSize:11,fontWeight:700,color:"#fff",cursor:emailChangeLoading?"not-allowed":"pointer",opacity:emailChangeLoading?.7:1}},emailChangeLoading?"Sending OTP...":"Send OTP to New Email"),
+                    h("button",{onClick:function(){setEmailChangeTarget(null);setEmailChangeErr("");},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"8px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
+                  )
+                ):h("div",null,
+                  h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:4}},"Change Email — Step 2 of 2"),
+                  h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"OTP sent to:"),
+                  h("div",{style:{fontSize:11,fontWeight:700,color:AMB,marginBottom:8}},emailChangeNew),
+                  h("input",{type:"number",value:emailChangeOtp,onChange:function(e){setEmailChangeOtp(e.target.value.slice(0,8));setEmailChangeErr("");},placeholder:"Enter OTP",style:{width:"100%",background:SFT,border:"1.5px solid "+(emailChangeErr?RED:BDR),borderRadius:8,padding:"9px 11px",fontSize:16,color:NVY,outline:"none",fontFamily:"monospace",textAlign:"center",letterSpacing:4,marginBottom:6}}),
+                  emailChangeErr?h("div",{style:{fontSize:11,color:RED,marginBottom:6}},emailChangeErr):null,
+                  h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:7,padding:"7px 10px",fontSize:10,color:AMB,marginBottom:8}},
+                    "⚠ After confirming, also update the email in Supabase dashboard:\nAuthentication → Users → find user → edit email"
+                  ),
+                  h("div",{style:{display:"flex",gap:6}},
+                    h("button",{onClick:function(){
+                      var otp=emailChangeOtp.trim();
+                      var oldEm=emailChangeTarget;
+                      var newEm=emailChangeNew.trim().toLowerCase();
+                      if(!otp||otp.length<6)return setEmailChangeErr("Enter the OTP");
+                      setEmailChangeLoading(true);setEmailChangeErr("");
+                      // Verify OTP for new email
+                      _sb.auth.verifyOtp({email:newEm,token:otp,type:"email"})
+                      .then(function(res){
+                        if(res.error){setEmailChangeErr("Invalid or expired OTP");setEmailChangeLoading(false);return;}
+                        // OTP verified — update all 3 tables
+                        return Promise.all([
+                          _sb.from("user_plans").update({email:newEm}).eq("email",oldEm),
+                          _sb.from("user_orgs").update({email:newEm}).eq("email",oldEm),
+                          _sb.from("user_data").update({email:newEm}).eq("email",oldEm)
+                        ]).then(function(results){
+                          setEmailChangeLoading(false);
+                          var anyErr=results.find(function(r){return r.error;});
+                          if(anyErr){setEmailChangeErr("DB update failed: "+anyErr.error.message);return;}
+                          // Success
+                          setEmailChangeTarget(null);setEmailChangeNew("");setEmailChangeOtp("");setEmailChangeStep("input");
+                          loadAdminUsers();
+                          showT("Email updated in app tables! Now update in Supabase Auth dashboard.");
+                        });
+                      }).catch(function(e){setEmailChangeErr(e.message||"Error");setEmailChangeLoading(false);});
+                    },disabled:emailChangeLoading,style:{flex:2,background:GRN,border:"none",borderRadius:8,padding:"8px",fontSize:11,fontWeight:700,color:CARD,cursor:emailChangeLoading?"not-allowed":"pointer",opacity:emailChangeLoading?.7:1}},emailChangeLoading?"Verifying...":"Confirm & Update Email"),
+                    h("button",{onClick:function(){setEmailChangeStep("input");setEmailChangeOtp("");setEmailChangeErr("");},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"8px",fontSize:11,color:GRY,cursor:"pointer"}},"Back")
+                  )
+                )
+              ):null
             );
           })
         )
