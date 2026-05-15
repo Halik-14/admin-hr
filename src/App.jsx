@@ -1087,7 +1087,7 @@ export default function App(){
   }),showBkup=sBkup[0],setShowBkup=sBkup[1];
   var sSH=st(null),sheetE=sSH[0],setSheetE=sSH[1];
   var sTO=st(null),toast=sTO[0],setToast=sTO[1];
-  var sSTab=st("profile"),settTab=sSTab[0],setSettTab=sSTab[1];
+  var sSTab=st("account"),settTab=sSTab[0],setSettTab=sSTab[1];
   var sET=st("active"),empTab=sET[0],setEmpTab=sET[1];
   var sOE=st(null),offE=sOE[0],setOffE=sOE[1];
   var sOS=st(1),offStep=sOS[0],setOffStep=sOS[1];
@@ -1778,7 +1778,7 @@ export default function App(){
 
   var setupScreen=authWrap(h("div",{key:"setup"},
     h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
-      gUser&&gUser.photo?h("img",{src:gUser.photo,width:60,height:60,style:{borderRadius:"50%",marginBottom:12}}):h("div",{style:{width:60,height:60,borderRadius:"50%",background:ACCENT,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:"#fff",fontWeight:700,marginBottom:12}},gUser?(gUser.name||"U").charAt(0).toUpperCase():"U"),
+      gUser&&gUser.photo?h("img",{src:gUser.photo,width:60,height:60,style:{borderRadius:"50%",marginBottom:12}}):h("div",{style:{width:60,height:60,borderRadius:"50%",background:ACCENT,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,color:ACCENT_FG,fontWeight:700,marginBottom:12}},gUser?(gUser.name||"U").charAt(0).toUpperCase():"U"),
       h("div",{style:{fontSize:18,fontWeight:700,color:T.AUTH_TEXT}},"Welcome, "+(gUser?gUser.name.split("@")[0]:"")+"!"),
       h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:3}},"Set up your workspace — this is permanent")
     ),
@@ -1945,7 +1945,7 @@ export default function App(){
       h("button",{onClick:function(){setTab("attendance");},style:{width:"100%",background:NVY,border:"none",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 16px rgba(15,23,42,.25)"}},
         h("div",{style:{width:44,height:44,borderRadius:13,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(ICONS.cal,"#fff",22)),
         h("div",{style:{flex:1,textAlign:"left"}},
-          h("div",{style:{fontSize:14,fontWeight:700,color:"#fff"}},"Mark Today's Attendance"),
+          h("div",{style:{fontSize:14,fontWeight:700,color:CARD}},"Mark Today's Attendance"),
           h("div",{style:{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:2}},actEmps.filter(function(e){return getTAtt(e.id)==="unmarked";}).length+" employees not yet marked")
         ),
         ic(ICONS.chev,"rgba(255,255,255,.7)",20)
@@ -1989,7 +1989,7 @@ export default function App(){
                 if(!remTxt.trim())return showT("Enter reminder text","err");
                 setReminders(function(p){return p.concat([{id:Date.now(),text:remTxt.trim(),date:remDate||"",done:false}]);});
                 setRemTxt("");setRemDate("");setRemOpen(false);showT("Reminder added!");
-              },style:{background:NVY,border:"none",borderRadius:8,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Add")
+              },style:{background:NVY,border:"none",borderRadius:8,padding:"8px 14px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Add")
             )
           ):null,
           activeRems.length===0&&!remOpen?h("div",{style:{textAlign:"center",padding:"8px 0",color:GRY,fontSize:11}},"No active reminders"):null,
@@ -2034,7 +2034,7 @@ export default function App(){
       card(h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Statutory Summary"),
-          h("button",{onClick:function(){setTab("settings");setSettTab("tax");},style:{fontSize:11,color:NVY,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}},"Tax Slabs")
+          h("button",{onClick:function(){setTab("settings");setSettTab("data");},style:{fontSize:11,color:NVY,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}},"Tax Slabs")
         ),
         (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM));a.pf+=d.pfE+d.pfR;a.esi+=d.esiE+d.esiR;a.pt+=d.pt;a.td+=d.tds;return a;},{pf:0,esi:0,pt:0,td:0});
           var eligCount=actEmps.filter(function(e){return calcGratuity(e).eligible;}).length;
@@ -2203,7 +2203,7 @@ export default function App(){
               if(revCtcR.current)revCtcR.current.value="";
               if(revNoteR.current)revNoteR.current.value="";
               setRevOpen(false);showT("Salary revised to "+fmt(newCtc));
-            },style:{width:"100%",background:GRN,border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Apply Revision")
+            },style:{width:"100%",background:GRN,border:"none",borderRadius:10,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Apply Revision")
           ):null,
           empRevs.length===0&&!revOpen?h("div",{style:{textAlign:"center",padding:"10px 0",color:GRY,fontSize:12}},"No revisions logged"):null,
           empRevs.map(function(r,i){
@@ -2281,7 +2281,7 @@ export default function App(){
                 var newLog=(empShift.log||[]).filter(function(l){return l.month!==curKey;}).concat([newEntry]);
                 setShifts(function(p){var o=Object.assign({},p);o[selE.id]=Object.assign({},empShift,{allowance:allow,log:newLog});return o;});
                 setShiftOpen(false);showT("Shift updated!");
-              },style:{background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},"Save")
+              },style:{background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},"Save")
             ),
             curLog.length>0?h("div",{style:{marginTop:10}},
               h("div",{style:{fontSize:9,color:GRY,fontWeight:600,marginBottom:5,letterSpacing:.5}},"SHIFT HISTORY"),
@@ -2552,7 +2552,7 @@ export default function App(){
               lbl("INCENTIVE (Rs.)"),
               h("div",{style:{display:"flex",gap:6,marginBottom:8}},
                 h("input",{type:"number",value:editPayInc,onChange:function(ev){setEditPayInc(ev.target.value);},placeholder:"0",style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
-                h("button",{onClick:function(){var k=e.id+"_"+payY+"_"+payM;setIncentives(function(p){var o=Object.assign({},p);o[k]=Number(editPayInc)||0;return o;});showT("Saved!");},style:{display:"flex",alignItems:"center",gap:4,background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,"#fff",13),"Save")
+                h("button",{onClick:function(){var k=e.id+"_"+payY+"_"+payM;setIncentives(function(p){var o=Object.assign({},p);o[k]=Number(editPayInc)||0;return o;});showT("Saved!");},style:{display:"flex",alignItems:"center",gap:4,background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,"#fff",13),"Save")
               ),
               [["Gross",fmt(d.gr),NVY,true],["Incentive",fmt(d.inc),GRN,false],["Shift Allow.",fmt(d.shiftAllow),TEL,false],["Absent Ded.","-"+fmt(d.ad),RED,false],["Half Ded.","-"+fmt(d.hd),AMB,false],["Unpaid Ded.","-"+fmt(d.ud),RED,false],["PF (Emp)","-"+fmt(d.pfE),NVY,false],["ESI (Emp)","-"+fmt(d.esiE),TEL,false],["Prof.Tax","-"+fmt(d.pt),AMB,false],["TDS","-"+fmt(d.tds),RED,false],["Health Ins","-"+fmt(d.hi),"#EC4899",false],["Custom","-"+fmt(d.cd),GRY,false]].map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px dashed "+BDR}},h("span",{style:{fontSize:11,color:item[3]?NVY:GRY,fontWeight:item[3]?700:400}},item[0]),h("span",{style:{fontSize:11,fontWeight:700,color:item[2]}},item[1]));}),
               h("div",{style:{display:"flex",justifyContent:"space-between",padding:"8px 0 0"}},h("span",{style:{fontSize:13,fontWeight:800,color:NVY}},"Net Take Home"),h("span",{style:{fontSize:14,fontWeight:800,color:GRN}},fmt(d.net)))
@@ -2618,7 +2618,7 @@ export default function App(){
         h("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:16,paddingBottom:14,borderBottom:"1px solid "+BDR}},
           orgLogo
             ?h("img",{src:orgLogo,style:{width:56,height:56,borderRadius:12,objectFit:"contain",border:"1px solid "+BDR,background:"#fff",padding:3,flexShrink:0}})
-            :h("div",{style:{width:56,height:56,borderRadius:12,background:NVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:"#fff",flexShrink:0}},(org.name||"?").charAt(0).toUpperCase()),
+            :h("div",{style:{width:56,height:56,borderRadius:12,background:NVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:CARD,flexShrink:0}},(org.name||"?").charAt(0).toUpperCase()),
           h("div",{style:{flex:1,minWidth:0}},
             h("div",{style:{fontSize:16,fontWeight:800,color:NVY,marginBottom:2}},org.name||""),
             h("div",{style:{fontSize:11,color:GRY}},org.type||""),
@@ -2689,7 +2689,7 @@ export default function App(){
             address:orgAddr,
             logo_base64:orgLogo
           },{onConflict:"email"}).then(function(){showT("Company details saved!");});
-        },style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"12px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}},
+        },style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"12px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}},
           ic("save",CARD,16),"Save Company Details")
       ))
     ):null;
@@ -2702,7 +2702,7 @@ export default function App(){
       // ── User card ──
       card(h("div",null,
         h("div",{style:{display:"flex",alignItems:"center",gap:14,marginBottom:14,paddingBottom:14,borderBottom:"1px solid "+BDR}},
-          h("div",{style:{width:52,height:52,borderRadius:"50%",background:NVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:"#fff",flexShrink:0}},
+          h("div",{style:{width:52,height:52,borderRadius:"50%",background:NVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:800,color:CARD,flexShrink:0}},
             gUser?(gUser.email||"U").charAt(0).toUpperCase():"U"
           ),
           h("div",{style:{flex:1,minWidth:0}},
@@ -2779,7 +2779,7 @@ export default function App(){
               )
             ),
             h("button",{onClick:isPaid?function(){makePFESIPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}:needPaid,
-              style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},
+              style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
               ic(isPaid?ICONS.dl:"lock","#fff",12),isPaid?"PDF":"Paid")
           ),
           // Salary Register
@@ -2792,7 +2792,7 @@ export default function App(){
               )
             ),
             h("button",{onClick:isPaid?function(){makeSalaryRegisterPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}:needPaid,
-              style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},
+              style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
               ic(isPaid?ICONS.dl:"lock","#fff",12),isPaid?"PDF":"Paid")
           ),
           // ECR
@@ -2805,7 +2805,7 @@ export default function App(){
               )
             ),
             h("button",{onClick:isPaid?function(){setPayDlM(curM);setPayDlY(curY);setShowECRDl(true);}:needPaid,
-              style:{display:"flex",alignItems:"center",gap:4,background:isPaid?"#D97706":GRY,border:"none",borderRadius:7,padding:"6px 12px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},
+              style:{display:"flex",alignItems:"center",gap:4,background:isPaid?"#D97706":GRY,border:"none",borderRadius:7,padding:"6px 12px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
               ic(isPaid?ICONS.dl:"lock","#fff",12),isPaid?".txt":"Paid")
           )
         )
@@ -2826,7 +2826,7 @@ export default function App(){
             ),
             h("div",{style:{display:"flex",gap:5}},
               h("button",{onClick:isPaid?function(){try{makeEmpPDF(emps,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}catch(ex){showT("Error: "+ex.message,"err");}}:needPaid,
-                style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},
+                style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
                 ic(isPaid?ICONS.dl:"lock","#fff",12),"PDF"),
               h("button",{onClick:isPaid?function(){makeEmpCSV(emps);}:needPaid,
                 style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 11px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},
@@ -2844,7 +2844,7 @@ export default function App(){
             ),
             h("div",{style:{display:"flex",gap:5}},
               h("button",{onClick:isPaid?function(){setAttDlM(curM);setAttDlY(curY);setAttDlAll(false);setShowAttDl(true);}:needPaid,
-                style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},
+                style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
                 ic(isPaid?ICONS.dl:"lock","#fff",12),"PDF"),
               h("button",{onClick:isPaid?function(){makeAttCSV(att,emps);}:needPaid,
                 style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 11px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},
@@ -2862,7 +2862,7 @@ export default function App(){
             ),
             h("div",{style:{display:"flex",gap:5}},
               h("button",{onClick:isPaid?function(){setPayDlM(curM);setPayDlY(curY);setShowPayDl(true);}:needPaid,
-                style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},
+                style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
                 ic(isPaid?ICONS.dl:"lock","#fff",12),"PDF"),
               h("button",{onClick:isPaid?function(){makePayrollCSV(actEmps,curM,curY,mAtt,getInc);}:needPaid,
                 style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 11px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},
@@ -2947,7 +2947,7 @@ export default function App(){
             h("div",{style:{display:"flex",gap:7,marginTop:3}},
               h("input",{ref:cnR,placeholder:"Name e.g. Loan EMI",autoComplete:"off",style:{flex:2,background:SFT,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
               h("input",{ref:caR,placeholder:"Rs.",type:"number",style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 8px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
-              h("button",{onClick:function(){if(!cnR.current||!cnR.current.value||!caR.current||!caR.current.value)return;setCustoms(function(p){return p.concat([{name:cnR.current.value,amt:Number(caR.current.value)}]);});cnR.current.value="";caR.current.value="";},style:{background:NVY,border:"none",borderRadius:8,padding:"9px 10px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},"Add")
+              h("button",{onClick:function(){if(!cnR.current||!cnR.current.value||!caR.current||!caR.current.value)return;setCustoms(function(p){return p.concat([{name:cnR.current.value,amt:Number(caR.current.value)}]);});cnR.current.value="";caR.current.value="";},style:{background:NVY,border:"none",borderRadius:8,padding:"9px 10px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},"Add")
             )
           )
         ):null,
@@ -3154,14 +3154,14 @@ export default function App(){
                   if(!expInput)return showT("Select a date","err");
                   setUserPlan(u.email,"paid",{expires_on:expInput,activated_on:u.activated_on||new Date().toISOString().split("T")[0]});
                   setEditExpEmail(null);setExpInput("");
-                },style:{background:GRN,border:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save"),
+                },style:{background:GRN,border:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Save"),
                 h("button",{onClick:function(){setEditExpEmail(null);setExpInput("");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"6px 10px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
               ):null,
               // Action buttons
               h("div",{style:{display:"flex",gap:6}},
                 u.plan!=="paid"
-                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid",{activated_on:new Date().toISOString().split("T")[0]});},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Paid")
-                  :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Set Free"),
+                  ?h("button",{onClick:function(){setUserPlan(u.email,"paid",{activated_on:new Date().toISOString().split("T")[0]});},style:{flex:1,background:GRN,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Set Paid")
+                  :h("button",{onClick:function(){setUserPlan(u.email,"free");},style:{flex:1,background:GRY,border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Set Free"),
                 h("button",{onClick:function(){setEditExpEmail(isEditingExp?null:u.email);setExpInput(u.expires_on||"");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},isEditingExp?"Cancel Exp":"Set Expiry"),
                 h("button",{onClick:function(){var lim=window.prompt("Employee limit for "+u.email.split("@")[0]+"\n(enter number, blank = unlimited):",u.emp_limit||"");if(lim===null)return;var limNum=lim.trim()?parseInt(lim)||999:null;setUserPlan(u.email,u.plan,{emp_limit:limNum});showT("Limit: "+(limNum?"max "+limNum:"unlimited"));},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Emp Limit")
               )
@@ -3329,7 +3329,7 @@ export default function App(){
     h("style",{dangerouslySetInnerHTML:{__html:CSS_SPIN+CSS_LIVE}}),
     h("div",{style:{width:"100%",maxWidth:430,minHeight:"100vh",position:"relative",display:"flex",flexDirection:"column"}},
       showUpdate?h("div",{style:{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,zIndex:9999,background:"#0F172A",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,boxShadow:"0 2px 12px rgba(0,0,0,.3)"}},
-        h("div",{style:{fontSize:12,color:"#fff",fontWeight:600}},"\u2728 New update available!"),
+        h("div",{style:{fontSize:12,color:CARD,fontWeight:600}},"\u2728 New update available!"),
         h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
       ):null,
       showAdmin?renderAdminPanel():null,
