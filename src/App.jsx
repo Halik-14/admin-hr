@@ -1166,171 +1166,85 @@ export default function App(){
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
 
-  // ── Detect password reset from email link ──
-  se(function(){
-    var hash=window.location.hash;
-    if(hash&&hash.includes("type=recovery")){
-      setIsPasswordReset(true);setScreen("login");
-    }
-    // Also check for access_token in URL (Supabase redirect)
-    _sb.auth.onAuthStateChange(function(event){
-      if(event==="PASSWORD_RECOVERY"){setIsPasswordReset(true);setScreen("login");}
-    });
-  },[]);
 
-  // Supabase handles session refresh automatically - no manual timer needed
-  var SESSION_HRS=6;
+
+  // Session managed by Supabase automatically
   se(function(){
-    if(screen!=="app")return;
-    // Record login time
-    if(!lsGet("hr_login_ts",null))lsSet("hr_login_ts",Date.now());
-    // Check session every minute
-    var t=setInterval(function(){
-      var ts=lsGet("hr_login_ts",null);
-      if(!ts)return;
-      var hrs=(Date.now()-ts)/3600000;
-      if(hrs>=SESSION_HRS){
-        clearInterval(t);
-        lsSet("hr_login_ts",null);
-        _sb.auth.signOut();
-        setGUser(null);lsSet("hr_guser",null);
-        setScreen("login");
-        showT("Session expired. Please sign in again.","err");
-      }
-    },60000);
-    return function(){clearInterval(t);};
-  },[screen]);
-  se(function(){
+    var handled=false; // prevent double-handling
+
+    function loadUserData(user,cb){
+      var em=user.email;
+      var gu={name:em.split("@")[0],email:em,photo:""};
+      setGUser(gu);lsSet("hr_guser",gu);
+      Promise.all([
+        _sb.from("user_orgs").select("*").eq("email",em).maybeSingle(),
+        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",em).maybeSingle(),
+        _sb.from("user_data").select("*").eq("email",em).maybeSingle()
+      ]).then(function(results){
+        var orgRes=results[0],planRes=results[1],dataRes=results[2];
+        var plan=(planRes.data&&planRes.data.plan)||"free";
+        setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
+        if(orgRes.data&&orgRes.data.org_name){
+          var o={name:orgRes.data.org_name,email:em,position:orgRes.data.position||"",
+            type:orgRes.data.org_type||"",plan:plan,
+            emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
+            expires_on:(planRes.data&&planRes.data.expires_on)||null,
+            address:(orgRes.data&&orgRes.data.address)||"",
+            logo:(orgRes.data&&orgRes.data.logo_base64)||""};
+          lsSet("hr_org_"+em,o);setOrg(o);
+          if(dataRes.data){
+            try{
+              setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
+              setAtt(JSON.parse(dataRes.data.att_json||"{}"));
+              setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
+              setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
+              setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
+              setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
+              setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+              lsSet("hr_last_sync",dataRes.data.updated_at);
+            }catch(e){}
+          }
+          setScreen("app");
+        } else {
+          setScreen("setup");
+        }
+        if(cb)cb();
+      }).catch(function(){
+        var cached=lsGet("hr_org_"+em,null);
+        if(cached&&cached.name){setOrg(cached);setScreen("app");}
+        else setScreen("setup");
+        if(cb)cb();
+      });
+    }
+
+    // First: check existing session (handles app open / refresh)
     _sb.auth.getSession().then(function(res){
       if(res.data&&res.data.session&&res.data.session.user){
-        var user=res.data.session.user;
-        var gu={name:user.email.split("@")[0],email:user.email,photo:""};
-        setGUser(gu);lsSet("hr_guser",gu);
-        Promise.all([
-          _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
-          _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
-          _sb.from("user_data").select("*").eq("email",user.email).maybeSingle()
-        ]).then(function(results){
-          var orgRes=results[0],planRes=results[1],dataRes=results[2];
-          var plan=(planRes.data&&planRes.data.plan)||"free";
-          var admin=(planRes.data&&planRes.data.is_admin)||false;
-          setIsAdmin(admin);
-          if(orgRes.data&&orgRes.data.org_name){
-            var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
-              emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
-              expires_on:(planRes.data&&planRes.data.expires_on)||null,
-              address:(orgRes.data&&orgRes.data.address)||"",logo:(orgRes.data&&orgRes.data.logo_base64)||""};
-            lsSet("hr_org_"+user.email,o);setOrg(o);
-            if(dataRes.data){
-              try{
-                setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
-                setAtt(JSON.parse(dataRes.data.att_json||"{}"));
-                setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
-                setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
-                setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
-                setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
-                setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
-              }catch(e){}
-            }
-            setScreen("app");
-          } else {
-            setScreen("setup");
-          }
-        }).catch(function(){
-          var cached=lsGet("hr_org_"+user.email,null);
-          if(cached&&cached.name){setOrg(cached);setScreen("app");}
-          else setScreen("setup");
-        });
+        handled=true;
+        loadUserData(res.data.session.user,null);
       } else {
         setScreen("login");
       }
-      setSessionChecked(true);
+    }).catch(function(){
+      setScreen("login");
     });
-    // Listen for auth changes (email confirmation)
-    var sub=_sb.auth.onAuthStateChange(function(event,session){
-      if(event==="SIGNED_IN"&&session){
-        var user=session.user;
-        var gu={name:user.email.split("@")[0],email:user.email,photo:""};
-        // Clear stale data from previous user
-        ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-        setGUser(gu);lsSet("hr_guser",gu);
-        // Fetch all data before showing app - no blank flash
-        Promise.all([
-          _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
-          _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
-          _sb.from("user_data").select("*").eq("email",user.email).maybeSingle()
-        ]).then(function(results){
-          var orgRes=results[0],planRes=results[1],dataRes=results[2];
-          if(orgRes.data&&orgRes.data.org_name){
-            var plan=(planRes.data&&planRes.data.plan)||"free";
-            var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",
-              plan:plan,emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
-              expires_on:(planRes.data&&planRes.data.expires_on)||null,address:(orgRes.data&&orgRes.data.address)||"",logo:(orgRes.data&&orgRes.data.logo_base64)||""};
-            lsSet("hr_org_"+user.email,o);setOrg(o);
-            setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
-            if(dataRes.data){
-              try{
-                setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
-                setAtt(JSON.parse(dataRes.data.att_json||"{}"));
-                setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
-                setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
-                setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
-                setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
-                setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
-                lsSet("hr_last_sync",dataRes.data.updated_at);
-              }catch(e){}
-            }
-            setScreen("app");
-          } else setScreen("setup");
-        }).catch(function(){
-          var c=lsGet("hr_org_"+user.email,null);
-          if(c&&c.name){setOrg(c);setScreen("app");}else setScreen("setup");
-        });
-      }
-    });
-    return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
-  },[]);
 
-  // ── Supabase session verification on app load ──────────────────────────────
-  // Checks with Supabase if the session is still valid on every app open.
-  // If user was deleted from Supabase, this forces logout automatically.
-  se(function(){
-    _sb.auth.getSession().then(function(res){
-      var session=res.data&&res.data.session;
-      if(!session){
-        // No valid Supabase session — force logout regardless of localStorage
-        if(lsGet("hr_guser",null)){
-          lsSet("hr_guser",null);
-          setGUser(null);
-          setScreen("login");
-        }
-        return;
-      }
-      // Valid session — ensure localStorage is in sync
-      var email=session.user.email;
-      var gu={name:email.split("@")[0],email:email,photo:""};
-      setGUser(gu);
-      // Already handled by Promise.all above - skip duplicate check
-    });
-    // Listen for auth state changes (logout from another tab, token expiry, user deleted)
+    // Second: listen for new sign-ins (handles OTP verify + email confirm)
     var sub=_sb.auth.onAuthStateChange(function(event,session){
-      if(event==="SIGNED_OUT"||!session){
-        lsSet("hr_guser",null);
-        setGUser(null);
-        setScreen("login");
+      if(event==="SIGNED_IN"&&session&&session.user&&!handled){
+        handled=true;
+        // Clear stale data from any previous user
+        ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+        setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
+        loadUserData(session.user,null);
       }
+      if(event==="PASSWORD_RECOVERY"){setIsPasswordReset(true);setScreen("login");}
+      if(event==="SIGNED_OUT"){setScreen("login");}
     });
-    return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
+    return function(){
+      try{sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();}catch(e){}
+    };
   },[]);
-  se(function(){
-    var _em=gUser&&gUser.email?gUser.email:"";
-    if(_em){lsSet("hr_emps_"+_em,emps);lsSet("hr_att_"+_em,att);lsSet("hr_inc_"+_em,incentives);}
-    lsSet("hr_emps",emps);lsSet("hr_att",att);lsSet("hr_inc",incentives);
-    if(gUser&&gUser.email&&screen==="app"){
-      // Sync immediately - no debounce so sign out never loses data
-      syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
-    }
-  },[emps,att,incentives,shifts,reminders,notices,revisions]);
 
 
   se(function(){lsSet("hr_org",org);},[org]);
@@ -1604,7 +1518,7 @@ export default function App(){
   function handleVerifyOTP(){
     var email=authEmail.trim().toLowerCase();
     var token=authOtp.trim();
-    if(!token||token.length<6)return setAuthErr("Enter the 6-digit OTP");
+    if(!token||token.length<6)return setAuthErr("Enter the OTP from your email");
     setAuthLoading(true);setAuthErr("");
     _sb.auth.verifyOtp({email:email,token:token,type:"email"})
     .then(function(res){
@@ -1689,7 +1603,7 @@ export default function App(){
       authLoading?"Sending OTP...":"Continue with OTP"
     ),
     h("div",{style:{textAlign:"center",marginTop:16,fontSize:11,color:T.AUTH_LABEL}},
-      "We will send a 6-digit OTP to your email"
+      "We will send an OTP code to your email"
     ),
     h("div",{style:{textAlign:"center",marginTop:8,fontSize:11,color:T.AUTH_LABEL}},
       "Need help? ",
@@ -1711,9 +1625,9 @@ export default function App(){
     h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600,textAlign:"left"}},"ENTER 6-DIGIT OTP"),
     h("input",{
       type:"number",value:authOtp,
-      onChange:function(e){setAuthOtp(e.target.value.slice(0,6));setAuthErr("");},
+      onChange:function(e){setAuthOtp(e.target.value.slice(0,8));setAuthErr("");},
       onKeyDown:function(e){if(e.key==="Enter")handleVerifyOTP();},
-      placeholder:"000000",
+      placeholder:"Enter OTP",
       style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"14px",fontSize:22,color:T.AUTH_TEXT,outline:"none",fontFamily:"monospace",textAlign:"center",letterSpacing:8,marginBottom:10}
     }),
     authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
@@ -1730,7 +1644,7 @@ export default function App(){
         "Resend OTP"
       )
     ),
-    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:4}},"OTP expires in 10 minutes")
+    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:4}},"OTP expires in 10 minutes • Check spam if not received")
   ));
 
   var setPasswordScreen=authWrap(h("div",{key:"setpw",style:{textAlign:"center"}},
