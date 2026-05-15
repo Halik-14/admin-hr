@@ -1052,9 +1052,9 @@ export default function App(){
     });
   },[]);
   var sT=st("dashboard"),tab=sT[0],setTab=sT[1];
-  var sE=st(function(){return lsGet("hr_emps",EMPS);}),emps=sE[0],setEmps=sE[1];
-  var sA=st(function(){return lsGet("hr_att",{});}),att=sA[0],setAtt=sA[1];
-  var sI=st(function(){return lsGet("hr_inc",{});}),incentives=sI[0],setIncentives=sI[1];
+  var sE=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?lsGet("hr_emps_"+gu.email,[]):[];}),emps=sE[0],setEmps=sE[1];
+  var sA=st({}),att=sA[0],setAtt=sA[1];
+  var sI=st({}),incentives=sI[0],setIncentives=sI[1];
   var sSE=st(null),selE=sSE[0],setSelE=sSE[1];
   var sEE=st(null),editE=sEE[0],setEditE=sEE[1];
   var sEP=st(null),editPayE=sEP[0],setEditPayE=sEP[1];
@@ -1095,7 +1095,7 @@ export default function App(){
   var sNW=st(new Date()),now=sNW[0],setNow=sNW[1];
   var sBR=st([]),bRemind=sBR[0],setBRemind=sBR[1];
   var sSB=st([]),skipB=sSB[0],setSkipB=sSB[1];
-  var sOR=st(function(){return lsGet("hr_org",{name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});}),org=sOR[0],setOrg=sOR[1];
+  var sOR=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?lsGet("hr_org_"+gu.email,{name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""}):{};}),org=sOR[0],setOrg=sOR[1];
   var sSQ=st(""),searchQ=sSQ[0],setSearchQ=sSQ[1];
   var sPW=st(""),pwd=sPW[0],setPwd=sPW[1];
   var sPW2=st(""),pwd2=sPW2[0],setPwd2=sPW2[1];
@@ -1245,6 +1245,8 @@ export default function App(){
       if(event==="SIGNED_IN"&&session){
         var user=session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
+        // Clear stale data from previous user
+        ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
         setGUser(gu);lsSet("hr_guser",gu);
         // Fetch all data before showing app - no blank flash
         Promise.all([
@@ -1315,13 +1317,9 @@ export default function App(){
     return function(){sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();};
   },[]);
   se(function(){
-    lsSet("hr_emps",emps);
-    lsSet("hr_att",att);
-    lsSet("hr_inc",incentives);
-    lsSet("hr_shifts",shifts);
-    lsSet("hr_reminders",reminders);
-    lsSet("hr_notices",notices);
-    lsSet("hr_revisions",revisions);
+    var _em=gUser&&gUser.email?gUser.email:"";
+    if(_em){lsSet("hr_emps_"+_em,emps);lsSet("hr_att_"+_em,att);lsSet("hr_inc_"+_em,incentives);}
+    lsSet("hr_emps",emps);lsSet("hr_att",att);lsSet("hr_inc",incentives);
     if(gUser&&gUser.email&&screen==="app"){
       // Sync immediately - no debounce so sign out never loses data
       syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
@@ -1589,6 +1587,10 @@ export default function App(){
       if(res.error){setAuthErr(res.error.message);setAuthLoading(false);return;}
       var email=res.data.user.email;
       var gu={name:email.split("@")[0],email:email,photo:""};
+      // Clear ALL generic keys so previous user data never leaks
+      ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+      // Reset state immediately
+      setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
       setGUser(gu);lsSet("hr_guser",gu);
       lsSet("hr_last_email",email);
       var loginT=new Date().toISOString();lsSet("hr_login_time",loginT);setLoginTime(loginT);
@@ -2760,7 +2762,13 @@ export default function App(){
           syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
           setAuthPwd("");setAuthPwd2("");
           setTimeout(function(){
-            _sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);setScreen("login");
+            var _email=gUser&&gUser.email?gUser.email:"";
+            _sb.auth.signOut();
+            ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+            if(_email)["hr_emps_","hr_att_","hr_inc_"].forEach(function(k){try{localStorage.removeItem(k+_email);}catch(e){}});
+            setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
+            setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
+            lsSet("hr_login_time",null);setScreen("login");
           },800);
           showT("Signing out...");
         },style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:RED+"12",border:"1.5px solid "+RED+"33",borderRadius:10,padding:"11px",fontSize:13,fontWeight:700,color:RED,cursor:"pointer"}},
@@ -3023,7 +3031,7 @@ export default function App(){
               isAdmin?h("button",{onClick:function(){setShowAdmin(true);setProf(false);loadAdminUsers();},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
               h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need support for Admin HR. My account: "+(gUser?gUser.email:"")),"_blank");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:TEL,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},ic(ICONS.wa,TEL,14),"Contact Support"),
               h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
-                h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);setAuthPwd("");setAuthPwd2("");setTimeout(function(){_sb.auth.signOut();setGUser(null);lsSet("hr_guser",null);lsSet("hr_login_time",null);setScreen("login");setProf(false);},800);showT("Signing out...");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
+                h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);setAuthPwd("");setAuthPwd2("");setTimeout(function(){_sb.auth.signOut();var _email=gUser&&gUser.email?gUser.email:"";["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});if(_email)["hr_emps_","hr_att_","hr_inc_"].forEach(function(k){try{localStorage.removeItem(k+_email);}catch(e){}});setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});lsSet("hr_login_time",null);setScreen("login");setProf(false);},800);showT("Signing out...");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
               )
             ):null
           )
