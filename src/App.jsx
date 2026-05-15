@@ -999,6 +999,9 @@ export default function App(){
   var sADMUSERS=st([]),adminUsers=sADMUSERS[0],setAdminUsers=sADMUSERS[1];
   var sADMTAB=st("users"),adminTab=sADMTAB[0],setAdminTab=sADMTAB[1];
   var sShowAdmin=st(false),showAdmin=sShowAdmin[0],setShowAdmin=sShowAdmin[1];
+  var sAdmSrch=st(""),adminSearch=sAdmSrch[0],setAdminSearch=sAdmSrch[1];
+  var sEditExp=st(null),editExpEmail=sEditExp[0],setEditExpEmail=sEditExp[1];
+  var sExpInp=st(""),expInput=sExpInp[0],setExpInput=sExpInp[1];
   se(function(){
     if(!("serviceWorker" in navigator))return;
     navigator.serviceWorker.addEventListener("message",function(e){
@@ -1310,7 +1313,6 @@ export default function App(){
   var isPaid=org.plan==="paid";
   var isFree=!isPaid;
   var EMP_LIMIT=org.emp_limit||(isPaid?org.emp_limit||999:5); // free=5, paid=set by admin
-  var isAdmin=(gUser&&gUser.email===OWNER_EMAIL)||false;
   function needPaid(){showT("This feature requires Paid Plan. Upgrade to access.","err");}
   var actEmps=emps.filter(function(e){return e.status==="active";});
   var trmEmps=emps.filter(function(e){return e.status==="terminated"||e.status==="resigned";});
