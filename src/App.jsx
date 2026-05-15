@@ -981,7 +981,7 @@ export default function App(){
   applyTheme(themeMode);  // Sync module-level colors to current theme on every render
   var CSS_SPIN="@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}"; var CSS_LIVE=buildCSS(); // Rebuild CSS string for current theme
 
-  var sS=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?"app":"login";}),screen=sS[0],setScreen=sS[1];
+  var sS=st("login"),screen=sS[0],setScreen=sS[1];
   var sUPD=st(false),showUpdate=sUPD[0],setShowUpdate=sUPD[1];
   var sRPW=st(false),showResetPw=sRPW[0],setShowResetPw=sRPW[1];
   var sREM=st(""),resetEmail=sREM[0],setResetEmail=sREM[1];
@@ -1205,41 +1205,45 @@ export default function App(){
         var user=res.data.session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        if(screen==="login"){
-          // Always fetch from Supabase - never trust localStorage for multi-device
-          Promise.all([
-            _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
-            _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
-            _sb.from("user_data").select("*").eq("email",user.email).maybeSingle()
-          ]).then(function(results){
-            var orgRes=results[0],planRes=results[1],dataRes=results[2];
-            if(orgRes.data&&orgRes.data.org_name){
-              var plan=(planRes.data&&planRes.data.plan)||"free";
-              var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
-                emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
-                expires_on:(planRes.data&&planRes.data.expires_on)||null,address:(orgRes.data&&orgRes.data.address)||"",logo:(orgRes.data&&orgRes.data.logo_base64)||""};
-              lsSet("hr_org_"+user.email,o);setOrg(o);
-              if(dataRes.data){
-                try{
-                  setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
-                  setAtt(JSON.parse(dataRes.data.att_json||"{}"));
-                  setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
-                  setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
-                  setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
-                  setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
-                  setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
-                }catch(e){}
-              }
-              setScreen("app");
-            } else {
-              setScreen("setup");
+        // Always fetch fresh data from Supabase regardless of screen state
+        Promise.all([
+          _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
+          _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
+          _sb.from("user_data").select("*").eq("email",user.email).maybeSingle()
+        ]).then(function(results){
+          var orgRes=results[0],planRes=results[1],dataRes=results[2];
+          var plan=(planRes.data&&planRes.data.plan)||"free";
+          var admin=(planRes.data&&planRes.data.is_admin)||false;
+          setIsAdmin(admin);
+          if(orgRes.data&&orgRes.data.org_name){
+            var o={name:orgRes.data.org_name,email:user.email,position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
+              emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
+              expires_on:(planRes.data&&planRes.data.expires_on)||null,
+              address:(orgRes.data&&orgRes.data.address)||"",logo:(orgRes.data&&orgRes.data.logo_base64)||""};
+            lsSet("hr_org_"+user.email,o);setOrg(o);
+            if(dataRes.data){
+              try{
+                setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
+                setAtt(JSON.parse(dataRes.data.att_json||"{}"));
+                setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
+                setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
+                setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
+                setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
+                setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+              }catch(e){}
             }
-          }).catch(function(){
-            var cached=lsGet("hr_org_"+user.email,null);
-            if(cached&&cached.name){setOrg(cached);setScreen("app");}
-            else setScreen("setup");
-          });
-        }
+            setScreen("app");
+          } else {
+            setScreen("setup");
+          }
+        }).catch(function(){
+          var cached=lsGet("hr_org_"+user.email,null);
+          if(cached&&cached.name){setOrg(cached);setScreen("app");}
+          else setScreen("setup");
+        });
+      } else {
+        // No session - go to login
+        setScreen("login");
       }
     });
     // Listen for auth changes (email confirmation)
