@@ -1168,11 +1168,10 @@ export default function App(){
 
 
 
-  // Session managed by Supabase automatically
   se(function(){
-    var handled=false; // prevent double-handling
+    var sessionLoaded=false;
 
-    function loadUserData(user,cb){
+    function loadUserData(user){
       var em=user.email;
       var gu={name:em.split("@")[0],email:em,photo:""};
       setGUser(gu);lsSet("hr_guser",gu);
@@ -1208,38 +1207,37 @@ export default function App(){
         } else {
           setScreen("setup");
         }
-        if(cb)cb();
       }).catch(function(){
         var cached=lsGet("hr_org_"+em,null);
         if(cached&&cached.name){setOrg(cached);setScreen("app");}
         else setScreen("setup");
-        if(cb)cb();
       });
     }
 
-    // First: check existing session (handles app open / refresh)
+    // Check existing session on app open
     _sb.auth.getSession().then(function(res){
       if(res.data&&res.data.session&&res.data.session.user){
-        handled=true;
-        loadUserData(res.data.session.user,null);
+        sessionLoaded=true;
+        loadUserData(res.data.session.user);
       } else {
         setScreen("login");
       }
-    }).catch(function(){
-      setScreen("login");
-    });
+    }).catch(function(){setScreen("login");});
 
-    // Second: listen for new sign-ins (handles OTP verify + email confirm)
+    // Listen for auth events - handles OTP verify, sign out
     var sub=_sb.auth.onAuthStateChange(function(event,session){
-      if(event==="SIGNED_IN"&&session&&session.user&&!handled){
-        handled=true;
-        // Clear stale data from any previous user
-        ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-        setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
-        loadUserData(session.user,null);
+      if(event==="SIGNED_IN"&&session&&session.user){
+        // Only run if getSession didn't already load (avoids duplicate on app open)
+        if(!sessionLoaded){
+          // Clear stale data from previous user
+          ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+          setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
+          loadUserData(session.user);
+        }
+        sessionLoaded=false; // reset so next OTP login works
       }
-      if(event==="PASSWORD_RECOVERY"){setIsPasswordReset(true);setScreen("login");}
       if(event==="SIGNED_OUT"){setScreen("login");}
+      if(event==="PASSWORD_RECOVERY"){setIsPasswordReset(true);setScreen("login");}
     });
     return function(){
       try{sub.data&&sub.data.subscription&&sub.data.subscription.unsubscribe();}catch(e){}
