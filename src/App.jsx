@@ -981,7 +981,8 @@ export default function App(){
   applyTheme(themeMode);  // Sync module-level colors to current theme on every render
   var CSS_SPIN="@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}"; var CSS_LIVE=buildCSS(); // Rebuild CSS string for current theme
 
-  var sS=st("login"),screen=sS[0],setScreen=sS[1];
+  var sS=st("loading"),screen=sS[0],setScreen=sS[1];
+  var sSessionChecked=st(false),sessionChecked=sSessionChecked[0],setSessionChecked=sSessionChecked[1];
   var sUPD=st(false),showUpdate=sUPD[0],setShowUpdate=sUPD[1];
   var sRPW=st(false),showResetPw=sRPW[0],setShowResetPw=sRPW[1];
   var sREM=st(""),resetEmail=sREM[0],setResetEmail=sREM[1];
@@ -1205,7 +1206,6 @@ export default function App(){
         var user=res.data.session.user;
         var gu={name:user.email.split("@")[0],email:user.email,photo:""};
         setGUser(gu);lsSet("hr_guser",gu);
-        // Always fetch fresh data from Supabase regardless of screen state
         Promise.all([
           _sb.from("user_orgs").select("*").eq("email",user.email).maybeSingle(),
           _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",user.email).maybeSingle(),
@@ -1242,9 +1242,9 @@ export default function App(){
           else setScreen("setup");
         });
       } else {
-        // No session - go to login
         setScreen("login");
       }
+      setSessionChecked(true);
     });
     // Listen for auth changes (email confirmation)
     var sub=_sb.auth.onAuthStateChange(function(event,session){
@@ -1591,7 +1591,7 @@ export default function App(){
     if(!email)return setAuthErr("Enter your email address");
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
     setAuthLoading(true);setAuthErr("");
-    _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}})
+    _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true,emailRedirectTo:null}})
     .then(function(res){
       setAuthLoading(false);
       if(res.error){setAuthErr(res.error.message);return;}
@@ -2627,14 +2627,16 @@ export default function App(){
     );
   }
 
+  var loadingScreen=h("div",{style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}},
+    logoSVG(52),
+    h("div",{style:{display:"flex",gap:6,marginTop:8}},
+      [0,1,2].map(function(i){return h("div",{key:i,style:{width:7,height:7,borderRadius:"50%",background:NVY,opacity:.35,animation:"dot 1.2s "+(i*0.2)+"s infinite"}});})
+    )
+  );
+
   var appContent;
-  if(screen==="login")appContent=authLoading?h("div",{style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:16}},
-    logoSVG(48),
-    h("div",{style:{display:"flex",gap:6}},
-      [0,1,2].map(function(i){return h("div",{key:i,style:{width:6,height:6,borderRadius:"50%",background:NVY,opacity:.3,animation:"dot 1.2s "+(i*0.2)+"s infinite"}});})
-    ),
-    h("div",{style:{fontSize:12,color:T.AUTH_LABEL}})
-  ):(isPasswordReset?setPasswordScreen:(authMode==="otp"?otpScreen:emailScreen));
+  if(screen==="loading")appContent=loadingScreen;
+  else if(screen==="login")appContent=authLoading?loadingScreen:(isPasswordReset?setPasswordScreen:(authMode==="otp"?otpScreen:emailScreen));
   else if(screen==="setup")appContent=setupScreen;
   else{
     var tabContent;
