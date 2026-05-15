@@ -1096,7 +1096,10 @@ export default function App(){
   var sNW=st(new Date()),now=sNW[0],setNow=sNW[1];
   var sBR=st([]),bRemind=sBR[0],setBRemind=sBR[1];
   var sSB=st([]),skipB=sSB[0],setSkipB=sSB[1];
+  var sAR=st([]),annivRemind=sAR[0],setAnnivRemind=sAR[1];
   var sOR=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?lsGet("hr_org_"+gu.email,{name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""}):{};}),org=sOR[0],setOrg=sOR[1];
+  var sOL=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.logo||"";}),orgLogo=sOL[0],setOrgLogo=sOL[1];
+  var sOA=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.address||"";}),orgAddr=sOA[0],setOrgAddr=sOA[1];
   var sSQ=st(""),searchQ=sSQ[0],setSearchQ=sSQ[1];
   var sPW=st(""),pwd=sPW[0],setPwd=sPW[1];
   var sPW2=st(""),pwd2=sPW2[0],setPwd2=sPW2[1];
@@ -1235,13 +1238,18 @@ export default function App(){
   },[]);
 
 
-  se(function(){lsSet("hr_org",org);},[org]);
+  se(function(){
+    lsSet("hr_org",org);
+    if(org.logo!==undefined)setOrgLogo(org.logo||"");
+    if(org.address!==undefined)setOrgAddr(org.address||"");
+  },[org]);
 
 
 
 
   se(function(){
     var td=new Date(),tdDate=new Date(td.getFullYear(),td.getMonth(),td.getDate());
+    // Birthdays within 30 days
     var upcoming=emps.filter(function(e){return e.status==="active"&&e.dob&&!skipB.includes(e.id);}).filter(function(e){
       var dob=new Date(e.dob),bday=new Date(td.getFullYear(),dob.getMonth(),dob.getDate());
       if(bday<tdDate)bday.setFullYear(td.getFullYear()+1);
@@ -1249,6 +1257,16 @@ export default function App(){
       return diff<=30;
     });
     setBRemind(upcoming);
+    // Work anniversaries within 30 days
+    var annivs=emps.filter(function(e){return e.status==="active"&&e.joined;}).map(function(e){
+      var doj=new Date(e.joined);
+      var anniv=new Date(td.getFullYear(),doj.getMonth(),doj.getDate());
+      if(anniv<tdDate)anniv.setFullYear(td.getFullYear()+1);
+      var diff=Math.ceil((anniv-tdDate)/86400000);
+      var years=anniv.getFullYear()-doj.getFullYear();
+      return {emp:e,diff:diff,years:years,anniv:anniv};
+    }).filter(function(a){return a.diff<=30&&a.years>0;});
+    setAnnivRemind(annivs);
   },[emps,skipB]);
 
 
@@ -1716,6 +1734,26 @@ export default function App(){
                 )
               ),
               h("button",{onClick:function(){setSkipB(function(p){return p.concat([emp.id]);});},style:{background:"none",border:"1px solid "+BDR,borderRadius:6,padding:"2px 8px",fontSize:10,color:GRY,cursor:"pointer"}},"Skip")
+            );
+          })
+        ):null,
+        annivRemind.length>0?h("div",{style:{borderRadius:12,padding:12,marginBottom:8,border:"1.5px solid #A5B4FC",background:"#EEF2FF"}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8}},
+            ic("workspace_premium","#4F46E5",15),
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Work Anniversaries")
+          ),
+          annivRemind.map(function(a){
+            var urgent=a.diff<=1;
+            return h("div",{key:a.emp.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid #C7D2FE",animation:urgent?"blinkBg 1.2s ease-in-out infinite":"none",borderRadius:urgent?6:0,paddingLeft:urgent?6:0}},
+              h("div",{style:{display:"flex",alignItems:"center",gap:7}},
+                av(a.emp,26),
+                h("div",null,
+                  h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},a.emp.name),
+                  h("div",{style:{fontSize:10,fontWeight:600,color:urgent?RED:"#4F46E5"}},
+                    a.years+" year"+(a.years>1?"s":"")+" \u2022 "+(a.diff===0?"Today! \uD83C\uDF89":a.diff===1?"Tomorrow!":a.anniv.toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" ("+a.diff+"d)")
+                  )
+                )
+              )
             );
           })
         ):null,
