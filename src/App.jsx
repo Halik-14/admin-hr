@@ -1169,12 +1169,11 @@ export default function App(){
 
 
   se(function(){
-    var sessionLoaded=false;
 
     function loadUserData(user){
       var em=user.email;
-      var gu={name:em.split("@")[0],email:em,photo:""};
-      setGUser(gu);lsSet("hr_guser",gu);
+      setGUser({name:em.split("@")[0],email:em,photo:""});
+      lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
       Promise.all([
         _sb.from("user_orgs").select("*").eq("email",em).maybeSingle(),
         _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",em).maybeSingle(),
@@ -1184,25 +1183,23 @@ export default function App(){
         var plan=(planRes.data&&planRes.data.plan)||"free";
         setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
         if(orgRes.data&&orgRes.data.org_name){
-          var o={name:orgRes.data.org_name,email:em,position:orgRes.data.position||"",
-            type:orgRes.data.org_type||"",plan:plan,
+          var o={name:orgRes.data.org_name,email:em,
+            position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
             emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
             expires_on:(planRes.data&&planRes.data.expires_on)||null,
             address:(orgRes.data&&orgRes.data.address)||"",
             logo:(orgRes.data&&orgRes.data.logo_base64)||""};
           lsSet("hr_org_"+em,o);setOrg(o);
-          if(dataRes.data){
-            try{
-              setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
-              setAtt(JSON.parse(dataRes.data.att_json||"{}"));
-              setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
-              setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
-              setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
-              setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
-              setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
-              lsSet("hr_last_sync",dataRes.data.updated_at);
-            }catch(e){}
-          }
+          if(dataRes.data){try{
+            setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
+            setAtt(JSON.parse(dataRes.data.att_json||"{}"));
+            setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
+            setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
+            setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
+            setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
+            setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+            lsSet("hr_last_sync",dataRes.data.updated_at);
+          }catch(e){}}
           setScreen("app");
         } else {
           setScreen("setup");
@@ -1214,29 +1211,22 @@ export default function App(){
       });
     }
 
-    // Check existing session on app open
-    _sb.auth.getSession().then(function(res){
-      if(res.data&&res.data.session&&res.data.session.user){
-        sessionLoaded=true;
-        loadUserData(res.data.session.user);
-      } else {
-        setScreen("login");
-      }
-    }).catch(function(){setScreen("login");});
-
-    // Listen for auth events - handles OTP verify, sign out
+    // onAuthStateChange is the single source of truth for all auth events
     var sub=_sb.auth.onAuthStateChange(function(event,session){
       if(event==="SIGNED_IN"&&session&&session.user){
-        // Only run if getSession didn't already load (avoids duplicate on app open)
-        if(!sessionLoaded){
-          // Clear stale data from previous user
-          ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-          setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
-          loadUserData(session.user);
-        }
-        sessionLoaded=false; // reset so next OTP login works
+        loadUserData(session.user);
       }
-      if(event==="SIGNED_OUT"){setScreen("login");}
+      if(event==="INITIAL_SESSION"){
+        // Fires on app open - if no session go to login
+        if(!session){setScreen("login");}
+        // If session exists, SIGNED_IN already fired and is handling it
+      }
+      if(event==="SIGNED_OUT"){
+        setGUser(null);lsSet("hr_guser",null);
+        setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
+        setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
+        setScreen("login");
+      }
       if(event==="PASSWORD_RECOVERY"){setIsPasswordReset(true);setScreen("login");}
     });
     return function(){
@@ -1521,55 +1511,13 @@ export default function App(){
     _sb.auth.verifyOtp({email:email,token:token,type:"email"})
     .then(function(res){
       if(res.error){setAuthErr("Invalid or expired OTP. Try again.");setAuthLoading(false);return;}
-      var user=res.data.user;
-      if(!user){setAuthErr("Verification failed. Try again.");setAuthLoading(false);return;}
-      var em=user.email;
-      var gu={name:em.split("@")[0],email:em,photo:""};
-      // Clear stale data from any previous user
+      if(!res.data.user){setAuthErr("Verification failed. Try again.");setAuthLoading(false);return;}
+      // Clear stale data from previous user before onAuthStateChange fires
       ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
       setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
       setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
-      setGUser(gu);lsSet("hr_guser",gu);
-      var loginT=new Date().toISOString();lsSet("hr_login_time",loginT);setLoginTime(loginT);
-      // Fetch all data before showing app
-      Promise.all([
-        _sb.from("user_orgs").select("org_name,org_type,position,address,logo_base64").eq("email",em).maybeSingle(),
-        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",em).maybeSingle(),
-        _sb.from("user_data").select("*").eq("email",em).maybeSingle()
-      ]).then(function(results){
-        var orgRes=results[0],planRes=results[1],dataRes=results[2];
-        var plan=(planRes.data&&planRes.data.plan)||"free";
-        var admin=(planRes.data&&planRes.data.is_admin)||false;
-        var empLimit=(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null;
-        var expiresOn=(planRes.data&&planRes.data.expires_on)||null;
-        setIsAdmin(admin);
-        var sbOrg=orgRes.data;
-        if(sbOrg&&sbOrg.org_name){
-          var updatedOrg={name:sbOrg.org_name,email:em,position:sbOrg.position||"",type:sbOrg.org_type||"",plan:plan,expires_on:expiresOn,emp_limit:empLimit,address:sbOrg.address||"",logo:sbOrg.logo_base64||""};
-          lsSet("hr_org_"+em,updatedOrg);setOrg(updatedOrg);
-          if(dataRes.data){
-            try{
-              setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
-              setAtt(JSON.parse(dataRes.data.att_json||"{}"));
-              setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
-              setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
-              setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
-              setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
-              setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
-              lsSet("hr_last_sync",dataRes.data.updated_at);
-            }catch(e){}
-          }
-          setScreen("app");showT("Welcome back!");
-        } else {
-          setScreen("setup");
-        }
-        setAuthLoading(false);
-      }).catch(function(){
-        var cachedOrg=lsGet("hr_org_"+em,null);
-        if(cachedOrg&&cachedOrg.name){setOrg(cachedOrg);setScreen("app");}
-        else setScreen("setup");
-        setAuthLoading(false);
-      });
+      setAuthLoading(false);
+      // onAuthStateChange SIGNED_IN will fire and call loadUserData automatically
     }).catch(function(e){setAuthErr(e.message||"Verification failed");setAuthLoading(false);});
   }
 
