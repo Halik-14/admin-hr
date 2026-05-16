@@ -1145,9 +1145,16 @@ export default function App(){
   var sAEM=st(lsGet("hr_last_email","")),authEmail=sAEM[0],setAuthEmail=sAEM[1];
   var sAPW=st(""),authPwd=sAPW[0],setAuthPwd=sAPW[1];
   var sAPW2=st(""),authPwd2=sAPW2[0],setAuthPwd2=sAPW2[1];
-  var sAMD=st("email"),authMode=sAMD[0],setAuthMode=sAMD[1];
+  var sAMD=st("landing"),authMode=sAMD[0],setAuthMode=sAMD[1];
   var sOTP=st(""),authOtp=sOTP[0],setAuthOtp=sOTP[1];
   var sOTPSent=st(false),otpSent=sOTPSent[0],setOtpSent=sOTPSent[1];
+  // Signup form fields
+  var sSUName=st(""),suName=sSUName[0],setSuName=sSUName[1];
+  var sSUOrg=st(""),suOrg=sSUOrg[0],setSuOrg=sSUOrg[1];
+  var sSUType=st(""),suType=sSUType[0],setSuType=sSUType[1];
+  var sSUPos=st(""),suPos=sSUPos[0],setSuPos=sSUPos[1];
+  var sSUEmp=st(""),suEmpRange=sSUEmp[0],setSuEmpRange=sSUEmp[1];
+  var sSUAgreed=st(false),suAgreed=sSUAgreed[0],setSuAgreed=sSUAgreed[1];
   var sAER=st(""),authErr=sAER[0],setAuthErr=sAER[1];
   var sALD=st(false),authLoading=sALD[0],setAuthLoading=sALD[1];
   var sShowPw=st(false),showPw=sShowPw[0],setShowPw=sShowPw[1];
@@ -1248,9 +1255,7 @@ export default function App(){
         loadUserData(session.user);
       }
       if(event==="INITIAL_SESSION"){
-        // Fires on app open - if no session go to login
-        if(!session){setScreen("login");}
-        // If session exists, SIGNED_IN already fired and is handling it
+        if(!session){setScreen("login");setAuthMode("landing");}
       }
       if(event==="SIGNED_OUT"){
         setGUser(null);lsSet("hr_guser",null);
@@ -1430,7 +1435,22 @@ export default function App(){
     _sb.from("admin_user_overview").select("*")
     .then(function(res){
       if(res.error){showT("Load error: "+res.error.message,"err");return;}
-      setAdminUsers(res.data||[]);
+      // Enrich with user_orgs data
+      _sb.from("user_orgs").select("email,org_name,org_type,position,full_name,emp_count_range,phone,website")
+      .then(function(orgsRes){
+        var orgsMap={};
+        (orgsRes.data||[]).forEach(function(o){orgsMap[o.email]=o;});
+        var enriched=(res.data||[]).map(function(u){
+          var o=orgsMap[u.email]||{};
+          return Object.assign({},u,{
+            org_name:o.org_name||"",org_type:o.org_type||"",
+            position:o.position||"",full_name:o.full_name||"",
+            emp_count_range:o.emp_count_range||"",
+            phone:o.phone||"",website:o.website||""
+          });
+        });
+        setAdminUsers(enriched);
+      });
     });
   }
   function setUserPlan(email,plan,extraData){
@@ -1584,19 +1604,49 @@ export default function App(){
   function hashPwd(str){var h=5381;for(var i=0;i<str.length;i++)h=((h<<5)+h)^str.charCodeAt(i);return String(h>>>0);}
 
 
-  // ── OTP: Send email OTP ──────────────────────────────────────────────────
+  // ── OTP: Send OTP for SIGNUP ─────────────────────────────────────────────
+  function handleSignupSendOTP(){
+    var email=authEmail.trim().toLowerCase();
+    if(!suName.trim())return setAuthErr("Enter your full name");
+    if(!suOrg.trim())return setAuthErr("Enter organization name");
+    if(!suType)return setAuthErr("Select organization type");
+    if(!suPos.trim())return setAuthErr("Enter your role/position");
+    if(!suEmpRange)return setAuthErr("Select employee count range");
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
+    if(!suAgreed)return setAuthErr("Please confirm the email warning");
+    setAuthLoading(true);setAuthErr("");
+    // Check if email already registered
+    _sb.from("user_plans").select("email").eq("email",email).maybeSingle()
+    .then(function(res){
+      if(res.data){setAuthErr("Account already exists. Please Sign In.");setAuthLoading(false);return;}
+      // Send OTP
+      return _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}})
+      .then(function(r){
+        setAuthLoading(false);
+        if(r.error){setAuthErr(r.error.message);return;}
+        setOtpSent(true);setAuthMode("signup-otp");
+        lsSet("hr_last_email",email);
+      });
+    }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
+  }
+
+  // ── OTP: Send OTP for SIGNIN ─────────────────────────────────────────────
   function handleSendOTP(){
     var email=authEmail.trim().toLowerCase();
-    if(!email)return setAuthErr("Enter your email address");
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
     setAuthLoading(true);setAuthErr("");
-    _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true,emailRedirectTo:null}})
+    // Check if account exists
+    _sb.from("user_plans").select("email").eq("email",email).maybeSingle()
     .then(function(res){
-      setAuthLoading(false);
-      if(res.error){setAuthErr(res.error.message);return;}
-      setOtpSent(true);setAuthMode("otp");
-      lsSet("hr_last_email",email);
-    }).catch(function(e){setAuthErr(e.message||"Failed to send OTP");setAuthLoading(false);});
+      if(!res.data){setAuthErr("No account found. Please Sign Up first.");setAuthLoading(false);return;}
+      return _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:false,emailRedirectTo:null}})
+      .then(function(r){
+        setAuthLoading(false);
+        if(r.error){setAuthErr(r.error.message);return;}
+        setOtpSent(true);setAuthMode("otp");
+        lsSet("hr_last_email",email);
+      });
+    }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
   }
 
   // ── OTP: Verify OTP ──────────────────────────────────────────────────────
@@ -1605,92 +1655,225 @@ export default function App(){
     var token=authOtp.trim();
     if(!token||token.length<6)return setAuthErr("Enter the OTP from your email");
     setAuthLoading(true);setAuthErr("");
+    var isSignup=authMode==="signup-otp";
     _sb.auth.verifyOtp({email:email,token:token,type:"email"})
     .then(function(res){
       if(res.error){setAuthErr("Invalid or expired OTP. Try again.");setAuthLoading(false);return;}
       if(!res.data.user){setAuthErr("Verification failed. Try again.");setAuthLoading(false);return;}
-      // Clear stale data from previous user before onAuthStateChange fires
+      // Clear stale data from previous user
       ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
       setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
       setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
+      if(isSignup){
+        // Save signup details to user_orgs
+        _sb.from("user_orgs").upsert({
+          email:email,
+          org_name:suOrg.trim(),
+          org_type:suType,
+          position:suPos.trim(),
+          full_name:suName.trim(),
+          emp_count_range:suEmpRange
+        },{onConflict:"email"}).then(function(){});
+      }
       setAuthLoading(false);
-      // onAuthStateChange SIGNED_IN will fire and call loadUserData automatically
+      // onAuthStateChange SIGNED_IN will fire and call loadUserData
     }).catch(function(e){setAuthErr(e.message||"Verification failed");setAuthLoading(false);});
   }
 
 
   // ── AUTH SCREENS ────────────────────────────────────────────────────────
   var makeInIndiaBadge=h("div",{style:{textAlign:"center",padding:"0 0 20px",marginTop:"auto"}},
-    h("div",{style:{fontSize:9,color:T.AUTH_LABEL,letterSpacing:.8}},"Proudly built in India • Made for Indian Businesses")
+    h("div",{style:{fontSize:9,color:T.AUTH_LABEL,letterSpacing:.8}},"Proudly built in India \u2022 Made for Indian Businesses")
   );
-  var authWrap=function(inner){return h("div",{style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 24px 0"}},
-    h("div",{style:{width:"100%",maxWidth:380,flex:1,display:"flex",flexDirection:"column",justifyContent:"center"}},inner),
+  var authWrap=function(inner,scroll){return h("div",{style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:scroll?"flex-start":"center",padding:scroll?"24px 24px 0":"32px 24px 0",overflowY:scroll?"auto":"hidden"}},
+    h("div",{style:{width:"100%",maxWidth:380,flex:1,display:"flex",flexDirection:"column",justifyContent:scroll?"flex-start":"center",paddingTop:scroll?8:0}},inner),
     h("div",{style:{width:"100%",maxWidth:380}},makeInIndiaBadge)
   );};
 
-  // Email entry screen
-  var emailScreen=authWrap(h("div",{key:"email"},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:32}},
-      logoSVG(64),
-      h("div",{style:{fontSize:24,fontWeight:800,color:T.AUTH_TEXT,marginTop:16,letterSpacing:-.5}},"Admin HR"),
-      h("div",{style:{fontSize:13,color:T.AUTH_LABEL,marginTop:4,textAlign:"center"}},"Smart HR for Indian Businesses")
+  var inp=function(type,val,onChange,placeholder,err){
+    return h("input",{type:type||"text",value:val,onChange:onChange,placeholder:placeholder,
+      style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(err?RED:T.AUTH_INPUT_BDR),
+        borderRadius:10,padding:"11px 13px",fontSize:13,color:T.AUTH_TEXT,outline:"none",
+        fontFamily:"inherit",marginBottom:err?4:10,boxSizing:"border-box"}});
+  };
+  var sel=function(val,onChange,opts,placeholder,err){
+    return h("select",{value:val,onChange:onChange,
+      style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(err?RED:T.AUTH_INPUT_BDR),
+        borderRadius:10,padding:"11px 13px",fontSize:13,color:val?T.AUTH_TEXT:T.AUTH_LABEL,
+        outline:"none",fontFamily:"inherit",marginBottom:10,appearance:"none",boxSizing:"border-box"}},
+      h("option",{value:"",disabled:true},placeholder),
+      opts.map(function(o){return h("option",{key:o,value:o},o);})
+    );
+  };
+  var authLbl=function(txt){return h("div",{style:{fontSize:10,fontWeight:700,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:4}},txt);};
+  var authBtn=function(txt,onClick,secondary){return h("button",{onClick:onClick,disabled:authLoading,
+    style:{width:"100%",background:secondary?T.AUTH_INPUT_BG:T.AUTH_BTN_BG,
+      border:secondary?"1.5px solid "+T.AUTH_INPUT_BDR:"none",
+      borderRadius:12,padding:"13px",color:secondary?T.AUTH_TEXT:T.AUTH_BTN_TEXT,
+      fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",
+      opacity:authLoading?.8:1,marginBottom:secondary?0:8}},txt);};
+  var authErr2=function(){return authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null;};
+
+  // ── Landing screen ──
+  var landingScreen=authWrap(h("div",{key:"land"},
+    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:40}},
+      logoSVG(72),
+      h("div",{style:{fontSize:26,fontWeight:800,color:T.AUTH_TEXT,marginTop:18,letterSpacing:-.5}},"Admin HR"),
+      h("div",{style:{fontSize:13,color:T.AUTH_LABEL,marginTop:5,textAlign:"center",lineHeight:1.5}},"Smart HR Management\nfor Indian Businesses")
     ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600}},"YOUR EMAIL"),
-    h("input",{type:"email",value:authEmail,onChange:function(e){setAuthEmail(e.target.value);setAuthErr("");},
-      onKeyDown:function(e){if(e.key==="Enter")handleSendOTP();},
-      placeholder:"you@company.com",autoComplete:"email",
-      style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"13px 14px",fontSize:13,color:T.AUTH_TEXT,outline:"none",fontFamily:"inherit",marginBottom:10}
-    }),
-    authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
-    h("button",{onClick:handleSendOTP,disabled:authLoading,style:{width:"100%",background:authLoading?T.AUTH_LABEL:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",opacity:authLoading?.7:1}},
-      authLoading?"Sending...":"Get OTP"
-    ),
-    h("div",{style:{textAlign:"center",marginTop:16,fontSize:11,color:T.AUTH_LABEL}},
-      "We will send an OTP code to your email"
-    ),
-    h("div",{style:{textAlign:"center",marginTop:8,fontSize:11,color:T.AUTH_LABEL}},
+    authBtn(authLoading?"Please wait...":"Sign In",function(){setAuthErr("");setAuthMode("signin");}),
+    authBtn("Create Account",function(){setAuthErr("");setAuthMode("signup");},"secondary"),
+    h("div",{style:{textAlign:"center",marginTop:20,fontSize:11,color:T.AUTH_LABEL}},
       "Need help? ",
-      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need help with Admin HR login."),"_blank");}},
-        "Contact Support"
-      )
-    ),
-    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:3,textAlign:"center"}},"Mon-Fri, 10 AM - 6 PM")
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},"Contact Support")
+    )
   ));
 
-  // OTP verification screen
+  // ── Sign In screen ──
+  var signinScreen=authWrap(h("div",{key:"signin"},
+    h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:24}},
+      h("button",{onClick:function(){setAuthMode("landing");setAuthErr("");},style:{background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:20,padding:0,lineHeight:1}},"\u2190"),
+      h("div",null,
+        h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT}},"Sign In"),
+        h("div",{style:{fontSize:12,color:T.AUTH_LABEL}},"Welcome back")
+      )
+    ),
+    authLbl("EMAIL ADDRESS"),
+    inp("email",authEmail,function(e){setAuthEmail(e.target.value);setAuthErr("");},
+      "you@company.com",!!authErr),
+    authErr2(),
+    authBtn(authLoading?"Sending OTP...":"Get OTP",handleSendOTP),
+    h("div",{style:{textAlign:"center",fontSize:12,color:T.AUTH_LABEL,marginTop:8}},
+      "New to Admin HR? ",
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:700},onClick:function(){setAuthErr("");setAuthMode("signup");}},"Create Account")
+    )
+  ));
+
+  // ── Sign Up screen ──
+  var signupScreen=authWrap(h("div",{key:"signup"},
+    h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:20}},
+      h("button",{onClick:function(){setAuthMode("landing");setAuthErr("");},style:{background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:20,padding:0,lineHeight:1}},"\u2190"),
+      h("div",null,
+        h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT}},"Create Account"),
+        h("div",{style:{fontSize:12,color:T.AUTH_LABEL}},"Set up your HR workspace")
+      )
+    ),
+    authLbl("FULL NAME"),
+    inp("text",suName,function(e){setSuName(e.target.value);setAuthErr("");},"Your full name"),
+    authLbl("ORGANIZATION NAME"),
+    inp("text",suOrg,function(e){setSuOrg(e.target.value);setAuthErr("");},"Company / Business name"),
+    authLbl("ORGANIZATION TYPE"),
+    sel(suType,function(e){setSuType(e.target.value);setAuthErr("");},
+      ["IT / Software","Retail","Manufacturing","Healthcare","Education","Finance","Construction","Logistics","Hospitality","Other"],
+      "Select type"),
+    authLbl("YOUR ROLE / POSITION"),
+    sel(suPos,function(e){setSuPos(e.target.value);setAuthErr("");},
+      ["Business Owner","HR Manager","HR Executive","Director","CEO / MD","Finance Manager","Admin Manager","Other"],
+      "Select your role"),
+    authLbl("TEAM SIZE"),
+    sel(suEmpRange,function(e){setSuEmpRange(e.target.value);setAuthErr("");},
+      ["1 - 10","11 - 50","51 - 200","201 - 500","500+"],
+      "Select team size"),
+    authLbl("WORK EMAIL"),
+    inp("email",authEmail,function(e){setAuthEmail(e.target.value);setAuthErr("");},"you@company.com",!!authErr),
+    // Warning checkbox
+    h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"44",borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer"},
+      onClick:function(){setSuAgreed(function(v){return !v;});}},
+      h("div",{style:{width:18,height:18,borderRadius:4,border:"2px solid "+(suAgreed?AMB:T.AUTH_INPUT_BDR),background:suAgreed?AMB:"transparent",flexShrink:0,marginTop:1,display:"flex",alignItems:"center",justifyContent:"center"}},
+        suAgreed?h("div",{style:{color:"#fff",fontSize:12,fontWeight:900}},"\u2713"):null
+      ),
+      h("div",{style:{fontSize:11,color:T.AUTH_LABEL,lineHeight:1.5}},
+        h("span",{style:{color:AMB,fontWeight:700}},"Important: "),
+        "This email will be your permanent login ID. It cannot be changed later. Please use a professional long-term email."
+      )
+    ),
+    authErr2(),
+    authBtn(authLoading?"Sending OTP...":"Continue",handleSignupSendOTP),
+    h("div",{style:{textAlign:"center",fontSize:12,color:T.AUTH_LABEL,marginTop:4}},
+      "Already have an account? ",
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:700},onClick:function(){setAuthErr("");setAuthMode("signin");}},"Sign In")
+    )
+  ),true);
+
+  // ── OTP screen (shared for signin and signup) ──
   var otpScreen=authWrap(h("div",{key:"otp",style:{textAlign:"center"}},
     h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
       logoSVG(52),
-      h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Check Your Email"),
+      h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},
+        authMode==="signup-otp"?"Verify Your Email":"Check Your Email"),
       h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:5}},"OTP sent to"),
-      h("div",{style:{fontSize:13,fontWeight:700,color:T.AUTH_TEXT,marginTop:3}},authEmail)
+      h("div",{style:{fontSize:13,fontWeight:700,color:T.AUTH_TEXT,marginTop:3}},authEmail),
+      authMode==="signup-otp"?h("div",{style:{background:"#4F46E518",borderRadius:8,padding:"6px 12px",marginTop:8,fontSize:11,color:"#4F46E5",fontWeight:600}},
+        "Almost there! Verify to complete signup"
+      ):null
     ),
-    h("div",{style:{fontSize:11,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:5,fontWeight:600,textAlign:"left"}},"ENTER 6-DIGIT OTP"),
+    authLbl("ENTER OTP FROM EMAIL"),
     h("input",{
       type:"number",value:authOtp,
       onChange:function(e){setAuthOtp(e.target.value.slice(0,8));setAuthErr("");},
       onKeyDown:function(e){if(e.key==="Enter")handleVerifyOTP();},
-      placeholder:"Enter OTP",
-      style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"14px",fontSize:22,color:T.AUTH_TEXT,outline:"none",fontFamily:"monospace",textAlign:"center",letterSpacing:8,marginBottom:10}
+      placeholder:"••••••",
+      style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),
+        borderRadius:12,padding:"14px",fontSize:28,color:T.AUTH_TEXT,outline:"none",
+        fontFamily:"monospace",textAlign:"center",letterSpacing:10,marginBottom:10}
     }),
-    authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null,
-    h("button",{onClick:handleVerifyOTP,disabled:authLoading,style:{width:"100%",background:authLoading?T.AUTH_LABEL:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:authLoading?"not-allowed":"pointer",opacity:authLoading?.7:1}},
-      authLoading?"Verifying...":"Verify & Sign In"
+    authErr2(),
+    authBtn(authLoading?"Verifying...":"Verify & "+( authMode==="signup-otp"?"Create Account":"Sign In"),handleVerifyOTP),
+    h("div",{style:{marginTop:14,fontSize:12,color:T.AUTH_LABEL,textAlign:"center"}},
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},
+        onClick:function(){setAuthMode(authMode==="signup-otp"?"signup":"signin");setAuthOtp("");setAuthErr("");setOtpSent(false);}},
+        "\u2190 Go back"),
+      " \u2022 ",
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},
+        onClick:function(){setAuthOtp("");setAuthErr("");authMode==="signup-otp"?handleSignupSendOTP():handleSendOTP();}},
+        "Resend OTP")
     ),
-    h("div",{style:{marginTop:16,fontSize:12,color:T.AUTH_LABEL,textAlign:"center"}},
-      "Didn't get it? ",
-      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){setAuthMode("email");setAuthOtp("");setAuthErr("");setOtpSent(false);}},
-        "Change email"
-      ),
-      " or ",
-      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){setAuthOtp("");setAuthErr("");handleSendOTP();}},
-        "Resend OTP"
-      )
-    ),
-    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:4}},"OTP expires in 10 minutes • Check spam if not received")
+    h("div",{style:{fontSize:10,color:T.AUTH_LABEL,marginTop:6}},"OTP expires in 10 minutes \u2022 Check spam if not received")
   ));
 
+  // ── Setup screen (for existing OTP users who have no org yet) ──
+  var setupScreen=authWrap(h("div",{key:"setup"},
+    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:24}},
+      logoSVG(52),
+      h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Set Up Your Workspace"),
+      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:3,textAlign:"center"}},"Tell us about your organization")
+    ),
+    authLbl("ORGANIZATION NAME"),
+    inp("text",suOrg,function(e){setSuOrg(e.target.value);setAuthErr("");},"Company / Business name"),
+    authLbl("ORGANIZATION TYPE"),
+    sel(suType,function(e){setSuType(e.target.value);setAuthErr("");},
+      ["IT / Software","Retail","Manufacturing","Healthcare","Education","Finance","Construction","Logistics","Hospitality","Other"],
+      "Select type"),
+    authLbl("YOUR ROLE"),
+    sel(suPos,function(e){setSuPos(e.target.value);setAuthErr("");},
+      ["Business Owner","HR Manager","HR Executive","Director","CEO / MD","Finance Manager","Admin Manager","Other"],
+      "Select your role"),
+    authLbl("TEAM SIZE"),
+    sel(suEmpRange,function(e){setSuEmpRange(e.target.value);setAuthErr("");},
+      ["1 - 10","11 - 50","51 - 200","201 - 500","500+"],
+      "Select team size"),
+    authErr2(),
+    authBtn(authLoading?"Saving...":"Get Started",function(){
+      if(!suOrg.trim())return setAuthErr("Enter organization name");
+      if(!suType)return setAuthErr("Select organization type");
+      if(!suPos)return setAuthErr("Select your role");
+      if(!suEmpRange)return setAuthErr("Select team size");
+      var em=gUser&&gUser.email?gUser.email:"";
+      setAuthLoading(true);
+      _sb.from("user_orgs").upsert({
+        email:em,org_name:suOrg.trim(),org_type:suType,
+        position:suPos,emp_count_range:suEmpRange
+      },{onConflict:"email"}).then(function(){
+        setAuthLoading(false);
+        var o=Object.assign({},org,{name:suOrg.trim(),type:suType,position:suPos,email:em,plan:"free"});
+        setOrg(o);lsSet("hr_org_"+em,o);
+        setScreen("app");showT("Welcome to Admin HR!");
+      }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
+    })
+  ),true);
+
   var setPasswordScreen=authWrap(h("div",{key:"setpw",style:{textAlign:"center"}},
+
     h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:28}},
       logoSVG(52),
       h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Set New Password"),
@@ -2966,7 +3149,11 @@ export default function App(){
 
   var appContent;
   if(screen==="loading")appContent=loadingScreen;
-  else if(screen==="login")appContent=isPasswordReset?setPasswordScreen:(authMode==="otp"?otpScreen:emailScreen);
+  else if(screen==="login")appContent=isPasswordReset?setPasswordScreen:
+    (authMode==="otp"||authMode==="signup-otp")?otpScreen:
+    authMode==="signup"?signupScreen:
+    authMode==="signin"?signinScreen:
+    landingScreen;
   else if(screen==="setup")appContent=setupScreen;
   else{
     var tabContent;
@@ -3124,19 +3311,55 @@ export default function App(){
             var confirmed=!!u.email_confirmed_at;
             var isOwner=u.email===OWNER_EMAIL;
             var isEditingExp=editExpEmail===u.email;
+            var isExpanded=emailChangeTarget===("expand_"+u.email);
             return h("div",{key:u.email,style:{background:SFT,borderRadius:12,padding:"11px 12px",marginBottom:10,border:"1px solid "+(u.plan==="paid"?GRN+"44":BDR)}},
-              // Email + plan badge
+              // ── Top row: email + plan badge + expand toggle ──
               h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
-                h("div",{style:{fontSize:12,fontWeight:700,color:NVY,flex:1,marginRight:8,wordBreak:"break-all"}},u.email,isOwner?h("span",{style:{fontSize:9,color:AMB,fontWeight:600,marginLeft:6}},"OWNER"):null),
-                h("div",{style:{fontSize:10,fontWeight:700,color:u.plan==="paid"?GRN:GRY,background:(u.plan==="paid"?GRN:GRY)+"18",borderRadius:20,padding:"2px 8px",flexShrink:0}},u.plan==="paid"?"PAID":"FREE")
+                h("div",{style:{flex:1,marginRight:8}},
+                  h("div",{style:{fontSize:12,fontWeight:700,color:NVY,wordBreak:"break-all"}},
+                    u.email,isOwner?h("span",{style:{fontSize:9,color:AMB,fontWeight:600,marginLeft:6}},"OWNER"):null
+                  ),
+                  u.full_name?h("div",{style:{fontSize:11,color:GRY,marginTop:2}},u.full_name):null
+                ),
+                h("div",{style:{display:"flex",gap:5,alignItems:"center",flexShrink:0}},
+                  h("div",{style:{fontSize:10,fontWeight:700,color:u.plan==="paid"?GRN:GRY,background:(u.plan==="paid"?GRN:GRY)+"18",borderRadius:20,padding:"2px 8px"}},u.plan==="paid"?"PAID":"FREE"),
+                  h("button",{onClick:function(){setEmailChangeTarget(isExpanded?null:"expand_"+u.email);},
+                    style:{background:"none",border:"1px solid "+BDR,borderRadius:6,padding:"2px 7px",fontSize:12,color:GRY,cursor:"pointer"}},
+                    isExpanded?"\u25b2":"\u25bc")
+                )
               ),
-              // Meta info
-              h("div",{style:{display:"flex",gap:6,marginBottom:6,flexWrap:"wrap"}},
-                h("div",{style:{fontSize:9,color:confirmed?GRN:AMB,background:(confirmed?GRN:AMB)+"18",borderRadius:4,padding:"1px 6px"}},confirmed?"✓ Verified":"⚠ Unverified"),
-                h("div",{style:{fontSize:9,color:GRY}},"Joined: "+joined),
-                h("div",{style:{fontSize:9,color:GRY}},"Last: "+lastLogin),
-                h("div",{style:{fontSize:9,color:TEL,background:TEL+"15",borderRadius:4,padding:"1px 6px"}},"Emp: "+(u.emp_limit||(u.plan==="paid"?"Unlimited":"5")))
+              // ── Collapsed summary row ──
+              h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}},
+                u.org_name?h("div",{style:{fontSize:9,color:TEL,background:TEL+"15",borderRadius:4,padding:"1px 6px"}},u.org_name):null,
+                u.org_type?h("div",{style:{fontSize:9,color:GRY,background:SFT,border:"1px solid "+BDR,borderRadius:4,padding:"1px 6px"}},u.org_type):null,
+                h("div",{style:{fontSize:9,color:confirmed?GRN:AMB,background:(confirmed?GRN:AMB)+"18",borderRadius:4,padding:"1px 6px"}},confirmed?"\u2713 Verified":"\u26a0 Unverified"),
+                h("div",{style:{fontSize:9,color:GRY}},"Last: "+lastLogin)
               ),
+              // ── Expanded detail panel ──
+              isExpanded?h("div",{style:{background:CARD,borderRadius:10,padding:"10px 12px",marginBottom:8,border:"1px solid "+BDR}},
+                h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"USER DETAILS"),
+                [
+                  ["Full Name",u.full_name||"—"],
+                  ["Email",u.email],
+                  ["Organization",u.org_name||"—"],
+                  ["Org Type",u.org_type||"—"],
+                  ["Position",u.position||"—"],
+                  ["Team Size",u.emp_count_range||"—"],
+                  ["Phone",u.phone||"—"],
+                  ["Website",u.website||"—"],
+                  ["Joined",joined||"—"],
+                  ["Last Login",lastLogin],
+                  ["Plan",u.plan==="paid"?"Paid":"Free"],
+                  ["Emp Limit",u.emp_limit?("Max "+u.emp_limit):(u.plan==="paid"?"Unlimited":"5 (free)")],
+                  ["Expires",u.expires_on?new Date(u.expires_on).toLocaleDateString("en-IN"):"No expiry"],
+                  ["Email Status",confirmed?"Verified":"Not verified"]
+                ].map(function(item){
+                  return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
+                    h("span",{style:{fontSize:11,color:GRY,fontWeight:500}},item[0]),
+                    h("span",{style:{fontSize:11,color:NVY,fontWeight:600,textAlign:"right",maxWidth:"60%",wordBreak:"break-all"}},item[1])
+                  );
+                })
+              ):null,
               // Expiry countdown
               u.plan==="paid"?h("div",{style:{background:CARD,borderRadius:8,padding:"7px 10px",marginBottom:8,display:"flex",justifyContent:"space-between",alignItems:"center"}},
                 h("div",null,
