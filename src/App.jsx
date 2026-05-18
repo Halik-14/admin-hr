@@ -2595,8 +2595,8 @@ export default function App(){
           ["Allowances",fmt(sheetE.allow||0),NVY],
           d.inc>0?["Incentive",fmt(d.inc),"#059669"]:null,
           d.shiftAllow>0?["Shift Allowance",fmt(d.shiftAllow),TEL]:null
-        ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1]));},
-        h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:8}},h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},"Gross"),h("span",{style:{fontSize:12,fontWeight:800,color:GRN}},fmt(d.gr)))),
+        ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1]));}),
+        h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:8}},h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},"Gross"),h("span",{style:{fontSize:12,fontWeight:800,color:GRN}},fmt(d.gr))),
         // Deductions section
         h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5,marginTop:4}},"DEDUCTIONS"),
         [
