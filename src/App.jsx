@@ -3502,20 +3502,6 @@ export default function App(){
       )
     );
   }
-      if(!expiresOn)return null;
-      var now=new Date();
-      var end=new Date(expiresOn);
-      end.setHours(23,59,59,999);
-      var diff=end-now;
-      if(diff<=0)return h("div",{style:{fontSize:10,color:RED,fontWeight:700}},"EXPIRED");
-      var dd=Math.floor(diff/86400000);
-      var hh=Math.floor((diff%86400000)/3600000);
-      var mm=Math.floor((diff%3600000)/60000);
-      var ss=Math.floor((diff%60000)/1000);
-      var color=dd<=3?RED:dd<=7?AMB:GRN;
-      return h("div",{style:{fontSize:10,fontWeight:700,color:color,fontFamily:"monospace",letterSpacing:.5}},
-        String(dd).padStart(2,"0")+"d "+String(hh).padStart(2,"0")+"h "+String(mm).padStart(2,"0")+"m "+String(ss).padStart(2,"0")+"s"
-      );
   function renderPFDlPicker(){
     if(!showPFDl)return null;
     return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowPFDl(false);}},
