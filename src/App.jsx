@@ -3396,6 +3396,7 @@ export default function App(){
                 h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"ACCOUNT DETAILS"),
                 [
                   ["Full Name",u.full_name||"—"],
+                  ["Mobile",u.phone||"—"],
                   ["Organization",u.org_name||"—"],
                   ["Org Type",u.org_type||"—"],
                   ["Position",u.position||"—"],
@@ -3448,12 +3449,12 @@ export default function App(){
               ):null,
               // ── Action buttons ──
               h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-                !isOwner?(u.plan!=="paid"
+                (u.plan!=="paid"
                   ?h("button",{onClick:function(){setUserPlan(u.email,"paid",{activated_on:new Date().toISOString().split("T")[0]});},
-                    style:{flex:1,background:GRN,border:"none",borderRadius:8,padding:"7px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Set Paid")
+                    style:{flex:1,background:GRN,border:"none",borderRadius:8,padding:"7px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},isOwner?"Test Paid":"Set Paid")
                   :h("button",{onClick:function(){setUserPlan(u.email,"free");},
-                    style:{flex:1,background:GRY,border:"none",borderRadius:8,padding:"7px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Set Free")
-                ):null,
+                    style:{flex:1,background:GRY,border:"none",borderRadius:8,padding:"7px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},isOwner?"Test Free":"Set Free")
+                ),
                 !isOwner?h("button",{onClick:function(){setEditExpEmail(isEditingExp?null:u.email);setExpInput(u.expires_on||"");},
                   style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 10px",fontSize:11,fontWeight:600,color:NVY,cursor:"pointer"}},
                   isEditingExp?"Cancel":"Set Expiry"):null,
