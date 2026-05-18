@@ -1206,11 +1206,21 @@ export default function App(){
       var em=user.email;
       setGUser({name:em.split("@")[0],email:em,photo:""});
       lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
+      // Timeout fallback - if Supabase takes too long, use cache
+      var timedOut=false;
+      var timer=setTimeout(function(){
+        timedOut=true;
+        var cached=lsGet("hr_org_"+em,null);
+        if(cached&&cached.name){setOrg(cached);setScreen("app");}
+        else setScreen("login");
+      },8000);
       Promise.all([
         _sb.from("user_orgs").select("*").eq("email",em).maybeSingle(),
-        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit").eq("email",em).maybeSingle(),
+        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit,is_blocked").eq("email",em).maybeSingle(),
         _sb.from("user_data").select("*").eq("email",em).maybeSingle()
       ]).then(function(results){
+        clearTimeout(timer);
+        if(timedOut)return;
         var orgRes=results[0],planRes=results[1],dataRes=results[2];
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var isBlocked=(planRes.data&&planRes.data.is_blocked)||false;
@@ -1242,11 +1252,13 @@ export default function App(){
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
           setScreen("app");
-          _dataLoaded.current=false; // allow auto-sync after fresh load
+          _dataLoaded.current=false;
         } else {
           setScreen("setup");
         }
       }).catch(function(){
+        clearTimeout(timer);
+        if(timedOut)return;
         var cached=lsGet("hr_org_"+em,null);
         if(cached&&cached.name){setOrg(cached);setScreen("app");}
         else setScreen("setup");
@@ -1265,7 +1277,7 @@ export default function App(){
         setGUser(null);lsSet("hr_guser",null);
         setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
         setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
-        setScreen("login");
+        setScreen("login");setAuthMode("landing");
       }
       if(event==="PASSWORD_RECOVERY"){setIsPasswordReset(true);setScreen("login");}
     });
