@@ -2519,6 +2519,10 @@ export default function App(){
     if(sheetE)return renderAttSheet();
     var todayDate=attY+"-"+String(attM+1).padStart(2,"0")+"-"+String(new Date().getDate()).padStart(2,"0");
     return h("div",{className:"fd"},
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
+        h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},MOS[attM]+" "+attY),
+        h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
+      ),
       h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
         h("select",{value:attY,onChange:function(e){var y=Number(e.target.value);setAttY(y);if(y===curY&&attM>curM)setAttM(curM);},style:{flex:0,width:"auto",marginBottom:0,padding:"7px 10px",fontSize:12}},
           pastYears().reverse().map(function(y){return h("option",{key:y,value:y},y);})
@@ -2895,30 +2899,6 @@ export default function App(){
             h("div",{style:{fontSize:14,fontWeight:700,color:NVY,marginBottom:2}},org.position||gUser&&gUser.name||""),
             h("div",{style:{fontSize:11,color:GRY,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},gUser?gUser.email:"")
           )
-        ),
-        // ── Change email row ──
-        showEmailChange?h("div",{style:{background:SFT,borderRadius:12,padding:12,marginBottom:12,border:"1px solid "+BDR}},
-          emailChangeStep===1?h("div",null,
-            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:6}},"Change Email Address"),
-            h("div",{style:{fontSize:11,color:GRY,marginBottom:10}},"A confirmation will be sent to your new email. You will be signed out once confirmed."),
-            h("input",{type:"email",value:newEmailVal,onChange:function(e){setNewEmailVal(e.target.value);setEmailChangeErr("");},placeholder:"Enter new email address",style:{width:"100%",background:CARD,border:"1.5px solid "+(emailChangeErr?RED:BDR),borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:emailChangeErr?4:8,boxSizing:"border-box"}}),
-            emailChangeErr?h("div",{style:{fontSize:11,color:RED,marginBottom:8}},emailChangeErr):null,
-            h("div",{style:{display:"flex",gap:7}},
-              h("button",{onClick:cancelEmailChange,style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px",fontSize:12,color:GRY,fontWeight:600,cursor:"pointer"}},"Cancel"),
-              h("button",{onClick:handleEmailChange,disabled:emailChangeLoading,style:{flex:2,background:NVY,border:"none",borderRadius:9,padding:"9px",fontSize:12,color:CARD,fontWeight:700,cursor:emailChangeLoading?"not-allowed":"pointer",opacity:emailChangeLoading?.7:1}},emailChangeLoading?"Sending...":"Send Confirmation")
-            )
-          ):h("div",{style:{textAlign:"center",padding:"4px 0"}},
-            h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:4}},"Confirmation Sent"),
-            h("div",{style:{fontSize:11,color:GRY,marginBottom:4}},"Check: "+newEmailVal),
-            h("div",{style:{fontSize:11,color:GRY,marginBottom:12}},"Click the link in the email. You will be signed out automatically."),
-            h("button",{onClick:cancelEmailChange,style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"7px 16px",fontSize:12,color:GRY,fontWeight:600,cursor:"pointer"}},"Cancel")
-          )
-        ):h("div",{onClick:function(){setShowEmailChange(true);setEmailChangeStep(1);setNewEmailVal("");setEmailChangeErr("");},style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid "+BDR,cursor:"pointer"}},
-          h("div",null,
-            h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},"Change Email"),
-            h("div",{style:{fontSize:10,color:GRY,marginTop:2}},"Update your login email address")
-          ),
-          ic("chevron_right",GRY,16)
         ),
         h("div",{style:{height:10}}),
         sectionTitle("PLAN"),
