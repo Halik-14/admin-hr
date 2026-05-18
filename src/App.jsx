@@ -1206,21 +1206,11 @@ export default function App(){
       var em=user.email;
       setGUser({name:em.split("@")[0],email:em,photo:""});
       lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
-      // Timeout fallback - if Supabase takes too long, use cache
-      var timedOut=false;
-      var timer=setTimeout(function(){
-        timedOut=true;
-        var cached=lsGet("hr_org_"+em,null);
-        if(cached&&cached.name){setOrg(cached);setScreen("app");}
-        else setScreen("login");
-      },8000);
       Promise.all([
         _sb.from("user_orgs").select("*").eq("email",em).maybeSingle(),
         _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit,is_blocked").eq("email",em).maybeSingle(),
         _sb.from("user_data").select("*").eq("email",em).maybeSingle()
       ]).then(function(results){
-        clearTimeout(timer);
-        if(timedOut)return;
         var orgRes=results[0],planRes=results[1],dataRes=results[2];
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var isBlocked=(planRes.data&&planRes.data.is_blocked)||false;
@@ -1232,14 +1222,16 @@ export default function App(){
         }
         setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
         if(orgRes.data&&orgRes.data.org_name){
-          var o={name:orgRes.data.org_name,email:em,
+          var o={
+            name:orgRes.data.org_name,email:em,
             position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
             emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
             expires_on:(planRes.data&&planRes.data.expires_on)||null,
             address:(orgRes.data&&orgRes.data.address)||"",
             logo:(orgRes.data&&orgRes.data.logo_base64)||"",
             phone:(orgRes.data&&orgRes.data.phone)||"",
-            website:(orgRes.data&&orgRes.data.website)||""};
+            website:(orgRes.data&&orgRes.data.website)||""
+          };
           lsSet("hr_org_"+em,o);setOrg(o);
           if(dataRes.data){try{
             setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
@@ -1251,41 +1243,33 @@ export default function App(){
             setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
-          setScreen("app");
           _dataLoaded.current=false;
+          setScreen("app");
         } else {
           setScreen("setup");
         }
       }).catch(function(){
-        clearTimeout(timer);
-        if(timedOut)return;
         var cached=lsGet("hr_org_"+em,null);
         if(cached&&cached.name){setOrg(cached);setScreen("app");}
         else setScreen("setup");
       });
     }
 
-    // onAuthStateChange is the single source of truth for all auth events
-    var initialHandled=false;
+    // Single listener — INITIAL_SESSION is the first event, handles everything
+    var loaded=false;
     var sub=_sb.auth.onAuthStateChange(function(event,session){
-      if(event==="INITIAL_SESSION"){
-        initialHandled=true;
-        if(session&&session.user){
-          loadUserData(session.user);
-        } else {
-          setScreen("login");setAuthMode("landing");
-        }
-      }
-      if(event==="SIGNED_IN"&&session&&session.user){
-        // Skip if INITIAL_SESSION already handled this (app reopen)
-        // Only run for new logins (OTP verify)
-        if(initialHandled){
-          initialHandled=false; // reset for next time
-          return;
-        }
+      if((event==="INITIAL_SESSION"||event==="SIGNED_IN")&&session&&session.user){
+        if(loaded)return; // prevent double-load on app open
+        loaded=true;
         loadUserData(session.user);
+        // Reset after 3s so next OTP login works
+        setTimeout(function(){loaded=false;},3000);
+      }
+      if(event==="INITIAL_SESSION"&&!session){
+        setScreen("login");setAuthMode("landing");
       }
       if(event==="SIGNED_OUT"){
+        loaded=false;
         setGUser(null);lsSet("hr_guser",null);
         setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
         setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
@@ -1707,22 +1691,31 @@ export default function App(){
     .then(function(res){
       if(res.error){setAuthErr("Invalid or expired OTP. Try again.");setAuthLoading(false);return;}
       if(!res.data.user){setAuthErr("Verification failed. Try again.");setAuthLoading(false);return;}
+      var user=res.data.user;
       // Clear stale data
       ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
       setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
       setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
       if(isSignup){
-        // Save signup details FIRST then let onAuthStateChange handle loadUserData
+        // Save org details first, THEN load — avoids race with onAuthStateChange
         _sb.from("user_orgs").upsert({
-          email:email,org_name:suOrg.trim(),org_type:suType,
+          email:user.email,org_name:suOrg.trim(),org_type:suType,
           position:suPos.trim(),full_name:suName.trim(),emp_count_range:suEmpRange
         },{onConflict:"email"}).then(function(){
           setAuthLoading(false);
-          // onAuthStateChange SIGNED_IN fires and calls loadUserData
+          // Don't rely on onAuthStateChange here — call loadUserData directly
+          setGUser({name:user.email.split("@")[0],email:user.email,photo:""});
+          lsSet("hr_guser",{name:user.email.split("@")[0],email:user.email,photo:""});
+          setOrg({name:suOrg.trim(),type:suType,position:suPos.trim(),email:user.email,plan:"free",address:"",logo:""});
+          lsSet("hr_org_"+user.email,{name:suOrg.trim(),type:suType,position:suPos.trim(),email:user.email,plan:"free",address:"",logo:""});
+          setScreen("app");
+          showT("Welcome to Admin HR!");
+        }).catch(function(){
+          setAuthLoading(false);setAuthErr("Failed to save details. Try again.");
         });
       } else {
         setAuthLoading(false);
-        // onAuthStateChange SIGNED_IN will fire and call loadUserData
+        // onAuthStateChange SIGNED_IN handles signin
       }
     }).catch(function(e){setAuthErr(e.message||"Verification failed");setAuthLoading(false);});
   }
