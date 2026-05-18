@@ -2009,7 +2009,6 @@ export default function App(){
         ic(ICONS.chev,"rgba(255,255,255,.7)",20)
       ),
       showRemSection?h("div",{style:{marginBottom:12}},
-        (bRemind.length>0||annivRemind.length>0)?h("div",null,
         bRemind.length>0?h("div",{style:{borderRadius:12,padding:12,marginBottom:8,border:"1.5px solid #FCD34D",animation:bdayUrgent?"blinkBorder 1.2s ease-in-out infinite":"none",background:T.PILL_WARN_SOFT}},
           h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8}},
             ic("cake",AMB,15),
@@ -2052,10 +2051,10 @@ export default function App(){
             );
           })
         ):null,
-        ):h("div",{style:{background:SFT,borderRadius:12,padding:"10px 14px",marginBottom:8,border:"1px solid "+BDR,display:"flex",alignItems:"center",gap:8}},
+        bRemind.length===0&&annivRemind.length===0?h("div",{style:{background:SFT,borderRadius:12,padding:"10px 14px",marginBottom:8,border:"1px solid "+BDR,display:"flex",alignItems:"center",gap:8}},
           ic("event_available",GRY,15),
           h("div",{style:{fontSize:12,color:GRY}},"No upcoming birthdays or anniversaries in the next 30 days")
-        ),
+        ):null,
         h("div",{style:{background:CARD,border:"1.5px solid "+(urgentRems.length>0?RED:BDR),borderRadius:12,padding:12,animation:urgentRems.length>0?"blinkBorder 1.2s ease-in-out infinite":"none"}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:activeRems.length>0||remOpen?10:0}},
             h("div",{style:{display:"flex",alignItems:"center",gap:6}},
