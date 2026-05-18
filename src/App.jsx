@@ -1266,12 +1266,24 @@ export default function App(){
     }
 
     // onAuthStateChange is the single source of truth for all auth events
+    var initialHandled=false;
     var sub=_sb.auth.onAuthStateChange(function(event,session){
-      if(event==="SIGNED_IN"&&session&&session.user){
-        loadUserData(session.user);
-      }
       if(event==="INITIAL_SESSION"){
-        if(!session){setScreen("login");setAuthMode("landing");}
+        initialHandled=true;
+        if(session&&session.user){
+          loadUserData(session.user);
+        } else {
+          setScreen("login");setAuthMode("landing");
+        }
+      }
+      if(event==="SIGNED_IN"&&session&&session.user){
+        // Skip if INITIAL_SESSION already handled this (app reopen)
+        // Only run for new logins (OTP verify)
+        if(initialHandled){
+          initialHandled=false; // reset for next time
+          return;
+        }
+        loadUserData(session.user);
       }
       if(event==="SIGNED_OUT"){
         setGUser(null);lsSet("hr_guser",null);
@@ -1637,6 +1649,7 @@ export default function App(){
 
 
   // ── OTP: Send OTP for SIGNUP ─────────────────────────────────────────────
+  // ── OTP: Send OTP for SIGNUP ─────────────────────────────────────────────
   function handleSignupSendOTP(){
     var email=authEmail.trim().toLowerCase();
     if(!suName.trim())return setAuthErr("Enter your full name");
@@ -1647,11 +1660,9 @@ export default function App(){
     if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
     if(!suAgreed)return setAuthErr("Please confirm the email warning");
     setAuthLoading(true);setAuthErr("");
-    // Check if email already registered
     _sb.from("user_plans").select("email").eq("email",email).maybeSingle()
     .then(function(res){
       if(res.data){setAuthErr("Account already exists. Please Sign In.");setAuthLoading(false);return;}
-      // Send OTP
       return _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}})
       .then(function(r){
         setAuthLoading(false);
@@ -1667,17 +1678,21 @@ export default function App(){
     var email=authEmail.trim().toLowerCase();
     if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
     setAuthLoading(true);setAuthErr("");
-    // Check if account exists
-    _sb.from("user_plans").select("email").eq("email",email).maybeSingle()
-    .then(function(res){
-      if(!res.data){setAuthErr("No account found. Please Sign Up first.");setAuthLoading(false);return;}
-      return _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:false,emailRedirectTo:null}})
-      .then(function(r){
-        setAuthLoading(false);
-        if(r.error){setAuthErr(r.error.message);return;}
-        setOtpSent(true);setAuthMode("otp");
-        lsSet("hr_last_email",email);
-      });
+    // Just send OTP — don't block on user_plans check (old accounts may not have a row)
+    _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:false,emailRedirectTo:null}})
+    .then(function(r){
+      setAuthLoading(false);
+      if(r.error){
+        // If user doesn't exist in auth at all, show clear message
+        if(r.error.message&&r.error.message.toLowerCase().includes("not found")){
+          setAuthErr("No account found. Please Sign Up first.");
+        } else {
+          setAuthErr(r.error.message);
+        }
+        return;
+      }
+      setOtpSent(true);setAuthMode("otp");
+      lsSet("hr_last_email",email);
     }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
   }
 
@@ -1692,23 +1707,23 @@ export default function App(){
     .then(function(res){
       if(res.error){setAuthErr("Invalid or expired OTP. Try again.");setAuthLoading(false);return;}
       if(!res.data.user){setAuthErr("Verification failed. Try again.");setAuthLoading(false);return;}
-      // Clear stale data from previous user
+      // Clear stale data
       ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
       setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
       setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
       if(isSignup){
-        // Save signup details to user_orgs
+        // Save signup details FIRST then let onAuthStateChange handle loadUserData
         _sb.from("user_orgs").upsert({
-          email:email,
-          org_name:suOrg.trim(),
-          org_type:suType,
-          position:suPos.trim(),
-          full_name:suName.trim(),
-          emp_count_range:suEmpRange
-        },{onConflict:"email"}).then(function(){});
+          email:email,org_name:suOrg.trim(),org_type:suType,
+          position:suPos.trim(),full_name:suName.trim(),emp_count_range:suEmpRange
+        },{onConflict:"email"}).then(function(){
+          setAuthLoading(false);
+          // onAuthStateChange SIGNED_IN fires and calls loadUserData
+        });
+      } else {
+        setAuthLoading(false);
+        // onAuthStateChange SIGNED_IN will fire and call loadUserData
       }
-      setAuthLoading(false);
-      // onAuthStateChange SIGNED_IN will fire and call loadUserData
     }).catch(function(e){setAuthErr(e.message||"Verification failed");setAuthLoading(false);});
   }
 
