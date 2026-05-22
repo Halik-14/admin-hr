@@ -1,0 +1,15 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.adminhr.app",
+    "sha256_cert_fingerprints": [
+      "DB:3C:09:1A:6A:B6:E5:05:9B:EB:C3:FD:D5:EF:3A:FE:F8:88:49:8F:A8:37:11:6E:4D:E9:8A:90:19:C7:3C:C8",
+      "1C:E0:AA:E1:D5:A7:32:DA:F1:68:A0:32:FC:BA:A8:63:7F:FF:B0:D9:82:29:E9:DC:11:57:A8:9E:FB:15:D9:53",
+      "7E:93:83:48:0F:9D:3A:FD:F9:56:C4:2A:44:0F:CA:0B:53:2F:17:3C:89:59:07:EF:2E:9A:34:F7:B7:05:7B:A4",
+      "6A:53:63:8D:C3:8F:44:BE:9B:85:D9:5F:4F:71:96:B8:C6:D7:8B:3F:70:14:47:5F:FC:C8:47:EA:0F:62:0F:0C",
+      "7B:BF:03:39:BA:59:1C:6A:7E:E7:B1:86:2E:94:31:0D:EA:2C:F2:14:7D:45:D6:5C:B3:03:F7:60:58:43:75:D1",
+      "21:33:B4:DA:5B:1A:F5:4A:9A:DF:47:7F:1B:96:F4:40:27:19:6C:26:2C:37:AA:3A:FF:FC:75:C4:F6:C3:AE:EA"
+    ]
+  }
+}]
