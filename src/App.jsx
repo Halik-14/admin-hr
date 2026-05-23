@@ -1112,6 +1112,47 @@ export default function App(){
   var sAR=st([]),annivRemind=sAR[0],setAnnivRemind=sAR[1];
   var sESort=st("name"),empSort=sESort[0],setEmpSort=sESort[1];
   var sESDir=st("asc"),empSortDir=sESDir[0],setEmpSortDir=sESDir[1];
+  // ── Pro features state ──
+  var sRole=st("owner"),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee
+  var sEmpEmail=st(""),empEmployerEmail=sEmpEmail[0],setEmpEmployerEmail=sEmpEmail[1];
+  var sTasks=st([]),tasks=sTasks[0],setTasks=sTasks[1];
+  var sTaskComments=st({}),taskComments=sTaskComments[0],setTaskComments=sTaskComments[1];
+  var sSelTask=st(null),selTask=sSelTask[0],setSelTask=sSelTask[1];
+  var sShowNewTask=st(false),showNewTask=sShowNewTask[0],setShowNewTask=sShowNewTask[1];
+  var sTaskTitle=st(""),taskTitle=sTaskTitle[0],setTaskTitle=sTaskTitle[1];
+  var sTaskDesc=st(""),taskDesc=sTaskDesc[0],setTaskDesc=sTaskDesc[1];
+  var sTaskAssignType=st("individual"),taskAssignType=sTaskAssignType[0],setTaskAssignType=sTaskAssignType[1];
+  var sTaskAssignTarget=st(""),taskAssignTarget=sTaskAssignTarget[0],setTaskAssignTarget=sTaskAssignTarget[1];
+  var sTaskPriority=st("medium"),taskPriority=sTaskPriority[0],setTaskPriority=sTaskPriority[1];
+  var sTaskDeadline=st(""),taskDeadline=sTaskDeadline[0],setTaskDeadline=sTaskDeadline[1];
+  var sTaskComment=st(""),taskComment=sTaskComment[0],setTaskComment=sTaskComment[1];
+  var sLeaveReqs=st([]),leaveReqs=sLeaveReqs[0],setLeaveReqs=sLeaveReqs[1];
+  var sSelLeave=st(null),selLeave=sSelLeave[0],setSelLeave=sSelLeave[1];
+  var sShowLeaveForm=st(false),showLeaveForm=sShowLeaveForm[0],setShowLeaveForm=sShowLeaveForm[1];
+  var sLeaveType=st("CL"),leaveType=sLeaveType[0],setLeaveType=sLeaveType[1];
+  var sLeaveFrom=st(""),leaveFrom=sLeaveFrom[0],setLeaveFrom=sLeaveFrom[1];
+  var sLeaveTo=st(""),leaveTo=sLeaveTo[0],setLeaveTo=sLeaveTo[1];
+  var sLeaveReason=st(""),leaveReason=sLeaveReason[0],setLeaveReason=sLeaveReason[1];
+  var sLeaveReply=st(""),leaveReply=sLeaveReply[0],setLeaveReply=sLeaveReply[1];
+  var sNotifs=st([]),notifs=sNotifs[0],setNotifs=sNotifs[1];
+  var sUnreadNotifs=st(0),unreadNotifs=sUnreadNotifs[0],setUnreadNotifs=sUnreadNotifs[1];
+  var sShowNotifs=st(false),showNotifs=sShowNotifs[0],setShowNotifs=sShowNotifs[1];
+  var sShowInvite=st(false),showInvite=sShowInvite[0],setShowInvite=sShowInvite[1];
+  var sInviteEmail=st(""),inviteEmail=sInviteEmail[0],setInviteEmail=sInviteEmail[1];
+  var sInviteCode=st(""),inviteCode=sInviteCode[0],setInviteCode=sInviteCode[1];
+  var sShowInviteCode=st(false),showInviteCode=sShowInviteCode[0],setShowInviteCode=sShowInviteCode[1];
+  var sKpis=st([]),kpis=sKpis[0],setKpis=sKpis[1];
+  var sKpiScores=st([]),kpiScores=sKpiScores[0],setKpiScores=sKpiScores[1];
+  var sShowKpiForm=st(false),showKpiForm=sShowKpiForm[0],setShowKpiForm=sShowKpiForm[1];
+  var sKpiName=st(""),kpiName=sKpiName[0],setKpiName=sKpiName[1];
+  var sKpiTarget=st(""),kpiTarget=sKpiTarget[0],setKpiTarget=sKpiTarget[1];
+  var sKpiUnit=st("%"),kpiUnit=sKpiUnit[0],setKpiUnit=sKpiUnit[1];
+  var sKpiWeight=st("100"),kpiWeight=sKpiWeight[0],setKpiWeight=sKpiWeight[1];
+  var sKpiAssignType=st("individual"),kpiAssignType=sKpiAssignType[0],setKpiAssignType=sKpiAssignType[1];
+  var sKpiAssignTarget=st(""),kpiAssignTarget=sKpiAssignTarget[0],setKpiAssignTarget=sKpiAssignTarget[1];
+  var sTaskTab=st("all"),taskTab=sTaskTab[0],setTaskTab=sTaskTab[1];
+  var sLeaveTab=st("pending"),leaveTab=sLeaveTab[0],setLeaveTab=sLeaveTab[1];
+  var sProTab=st("tasks"),proTab=sProTab[0],setProTab=sProTab[1];
   var sEChg=st(false),showEmailChange=sEChg[0],setShowEmailChange=sEChg[1];
   var sNewEm=st(""),newEmailVal=sNewEm[0],setNewEmailVal=sNewEm[1];
   var sEmStp=st(1),emailChangeStep=sEmStp[0],setEmailChangeStep=sEmStp[1];
@@ -1221,6 +1262,10 @@ export default function App(){
           return;
         }
         setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
+        var role=(planRes.data&&planRes.data.role)||"owner";
+        setUserRole(role);
+        var empEmpEmail=(planRes.data&&planRes.data.employer_email)||"";
+        setEmpEmployerEmail(empEmpEmail);
         if(orgRes.data&&orgRes.data.org_name){
           var o={
             name:orgRes.data.org_name,email:em,
@@ -1930,6 +1975,187 @@ export default function App(){
     h("button",{onClick:handleSetNewPassword,style:{width:"100%",background:T.AUTH_BTN_BG,border:"none",borderRadius:12,padding:"14px",color:T.AUTH_BTN_TEXT,fontSize:14,fontWeight:700,cursor:"pointer",marginTop:6}},"Update Password")
   ));
 
+
+
+  // ── Pro: Notification helpers ──────────────────────────────────────────
+  function addNotif(toEmail,fromEmail,type,title,message,refId,refType){
+    var n={id:Date.now(),to:toEmail,from:fromEmail,type:type,title:title,message:message,refId:refId||"",refType:refType||"general",read:false,createdAt:new Date().toISOString()};
+    setNotifs(function(p){return [n].concat(p);});
+    setUnreadNotifs(function(c){return c+1;});
+  }
+
+  // ── Pro: Task functions ─────────────────────────────────────────────────
+  function saveTask(){
+    if(!taskTitle.trim())return showT("Enter task title","err");
+    if(!taskAssignTarget)return showT("Select assignment target","err");
+    if(!taskDeadline)return showT("Select deadline","err");
+    var task={
+      id:Date.now(),
+      createdBy:gUser.email,
+      employerEmail:gUser.email,
+      assignType:taskAssignType,
+      assignTarget:taskAssignTarget,
+      title:taskTitle.trim(),
+      description:taskDesc.trim(),
+      priority:taskPriority,
+      deadline:taskDeadline,
+      status:"assigned",
+      completionNote:"",
+      rejectionReason:"",
+      createdAt:new Date().toISOString(),
+      updatedAt:new Date().toISOString()
+    };
+    setTasks(function(p){return [task].concat(p);});
+    setTaskTitle("");setTaskDesc("");setTaskAssignTarget("");setTaskDeadline("");setTaskPriority("medium");setTaskAssignType("individual");
+    setShowNewTask(false);
+    addNotif(taskAssignTarget,gUser.email,"task_assigned","New task assigned","You have a new task: "+task.title,String(task.id),"task");
+    showT("Task assigned!");
+  }
+
+  function updateTaskStatus(taskId,status,note){
+    setTasks(function(p){return p.map(function(t){
+      if(t.id!==taskId)return t;
+      var updated=Object.assign({},t,{status:status,updatedAt:new Date().toISOString()});
+      if(note&&status==="completed")updated.completionNote=note;
+      if(note&&status==="rejected")updated.rejectionReason=note;
+      return updated;
+    });});
+    var task=tasks.find(function(t){return t.id===taskId;});
+    if(!task)return;
+    if(status==="completed"){
+      addNotif(task.employerEmail,gUser.email,"task_completed","Task completed",gUser.email.split("@")[0]+" completed: "+task.title,String(taskId),"task");
+    }
+    if(status==="verified"){
+      addNotif(task.assignTarget,gUser.email,"task_verified","Task verified","Your task was verified: "+task.title,String(taskId),"task");
+    }
+    if(status==="rejected"){
+      addNotif(task.assignTarget,gUser.email,"task_rejected","Task rejected","Your task needs revision: "+task.title,String(taskId),"task");
+    }
+    showT(status==="verified"?"Task verified!":status==="rejected"?"Task sent back":"Status updated");
+  }
+
+  function addTaskComment(taskId){
+    if(!taskComment.trim())return;
+    var comment={id:Date.now(),taskId:taskId,fromEmail:gUser.email,message:taskComment.trim(),createdAt:new Date().toISOString()};
+    setTaskComments(function(p){var o=Object.assign({},p);o[taskId]=(o[taskId]||[]).concat([comment]);return o;});
+    var task=tasks.find(function(t){return t.id===taskId;});
+    if(task){
+      var toEmail=gUser.email===task.employerEmail?task.assignTarget:task.employerEmail;
+      addNotif(toEmail,gUser.email,"task_comment","New comment",gUser.email.split("@")[0]+": "+taskComment.trim(),String(taskId),"task");
+    }
+    setTaskComment("");showT("Comment sent");
+  }
+
+  // ── Pro: Leave functions ────────────────────────────────────────────────
+  var LEAVE_TYPES={
+    CL:{name:"Casual Leave",paid:true,needsReason:false},
+    SL:{name:"Sick Leave",paid:true,needsReason:true},
+    PL:{name:"Paid Leave",paid:true,needsReason:false},
+    UL:{name:"Unpaid Leave",paid:false,needsReason:true},
+    EL:{name:"Emergency Leave",paid:true,needsReason:true},
+    CO:{name:"Compensatory Off",paid:true,needsReason:false},
+    ML:{name:"Maternity Leave",paid:true,needsReason:false},
+    PTL:{name:"Paternity Leave",paid:true,needsReason:false}
+  };
+
+  function applyLeave(){
+    if(!leaveFrom||!leaveTo)return showT("Select date range","err");
+    if(LEAVE_TYPES[leaveType].needsReason&&!leaveReason.trim())return showT("Reason required for "+LEAVE_TYPES[leaveType].name,"err");
+    var req={id:Date.now(),employeeEmail:gUser.email,employerEmail:empEmployerEmail,leaveType:leaveType,fromDate:leaveFrom,toDate:leaveTo,reason:leaveReason.trim(),status:"pending",adminReply:"",createdAt:new Date().toISOString()};
+    setLeaveReqs(function(p){return [req].concat(p);});
+    setLeaveFrom("");setLeaveTo("");setLeaveReason("");setShowLeaveForm(false);
+    addNotif(empEmployerEmail,gUser.email,"leave_requested","Leave request",gUser.email.split("@")[0]+" applied for "+LEAVE_TYPES[leaveType].name,String(req.id),"leave");
+    showT("Leave request sent!");
+  }
+
+  function approveLeave(reqId){
+    setLeaveReqs(function(p){return p.map(function(r){
+      if(r.id!==reqId)return r;
+      // Auto-mark attendance
+      var d=new Date(r.fromDate),end=new Date(r.toDate);
+      var attKey=LEAVE_TYPES[r.leaveType].paid?"pl":"ul";
+      setAtt(function(a){
+        var o=Object.assign({},a);
+        while(d<=end){
+          var ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+          // find employee id
+          var emp=emps.find(function(e){return e.email===r.employeeEmail||e.name.toLowerCase()===r.employeeEmail.split("@")[0].toLowerCase();});
+          if(emp)o[ds+"_"+emp.id]=attKey;
+          d.setDate(d.getDate()+1);
+        }
+        return o;
+      });
+      return Object.assign({},r,{status:"approved"});
+    });});
+    var req=leaveReqs.find(function(r){return r.id===reqId;});
+    if(req)addNotif(req.employeeEmail,gUser.email,"leave_approved","Leave approved","Your "+LEAVE_TYPES[req.leaveType].name+" has been approved",String(reqId),"leave");
+    showT("Leave approved! Attendance auto-marked.");
+  }
+
+  function rejectLeave(reqId,reply){
+    setLeaveReqs(function(p){return p.map(function(r){return r.id===reqId?Object.assign({},r,{status:"rejected",adminReply:reply||""}):r;});});
+    var req=leaveReqs.find(function(r){return r.id===reqId;});
+    if(req)addNotif(req.employeeEmail,gUser.email,"leave_rejected","Leave rejected","Your leave request was not approved",String(reqId),"leave");
+    showT("Leave rejected.");
+  }
+
+  // ── Pro: Invite functions ───────────────────────────────────────────────
+  function generateInviteCode(){
+    if(!inviteEmail.trim()||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inviteEmail.trim()))return showT("Enter valid email","err");
+    var code=String(Math.floor(100000+Math.random()*900000));
+    setInviteCode(code);
+    setShowInviteCode(true);
+    showT("Invite code generated! Share code "+code+" with employee.");
+    // Save invite to localStorage for verification
+    try{var invites=JSON.parse(localStorage.getItem("hr_invites")||"{}");invites[code]={email:inviteEmail.trim().toLowerCase(),employerEmail:gUser.email,expires:Date.now()+172800000};localStorage.setItem("hr_invites",JSON.stringify(invites));}catch(e){}
+  }
+
+  // ── Pro: KPI functions ──────────────────────────────────────────────────
+  function saveKpi(){
+    if(!kpiName.trim())return showT("Enter KPI name","err");
+    if(!kpiTarget)return showT("Enter target value","err");
+    if(!kpiAssignTarget)return showT("Select assignment target","err");
+    var kpi={id:Date.now(),employerEmail:gUser.email,assignType:kpiAssignType,assignTarget:kpiAssignTarget,name:kpiName.trim(),target:Number(kpiTarget),unit:kpiUnit,weightage:Number(kpiWeight)||100,createdAt:new Date().toISOString()};
+    setKpis(function(p){return p.concat([kpi]);});
+    setKpiName("");setKpiTarget("");setKpiUnit("%");setKpiWeight("100");setKpiAssignTarget("");setShowKpiForm(false);
+    showT("KPI saved!");
+  }
+
+  function getEmpKpis(empEmail,empDept,empRole){
+    return kpis.filter(function(k){
+      return k.employerEmail===gUser.email&&(
+        (k.assignType==="individual"&&k.assignTarget===empEmail)||
+        (k.assignType==="department"&&k.assignTarget===empDept)||
+        (k.assignType==="role"&&k.assignTarget===empRole)
+      );
+    });
+  }
+
+  function getKpiScore(kpiId,empEmail){
+    return kpiScores.find(function(s){return s.kpiId===kpiId&&s.employeeEmail===empEmail&&s.month===curM&&s.year===curY;});
+  }
+
+  function calcOverallGrade(empEmail,empDept,empRole){
+    var empKpis=getEmpKpis(empEmail,empDept,empRole);
+    if(!empKpis.length)return null;
+    var totalWeight=0,weightedScore=0;
+    empKpis.forEach(function(k){
+      var score=getKpiScore(k.id,empEmail);
+      if(score){
+        var pct=score.finalPct||0;
+        weightedScore+=pct*k.weightage;
+        totalWeight+=k.weightage;
+      }
+    });
+    if(!totalWeight)return null;
+    var overall=Math.round(weightedScore/totalWeight);
+    var grade=overall>=90?"Excellent":overall>=70?"Good":overall>=50?"Average":"Poor";
+    return {pct:overall,grade:grade};
+  }
+
+  function needsPro(){
+    showT("Admin HR Pro feature. Contact us to upgrade.","err");
+  }
 
   function renderDashboard(){
 
@@ -3106,6 +3332,344 @@ export default function App(){
   }
 
 
+
+  // ── Pro: Notification Bell ──────────────────────────────────────────────
+  function renderNotifPanel(){
+    if(!showNotifs)return null;
+    var myNotifs=notifs.filter(function(n){return n.to===gUser.email;});
+    return h("div",{style:{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:999,background:"rgba(0,0,0,0.4)"},onClick:function(){setShowNotifs(false);}},
+      h("div",{style:{position:"absolute",top:56,right:8,width:320,maxHeight:"70vh",background:CARD,borderRadius:16,border:"1px solid "+BDR,overflow:"hidden",boxShadow:"0 8px 32px rgba(0,0,0,.15)"},onClick:function(e){e.stopPropagation();}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",borderBottom:"1px solid "+BDR}},
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Notifications"),
+          myNotifs.some(function(n){return !n.read;})?h("button",{onClick:function(){setNotifs(function(p){return p.map(function(n){return Object.assign({},n,{read:true});});});setUnreadNotifs(0);},style:{background:"none",border:"none",fontSize:11,color:TEL,cursor:"pointer",fontWeight:600}},"Mark all read"):null
+        ),
+        h("div",{style:{overflowY:"auto",maxHeight:"calc(70vh - 48px)"}},
+          myNotifs.length===0?h("div",{style:{padding:"24px",textAlign:"center",color:GRY,fontSize:12}},"No notifications yet"):
+          myNotifs.map(function(n){
+            var iconMap={task_assigned:"assignment",task_completed:"task_alt",task_verified:"verified",task_rejected:"cancel",task_comment:"chat_bubble",leave_requested:"event_busy",leave_approved:"event_available",leave_rejected:"event_busy",kpi_scored:"insights"};
+            var colorMap={task_assigned:"#4F46E5",task_completed:"#10B981",task_verified:"#10B981",task_rejected:"#EF4444",task_comment:"#4F46E5",leave_requested:"#F59E0B",leave_approved:"#10B981",leave_rejected:"#EF4444",kpi_scored:"#D97706"};
+            return h("div",{key:n.id,style:{display:"flex",gap:10,padding:"10px 14px",borderBottom:"1px solid "+BDR,background:n.read?"transparent":ACCENT+"08",cursor:"pointer"},
+              onClick:function(){setNotifs(function(p){return p.map(function(x){return x.id===n.id?Object.assign({},x,{read:true}):x;});});setUnreadNotifs(function(c){return Math.max(0,c-1);});setShowNotifs(false);if(n.refType==="task")setTab("pro");if(n.refType==="leave")setTab("pro");}},
+              h("div",{style:{width:34,height:34,borderRadius:"50%",background:(colorMap[n.type]||TEL)+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+                ic(iconMap[n.type]||"notifications",colorMap[n.type]||TEL,16)
+              ),
+              h("div",{style:{flex:1}},
+                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},n.title),
+                h("div",{style:{fontSize:11,color:GRY,marginTop:2,lineHeight:1.4}},n.message),
+                h("div",{style:{fontSize:10,color:GRY,marginTop:3}},new Date(n.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}))
+              ),
+              !n.read?h("div",{style:{width:8,height:8,borderRadius:"50%",background:ACCENT,flexShrink:0,marginTop:4}}):null
+            );
+          })
+        )
+      )
+    );
+  }
+
+  // ── Pro: Tasks screen ───────────────────────────────────────────────────
+  function renderTasks(){
+    if(!isPaid)return h("div",{style:{padding:24,textAlign:"center"}},
+      h("div",{style:{fontSize:48,marginBottom:12}},"⭐"),
+      h("div",{style:{fontSize:18,fontWeight:700,color:NVY,marginBottom:8}},"Admin HR Pro"),
+      h("div",{style:{fontSize:13,color:GRY,marginBottom:20,lineHeight:1.6}},"Task management, KPI tracking, employee portal and more — unlock with Admin HR Pro."),
+      h("div",{style:{background:SFT,borderRadius:12,padding:16,marginBottom:20,textAlign:"left"}},
+        ["Assign and track tasks","Employee self-service portal","KPI & performance tracking","Leave apply & approve workflow","In-app notifications"].map(function(f){
+          return h("div",{key:f,style:{display:"flex",gap:8,alignItems:"center",padding:"5px 0"}},
+            ic("check_circle","#10B981",16),
+            h("div",{style:{fontSize:12,color:NVY}},f)
+          );
+        })
+      ),
+      h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro"),"_blank");},style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        ic("whatsapp","#25D366",18),"Contact to Upgrade"
+      )
+    );
+
+    var myTasks=tasks;
+    var filteredTasks=taskTab==="all"?myTasks:myTasks.filter(function(t){return t.status===taskTab;});
+    var pendingLeaves=leaveReqs.filter(function(r){return r.status==="pending";});
+
+    if(selTask){
+      var t=selTask;
+      var tComments=taskComments[t.id]||[];
+      var assignedEmp=emps.find(function(e){return e.email===t.assignTarget||e.name===t.assignTarget;});
+      return card(h("div",null,
+        h("button",{onClick:function(){setSelTask(null);},style:{background:"none",border:"none",cursor:"pointer",color:TEL,fontSize:12,fontWeight:600,padding:0,marginBottom:12,display:"flex",alignItems:"center",gap:4}},ic("arrow_back",TEL,14),"Back to tasks"),
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}},
+          h("div",{style:{fontSize:15,fontWeight:700,color:NVY,flex:1,marginRight:8}},t.title),
+          h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:20,background:t.priority==="high"?"#FEE2E2":t.priority==="medium"?"#FEF3C7":"#D1FAE5",color:t.priority==="high"?"#991B1B":t.priority==="medium"?"#92400E":"#065F46"}},t.priority.toUpperCase())
+        ),
+        t.description?h("div",{style:{fontSize:12,color:GRY,marginBottom:10,lineHeight:1.5}},t.description):null,
+        h("div",{style:{display:"flex",gap:16,marginBottom:10}},
+          h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"ASSIGNED TO"),h("div",{style:{fontSize:12,fontWeight:600,color:NVY,marginTop:2}},assignedEmp?assignedEmp.name:t.assignTarget)),
+          h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"DEADLINE"),h("div",{style:{fontSize:12,fontWeight:600,color:new Date(t.deadline)<new Date()&&t.status!=="verified"?RED:NVY,marginTop:2}},t.deadline)),
+          h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"STATUS"),h("div",{style:{fontSize:11,fontWeight:700,color:t.status==="verified"?"#10B981":t.status==="rejected"?RED:t.status==="completed"?TEL:AMB,marginTop:2}},t.status.charAt(0).toUpperCase()+t.status.slice(1)))
+        ),
+        t.completionNote?h("div",{style:{background:"#ECFDF5",borderRadius:8,padding:"8px 10px",marginBottom:8,fontSize:11,color:"#065F46"}},h("span",{style:{fontWeight:600}},"Completion note: "),t.completionNote):null,
+        t.status==="completed"?h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+          h("button",{onClick:function(){updateTaskStatus(t.id,"verified");setSelTask(null);},style:{flex:1,background:"#10B981",border:"none",borderRadius:9,padding:"9px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Verify Complete"),
+          h("button",{onClick:function(){var r=window.prompt("Rejection reason:");if(r)updateTaskStatus(t.id,"rejected",r);setSelTask(null);},style:{flex:1,background:RED,border:"none",borderRadius:9,padding:"9px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Reject")
+        ):null,
+        h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"COMMENTS"),
+        h("div",{style:{background:SFT,borderRadius:10,padding:10,marginBottom:8,maxHeight:180,overflowY:"auto"}},
+          tComments.length===0?h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:12}},"No comments yet"):
+          tComments.map(function(c){
+            var isMe=c.fromEmail===gUser.email;
+            return h("div",{key:c.id,style:{marginBottom:8,textAlign:isMe?"right":"left"}},
+              h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},isMe?"You":c.fromEmail.split("@")[0]+" \u2022 "+new Date(c.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})),
+              h("div",{style:{display:"inline-block",background:isMe?ACCENT:CARD,color:isMe?"#fff":NVY,borderRadius:10,padding:"6px 10px",fontSize:11,maxWidth:"80%",border:isMe?"none":"1px solid "+BDR,lineHeight:1.4}},c.message)
+            );
+          })
+        ),
+        h("div",{style:{display:"flex",gap:8}},
+          h("input",{type:"text",value:taskComment,onChange:function(e){setTaskComment(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addTaskComment(t.id);},placeholder:"Add comment...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+          h("button",{onClick:function(){addTaskComment(t.id);},style:{background:ACCENT,border:"none",borderRadius:9,padding:"8px 12px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Send")
+        )
+      ),0);
+    }
+
+    return h("div",null,
+      // Leave requests panel
+      pendingLeaves.length>0?h("div",{style:{background:AMB+"12",border:"1.5px solid "+AMB+"44",borderRadius:12,padding:12,marginBottom:12}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8}},
+          ic("event_busy",AMB,15),
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Leave requests ("+pendingLeaves.length+" pending)")
+        ),
+        pendingLeaves.map(function(r){
+          var emp=emps.find(function(e){return e.email===r.employeeEmail;});
+          return h("div",{key:r.id,style:{background:CARD,borderRadius:9,padding:"9px 11px",marginBottom:6,border:"1px solid "+BDR}},
+            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},
+              h("div",null,
+                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},emp?emp.name:r.employeeEmail.split("@")[0]),
+                h("div",{style:{fontSize:10,color:GRY,marginTop:2}},LEAVE_TYPES[r.leaveType].name+" • "+r.fromDate+" to "+r.toDate),
+                r.reason?h("div",{style:{fontSize:10,color:GRY,marginTop:2}},"Reason: "+r.reason):null
+              )
+            ),
+            h("div",{style:{display:"flex",gap:6}},
+              h("button",{onClick:function(){approveLeave(r.id);},style:{flex:1,background:"#10B981",border:"none",borderRadius:7,padding:"6px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},"Approve"),
+              h("button",{onClick:function(){var reply=window.prompt("Rejection reason:");rejectLeave(r.id,reply||"");},style:{flex:1,background:RED,border:"none",borderRadius:7,padding:"6px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},"Reject")
+            )
+          );
+        })
+      ):null,
+
+      // Task filter tabs
+      h("div",{style:{display:"flex",gap:5,marginBottom:10,overflowX:"auto"}},
+        [["all","All"],["assigned","Assigned"],["in_progress","In Progress"],["completed","Done"],["verified","Verified"]].map(function(item){
+          return h("button",{key:item[0],onClick:function(){setTaskTab(item[0]);},style:{flexShrink:0,background:taskTab===item[0]?ACCENT:CARD,border:"1px solid "+(taskTab===item[0]?ACCENT:BDR),borderRadius:15,padding:"4px 10px",color:taskTab===item[0]?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);
+        })
+      ),
+
+      filteredTasks.length===0?h("div",{style:{textAlign:"center",padding:"32px 0",color:GRY,fontSize:13}},"No tasks in this category"):null,
+
+      filteredTasks.map(function(t){
+        var tCommentCount=(taskComments[t.id]||[]).length;
+        return h("div",{key:t.id,onClick:function(){setSelTask(t);},style:{background:CARD,border:"1px solid "+(t.status==="completed"?TEL:t.status==="verified"?"#10B981":t.status==="rejected"?RED:BDR),borderRadius:12,padding:"11px 12px",marginBottom:8,cursor:"pointer"}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
+            h("div",{style:{fontSize:12,fontWeight:600,color:NVY,flex:1,marginRight:8}},t.title),
+            h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:t.priority==="high"?"#FEE2E2":t.priority==="medium"?"#FEF3C7":"#D1FAE5",color:t.priority==="high"?"#991B1B":t.priority==="medium"?"#92400E":"#065F46",flexShrink:0}},t.priority.toUpperCase())
+          ),
+          h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
+            h("div",{style:{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20,background:t.status==="verified"?"#D1FAE5":t.status==="completed"?"#EFF6FF":t.status==="rejected"?"#FEE2E2":"#FEF3C7",color:t.status==="verified"?"#065F46":t.status==="completed"?"#1E40AF":t.status==="rejected"?"#991B1B":"#92400E"}},t.status.replace("_"," ")),
+            h("div",{style:{fontSize:10,color:GRY,display:"flex",alignItems:"center",gap:3}},ic("calendar_today",GRY,10),t.deadline),
+            tCommentCount>0?h("div",{style:{fontSize:10,color:GRY,display:"flex",alignItems:"center",gap:3}},ic("chat_bubble",GRY,10),tCommentCount+" comments"):null
+          ),
+          h("div",{style:{fontSize:10,color:GRY,marginTop:4}},
+            t.assignType==="individual"?("Assigned to: "+(emps.find(function(e){return e.email===t.assignTarget;})||{name:t.assignTarget}).name):
+            (t.assignType==="department"?"Dept: "+t.assignTarget:"Role: "+t.assignTarget)
+          )
+        );
+      }),
+
+      showNewTask?card(h("div",null,
+        h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"New Task"),
+        lbl("ASSIGN TO"),
+        h("select",{value:taskAssignType,onChange:function(e){setTaskAssignType(e.target.value);setTaskAssignTarget("");},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+          ["individual","department","role"].map(function(v){return h("option",{key:v,value:v},v.charAt(0).toUpperCase()+v.slice(1));})),
+        taskAssignType==="individual"?h("select",{value:taskAssignTarget,onChange:function(e){setTaskAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+          [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
+        ):taskAssignType==="department"?h("select",{value:taskAssignTarget,onChange:function(e){setTaskAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+          [h("option",{key:"",value:""},"Select department")].concat([...new Set(emps.map(function(e){return e.dept;}).filter(Boolean))].map(function(d){return h("option",{key:d,value:d},d);}))
+        ):h("select",{value:taskAssignTarget,onChange:function(e){setTaskAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+          [h("option",{key:"",value:""},"Select role")].concat([...new Set(emps.map(function(e){return e.role;}).filter(Boolean))].map(function(r){return h("option",{key:r,value:r},r);}))
+        ),
+        lbl("TASK TITLE"),
+        h("input",{type:"text",value:taskTitle,onChange:function(e){setTaskTitle(e.target.value);},placeholder:"Task title",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        lbl("DESCRIPTION (OPTIONAL)"),
+        h("textarea",{value:taskDesc,onChange:function(e){setTaskDesc(e.target.value);},placeholder:"Task details...",style:{width:"100%",height:60,marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"none"}}),
+        h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+          h("div",{style:{flex:1}},lbl("PRIORITY"),h("select",{value:taskPriority,onChange:function(e){setTaskPriority(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+            ["high","medium","low"].map(function(v){return h("option",{key:v,value:v},v.charAt(0).toUpperCase()+v.slice(1));}))),
+          h("div",{style:{flex:1}},lbl("DEADLINE"),h("input",{type:"date",value:taskDeadline,onChange:function(e){setTaskDeadline(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}))
+        ),
+        h("div",{style:{display:"flex",gap:8}},
+          h("button",{onClick:saveTask,style:{flex:2,background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Assign Task"),
+          h("button",{onClick:function(){setShowNewTask(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
+        )
+      ),0):
+      h("button",{onClick:function(){setShowNewTask(true);},style:{width:"100%",background:ACCENT,border:"none",borderRadius:12,padding:"13px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        ic("add_task",ACCENT_FG,18),"Assign New Task"
+      )
+    );
+  }
+
+  // ── Pro: KPI screen ─────────────────────────────────────────────────────
+  function renderKPI(){
+    if(!isPaid)return null;
+    var actEmpsKpi=emps.filter(function(e){return e.status==="active";});
+    return h("div",null,
+      h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"KPI & Performance — "+MOS[curM]+" "+curY),
+      actEmpsKpi.map(function(e){
+        var empKpis=getEmpKpis(e.email||e.name,e.dept,e.role);
+        var grade=calcOverallGrade(e.email||e.name,e.dept,e.role);
+        return h("div",{key:e.id,style:{background:CARD,border:"1px solid "+BDR,borderRadius:12,padding:"11px 12px",marginBottom:8}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:empKpis.length>0?8:0}},
+            av(e,32),
+            h("div",{style:{flex:1}},
+              h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
+              h("div",{style:{fontSize:10,color:GRY}},e.role||e.dept||"")
+            ),
+            grade?h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:20,background:grade.grade==="Excellent"?"#D1FAE5":grade.grade==="Good"?"#DBEAFE":grade.grade==="Average"?"#FEF3C7":"#FEE2E2",color:grade.grade==="Excellent"?"#065F46":grade.grade==="Good"?"#1E40AF":grade.grade==="Average"?"#92400E":"#991B1B"}},grade.grade+" "+grade.pct+"%"):
+            h("div",{style:{fontSize:10,color:GRY}},"No KPIs set")
+          ),
+          empKpis.length>0?h("div",{style:{borderTop:"1px solid "+BDR,paddingTop:8}},
+            empKpis.slice(0,3).map(function(k){
+              var score=getKpiScore(k.id,e.email||e.name);
+              var pct=score?score.finalPct:0;
+              return h("div",{key:k.id,style:{marginBottom:6}},
+                h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},
+                  h("div",{style:{fontSize:10,color:NVY}},k.name),
+                  h("div",{style:{fontSize:10,fontWeight:600,color:pct>=90?"#10B981":pct>=70?TEL:pct>=50?AMB:RED}},score?pct+"%":"Not scored")
+                ),
+                h("div",{style:{height:5,background:SFT,borderRadius:3,overflow:"hidden"}},
+                  h("div",{style:{height:"100%",background:pct>=90?"#10B981":pct>=70?TEL:pct>=50?AMB:RED,borderRadius:3,width:pct+"%"}})
+                )
+              );
+            }),
+            h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{marginTop:6,background:"none",border:"none",color:TEL,fontSize:11,fontWeight:600,cursor:"pointer",padding:0}},"+ Add KPI")
+          ):h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"none",color:TEL,fontSize:11,fontWeight:600,cursor:"pointer",padding:0}},"+ Set KPI targets")
+        );
+      }),
+      showKpiForm?card(h("div",null,
+        h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"New KPI"),
+        lbl("ASSIGN TYPE"),
+        h("select",{value:kpiAssignType,onChange:function(e){setKpiAssignType(e.target.value);setKpiAssignTarget("");},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+          ["individual","department","role"].map(function(v){return h("option",{key:v,value:v},v.charAt(0).toUpperCase()+v.slice(1));})),
+        kpiAssignType==="individual"?h("select",{value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+          [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
+        ):null,
+        lbl("KPI NAME"),
+        h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Sales target",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},lbl("TARGET VALUE"),h("input",{type:"number",value:kpiTarget,onChange:function(e){setKpiTarget(e.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
+          h("div",{style:{flex:1}},lbl("UNIT"),h("select",{value:kpiUnit,onChange:function(e){setKpiUnit(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+            ["%","Number","Rs."].map(function(u){return h("option",{key:u,value:u},u);})))
+        ),
+        lbl("WEIGHTAGE (%)"),
+        h("input",{type:"number",value:kpiWeight,onChange:function(e){setKpiWeight(e.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        h("div",{style:{display:"flex",gap:8}},
+          h("button",{onClick:saveKpi,style:{flex:2,background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Save KPI"),
+          h("button",{onClick:function(){setShowKpiForm(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
+        )
+      ),0):null
+    );
+  }
+
+  // ── Pro: Invite employee ────────────────────────────────────────────────
+  function renderInviteModal(){
+    if(!showInvite)return null;
+    return h("div",{style:{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:998,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",padding:16},onClick:function(){setShowInvite(false);}},
+      h("div",{style:{background:CARD,borderRadius:16,padding:20,width:"100%",maxWidth:360,border:"1px solid "+BDR},onClick:function(e){e.stopPropagation();}},
+        h("div",{style:{fontSize:14,fontWeight:700,color:NVY,marginBottom:4}},"Invite Employee to App"),
+        h("div",{style:{fontSize:11,color:GRY,marginBottom:14}},"Employee receives a 6-digit invite code to join your organization"),
+        lbl("EMPLOYEE EMAIL"),
+        h("input",{type:"email",value:inviteEmail,onChange:function(e){setInviteEmail(e.target.value);setShowInviteCode(false);},placeholder:"employee@company.com",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        h("button",{onClick:generateInviteCode,style:{width:"100%",background:ACCENT,border:"none",borderRadius:10,padding:"11px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10}},"Generate Invite Code"),
+        showInviteCode?h("div",{style:{background:ACCENT+"10",border:"1.5px dashed "+ACCENT+"44",borderRadius:12,padding:14,textAlign:"center"}},
+          h("div",{style:{fontSize:11,color:GRY,marginBottom:6}},"Share this code with "+inviteEmail),
+          h("div",{style:{fontSize:32,fontWeight:700,letterSpacing:10,color:ACCENT,fontFamily:"monospace"}}),
+          h("div",{style:{fontSize:36,fontWeight:700,letterSpacing:8,color:ACCENT,fontFamily:"monospace"}},inviteCode),
+          h("div",{style:{fontSize:10,color:GRY,marginTop:6}},"Valid for 48 hours • One-time use"),
+          h("button",{onClick:function(){try{navigator.clipboard.writeText(inviteCode);}catch(e){}showT("Code copied!");},style:{marginTop:8,background:"none",border:"1px solid "+ACCENT,borderRadius:7,padding:"4px 12px",color:ACCENT,fontSize:11,fontWeight:600,cursor:"pointer"}},"Copy Code")
+        ):null,
+        h("button",{onClick:function(){setShowInvite(false);setInviteEmail("");setShowInviteCode(false);},style:{width:"100%",background:"none",border:"none",color:GRY,fontSize:12,cursor:"pointer",marginTop:8}},"Close")
+      )
+    );
+  }
+
+  // ── Pro: Main Pro screen ────────────────────────────────────────────────
+  function renderPro(){
+    return h("div",null,
+      h("div",{style:{display:"flex",gap:5,marginBottom:12,overflowX:"auto"}},
+        [["tasks","Tasks",isPaid?tasks.filter(function(t){return t.status==="completed";}).length+" done":null],
+         ["kpi","KPI",null],
+         ["leaves","Leaves",leaveReqs.filter(function(r){return r.status==="pending";}).length>0?leaveReqs.filter(function(r){return r.status==="pending";}).length+" pending":null],
+         ["invite","Invite",null]
+        ].map(function(item){
+          return h("button",{key:item[0],onClick:function(){setProTab(item[0]);},style:{flexShrink:0,background:proTab===item[0]?ACCENT:CARD,border:"1px solid "+(proTab===item[0]?ACCENT:BDR),borderRadius:15,padding:"5px 12px",color:proTab===item[0]?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",gap:4}},
+            item[1],
+            item[2]?h("span",{style:{background:proTab===item[0]?"rgba(255,255,255,0.3)":RED,color:proTab===item[0]?"#fff":"#fff",borderRadius:20,padding:"0 5px",fontSize:9,marginLeft:2}},item[2]):null
+          );
+        })
+      ),
+      proTab==="tasks"?renderTasks():
+      proTab==="kpi"?renderKPI():
+      proTab==="leaves"?renderAdminLeaves():
+      proTab==="invite"?renderInviteSection():null
+    );
+  }
+
+  function renderAdminLeaves(){
+    if(!isPaid)return null;
+    var filtered=leaveTab==="all"?leaveReqs:leaveReqs.filter(function(r){return r.status===leaveTab;});
+    return h("div",null,
+      h("div",{style:{display:"flex",gap:5,marginBottom:10}},
+        [["pending","Pending"],["approved","Approved"],["rejected","Rejected"],["all","All"]].map(function(item){
+          return h("button",{key:item[0],onClick:function(){setLeaveTab(item[0]);},style:{flexShrink:0,background:leaveTab===item[0]?ACCENT:CARD,border:"1px solid "+(leaveTab===item[0]?ACCENT:BDR),borderRadius:15,padding:"4px 10px",color:leaveTab===item[0]?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);
+        })
+      ),
+      filtered.length===0?h("div",{style:{textAlign:"center",padding:"24px 0",color:GRY,fontSize:12}},"No leave requests"):
+      filtered.map(function(r){
+        var emp=emps.find(function(e){return e.email===r.employeeEmail;});
+        return h("div",{key:r.id,style:{background:CARD,border:"1px solid "+(r.status==="approved"?"#10B981":r.status==="rejected"?RED:BDR),borderRadius:12,padding:"11px 12px",marginBottom:8}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4}},
+            h("div",null,
+              h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},emp?emp.name:r.employeeEmail.split("@")[0]),
+              h("div",{style:{fontSize:11,color:GRY,marginTop:2}},LEAVE_TYPES[r.leaveType].name+" • "+r.fromDate+" to "+r.toDate)
+            ),
+            h("div",{style:{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:r.status==="approved"?"#D1FAE5":r.status==="rejected"?"#FEE2E2":"#FEF3C7",color:r.status==="approved"?"#065F46":r.status==="rejected"?"#991B1B":"#92400E"}},r.status.charAt(0).toUpperCase()+r.status.slice(1))
+          ),
+          r.reason?h("div",{style:{fontSize:10,color:GRY,marginBottom:6}},"Reason: "+r.reason):null,
+          r.status==="pending"?h("div",{style:{display:"flex",gap:6,marginTop:6}},
+            h("button",{onClick:function(){approveLeave(r.id);},style:{flex:1,background:"#10B981",border:"none",borderRadius:7,padding:"6px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},"Approve"),
+            h("button",{onClick:function(){var reply=window.prompt("Rejection reason:");rejectLeave(r.id,reply||"");},style:{flex:1,background:RED,border:"none",borderRadius:7,padding:"6px",color:"#fff",fontSize:11,fontWeight:700,cursor:"pointer"}},"Reject")
+          ):null
+        );
+      })
+    );
+  }
+
+  function renderInviteSection(){
+    if(!isPaid)return null;
+    return h("div",null,
+      h("div",{style:{background:SFT,borderRadius:12,padding:14,marginBottom:12,textAlign:"center"}},
+        ic("person_add",ACCENT,32),
+        h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginTop:8,marginBottom:4}},"Invite Employees"),
+        h("div",{style:{fontSize:11,color:GRY,marginBottom:12,lineHeight:1.5}},"Invite employees to access their own dashboard — view tasks, apply leave, check KPIs"),
+        h("button",{onClick:function(){setShowInvite(true);},style:{background:ACCENT,border:"none",borderRadius:10,padding:"10px 20px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Send Invite")
+      ),
+      h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"HOW IT WORKS"),
+      [["1","Enter employee email and generate 6-digit code"],["2","Share the code with your employee"],["3","Employee downloads Admin HR app and signs up with code"],["4","Employee linked to your organization automatically"]].map(function(item){
+        return h("div",{key:item[0],style:{display:"flex",gap:10,marginBottom:10,alignItems:"flex-start"}},
+          h("div",{style:{width:24,height:24,borderRadius:"50%",background:ACCENT,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+            h("div",{style:{fontSize:11,fontWeight:700,color:ACCENT_FG}},item[0])
+          ),
+          h("div",{style:{fontSize:12,color:NVY,paddingTop:4}},item[1])
+        );
+      })
+    );
+  }
+
   function renderAddModal(){
     if(!addOpen)return null;
     return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:200,display:"flex",alignItems:"flex-end"}},
@@ -3180,6 +3744,7 @@ export default function App(){
     else if(tab==="employees")tabContent=renderEmployees();
     else if(tab==="attendance")tabContent=renderAttendance();
     else if(tab==="payroll")tabContent=renderPayroll();
+    else if(tab==="pro")tabContent=renderPro();
     else tabContent=renderSettings();
 
     appContent=h("div",null,
@@ -3194,7 +3759,7 @@ export default function App(){
             },style:{cursor:"pointer"}},logoSVG(38)),
             h("div",null,
               h("div",{style:{fontSize:9,color:GRY,letterSpacing:1.8,textTransform:"uppercase",fontWeight:600}},"Admin HR"),
-              h("div",{style:{fontSize:18,fontWeight:700,color:NVY,marginTop:1,letterSpacing:-.2}},tab==="dashboard"?"Dashboard":tab==="employees"?"Team":tab==="attendance"?"Attendance":tab==="payroll"?"Payroll":"Settings")
+              h("div",{style:{fontSize:18,fontWeight:700,color:NVY,marginTop:1,letterSpacing:-.2}},tab==="dashboard"?"Dashboard":tab==="employees"?"Team":tab==="attendance"?"Attendance":tab==="payroll"?"Payroll":tab==="pro"?"Pro ★":"Settings")
             )
           ),
           h("div",{style:{display:"flex",alignItems:"center",gap:8,position:"relative"}},
@@ -3233,6 +3798,11 @@ export default function App(){
         navBtn2("employees","Team","team",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
         navBtn2("attendance","Attend","cal",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
         navBtn2("payroll","Payroll","pay",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        h("button",{onClick:function(){setTab("pro");},style:{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 0",color:tab==="pro"?ACCENT:GRY,transition:"color .15s",position:"relative"}},
+          ic(isPaid?"star":"lock",tab==="pro"?ACCENT:GRY,20),
+          h("div",{style:{fontSize:9,fontWeight:tab==="pro"?700:400}},isPaid?"Pro ★":"Pro"),
+          leaveReqs.filter(function(r){return r.status==="pending";}).length>0||tasks.filter(function(t){return t.status==="completed";}).length>0?h("div",{style:{position:"absolute",top:4,right:"50%",transform:"translateX(10px)",width:7,height:7,borderRadius:"50%",background:RED}}):null
+        ),
         navBtn2("settings","Settings","set",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE)
       ),
       toast?h("div",{style:{position:"fixed",top:18,left:"50%",transform:"translateX(-50%)",background:toast.type==="err"?RED:(themeMode==="light"?"#0F172A":"#fff"),color:toast.type==="err"?"#fff":(themeMode==="light"?"#fff":"#0F172A"),padding:"10px 20px",borderRadius:30,fontSize:13,fontWeight:600,zIndex:999,whiteSpace:"nowrap",boxShadow:T.SHADOW_LG,animation:"fU .2s ease"}},toast.msg):null,
@@ -3649,7 +4219,9 @@ export default function App(){
       renderECRPicker(),
       renderPayDlPicker(),
       renderAttDlPicker(),
-      appContent
+      appContent,
+      renderNotifPanel(),
+      renderInviteModal()
     )
   );
 }
