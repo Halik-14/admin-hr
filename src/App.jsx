@@ -88,7 +88,7 @@ var SVG_ICONS={
 "close":"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
 "notifications":"M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z",
 "cake":"M12 6c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3L12 1l-1.5 1.7c-.3.3-.5.8-.5 1.3 0 1.1.9 2 2 2zm6 4H6C4.9 10 4 10.9 4 12v.8c0 1.1.6 2.1 1.5 2.6.4.2.9.3 1.4.2.4-.1.7-.2 1-.5l2-2 2 2c.6.6 1.5.8 2.3.5.2-.1.5-.2.7-.3.9-.5 1.6-1.5 1.6-2.5V12c0-1.1-.9-2-2-2zM5 19h14v2H5zm0-3h14v2H5z",
-"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","bolt":"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","forward_to_inbox":"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4V8l8 5 8-5v5h2V6c0-1.1-.9-2-2-2zm-8 7L4 6h16l-8 5zm7 4l4 4-4 4v-3h-4v-2h4v-3z","play_arrow":"M8 5v14l11-7z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
+"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","bolt":"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","forward_to_inbox":"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4V8l8 5 8-5v5h2V6c0-1.1-.9-2-2-2zm-8 7L4 6h16l-8 5zm7 4l4 4-4 4v-3h-4v-2h4v-3z","play_arrow":"M8 5v14l11-7z","business":"M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z","language":"M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.9 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.66-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z","phone":"M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
 "delete_forever":"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z",
 "expand_more":"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z",
 "expand_less":"M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z",
@@ -1262,11 +1262,11 @@ export default function App(){
       setGUser({name:em.split("@")[0],email:em,photo:""});
       lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
       Promise.all([
+        _sb.from("user_plans").select("*").eq("email",em).maybeSingle(),
         _sb.from("user_orgs").select("*").eq("email",em).maybeSingle(),
-        _sb.from("user_plans").select("plan,is_admin,expires_on,emp_limit,is_blocked").eq("email",em).maybeSingle(),
         _sb.from("user_data").select("*").eq("email",em).maybeSingle()
       ]).then(function(results){
-        var orgRes=results[0],planRes=results[1],dataRes=results[2];
+        var planRes=results[0],orgRes=results[1],dataRes=results[2];
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var isBlocked=(planRes.data&&planRes.data.is_blocked)||false;
         if(isBlocked){
@@ -1277,9 +1277,49 @@ export default function App(){
         }
         setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
         var role=(planRes.data&&planRes.data.role)||"owner";
+        var employerEmail=(planRes.data&&planRes.data.employer_email)||"";
         setUserRole(role);
-        var empEmpEmail=(planRes.data&&planRes.data.employer_email)||"";
-        setEmpEmployerEmail(empEmpEmail);
+        setEmpEmployerEmail(employerEmail);
+
+        // ── Employee: load employer's data ──────────────────────────────
+        if(role==="employee"){
+          if(!employerEmail){setScreen("app");return;}
+          // Set display name from user_orgs full_name
+          var empFullName=(orgRes.data&&orgRes.data.full_name)||em.split("@")[0];
+          setGUser({name:empFullName,email:em,photo:""});
+          lsSet("hr_guser",{name:empFullName,email:em,photo:""});
+          setSuName(empFullName); // used in employee dashboard greeting
+          // Load employer's org info (company name, logo)
+          Promise.all([
+            _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_data").select("emps_json,att_json,inc_json").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
+          ]).then(function(empResults){
+            var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
+            // Set org to employer's org for display in employee header
+            setOrg({
+              name:(empOrg&&empOrg.org_name)||"",
+              logo:(empOrg&&empOrg.logo_base64)||"",
+              address:(empOrg&&empOrg.address)||"",
+              phone:(empOrg&&empOrg.phone)||"",
+              website:(empOrg&&empOrg.website)||"",
+              email:employerEmail,
+              plan:(empPlan&&empPlan.plan)||"free",
+              emp_limit:(empPlan&&empPlan.emp_limit)||null
+            });
+            // Load employer's employee data
+            if(empData){try{
+              setEmps(JSON.parse(empData.emps_json||"[]"));
+              setAtt(JSON.parse(empData.att_json||"{}"));
+              setIncentives(JSON.parse(empData.inc_json||"{}"));
+            }catch(e){}}
+            _dataLoaded.current=false;
+            setScreen("app"); // routes to renderEmployeeDashboard() via userRole check
+          }).catch(function(){setScreen("app");});
+          return;
+        }
+
+        // ── Owner/Admin flow ─────────────────────────────────────────────
         if(orgRes.data&&orgRes.data.org_name){
           var o={
             name:orgRes.data.org_name,email:em,
@@ -1319,6 +1359,8 @@ export default function App(){
     var sub=_sb.auth.onAuthStateChange(function(event,session){
       if((event==="INITIAL_SESSION"||event==="SIGNED_IN")&&session&&session.user){
         if(loaded)return; // prevent double-load on app open
+        // Don't interfere if employee OTP flow is handling it
+        if(authMode==="emp-otp")return;
         loaded=true;
         loadUserData(session.user);
         // Reset after 3s so next OTP login works
@@ -3499,27 +3541,55 @@ export default function App(){
     .then(function(res){
       if(res.error){setAuthErr("Invalid or expired OTP. Try again.");setAuthLoading(false);return;}
       var user=res.data.user;
-      // Create user_plans row for employee
+      var empName=suName.trim()||user.email.split("@")[0];
+      // Save employee to Supabase — user_plans + user_orgs + mark invite used
       return Promise.all([
         _sb.from("user_plans").upsert({
           email:user.email,plan:"employee",role:"employee",
           employer_email:inviteData.employerEmail,is_admin:false
         },{onConflict:"email"}),
         _sb.from("user_orgs").upsert({
-          email:user.email,full_name:suName.trim(),
+          email:user.email,full_name:empName,
           org_name:"",org_type:"",position:""
         },{onConflict:"email"}),
-        // Mark invite code as used
         _sb.from("invite_codes").update({used:true}).eq("code",inviteData.code)
       ]).then(function(){
-        setAuthLoading(false);
-        localStorage.removeItem("hr_emp_invite");
-        setUserRole("employee");
-        setEmpEmployerEmail(inviteData.employerEmail);
-        setGUser({name:suName.trim()||user.email.split("@")[0],email:user.email,photo:""});
-        lsSet("hr_guser",{name:suName.trim()||user.email.split("@")[0],email:user.email,photo:""});
-        setScreen("app");
-        showT("Welcome to Admin HR! "+suName.trim());
+        // Now load employer's data so employee dashboard has everything
+        return Promise.all([
+          _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website").eq("email",inviteData.employerEmail).maybeSingle(),
+          _sb.from("user_data").select("emps_json,att_json,inc_json").eq("email",inviteData.employerEmail).maybeSingle(),
+          _sb.from("user_plans").select("plan,emp_limit").eq("email",inviteData.employerEmail).maybeSingle()
+        ]).then(function(empResults){
+          var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
+          setAuthLoading(false);
+          localStorage.removeItem("hr_emp_invite");
+          // Set all state immediately — bypass onAuthStateChange
+          setUserRole("employee");
+          setEmpEmployerEmail(inviteData.employerEmail);
+          setSuName(empName);
+          setGUser({name:empName,email:user.email,photo:""});
+          lsSet("hr_guser",{name:empName,email:user.email,photo:""});
+          // Set employer org details
+          setOrg({
+            name:(empOrg&&empOrg.org_name)||"",
+            logo:(empOrg&&empOrg.logo_base64)||"",
+            address:(empOrg&&empOrg.address)||"",
+            phone:(empOrg&&empOrg.phone)||"",
+            website:(empOrg&&empOrg.website)||"",
+            email:inviteData.employerEmail,
+            plan:(empPlan&&empPlan.plan)||"free",
+            emp_limit:(empPlan&&empPlan.emp_limit)||null
+          });
+          // Load employer's employee list so employee can find their own record
+          if(empData){try{
+            setEmps(JSON.parse(empData.emps_json||"[]"));
+            setAtt(JSON.parse(empData.att_json||"{}"));
+            setIncentives(JSON.parse(empData.inc_json||"{}"));
+          }catch(e){}}
+          _dataLoaded.current=false;
+          setScreen("app");
+          showT("Welcome to Admin HR, "+empName+"!");
+        });
       });
     }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
   }
@@ -3811,8 +3881,25 @@ export default function App(){
         h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",textAlign:"center"}},
           emp?av(emp,60):h("div",{style:{width:60,height:60,borderRadius:"50%",background:ACCENT+"20",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}},ic("person",ACCENT,32)),
           h("div",{style:{fontSize:16,fontWeight:700,color:NVY,marginTop:10}},emp?emp.name:(suName||gUser.email.split("@")[0])),
-          h("div",{style:{fontSize:12,color:GRY,marginTop:4}},emp?(emp.role||"")+" "+(emp.dept?"• "+emp.dept:""):org.name),
+          h("div",{style:{fontSize:12,color:GRY,marginTop:4}},emp?(emp.role||"")+(emp.dept?" \u2022 "+emp.dept:""):"Employee"),
           emp?h("div",{style:{fontSize:11,color:GRY,marginTop:2}},"Joined: "+emp.joined):null
+        ),
+        // Company details card
+        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
+            org.logo?h("img",{src:org.logo,style:{width:36,height:36,borderRadius:8,objectFit:"contain"}}):
+            h("div",{style:{width:36,height:36,borderRadius:8,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center"}},ic("business",ACCENT,20)),
+            h("div",null,
+              h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},org.name||"Your Company"),
+              h("div",{style:{fontSize:11,color:GRY,marginTop:2}},org.address||"")
+            )
+          ),
+          org.phone?h("div",{style:{display:"flex",gap:6,alignItems:"center",fontSize:12,color:GRY,marginBottom:4}},ic("phone",GRY,14),org.phone):null,
+          org.website?h("div",{style:{display:"flex",gap:6,alignItems:"center",fontSize:12,color:GRY}},ic("language",GRY,14),org.website):null,
+          h("div",{style:{marginTop:10,paddingTop:10,borderTop:"1px solid "+BDR,display:"flex",gap:8,alignItems:"center"}},
+            h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1}},"EMPLOYER"),
+            h("div",{style:{fontSize:11,color:NVY,fontWeight:600}},empEmployerEmail)
+          )
         ),
         // Salary breakdown
         emp&&payData?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
