@@ -88,7 +88,7 @@ var SVG_ICONS={
 "close":"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
 "notifications":"M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z",
 "cake":"M12 6c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3L12 1l-1.5 1.7c-.3.3-.5.8-.5 1.3 0 1.1.9 2 2 2zm6 4H6C4.9 10 4 10.9 4 12v.8c0 1.1.6 2.1 1.5 2.6.4.2.9.3 1.4.2.4-.1.7-.2 1-.5l2-2 2 2c.6.6 1.5.8 2.3.5.2-.1.5-.2.7-.3.9-.5 1.6-1.5 1.6-2.5V12c0-1.1-.9-2-2-2zM5 19h14v2H5zm0-3h14v2H5z",
-"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","bolt":"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
+"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","bolt":"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","forward_to_inbox":"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4V8l8 5 8-5v5h2V6c0-1.1-.9-2-2-2zm-8 7L4 6h16l-8 5zm7 4l4 4-4 4v-3h-4v-2h4v-3z","play_arrow":"M8 5v14l11-7z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
 "delete_forever":"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z",
 "expand_more":"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z",
 "expand_less":"M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z",
@@ -1114,6 +1114,19 @@ export default function App(){
   var sESDir=st("asc"),empSortDir=sESDir[0],setEmpSortDir=sESDir[1];
   // ── Pro features state ──
   var sRole=st("owner"),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee
+  var sIsEmp=st(false),isEmployeeSignup=sIsEmp[0],setIsEmployeeSignup=sIsEmp[1];
+  var sInvCode=st(""),signupInviteCode=sInvCode[0],setSignupInviteCode=sInvCode[1];
+  var sEmpTab=st("home"),empTab=sEmpTab[0],setEmpTab=sEmpTab[1];
+  var sEmpData=st(null),empData=sEmpData[0],setEmpData=sEmpData[1]; // full employee record from emps
+  var sEmpPayMonth=st(new Date().getMonth()),empPayMonth=sEmpPayMonth[0],setEmpPayMonth=sEmpPayMonth[1];
+  var sEmpPayYear=st(new Date().getFullYear()),empPayYear=sEmpPayYear[0],setEmpPayYear=sEmpPayYear[1];
+  var sEmpSelTask=st(null),empSelTask=sEmpSelTask[0],setEmpSelTask=sEmpSelTask[1];
+  var sEmpTaskComment=st(""),empTaskComment=sEmpTaskComment[0],setEmpTaskComment=sEmpTaskComment[1];
+  var sEmpLeaveType=st("CL"),empLeaveType=sEmpLeaveType[0],setEmpLeaveType=sEmpLeaveType[1];
+  var sEmpLeaveFrom=st(""),empLeaveFrom=sEmpLeaveFrom[0],setEmpLeaveFrom=sEmpLeaveFrom[1];
+  var sEmpLeaveTo=st(""),empLeaveTo=sEmpLeaveTo[0],setEmpLeaveTo=sEmpLeaveTo[1];
+  var sEmpLeaveReason=st(""),empLeaveReason=sEmpLeaveReason[0],setEmpLeaveReason=sEmpLeaveReason[1];
+  var sEmpShowLeave=st(false),empShowLeave=sEmpShowLeave[0],setEmpShowLeave=sEmpShowLeave[1];
   var sEmpEmail=st(""),empEmployerEmail=sEmpEmail[0],setEmpEmployerEmail=sEmpEmail[1];
   var sTasks=st([]),tasks=sTasks[0],setTasks=sTasks[1];
   var sTaskComments=st({}),taskComments=sTaskComments[0],setTaskComments=sTaskComments[1];
@@ -1802,14 +1815,20 @@ export default function App(){
 
   // ── Landing screen ──
   var landingScreen=authWrap(h("div",{key:"land"},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:40}},
+    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:32}},
       logoSVG(72),
       h("div",{style:{fontSize:26,fontWeight:800,color:T.AUTH_TEXT,marginTop:18,letterSpacing:-.5}},"Admin HR"),
       h("div",{style:{fontSize:13,color:T.AUTH_LABEL,marginTop:5,textAlign:"center",lineHeight:1.5}},"Smart HR Management\nfor Indian Businesses")
     ),
     authBtn(authLoading?"Please wait...":"Sign In",function(){setAuthErr("");setAuthMode("signin");}),
-    authBtn("Create Account",function(){setAuthErr("");setAuthMode("signup");},"secondary"),
-    h("div",{style:{textAlign:"center",marginTop:20,fontSize:11,color:T.AUTH_LABEL}},
+    authBtn("Create Account",function(){setAuthErr("");setIsEmployeeSignup(false);setAuthMode("signup");},"secondary"),
+    h("div",{style:{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:10}},
+      h("div",{style:{flex:1,height:1,background:T.AUTH_INPUT_BDR}}),
+      h("div",{style:{fontSize:11,color:T.AUTH_LABEL,whiteSpace:"nowrap"}},"Are you an employee?"),
+      h("div",{style:{flex:1,height:1,background:T.AUTH_INPUT_BDR}})
+    ),
+    authBtn("Join with Invite Code",function(){setAuthErr("");setIsEmployeeSignup(true);setAuthMode("emp-signup");},"secondary"),
+    h("div",{style:{textAlign:"center",marginTop:16,fontSize:11,color:T.AUTH_LABEL}},
       "Need help? ",
       h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},"Contact Support")
     )
@@ -1957,6 +1976,33 @@ export default function App(){
       }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
     })
   ),true);
+
+  // ── Employee signup screen ──
+  var empSignupScreen=authWrap(h("div",{key:"empsignup"},
+    h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:24}},
+      h("button",{onClick:function(){setAuthMode("landing");setAuthErr("");},style:{background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:20,padding:0,lineHeight:1}},"\u2190"),
+      h("div",null,
+        h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT}},"Join Organisation"),
+        h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:2}},"Enter the invite code from your employer")
+      )
+    ),
+    h("div",{style:{background:ACCENT+"10",border:"1px solid "+ACCENT+"33",borderRadius:12,padding:"10px 14px",marginBottom:16,display:"flex",gap:8,alignItems:"flex-start"}},
+      ic("info",ACCENT,16),
+      h("div",{style:{fontSize:12,color:T.AUTH_TEXT,lineHeight:1.5}},"Your employer must invite you first and share a 6-digit code with you.")
+    ),
+    authLbl("YOUR FULL NAME"),
+    inp("text",suName,function(e){setSuName(e.target.value);setAuthErr("");},"Your full name"),
+    authLbl("YOUR WORK EMAIL"),
+    inp("email",authEmail,function(e){setAuthEmail(e.target.value);setAuthErr("");},"you@company.com",!!authErr),
+    authLbl("6-DIGIT INVITE CODE"),
+    h("input",{type:"number",value:signupInviteCode,onChange:function(e){setSignupInviteCode(e.target.value.slice(0,6));setAuthErr("");},placeholder:"000000",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),borderRadius:10,padding:"13px",fontSize:24,color:T.AUTH_TEXT,outline:"none",fontFamily:"monospace",textAlign:"center",letterSpacing:8,marginBottom:10,boxSizing:"border-box"}}),
+    authErr2(),
+    authBtn(authLoading?"Verifying code...":"Continue",handleEmployeeSignupSendOTP),
+    h("div",{style:{textAlign:"center",fontSize:12,color:T.AUTH_LABEL,marginTop:8}},
+      "Are you an employer? ",
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:700},onClick:function(){setAuthErr("");setAuthMode("signup");}},"Create Account")
+    )
+  ));
 
   var setPasswordScreen=authWrap(h("div",{key:"setpw",style:{textAlign:"center"}},
 
@@ -2106,9 +2152,15 @@ export default function App(){
     var code=String(Math.floor(100000+Math.random()*900000));
     setInviteCode(code);
     setShowInviteCode(true);
-    showT("Invite code generated! Share code "+code+" with employee.");
-    // Save invite to localStorage for verification
-    try{var invites=JSON.parse(localStorage.getItem("hr_invites")||"{}");invites[code]={email:inviteEmail.trim().toLowerCase(),employerEmail:gUser.email,expires:Date.now()+172800000};localStorage.setItem("hr_invites",JSON.stringify(invites));}catch(e){}
+    // Save to Supabase invite_codes table
+    _sb.from("invite_codes").insert({
+      code:code,
+      employer_email:gUser.email,
+      employee_email:inviteEmail.trim().toLowerCase()
+    }).then(function(r){
+      if(r.error)showT("Saved locally only","err");
+      else showT("Invite code ready! Share "+code+" with employee.");
+    });
   }
 
   // ── Pro: KPI functions ──────────────────────────────────────────────────
@@ -2383,7 +2435,7 @@ export default function App(){
           ),
           h("button",{onClick:function(){setAddOpen(true);setStep(1);},style:{background:NVY,border:"none",borderRadius:12,padding:"0 14px",color:CARD,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.plus,CARD,22)),
           isPaid?h("button",{onClick:function(){setShowInvite(true);},title:"Invite employee to app",style:{background:ACCENT+"15",border:"1px solid "+ACCENT+"44",borderRadius:12,padding:"0 12px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},
-            ic("person_add",ACCENT,18)
+            ic("forward_to_inbox",ACCENT,18)
           ):null
         ),
         // ── Sort bar ──
@@ -3396,7 +3448,456 @@ export default function App(){
 
 
 
-  // ── Pro: Notification Bell ──────────────────────────────────────────────
+  // ── Employee signup — verify invite code and link to employer ──────────
+  function handleEmployeeSignupSendOTP(){
+    var email=authEmail.trim().toLowerCase();
+    if(!suName.trim())return setAuthErr("Enter your full name");
+    if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
+    if(!signupInviteCode.trim()||signupInviteCode.trim().length!==6)return setAuthErr("Enter the 6-digit invite code from your employer");
+    setAuthLoading(true);setAuthErr("");
+    // Verify invite code in Supabase
+    _sb.from("invite_codes")
+      .select("*")
+      .eq("code",signupInviteCode.trim())
+      .eq("employee_email",email)
+      .eq("used",false)
+      .maybeSingle()
+    .then(function(res){
+      if(!res.data){
+        setAuthErr("Invalid or expired invite code. Ask your employer to resend.");
+        setAuthLoading(false);return;
+      }
+      if(new Date(res.data.expires_at)<new Date()){
+        setAuthErr("Invite code has expired. Ask your employer to generate a new one.");
+        setAuthLoading(false);return;
+      }
+      // Code valid — check email not already registered
+      return _sb.from("user_plans").select("email").eq("email",email).maybeSingle()
+      .then(function(planRes){
+        if(planRes.data){setAuthErr("This email is already registered. Please Sign In.");setAuthLoading(false);return;}
+        // Send OTP
+        return _sb.auth.signInWithOtp({email:email,options:{shouldCreateUser:true}})
+        .then(function(r){
+          setAuthLoading(false);
+          if(r.error){setAuthErr(r.error.message);return;}
+          setOtpSent(true);setAuthMode("emp-otp");
+          lsSet("hr_last_email",email);
+          lsSet("hr_emp_invite",JSON.stringify({code:signupInviteCode.trim(),employerEmail:res.data.employer_email}));
+        });
+      });
+    }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
+  }
+
+  function handleEmployeeVerifyOTP(){
+    var email=authEmail.trim().toLowerCase();
+    var token=authOtp.trim();
+    if(!token||token.length<6)return setAuthErr("Enter the OTP from your email");
+    setAuthLoading(true);setAuthErr("");
+    var inviteData=JSON.parse(lsGet("hr_emp_invite","null")||"null");
+    if(!inviteData){setAuthErr("Session expired. Please start again.");setAuthLoading(false);return;}
+    _sb.auth.verifyOtp({email:email,token:token,type:"email"})
+    .then(function(res){
+      if(res.error){setAuthErr("Invalid or expired OTP. Try again.");setAuthLoading(false);return;}
+      var user=res.data.user;
+      // Create user_plans row for employee
+      return Promise.all([
+        _sb.from("user_plans").upsert({
+          email:user.email,plan:"employee",role:"employee",
+          employer_email:inviteData.employerEmail,is_admin:false
+        },{onConflict:"email"}),
+        _sb.from("user_orgs").upsert({
+          email:user.email,full_name:suName.trim(),
+          org_name:"",org_type:"",position:""
+        },{onConflict:"email"}),
+        // Mark invite code as used
+        _sb.from("invite_codes").update({used:true}).eq("code",inviteData.code)
+      ]).then(function(){
+        setAuthLoading(false);
+        localStorage.removeItem("hr_emp_invite");
+        setUserRole("employee");
+        setEmpEmployerEmail(inviteData.employerEmail);
+        setGUser({name:suName.trim()||user.email.split("@")[0],email:user.email,photo:""});
+        lsSet("hr_guser",{name:suName.trim()||user.email.split("@")[0],email:user.email,photo:""});
+        setScreen("app");
+        showT("Welcome to Admin HR! "+suName.trim());
+      });
+    }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
+  }
+
+  // ── Employee dashboard ──────────────────────────────────────────────────
+  function renderEmployeeDashboard(){
+    // Find this employee's record from employer's data
+    var myEmail=gUser&&gUser.email?gUser.email:"";
+    var myRecord=emps.find(function(e){return e.email===myEmail||e.name.toLowerCase()===myEmail.split("@")[0].toLowerCase();});
+    var myTasks=tasks.filter(function(t){return t.assignTarget===myEmail||(myRecord&&(t.assignTarget===myRecord.name||t.assignTarget===myRecord.email));});
+    var myLeaves=leaveReqs.filter(function(r){return r.employeeEmail===myEmail;});
+    var myNotifs=notifs.filter(function(n){return n.to===myEmail;});
+    var unread=myNotifs.filter(function(n){return !n.read;}).length;
+
+    // ── Auto KPI calculation ──
+    function calcAutoKPIs(){
+      if(!myRecord)return null;
+      var now=new Date();
+      var yr=now.getFullYear(),mo=now.getMonth();
+      var daysInMonth=new Date(yr,mo+1,0).getDate();
+      var holidays=0,present=0,halfDays=0;
+      for(var d=1;d<=daysInMonth;d++){
+        var ds=yr+"-"+String(mo+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+        var s=att[ds+"_"+myRecord.id]||"unmarked";
+        if(s==="holiday")holidays++;
+        else if(s==="present")present++;
+        else if(s==="half")halfDays+=0.5;
+      }
+      var workingDays=daysInMonth-holidays;
+      var attPct=workingDays>0?Math.round((present+halfDays)/workingDays*100):0;
+      var completedTasks=myTasks.filter(function(t){
+        if(t.status!=="verified")return false;
+        return t.updatedAt&&new Date(t.updatedAt).getMonth()===mo&&new Date(t.updatedAt).getFullYear()===yr;
+      }).length;
+      var onTimeTasks=myTasks.filter(function(t){
+        if(t.status!=="verified")return false;
+        return t.deadline&&new Date(t.updatedAt)<=new Date(t.deadline);
+      }).length;
+      var totalCompleted=myTasks.filter(function(t){return t.status==="verified";}).length;
+      var onTimePct=totalCompleted>0?Math.round(onTimeTasks/totalCompleted*100):100;
+      return {attPct:attPct,completedTasks:completedTasks,onTimePct:onTimePct,workingDays:workingDays,presentDays:present+halfDays};
+    }
+    var autoKPI=calcAutoKPIs();
+
+    // ── Bottom nav ──
+    function empNavBtn(id,label,icon){
+      var active=empTab===id;
+      return h("button",{onClick:function(){setEmpTab(id);setEmpSelTask(null);},style:{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 0",color:active?ACCENT:GRY,transition:"color .15s"}},
+        h("div",{style:{padding:"5px 14px",borderRadius:14,background:active?ACCENT_SOFT:"transparent",transition:"background .15s",display:"flex",alignItems:"center",justifyContent:"center"}},ic(icon,active?ACCENT:GRY,22)),
+        h("div",{style:{fontSize:10,fontWeight:active?700:500,letterSpacing:.2}},label)
+      );
+    }
+
+    // ── Home tab ──
+    function renderEmpHome(){
+      var now=new Date();
+      var todayKey=todayStr+"_"+(myRecord?myRecord.id:"");
+      var todayAtt=myRecord?(att[todayKey]||"unmarked"):"unmarked";
+      var attColor=todayAtt==="present"?"#10B981":todayAtt==="absent"?RED:todayAtt==="half"?AMB:GRY;
+      var attLabel=todayAtt==="present"?"Present Today":todayAtt==="absent"?"Absent Today":todayAtt==="half"?"Half Day":todayAtt==="pl"?"On Paid Leave":todayAtt==="ul"?"On Unpaid Leave":todayAtt==="holiday"?"Holiday":todayAtt==="unmarked"?"Not marked yet":"";
+      return h("div",null,
+        // Greeting
+        h("div",{style:{background:"linear-gradient(135deg,#4F46E5,#7C3AED)",borderRadius:16,padding:"16px",marginBottom:14,color:"#fff"}},
+          h("div",{style:{fontSize:11,opacity:.8,marginBottom:4}},"Good "+(now.getHours()<12?"morning":now.getHours()<17?"afternoon":"evening")+","),
+          h("div",{style:{fontSize:20,fontWeight:800,marginBottom:8}},suName||(gUser&&gUser.email.split("@")[0])||"Employee"),
+          h("div",{style:{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"8px 12px",display:"inline-flex"}},
+            h("div",{style:{width:8,height:8,borderRadius:"50%",background:attColor==="unmarked"?GRY:attColor}}),
+            h("div",{style:{fontSize:12,fontWeight:600}},attLabel)
+          )
+        ),
+        // KPI summary card
+        autoKPI?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:12,display:"flex",alignItems:"center",gap:6}},ic("insights","#D97706",15),"This Month — Performance"),
+          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}},
+            [
+              ["Attendance",autoKPI.attPct+"%",autoKPI.attPct>=90?"#10B981":autoKPI.attPct>=70?ACCENT:RED],
+              ["Tasks Done",String(autoKPI.completedTasks),"#10B981"],
+              ["On Time",autoKPI.onTimePct+"%",autoKPI.onTimePct>=80?"#10B981":AMB]
+            ].map(function(item){
+              return h("div",{key:item[0],style:{background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
+                h("div",{style:{fontSize:18,fontWeight:800,color:item[2]}},item[1]),
+                h("div",{style:{fontSize:9,color:GRY,marginTop:2}},item[0])
+              );
+            })
+          )
+        ):null,
+        // Active tasks preview
+        myTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length>0?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("assignment",ACCENT,15),"Active Tasks"),
+            h("button",{onClick:function(){setEmpTab("tasks");},style:{background:"none",border:"none",color:ACCENT,fontSize:11,fontWeight:600,cursor:"pointer"}},"View all")
+          ),
+          myTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).slice(0,3).map(function(t){
+            var isOverdue=t.deadline&&new Date(t.deadline)<new Date();
+            return h("div",{key:t.id,onClick:function(){setEmpTab("tasks");setEmpSelTask(t);},style:{display:"flex",gap:10,padding:"8px 0",borderBottom:"1px solid "+BDR,cursor:"pointer"}},
+              h("div",{style:{width:4,borderRadius:2,background:t.priority==="high"?RED:t.priority==="medium"?AMB:"#10B981",flexShrink:0}}),
+              h("div",{style:{flex:1}},
+                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},t.title),
+                h("div",{style:{fontSize:10,color:isOverdue?RED:GRY,marginTop:2}},t.deadline?(isOverdue?"Overdue: ":"Due: ")+t.deadline:"No deadline")
+              ),
+              ic("chevron_right",GRY,16)
+            );
+          })
+        ):null,
+        // Notifications preview
+        myNotifs.filter(function(n){return !n.read;}).length>0?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10,display:"flex",alignItems:"center",gap:6}},
+            ic("notifications",ACCENT,15),"Notifications",
+            h("span",{style:{background:RED,color:"#fff",fontSize:9,fontWeight:700,borderRadius:10,padding:"0 6px",marginLeft:4}},unread)
+          ),
+          myNotifs.slice(0,3).map(function(n){
+            return h("div",{key:n.id,onClick:function(){setNotifs(function(p){return p.map(function(x){return x.id===n.id?Object.assign({},x,{read:true}):x;});});setUnreadNotifs(function(c){return Math.max(0,c-1);});},style:{display:"flex",gap:8,padding:"6px 0",borderBottom:"1px solid "+BDR,cursor:"pointer",opacity:n.read?.6:1}},
+              h("div",{style:{width:8,height:8,borderRadius:"50%",background:n.read?"transparent":ACCENT,flexShrink:0,marginTop:4}}),
+              h("div",{style:{flex:1}},
+                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},n.title),
+                h("div",{style:{fontSize:11,color:GRY,marginTop:1}},n.message)
+              )
+            );
+          })
+        ):null
+      );
+    }
+
+    // ── Tasks tab (employee) ──
+    function renderEmpTasks(){
+      if(empSelTask){
+        var t=empSelTask;
+        var tComments=taskComments[t.id]||[];
+        return h("div",{className:"fd"},
+          h("button",{onClick:function(){setEmpSelTask(null);},style:{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:ACCENT,fontSize:13,fontWeight:600,padding:"0 0 12px"}},
+            ic("arrow_back",ACCENT,16),"Back"
+          ),
+          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)",marginBottom:8}},
+            h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
+              h("div",{style:{fontSize:15,fontWeight:700,color:NVY,flex:1,marginRight:8,lineHeight:1.4}},t.title),
+              h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:20,flexShrink:0,background:t.priority==="high"?"#FEE2E2":t.priority==="medium"?"#FEF3C7":"#D1FAE5",color:t.priority==="high"?"#991B1B":t.priority==="medium"?"#92400E":"#065F46"}},t.priority.toUpperCase())
+            ),
+            t.description?h("div",{style:{fontSize:12,color:GRY,marginBottom:10,lineHeight:1.6,paddingBottom:10,borderBottom:"1px solid "+BDR}},t.description):null,
+            h("div",{style:{display:"flex",gap:16}},
+              h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"DEADLINE"),h("div",{style:{fontSize:12,fontWeight:600,color:t.deadline&&new Date(t.deadline)<new Date()&&t.status!=="verified"?RED:NVY,marginTop:2}},t.deadline||"No deadline")),
+              h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"STATUS"),h("div",{style:{fontSize:12,fontWeight:600,color:t.status==="verified"?"#10B981":t.status==="rejected"?RED:ACCENT,marginTop:2}},t.status.replace("_"," ").replace(/\b\w/g,function(c){return c.toUpperCase();})))
+            )
+          ),
+          t.rejectionReason?h("div",{style:{background:RED+"10",borderRadius:12,padding:"10px 14px",marginBottom:8,display:"flex",gap:8}},
+            ic("cancel",RED,16),
+            h("div",null,h("div",{style:{fontSize:11,fontWeight:700,color:RED}},"Sent back with reason"),h("div",{style:{fontSize:11,color:RED,marginTop:2}},t.rejectionReason))
+          ):null,
+          // Action buttons
+          t.status==="assigned"?h("button",{onClick:function(){updateTaskStatus(t.id,"in_progress");setEmpSelTask(Object.assign({},t,{status:"in_progress"}));showT("Task started!");},style:{width:"100%",background:ACCENT,border:"none",borderRadius:12,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+            ic("play_arrow",ACCENT_FG,18),"Start Working"
+          ):null,
+          t.status==="in_progress"||t.status==="rejected"?h("button",{onClick:function(){var note=window.prompt("Add a completion note (optional):")||"";updateTaskStatus(t.id,"completed",note);setEmpSelTask(Object.assign({},t,{status:"completed",completionNote:note}));},style:{width:"100%",background:"#10B981",border:"none",borderRadius:12,padding:"12px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+            ic("task_alt","#fff",18),"Mark as Complete"
+          ):null,
+          // Comments
+          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},ic("forum",NVY,15)," Comments ("+(tComments.length)+")"),
+            h("div",{style:{maxHeight:180,overflowY:"auto",marginBottom:10}},
+              tComments.length===0?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY,fontSize:12}},"No comments yet."):
+              tComments.map(function(c){
+                var isMe=c.fromEmail===myEmail;
+                return h("div",{key:c.id,style:{marginBottom:10,display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start"}},
+                  h("div",{style:{fontSize:9,color:GRY,marginBottom:3}},isMe?"You":"Manager"),
+                  h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?"#fff":NVY,borderRadius:10,padding:"8px 12px",fontSize:12,maxWidth:"80%"}},c.message)
+                );
+              })
+            ),
+            h("div",{style:{display:"flex",gap:8}},
+              h("input",{type:"text",value:empTaskComment,onChange:function(e){setEmpTaskComment(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&empTaskComment.trim()){addTaskComment(t.id);setEmpTaskComment("");}},placeholder:"Ask or update...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:22,padding:"10px 14px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+              h("button",{onClick:function(){if(empTaskComment.trim()){addTaskComment(t.id);setEmpTaskComment("");}},style:{width:40,height:40,background:ACCENT,border:"none",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("send","#fff",16))
+            )
+          )
+        );
+      }
+
+      var activeT=myTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress"||t.status==="rejected";});
+      var doneT=myTasks.filter(function(t){return t.status==="completed"||t.status==="verified";});
+
+      return h("div",{className:"fd"},
+        activeT.length===0&&doneT.length===0?h("div",{style:{textAlign:"center",padding:"48px 0",color:GRY}},
+          ic("assignment",GRY,48),
+          h("div",{style:{fontSize:14,marginTop:12,fontWeight:600}},"No tasks assigned yet"),
+          h("div",{style:{fontSize:12,marginTop:6}},"Your employer will assign tasks here")
+        ):null,
+        activeT.length>0?h("div",null,
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"ACTIVE"),
+          activeT.map(function(t){
+            var isOverdue=t.deadline&&new Date(t.deadline)<new Date();
+            return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",borderLeft:"3px solid "+(t.status==="rejected"?RED:t.priority==="high"?RED:t.priority==="medium"?AMB:"#10B981")}},
+              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
+                h("div",{style:{fontSize:12,fontWeight:700,color:NVY,flex:1,marginRight:8}},t.title),
+                t.status==="rejected"?h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:"#FEE2E2",color:"#991B1B"}},"Revision needed"):
+                h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:"#FEF9C3",color:"#713F12"}},t.status==="in_progress"?"Active":"New")
+              ),
+              h("div",{style:{fontSize:10,color:isOverdue?RED:GRY,display:"flex",alignItems:"center",gap:4}},
+                ic("calendar_today",isOverdue?RED:GRY,10),
+                t.deadline?(isOverdue?"Overdue: ":"Due: ")+t.deadline:"No deadline"
+              )
+            );
+          })
+        ):null,
+        doneT.length>0?h("div",{style:{marginTop:16}},
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"COMPLETED"),
+          doneT.map(function(t){
+            return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",opacity:.7}},
+              h("div",{style:{display:"flex",justifyContent:"space-between"}},
+                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},t.title),
+                h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:t.status==="verified"?"#D1FAE5":"#EFF6FF",color:t.status==="verified"?"#065F46":"#1E40AF"}},t.status==="verified"?"Verified":"Submitted")
+              )
+            );
+          })
+        ):null
+      );
+    }
+
+    // ── Leave tab (employee) ──
+    function renderEmpLeave(){
+      var leaveBalance={CL:12,SL:6,PL:12,UL:0,EL:2,CO:0,ML:0,PTL:0};
+      Object.keys(leaveBalance).forEach(function(lt){
+        var used=myLeaves.filter(function(r){return r.leaveType===lt&&r.status==="approved";}).length;
+        leaveBalance[lt]=Math.max(0,leaveBalance[lt]-used);
+      });
+      return h("div",{className:"fd"},
+        // Leave balance
+        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},"Leave Balance"),
+          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+            [["CL","Casual Leave"],["SL","Sick Leave"],["PL","Paid Leave"],["EL","Emergency Leave"]].map(function(item){
+              return h("div",{key:item[0],style:{background:SFT,borderRadius:10,padding:"10px"}},
+                h("div",{style:{fontSize:18,fontWeight:800,color:leaveBalance[item[0]]>0?ACCENT:RED}},leaveBalance[item[0]]),
+                h("div",{style:{fontSize:10,color:GRY,marginTop:2}},item[1])
+              );
+            })
+          )
+        ),
+        // Apply leave button
+        empShowLeave?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14}},"Apply for Leave"),
+          lbl("LEAVE TYPE"),
+          h("select",{value:empLeaveType,onChange:function(e){setEmpLeaveType(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+            Object.keys(LEAVE_TYPES).map(function(lt){return h("option",{key:lt,value:lt},LEAVE_TYPES[lt].name);})
+          ),
+          h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+            h("div",{style:{flex:1}},lbl("FROM"),h("input",{type:"date",value:empLeaveFrom,onChange:function(e){setEmpLeaveFrom(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
+            h("div",{style:{flex:1}},lbl("TO"),h("input",{type:"date",value:empLeaveTo,onChange:function(e){setEmpLeaveTo(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}))
+          ),
+          LEAVE_TYPES[empLeaveType]&&LEAVE_TYPES[empLeaveType].needsReason?h("div",null,
+            lbl("REASON"),
+            h("textarea",{value:empLeaveReason,onChange:function(e){setEmpLeaveReason(e.target.value);},placeholder:"Enter reason...",style:{width:"100%",height:60,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"none",marginBottom:8}})
+          ):null,
+          h("div",{style:{display:"flex",gap:8}},
+            h("button",{onClick:function(){
+              if(!empLeaveFrom||!empLeaveTo)return showT("Select dates","err");
+              if(LEAVE_TYPES[empLeaveType].needsReason&&!empLeaveReason.trim())return showT("Enter reason","err");
+              var req={id:Date.now(),employeeEmail:myEmail,employerEmail:empEmployerEmail,leaveType:empLeaveType,fromDate:empLeaveFrom,toDate:empLeaveTo,reason:empLeaveReason.trim(),status:"pending",adminReply:"",createdAt:new Date().toISOString()};
+              setLeaveReqs(function(p){return [req].concat(p);});
+              addNotif(empEmployerEmail,myEmail,"leave_requested","Leave request",(gUser?gUser.email.split("@")[0]:""+" applied for "+LEAVE_TYPES[empLeaveType].name),String(req.id),"leave");
+              setEmpLeaveFrom("");setEmpLeaveTo("");setEmpLeaveReason("");setEmpShowLeave(false);
+              showT("Leave request sent!");
+            },style:{flex:2,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Submit Request"),
+            h("button",{onClick:function(){setEmpShowLeave(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"12px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
+          )
+        ):h("button",{onClick:function(){setEmpShowLeave(true);},style:{width:"100%",background:ACCENT,border:"none",borderRadius:14,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic("add",ACCENT_FG,18),"Apply Leave"
+        ),
+        // Leave history
+        myLeaves.length>0?h("div",null,
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"HISTORY"),
+          myLeaves.map(function(r){
+            return h("div",{key:r.id,style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",borderLeft:"3px solid "+(r.status==="approved"?"#10B981":r.status==="rejected"?RED:AMB)}},
+              h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
+                h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},LEAVE_TYPES[r.leaveType]?LEAVE_TYPES[r.leaveType].name:r.leaveType),
+                h("div",{style:{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:r.status==="approved"?"#D1FAE5":r.status==="rejected"?"#FEE2E2":"#FEF3C7",color:r.status==="approved"?"#065F46":r.status==="rejected"?"#991B1B":"#92400E"}},r.status.charAt(0).toUpperCase()+r.status.slice(1))
+              ),
+              h("div",{style:{fontSize:11,color:GRY}},r.fromDate+" to "+r.toDate),
+              r.adminReply?h("div",{style:{fontSize:11,color:RED,marginTop:4,fontStyle:"italic"}},"Reply: "+r.adminReply):null
+            );
+          })
+        ):null
+      );
+    }
+
+    // ── Profile tab (employee) ──
+    function renderEmpProfile(){
+      var emp=myRecord;
+      var payData=emp?calcPay(emp,0,0,0,0,0):null;
+      return h("div",{className:"fd"},
+        // Profile card
+        h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",textAlign:"center"}},
+          emp?av(emp,60):h("div",{style:{width:60,height:60,borderRadius:"50%",background:ACCENT+"20",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}},ic("person",ACCENT,32)),
+          h("div",{style:{fontSize:16,fontWeight:700,color:NVY,marginTop:10}},emp?emp.name:(suName||gUser.email.split("@")[0])),
+          h("div",{style:{fontSize:12,color:GRY,marginTop:4}},emp?(emp.role||"")+" "+(emp.dept?"• "+emp.dept:""):org.name),
+          emp?h("div",{style:{fontSize:11,color:GRY,marginTop:2}},"Joined: "+emp.joined):null
+        ),
+        // Salary breakdown
+        emp&&payData?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+            h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Salary Breakdown"),
+            h("div",{style:{display:"flex",gap:6}},
+              h("select",{value:empPayMonth,onChange:function(e){setEmpPayMonth(Number(e.target.value));},style:{fontSize:11,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"4px 8px",color:NVY,outline:"none"}},
+                MOS.map(function(m,i){return h("option",{key:i,value:i},m);})),
+              h("select",{value:empPayYear,onChange:function(e){setEmpPayYear(Number(e.target.value));},style:{fontSize:11,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"4px 8px",color:NVY,outline:"none"}},
+                [curY-1,curY].map(function(y){return h("option",{key:y,value:y},y);}))
+            )
+          ),
+          h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"EARNINGS"),
+          [["Basic",fmt(emp.basic||0)],["HRA",fmt(emp.hra||0)],["Allowances",fmt(emp.allow||0)]].map(function(item){
+            return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
+              h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:NVY}},item[1])
+            );
+          }),
+          h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:8}},h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},"Gross"),h("span",{style:{fontSize:12,fontWeight:800,color:"#10B981"}},fmt(payData.gr))),
+          h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"DEDUCTIONS"),
+          [
+            payData.pfE>0?["PF (Employee 12%)","-"+fmt(payData.pfE)]:null,
+            payData.esiE>0?["ESI (Employee 0.75%)","-"+fmt(payData.esiE)]:null,
+            payData.pt>0?["Professional Tax","-"+fmt(payData.pt)]:null,
+            payData.tds>0?["TDS","-"+fmt(payData.tds)]:null,
+          ].filter(Boolean).map(function(item){
+            return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
+              h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:RED}},item[1])
+            );
+          }),
+          h("div",{style:{background:"#0F172A",borderRadius:12,padding:"12px 16px",marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            h("span",{style:{fontSize:13,fontWeight:600,color:"rgba(255,255,255,0.7)"}},"Net Take Home"),
+            h("span",{style:{fontSize:20,fontWeight:800,color:"#4ADE80"}},fmt(payData.net))
+          ),
+          isPaid?h("button",{onClick:function(){showT("Downloading payslip...");},style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",marginTop:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("download",CARD,16),"Download Payslip"):
+          h("div",{style:{background:AMB+"12",borderRadius:10,padding:"10px",marginTop:10,fontSize:11,color:AMB,textAlign:"center"}},"Payslip download available for Pro employers")
+        ):h("div",{style:{background:SFT,borderRadius:14,padding:"20px",textAlign:"center",color:GRY,fontSize:12,marginBottom:12}},"Your employer hasn't added your salary details yet."),
+        // Sign out
+        h("button",{onClick:function(){
+          _sb.auth.signOut();
+          ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+          setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
+          setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
+          setScreen("login");setAuthMode("landing");
+        },style:{width:"100%",background:RED+"12",border:"1.5px solid "+RED+"33",borderRadius:12,padding:"12px",color:RED,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic("logout",RED,16),"Sign Out"
+        )
+      );
+    }
+
+    return h("div",{style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG}},
+      // Employee header
+      h("div",{style:{background:CARD,borderTopLeftRadius:0,borderTopRightRadius:0,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid "+BDR,flexShrink:0}},
+        h("div",null,
+          h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},org.name||"Admin HR"),
+          h("div",{style:{fontSize:17,fontWeight:800,color:NVY}},empTab==="home"?"Dashboard":empTab==="tasks"?"My Tasks":empTab==="leave"?"Leave":"My Profile")
+        ),
+        h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+          h("button",{onClick:function(){setShowNotifs(true);},style:{position:"relative",background:"none",border:"none",cursor:"pointer",padding:2}},
+            ic("notifications",unread>0?ACCENT:GRY,22),
+            unread>0?h("div",{style:{position:"absolute",top:-2,right:-2,width:14,height:14,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center"}},h("div",{style:{fontSize:8,fontWeight:700,color:"#fff"}},unread>9?"9+":String(unread))):null
+          ),
+          h("div",{style:{width:32,height:32,borderRadius:"50%",background:ACCENT+"20",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"},onClick:function(){setEmpTab("profile");}},
+            h("div",{style:{fontSize:11,fontWeight:700,color:ACCENT}},suName?(suName[0]||"E").toUpperCase():(gUser?gUser.email[0].toUpperCase():"E"))
+          )
+        )
+      ),
+      // Content
+      h("div",{style:{flex:1,overflowY:"auto",padding:"14px 16px"}},
+        empTab==="home"?renderEmpHome():
+        empTab==="tasks"?renderEmpTasks():
+        empTab==="leave"?renderEmpLeave():
+        renderEmpProfile()
+      ),
+      // Employee bottom nav
+      h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0}},
+        empNavBtn("home","Home","grid"),
+        empNavBtn("tasks","Tasks","assignment"),
+        empNavBtn("leave","Leave","cal"),
+        empNavBtn("profile","Profile","user")
+      ),
+      renderNotifPanel(),
+      renderInviteModal()
+    );
+  }
   function renderNotifPanel(){
     if(!showNotifs)return null;
     var myNotifs=notifs.filter(function(n){return n.to===gUser.email;});
@@ -3990,10 +4491,29 @@ export default function App(){
   if(screen==="loading")appContent=loadingScreen;
   else if(screen==="login")appContent=isPasswordReset?setPasswordScreen:
     (authMode==="otp"||authMode==="signup-otp")?otpScreen:
+    authMode==="emp-otp"?h("div",{key:"empotp",style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 24px 0"}},
+      h("div",{style:{width:"100%",maxWidth:380,textAlign:"center"}},
+        logoSVG(52),
+        h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Verify Your Email"),
+        h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:5}},"OTP sent to "+authEmail),
+        h("div",{style:{marginTop:16}},
+          authLbl("ENTER OTP"),
+          h("input",{type:"number",value:authOtp,onChange:function(e){setAuthOtp(e.target.value.slice(0,8));setAuthErr("");},placeholder:"\u2022\u2022\u2022\u2022\u2022\u2022",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),borderRadius:12,padding:"14px",fontSize:28,color:T.AUTH_TEXT,outline:"none",fontFamily:"monospace",textAlign:"center",letterSpacing:10,marginBottom:10}}),
+          authErr2(),
+          authBtn(authLoading?"Verifying...":"Verify & Join",handleEmployeeVerifyOTP),
+          h("div",{style:{marginTop:12,fontSize:12,color:T.AUTH_LABEL}},
+            h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){setAuthMode("emp-signup");setAuthOtp("");setAuthErr("");}},"\u2190 Go back")
+          )
+        )
+      )
+    ):
+    authMode==="emp-signup"?empSignupScreen:
     authMode==="signup"?signupScreen:
     authMode==="signin"?signinScreen:
     landingScreen;
   else if(screen==="setup")appContent=setupScreen;
+  // ── Route to employee dashboard if role is employee ──
+  else if(userRole==="employee")appContent=renderEmployeeDashboard();
   else{
     var tabContent;
     if(tab==="dashboard")tabContent=renderDashboard();
