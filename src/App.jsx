@@ -88,7 +88,7 @@ var SVG_ICONS={
 "close":"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
 "notifications":"M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z",
 "cake":"M12 6c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3L12 1l-1.5 1.7c-.3.3-.5.8-.5 1.3 0 1.1.9 2 2 2zm6 4H6C4.9 10 4 10.9 4 12v.8c0 1.1.6 2.1 1.5 2.6.4.2.9.3 1.4.2.4-.1.7-.2 1-.5l2-2 2 2c.6.6 1.5.8 2.3.5.2-.1.5-.2.7-.3.9-.5 1.6-1.5 1.6-2.5V12c0-1.1-.9-2-2-2zM5 19h14v2H5zm0-3h14v2H5z",
-"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
+"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
 "delete_forever":"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z",
 "expand_more":"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z",
 "expand_less":"M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z",
@@ -3669,7 +3669,7 @@ export default function App(){
       h("div",{style:{fontSize:20,fontWeight:800,color:NVY,marginBottom:8}},"Admin HR Pro"),
       h("div",{style:{fontSize:13,color:GRY,marginBottom:24,lineHeight:1.7}},"Unlock the full power of HR management with Pro features."),
       h("div",{style:{textAlign:"left",marginBottom:24}},
-        [["Task management & tracking","work"],["KPI & performance reviews","insights"],["Employee self-service portal","smartphone"],["Leave apply & approval","event_available"],["In-app notifications","notifications"]].map(function(item){
+        [["Task management & tracking","target"],["KPI & performance reviews","insights"],["Employee self-service portal","smartphone"],["Leave apply & approval","event_available"],["In-app notifications","notifications"]].map(function(item){
           return h("div",{key:item[0],style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid "+BDR}},
             h("div",{style:{width:32,height:32,borderRadius:8,background:ACCENT+"12",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(item[1],ACCENT,16)),
             h("div",{style:{fontSize:13,color:NVY}},item[0])
@@ -3749,6 +3749,17 @@ export default function App(){
     var pendingLeaves=leaveReqs.filter(function(r){return r.status==="pending";});
 
     return h("div",{className:"fd"},
+      // ── Work inner tabs ──
+      h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:14,gap:3}},
+        h("button",{onClick:function(){setProTab("tasks");},style:{flex:1,background:proTab!=="kpi"?CARD:"transparent",border:proTab!=="kpi"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:proTab!=="kpi"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
+          ic("assignment",proTab!=="kpi"?ACCENT:GRY,15),"Tasks",
+          tasks.filter(function(t){return t.status==="completed";}).length>0?h("span",{style:{background:RED,color:"#fff",fontSize:9,fontWeight:700,borderRadius:10,padding:"0 5px",marginLeft:2}},tasks.filter(function(t){return t.status==="completed";}).length):null
+        ),
+        h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTab==="kpi"?CARD:"transparent",border:proTab==="kpi"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:proTab==="kpi"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
+          ic("insights",proTab==="kpi"?ACCENT:GRY,15),"KPI & Performance"
+        )
+      ),
+      proTab==="kpi"?renderKpiSection():h("div",null,
       pendingLeaves.length>0?h("div",{onClick:function(){setTab("attendance");setAttTab("leaves");},style:{background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:14,padding:"10px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:10,cursor:"pointer"}},
         h("div",{style:{width:36,height:36,borderRadius:10,background:AMB+"20",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("event_busy",AMB,18)),
         h("div",{style:{flex:1}},
@@ -3761,7 +3772,7 @@ export default function App(){
       h("div",{style:{marginBottom:20}},
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
           h("div",{style:{display:"flex",alignItems:"center",gap:8}},
-            h("div",{style:{width:32,height:32,borderRadius:9,background:ACCENT+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("briefcase",ACCENT,16)),
+            h("div",{style:{width:32,height:32,borderRadius:9,background:ACCENT+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("target",ACCENT,16)),
             h("div",null,
               h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},"Tasks"),
               h("div",{style:{fontSize:11,color:GRY}},tasks.length+" total")
@@ -3826,71 +3837,91 @@ export default function App(){
             h("button",{onClick:function(){setShowNewTask(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:11,padding:"12px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
           )
         ):null
-      ),
+      ))
+    );
+  }
 
-      h("div",null,
-        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:8}},
-            h("div",{style:{width:32,height:32,borderRadius:9,background:"#D97706"+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("insights","#D97706",16)),
-            h("div",null,
-              h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},"KPI & Performance"),
-              h("div",{style:{fontSize:11,color:GRY}},MOS[curM]+" "+curY)
-            )
-          ),
-          h("button",{onClick:function(){setShowKpiForm(true);},style:{background:"#D97706"+"15",border:"1px solid #D97706"+"44",borderRadius:10,padding:"7px 12px",color:"#D97706",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}},
-            ic("add","#D97706",14),"Add KPI"
-          )
+  function renderKpiSection(){
+    return h("div",{className:"fd"},
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
+        h("div",null,
+          h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},"KPI & Performance"),
+          h("div",{style:{fontSize:11,color:GRY,marginTop:2}},MOS[curM]+" "+curY+" reviews")
         ),
-        emps.filter(function(e){return e.status==="active";}).map(function(e){
-          var empKpiList=getEmpKpis(e.email||e.name,e.dept,e.role);
-          var grade=calcOverallGrade(e.email||e.name,e.dept,e.role);
-          var gradeColor=grade?(grade.grade==="Excellent"?"#10B981":grade.grade==="Good"?"#4F46E5":grade.grade==="Average"?AMB:RED):GRY;
-          return h("div",{key:e.id,style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-            h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:empKpiList.length>0?10:0}},
-              av(e,36),
-              h("div",{style:{flex:1}},
-                h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},e.name),
-                h("div",{style:{fontSize:10,color:GRY,marginTop:1}},e.role||e.dept||"")
-              ),
-              grade?h("div",{style:{textAlign:"right"}},
-                h("div",{style:{fontSize:18,fontWeight:800,color:gradeColor}},grade.pct+"%"),
-                h("div",{style:{fontSize:9,fontWeight:700,color:gradeColor}},grade.grade)
-              ):h("div",{style:{fontSize:10,color:GRY,fontStyle:"italic"}},"No KPIs")
+        h("button",{onClick:function(){setShowKpiForm(true);setKpiAssignTarget("");},style:{background:"#D97706"+"15",border:"1px solid #D97706"+"44",borderRadius:10,padding:"8px 14px",color:"#D97706",fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:5}},
+          ic("add","#D97706",14),"Add KPI"
+        )
+      ),
+      emps.filter(function(e){return e.status==="active";}).map(function(e){
+        var empKpiList=getEmpKpis(e.email||e.name,e.dept,e.role);
+        var grade=calcOverallGrade(e.email||e.name,e.dept,e.role);
+        var gradeColor=grade?(grade.grade==="Excellent"?"#10B981":grade.grade==="Good"?"#4F46E5":grade.grade==="Average"?AMB:RED):GRY;
+        return h("div",{key:e.id,style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:empKpiList.length>0?10:0}},
+            av(e,36),
+            h("div",{style:{flex:1}},
+              h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},e.name),
+              h("div",{style:{fontSize:10,color:GRY,marginTop:1}},e.role||e.dept||"")
             ),
-            empKpiList.length>0?h("div",{style:{borderTop:"1px solid "+BDR,paddingTop:10}},
-              empKpiList.map(function(k){
-                var score=getKpiScore(k.id,e.email||e.name);
-                var pct=score?score.finalPct:0;
-                var barColor=pct>=90?"#10B981":pct>=70?"#4F46E5":pct>=50?AMB:RED;
-                return h("div",{key:k.id,style:{marginBottom:8}},
-                  h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
-                    h("div",{style:{fontSize:11,color:NVY}},k.name+" ("+k.target+k.unit+")"),
-                    h("div",{style:{fontSize:11,fontWeight:700,color:score?barColor:GRY}},score?pct+"%":"Not scored")
-                  ),
-                  h("div",{style:{height:6,background:SFT,borderRadius:3,overflow:"hidden"}},
-                    h("div",{style:{height:"100%",background:barColor,borderRadius:3,width:(score?pct:0)+"%"}})
-                  )
-                );
-              }),
-              h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{marginTop:4,background:"none",border:"none",color:ACCENT,fontSize:11,fontWeight:600,cursor:"pointer",padding:0}},ic("add",ACCENT,12),"Add KPI")
-            ):h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"1px dashed "+BDR,borderRadius:9,padding:"7px",width:"100%",color:GRY,fontSize:11,cursor:"pointer"}},"+ Set KPI targets"),
-            showKpiForm&&kpiAssignTarget===(e.email||e.name)?h("div",{style:{background:CARD,borderRadius:14,padding:14,boxShadow:"0 4px 16px rgba(0,0,0,0.08)",marginTop:8,border:"1px solid "+BDR}},
-              lbl("KPI NAME"),
-              h("input",{type:"text",value:kpiName,onChange:function(ev){setKpiName(ev.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-              h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-                h("div",{style:{flex:1}},lbl("TARGET"),h("input",{type:"number",value:kpiTarget,onChange:function(ev){setKpiTarget(ev.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
-                h("div",{style:{flex:1}},lbl("UNIT"),h("select",{value:kpiUnit,onChange:function(ev){setKpiUnit(ev.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},["%","Number","Rs."].map(function(u){return h("option",{key:u,value:u},u);})))
-              ),
-              lbl("WEIGHTAGE (%)"),
-              h("input",{type:"number",value:kpiWeight,onChange:function(ev){setKpiWeight(ev.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-              h("div",{style:{display:"flex",gap:8}},
-                h("button",{onClick:saveKpi,style:{flex:2,background:"#D97706",border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Save KPI"),
-                h("button",{onClick:function(){setShowKpiForm(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
-              )
-            ):null
-          );
-        })
-      )
+            grade?h("div",{style:{textAlign:"right"}},
+              h("div",{style:{fontSize:20,fontWeight:800,color:gradeColor}},grade.pct+"%"),
+              h("div",{style:{fontSize:9,fontWeight:700,color:gradeColor}},grade.grade)
+            ):h("div",{style:{fontSize:10,color:GRY,fontStyle:"italic"}},"No KPIs set")
+          ),
+          empKpiList.length>0?h("div",{style:{borderTop:"1px solid "+BDR,paddingTop:10}},
+            empKpiList.map(function(k){
+              var score=getKpiScore(k.id,e.email||e.name);
+              var pct=score?score.finalPct:0;
+              var barColor=pct>=90?"#10B981":pct>=70?"#4F46E5":pct>=50?AMB:RED;
+              return h("div",{key:k.id,style:{marginBottom:8}},
+                h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
+                  h("div",{style:{fontSize:11,color:NVY}},k.name+" ("+k.target+k.unit+")"),
+                  h("div",{style:{fontSize:11,fontWeight:700,color:score?barColor:GRY}},score?pct+"%":"Not scored")
+                ),
+                h("div",{style:{height:6,background:SFT,borderRadius:3,overflow:"hidden"}},
+                  h("div",{style:{height:"100%",background:barColor,borderRadius:3,width:(score?pct:0)+"%"}})
+                )
+              );
+            }),
+            h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{marginTop:6,background:"none",border:"none",color:ACCENT,fontSize:11,fontWeight:600,cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:3}},ic("add",ACCENT,12),"Add KPI")
+          ):h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"1px dashed "+BDR,borderRadius:9,padding:"7px",width:"100%",color:GRY,fontSize:11,cursor:"pointer"}},"+ Set KPI targets"),
+          showKpiForm&&kpiAssignTarget===(e.email||e.name)?h("div",{style:{background:SFT,borderRadius:12,padding:14,marginTop:8,border:"1px solid "+BDR}},
+            lbl("KPI NAME"),
+            h("input",{type:"text",value:kpiName,onChange:function(ev){setKpiName(ev.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+            h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+              h("div",{style:{flex:1}},lbl("TARGET"),h("input",{type:"number",value:kpiTarget,onChange:function(ev){setKpiTarget(ev.target.value);},placeholder:"100",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
+              h("div",{style:{flex:1}},lbl("UNIT"),h("select",{value:kpiUnit,onChange:function(ev){setKpiUnit(ev.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},["%","Number","Rs."].map(function(u){return h("option",{key:u,value:u},u);})))
+            ),
+            lbl("WEIGHTAGE (%)"),
+            h("input",{type:"number",value:kpiWeight,onChange:function(ev){setKpiWeight(ev.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+            h("div",{style:{display:"flex",gap:8}},
+              h("button",{onClick:saveKpi,style:{flex:2,background:"#D97706",border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Save KPI"),
+              h("button",{onClick:function(){setShowKpiForm(false);},style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
+            )
+          ):null
+        );
+      }),
+      showKpiForm&&!kpiAssignTarget?h("div",{style:{background:CARD,borderRadius:14,padding:16,boxShadow:"0 4px 16px rgba(0,0,0,0.08)",marginTop:8}},
+        h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14}},"Add KPI"),
+        lbl("ASSIGN TYPE"),
+        h("select",{value:kpiAssignType,onChange:function(e){setKpiAssignType(e.target.value);setKpiAssignTarget("");},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+          ["individual","department","role"].map(function(v){return h("option",{key:v,value:v},v.charAt(0).toUpperCase()+v.slice(1));})),
+        kpiAssignType==="individual"?h("select",{value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
+          [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
+        ):null,
+        lbl("KPI NAME"),
+        h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},lbl("TARGET"),h("input",{type:"number",value:kpiTarget,onChange:function(e){setKpiTarget(e.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
+          h("div",{style:{flex:1}},lbl("UNIT"),h("select",{value:kpiUnit,onChange:function(e){setKpiUnit(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},["%","Number","Rs."].map(function(u){return h("option",{key:u,value:u},u);})))
+        ),
+        lbl("WEIGHTAGE (%)"),
+        h("input",{type:"number",value:kpiWeight,onChange:function(e){setKpiWeight(e.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        h("div",{style:{display:"flex",gap:8}},
+          h("button",{onClick:saveKpi,style:{flex:2,background:"#D97706",border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Save KPI"),
+          h("button",{onClick:function(){setShowKpiForm(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
+        )
+      ):null
     );
   }
 
@@ -4026,7 +4057,7 @@ export default function App(){
         navBtn2("payroll","Payroll","pay",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
         h("button",{onClick:function(){setTab("pro");},style:{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 0",color:tab==="pro"?ACCENT:GRY,transition:"color .15s",position:"relative"}},
           h("div",{style:{position:"relative"}},
-            ic("briefcase",tab==="pro"?ACCENT:GRY,20),
+            ic("target",tab==="pro"?ACCENT:GRY,20),
             !isPaid?h("div",{style:{position:"absolute",top:-4,right:-4,width:12,height:12,borderRadius:"50%",background:GRY,display:"flex",alignItems:"center",justifyContent:"center"}},ic("lock","#fff",8)):null
           ),
           h("div",{style:{fontSize:9,fontWeight:tab==="pro"?700:400}},"Work"),
