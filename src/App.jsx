@@ -3545,7 +3545,7 @@ export default function App(){
       // Save employee to Supabase — user_plans + user_orgs + mark invite used
       return Promise.all([
         _sb.from("user_plans").upsert({
-          email:user.email,plan:"employee",role:"employee",
+          email:user.email,plan:"free",role:"employee",
           employer_email:inviteData.employerEmail,is_admin:false
         },{onConflict:"email"}),
         _sb.from("user_orgs").upsert({
