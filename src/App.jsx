@@ -88,7 +88,7 @@ var SVG_ICONS={
 "close":"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
 "notifications":"M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z",
 "cake":"M12 6c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3L12 1l-1.5 1.7c-.3.3-.5.8-.5 1.3 0 1.1.9 2 2 2zm6 4H6C4.9 10 4 10.9 4 12v.8c0 1.1.6 2.1 1.5 2.6.4.2.9.3 1.4.2.4-.1.7-.2 1-.5l2-2 2 2c.6.6 1.5.8 2.3.5.2-.1.5-.2.7-.3.9-.5 1.6-1.5 1.6-2.5V12c0-1.1-.9-2-2-2zM5 19h14v2H5zm0-3h14v2H5z",
-"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","bolt":"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","forward_to_inbox":"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4V8l8 5 8-5v5h2V6c0-1.1-.9-2-2-2zm-8 7L4 6h16l-8 5zm7 4l4 4-4 4v-3h-4v-2h4v-3z","play_arrow":"M8 5v14l11-7z","business":"M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z","language":"M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.9 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.66-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z","phone":"M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
+"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","bolt":"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","forward_to_inbox":"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4V8l8 5 8-5v5h2V6c0-1.1-.9-2-2-2zm-8 7L4 6h16l-8 5zm7 4l4 4-4 4v-3h-4v-2h4v-3z","play_arrow":"M8 5v14l11-7z","business":"M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z","language":"M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.9 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.66-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z","edit_calendar":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13zM8 10H6v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H6v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z","logout":"M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z","mail":"M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z","phone":"M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
 "delete_forever":"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z",
 "expand_more":"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z",
 "expand_less":"M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z",
@@ -1154,6 +1154,7 @@ export default function App(){
   var sInviteEmail=st(""),inviteEmail=sInviteEmail[0],setInviteEmail=sInviteEmail[1];
   var sInviteCode=st(""),inviteCode=sInviteCode[0],setInviteCode=sInviteCode[1];
   var sShowInviteCode=st(false),showInviteCode=sShowInviteCode[0],setShowInviteCode=sShowInviteCode[1];
+  var sInviteEmpId=st(null),inviteEmpId=sInviteEmpId[0],setInviteEmpId=sInviteEmpId[1]; // employee record being invited
   var sKpis=st([]),kpis=sKpis[0],setKpis=sKpis[1];
   var sKpiScores=st([]),kpiScores=sKpiScores[0],setKpiScores=sKpiScores[1];
   var sShowKpiForm=st(false),showKpiForm=sShowKpiForm[0],setShowKpiForm=sShowKpiForm[1];
@@ -2194,13 +2195,16 @@ export default function App(){
     var code=String(Math.floor(100000+Math.random()*900000));
     setInviteCode(code);
     setShowInviteCode(true);
-    // Save to Supabase invite_codes table
+    var empEmail=inviteEmail.trim().toLowerCase();
+    // Find employee record ID for this email
+    var empRecord=inviteEmpId?emps.find(function(e){return e.id===inviteEmpId;}):emps.find(function(e){return e.email&&e.email.toLowerCase()===empEmail;});
     _sb.from("invite_codes").insert({
       code:code,
       employer_email:gUser.email,
-      employee_email:inviteEmail.trim().toLowerCase()
+      employee_email:empEmail,
+      employee_id:empRecord?String(empRecord.id):null
     }).then(function(r){
-      if(r.error)showT("Saved locally only","err");
+      if(r.error)showT("Code generated! Share with employee.");
       else showT("Invite code ready! Share "+code+" with employee.");
     });
   }
@@ -2476,9 +2480,7 @@ export default function App(){
             searchQ?h("button",{onClick:function(){setSearchQ("");},style:{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",padding:0}},ic("close",GRY,16)):null
           ),
           h("button",{onClick:function(){setAddOpen(true);setStep(1);},style:{background:NVY,border:"none",borderRadius:12,padding:"0 14px",color:CARD,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.plus,CARD,22)),
-          isPaid?h("button",{onClick:function(){setShowInvite(true);},title:"Invite employee to app",style:{background:ACCENT+"15",border:"1px solid "+ACCENT+"44",borderRadius:12,padding:"0 12px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},
-            ic("forward_to_inbox",ACCENT,18)
-          ):null
+null
         ),
         // ── Sort bar ──
         h("div",{style:{display:"flex",gap:5,marginBottom:8,overflowX:"auto"}},
@@ -2515,7 +2517,12 @@ export default function App(){
               h("div",{style:{fontSize:10,color:GRY,marginTop:1,opacity:.8}},e.eid+" \u2022 Joined "+e.joined),
               h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginTop:4}},"Net "+fmt(d.net)+" / mo")
             ),
+            h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
+            isPaid?h("button",{onClick:function(ev){ev.stopPropagation();setInviteEmpId(e.id);setInviteEmail(e.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},title:"Invite to app",style:{background:ACCENT+"15",border:"1px solid "+ACCENT+"33",borderRadius:8,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},
+              ic("forward_to_inbox",ACCENT,14)
+            ):null,
             ic(ICONS.chev,GRY,16)
+          )
           );
         })
       ):h("div",null,
@@ -2563,6 +2570,7 @@ export default function App(){
       ),
       h("div",{style:{display:"flex",gap:7,marginBottom:10}},
         h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:9,padding:"9px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
+        isPaid?h("button",{onClick:function(){setInviteEmpId(selE.id);setInviteEmail(selE.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"15",border:"1px solid "+ACCENT+"44",borderRadius:9,padding:"9px 12px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("forward_to_inbox",ACCENT,13),"Invite"):null,
         h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1px solid "+RED,borderRadius:9,padding:"9px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard")
       ),
       card(h("div",null,h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:7}},"Personal Info"),[["Mobile",selE.mob],["Email",selE.email],["PAN",selE.pan],["UAN",selE.uan]].filter(function(i){return i[1];}).map(function(i){return row(i[0],i[1]);}))),
@@ -3506,11 +3514,16 @@ export default function App(){
       .maybeSingle()
     .then(function(res){
       if(!res.data){
-        setAuthErr("Invalid or expired invite code. Ask your employer to resend.");
+        setAuthErr("Invalid invite code. Please check and try again.");
         setAuthLoading(false);return;
       }
       if(new Date(res.data.expires_at)<new Date()){
-        setAuthErr("Invite code has expired. Ask your employer to generate a new one.");
+        setAuthErr("This invite code has expired. Ask your employer to generate a new one.");
+        setAuthLoading(false);return;
+      }
+      // Verify email matches (or allow if employer entered different email)
+      if(res.data.employee_email&&res.data.employee_email!==email){
+        setAuthErr("This invite code was sent to a different email ("+res.data.employee_email+"). Use that email or ask employer to resend.");
         setAuthLoading(false);return;
       }
       // Code valid — check email not already registered
@@ -3596,21 +3609,27 @@ export default function App(){
 
   // ── Employee dashboard ──────────────────────────────────────────────────
   function renderEmployeeDashboard(){
-    // Find this employee's record from employer's data
     var myEmail=gUser&&gUser.email?gUser.email:"";
-    var myRecord=emps.find(function(e){return e.email===myEmail||e.name.toLowerCase()===myEmail.split("@")[0].toLowerCase();});
-    var myTasks=tasks.filter(function(t){return t.assignTarget===myEmail||(myRecord&&(t.assignTarget===myRecord.name||t.assignTarget===myRecord.email));});
+    var myRecord=emps.find(function(e){
+      return (e.email&&e.email.toLowerCase()===myEmail.toLowerCase())||
+             e.name.toLowerCase()===myEmail.split("@")[0].toLowerCase();
+    });
+    var myTasks=tasks.filter(function(t){
+      return t.assignTarget===myEmail||
+        (myRecord&&(t.assignTarget===myRecord.name||t.assignTarget===myRecord.email))||
+        (myRecord&&(t.assignType==="department"&&t.assignTarget===myRecord.dept))||
+        (myRecord&&(t.assignType==="role"&&t.assignTarget===myRecord.role));
+    });
+    var myDirectTasks=myTasks.filter(function(t){return t.assignType==="individual";});
+    var myTeamTasks=myTasks.filter(function(t){return t.assignType!=="individual";});
     var myLeaves=leaveReqs.filter(function(r){return r.employeeEmail===myEmail;});
     var myNotifs=notifs.filter(function(n){return n.to===myEmail;});
     var unread=myNotifs.filter(function(n){return !n.read;}).length;
 
-    // ── Auto KPI calculation ──
-    function calcAutoKPIs(){
-      if(!myRecord)return null;
-      var now=new Date();
-      var yr=now.getFullYear(),mo=now.getMonth();
-      var daysInMonth=new Date(yr,mo+1,0).getDate();
-      var holidays=0,present=0,halfDays=0;
+    // ── Auto KPI ──
+    var yr=curY,mo=curM,daysInMonth=new Date(yr,mo+1,0).getDate();
+    var holidays=0,present=0,halfDays=0;
+    if(myRecord){
       for(var d=1;d<=daysInMonth;d++){
         var ds=yr+"-"+String(mo+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
         var s=att[ds+"_"+myRecord.id]||"unmarked";
@@ -3618,91 +3637,109 @@ export default function App(){
         else if(s==="present")present++;
         else if(s==="half")halfDays+=0.5;
       }
-      var workingDays=daysInMonth-holidays;
-      var attPct=workingDays>0?Math.round((present+halfDays)/workingDays*100):0;
-      var completedTasks=myTasks.filter(function(t){
-        if(t.status!=="verified")return false;
-        return t.updatedAt&&new Date(t.updatedAt).getMonth()===mo&&new Date(t.updatedAt).getFullYear()===yr;
-      }).length;
-      var onTimeTasks=myTasks.filter(function(t){
-        if(t.status!=="verified")return false;
-        return t.deadline&&new Date(t.updatedAt)<=new Date(t.deadline);
-      }).length;
-      var totalCompleted=myTasks.filter(function(t){return t.status==="verified";}).length;
-      var onTimePct=totalCompleted>0?Math.round(onTimeTasks/totalCompleted*100):100;
-      return {attPct:attPct,completedTasks:completedTasks,onTimePct:onTimePct,workingDays:workingDays,presentDays:present+halfDays};
     }
-    var autoKPI=calcAutoKPIs();
+    var workDays=daysInMonth-holidays;
+    var attPct=workDays>0?Math.round((present+halfDays)/workDays*100):0;
+    var completedThisMonth=myDirectTasks.filter(function(t){
+      return t.status==="verified"&&t.updatedAt&&
+        new Date(t.updatedAt).getMonth()===mo&&new Date(t.updatedAt).getFullYear()===yr;
+    }).length;
+    var activeTasks=myDirectTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress"||t.status==="rejected";});
+    var leaveEntitlement=myRecord?Number(myRecord.leaveEntitlement||12):12;
+    var leavesUsed=myLeaves.filter(function(r){return r.status==="approved";}).length;
+    var leaveLeft=Math.max(0,leaveEntitlement-leavesUsed);
 
-    // ── Bottom nav ──
-    function empNavBtn(id,label,icon){
+    // ── Nav helper ──
+    function empNav(id,label,icon){
       var active=empTab===id;
-      return h("button",{onClick:function(){setEmpTab(id);setEmpSelTask(null);},style:{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 0",color:active?ACCENT:GRY,transition:"color .15s"}},
-        h("div",{style:{padding:"5px 14px",borderRadius:14,background:active?ACCENT_SOFT:"transparent",transition:"background .15s",display:"flex",alignItems:"center",justifyContent:"center"}},ic(icon,active?ACCENT:GRY,22)),
-        h("div",{style:{fontSize:10,fontWeight:active?700:500,letterSpacing:.2}},label)
+      var badge=id==="home"&&unread>0?unread:0;
+      return h("button",{onClick:function(){setEmpTab(id);setEmpSelTask(null);},
+        style:{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 0",color:active?ACCENT:GRY,position:"relative"}},
+        h("div",{style:{padding:"4px 14px",borderRadius:14,background:active?ACCENT_SOFT:"transparent",position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}},
+          ic(icon,active?ACCENT:GRY,22),
+          badge>0?h("div",{style:{position:"absolute",top:-3,right:3,width:14,height:14,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center"}},
+            h("div",{style:{fontSize:8,fontWeight:700,color:"#fff"}},badge>9?"9+":badge)
+          ):null
+        ),
+        h("div",{style:{fontSize:10,fontWeight:active?700:500}},label)
       );
     }
 
     // ── Home tab ──
-    function renderEmpHome(){
+    function empHome(){
       var now=new Date();
       var todayKey=todayStr+"_"+(myRecord?myRecord.id:"");
       var todayAtt=myRecord?(att[todayKey]||"unmarked"):"unmarked";
-      var attColor=todayAtt==="present"?"#10B981":todayAtt==="absent"?RED:todayAtt==="half"?AMB:GRY;
-      var attLabel=todayAtt==="present"?"Present Today":todayAtt==="absent"?"Absent Today":todayAtt==="half"?"Half Day":todayAtt==="pl"?"On Paid Leave":todayAtt==="ul"?"On Unpaid Leave":todayAtt==="holiday"?"Holiday":todayAtt==="unmarked"?"Not marked yet":"";
+      var attColors={"present":"#10B981","absent":RED,"half":AMB,"pl":"#4F46E5","ul":GRY,"holiday":"#7C3AED","unmarked":GRY};
+      var attLabels={"present":"Present","absent":"Absent","half":"Half Day","pl":"Paid Leave","ul":"Unpaid Leave","holiday":"Holiday","unmarked":"Not marked"};
+      var urgentTask=activeTasks.find(function(t){return t.priority==="high";});
+      urgentTask=urgentTask||activeTasks[0];
       return h("div",null,
-        // Greeting
-        h("div",{style:{background:"linear-gradient(135deg,#4F46E5,#7C3AED)",borderRadius:16,padding:"16px",marginBottom:14,color:"#fff"}},
-          h("div",{style:{fontSize:11,opacity:.8,marginBottom:4}},"Good "+(now.getHours()<12?"morning":now.getHours()<17?"afternoon":"evening")+","),
-          h("div",{style:{fontSize:20,fontWeight:800,marginBottom:8}},suName||(gUser&&gUser.email.split("@")[0])||"Employee"),
-          h("div",{style:{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"8px 12px",display:"inline-flex"}},
-            h("div",{style:{width:8,height:8,borderRadius:"50%",background:attColor==="unmarked"?GRY:attColor}}),
-            h("div",{style:{fontSize:12,fontWeight:600}},attLabel)
+        // Greeting card
+        h("div",{style:{background:"linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%)",borderRadius:20,padding:"18px 16px 16px",marginBottom:14,color:"#fff",position:"relative",overflow:"hidden"}},
+          h("div",{style:{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.08)"}}),
+          h("div",{style:{position:"absolute",bottom:-30,right:20,width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.05)"}}),
+          h("div",{style:{fontSize:12,opacity:.75,marginBottom:3}},now.getHours()<12?"Good morning":now.getHours()<17?"Good afternoon":"Good evening"),
+          h("div",{style:{fontSize:22,fontWeight:800,marginBottom:12,lineHeight:1.2}},suName||(myRecord&&myRecord.name)||"Employee"),
+          h("div",{style:{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"6px 12px"}},
+            h("div",{style:{width:8,height:8,borderRadius:"50%",background:attColors[todayAtt]||"#fff",flexShrink:0}}),
+            h("div",{style:{fontSize:12,fontWeight:600}},attLabels[todayAtt]||"Unknown"),
+            h("div",{style:{fontSize:11,opacity:.7}},"\u2022 Today")
           )
         ),
-        // KPI summary card
-        autoKPI?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:12,display:"flex",alignItems:"center",gap:6}},ic("insights","#D97706",15),"This Month — Performance"),
-          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}},
-            [
-              ["Attendance",autoKPI.attPct+"%",autoKPI.attPct>=90?"#10B981":autoKPI.attPct>=70?ACCENT:RED],
-              ["Tasks Done",String(autoKPI.completedTasks),"#10B981"],
-              ["On Time",autoKPI.onTimePct+"%",autoKPI.onTimePct>=80?"#10B981":AMB]
-            ].map(function(item){
-              return h("div",{key:item[0],style:{background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
-                h("div",{style:{fontSize:18,fontWeight:800,color:item[2]}},item[1]),
-                h("div",{style:{fontSize:9,color:GRY,marginTop:2}},item[0])
-              );
-            })
+        // Stats row
+        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}},
+          h("div",{style:{background:CARD,borderRadius:14,padding:"12px 8px",textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+            h("div",{style:{fontSize:22,fontWeight:800,color:"#10B981"}},present+(halfDays>0?"+":"")),
+            h("div",{style:{fontSize:9,color:GRY,marginTop:2,lineHeight:1.3}},"Days\nPresent")
+          ),
+          h("div",{style:{background:CARD,borderRadius:14,padding:"12px 8px",textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+            h("div",{style:{fontSize:22,fontWeight:800,color:leaveLeft>3?ACCENT:RED}},leaveLeft),
+            h("div",{style:{fontSize:9,color:GRY,marginTop:2,lineHeight:1.3}},"Leaves\nRemaining")
+          ),
+          h("div",{style:{background:CARD,borderRadius:14,padding:"12px 8px",textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+            h("div",{style:{fontSize:22,fontWeight:800,color:activeTasks.length>0?AMB:"#10B981"}},activeTasks.length),
+            h("div",{style:{fontSize:9,color:GRY,marginTop:2,lineHeight:1.3}},"Active\nTasks")
+          )
+        ),
+        // Urgent task
+        urgentTask?h("div",{onClick:function(){setEmpTab("tasks");setEmpSelTask(urgentTask);},style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",borderLeft:"4px solid "+(urgentTask.priority==="high"?RED:urgentTask.priority==="medium"?AMB:"#10B981")}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},
+            h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:.5}},"PRIORITY TASK"),
+            h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:20,background:urgentTask.priority==="high"?"#FEE2E2":urgentTask.priority==="medium"?"#FEF3C7":"#D1FAE5",color:urgentTask.priority==="high"?"#991B1B":urgentTask.priority==="medium"?"#92400E":"#065F46"}},urgentTask.priority.toUpperCase())
+          ),
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:4}},urgentTask.title),
+          h("div",{style:{display:"flex",alignItems:"center",gap:6,fontSize:11,color:urgentTask.deadline&&new Date(urgentTask.deadline)<new Date()?RED:GRY}},
+            ic("calendar_today",urgentTask.deadline&&new Date(urgentTask.deadline)<new Date()?RED:GRY,11),
+            urgentTask.deadline?"Due: "+urgentTask.deadline:"No deadline",
+            ic("chevron_right",GRY,14)
           )
         ):null,
-        // Active tasks preview
-        myTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length>0?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("assignment",ACCENT,15),"Active Tasks"),
-            h("button",{onClick:function(){setEmpTab("tasks");},style:{background:"none",border:"none",color:ACCENT,fontSize:11,fontWeight:600,cursor:"pointer"}},"View all")
+        // Performance snapshot
+        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("insights","#D97706",15),"Performance — "+MOS[mo]),
+            h("div",{style:{fontSize:11,fontWeight:700,color:attPct>=90?"#10B981":attPct>=70?ACCENT:RED}},attPct+"%")
           ),
-          myTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).slice(0,3).map(function(t){
-            var isOverdue=t.deadline&&new Date(t.deadline)<new Date();
-            return h("div",{key:t.id,onClick:function(){setEmpTab("tasks");setEmpSelTask(t);},style:{display:"flex",gap:10,padding:"8px 0",borderBottom:"1px solid "+BDR,cursor:"pointer"}},
-              h("div",{style:{width:4,borderRadius:2,background:t.priority==="high"?RED:t.priority==="medium"?AMB:"#10B981",flexShrink:0}}),
-              h("div",{style:{flex:1}},
-                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},t.title),
-                h("div",{style:{fontSize:10,color:isOverdue?RED:GRY,marginTop:2}},t.deadline?(isOverdue?"Overdue: ":"Due: ")+t.deadline:"No deadline")
-              ),
-              ic("chevron_right",GRY,16)
-            );
-          })
-        ):null,
-        // Notifications preview
-        myNotifs.filter(function(n){return !n.read;}).length>0?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10,display:"flex",alignItems:"center",gap:6}},
-            ic("notifications",ACCENT,15),"Notifications",
-            h("span",{style:{background:RED,color:"#fff",fontSize:9,fontWeight:700,borderRadius:10,padding:"0 6px",marginLeft:4}},unread)
+          h("div",{style:{height:6,background:SFT,borderRadius:3,overflow:"hidden",marginBottom:8}},
+            h("div",{style:{height:"100%",background:attPct>=90?"#10B981":attPct>=70?ACCENT:RED,borderRadius:3,width:attPct+"%",transition:"width 0.8s"}})
+          ),
+          h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:GRY}},
+            h("span","Attendance "+attPct+"%"),
+            h("span",completedThisMonth+" tasks done this month")
+          )
+        ),
+        // Notifications
+        unread>0?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},
+              ic("notifications",ACCENT,15),"Notifications",
+              h("span",{style:{background:RED,color:"#fff",fontSize:9,fontWeight:700,borderRadius:10,padding:"0 6px",marginLeft:4}},unread)
+            )
           ),
           myNotifs.slice(0,3).map(function(n){
-            return h("div",{key:n.id,onClick:function(){setNotifs(function(p){return p.map(function(x){return x.id===n.id?Object.assign({},x,{read:true}):x;});});setUnreadNotifs(function(c){return Math.max(0,c-1);});},style:{display:"flex",gap:8,padding:"6px 0",borderBottom:"1px solid "+BDR,cursor:"pointer",opacity:n.read?.6:1}},
-              h("div",{style:{width:8,height:8,borderRadius:"50%",background:n.read?"transparent":ACCENT,flexShrink:0,marginTop:4}}),
+            return h("div",{key:n.id,onClick:function(){setNotifs(function(p){return p.map(function(x){return x.id===n.id?Object.assign({},x,{read:true}):x;});});setUnreadNotifs(function(c){return Math.max(0,c-1);});},style:{display:"flex",gap:8,padding:"6px 0",borderBottom:"1px solid "+BDR,cursor:"pointer",alignItems:"flex-start"}},
+              h("div",{style:{width:6,height:6,borderRadius:"50%",background:n.read?"transparent":ACCENT,flexShrink:0,marginTop:5}}),
               h("div",{style:{flex:1}},
                 h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},n.title),
                 h("div",{style:{fontSize:11,color:GRY,marginTop:1}},n.message)
@@ -3713,121 +3750,232 @@ export default function App(){
       );
     }
 
-    // ── Tasks tab (employee) ──
-    function renderEmpTasks(){
+    // ── Attendance tab (read-only calendar) ──
+    function empAttendance(){
+      var todayDate=attYr+"-"+String(attMo+1).padStart(2,"0")+"-"+String(new Date().getDate()).padStart(2,"0");
+      var sAttY=empPayYear,sAttM=empPayMonth;
+      return h("div",null,
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+          h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},MOS[sAttM]+" "+sAttY),
+          h("div",{style:{fontSize:11,color:GRY}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
+        ),
+        h("div",{style:{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}},
+          MOS.map(function(m,i){
+            return h("button",{key:i,onClick:function(){setEmpPayMonth(i);},style:{flexShrink:0,background:sAttM===i?ACCENT:CARD,border:"1px solid "+(sAttM===i?ACCENT:BDR),borderRadius:15,padding:"4px 10px",color:sAttM===i?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},m);
+          })
+        ),
+        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",marginBottom:12}},
+          h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:8}},
+            ["Su","Mo","Tu","We","Th","Fr","Sa"].map(function(d){return h("div",{key:d,style:{fontSize:9,color:GRY,textAlign:"center",fontWeight:700,paddingBottom:3}},d);}),
+            (function(){
+              var cells=[];
+              var fd=new Date(sAttY,sAttM,1).getDay();
+              var days=new Date(sAttY,sAttM+1,0).getDate();
+              for(var xi=0;xi<fd;xi++)cells.push(h("div",{key:"x"+xi}));
+              for(var day=1;day<=days;day++){
+                var ds=sAttY+"-"+String(sAttM+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+                var s=myRecord?(att[ds+"_"+myRecord.id]||"unmarked"):"unmarked";
+                var isTd=ds===todayStr;
+                cells.push(h("div",{key:day,style:{aspectRatio:"1",borderRadius:6,background:s==="unmarked"?SFT:ATC[s]+"18",border:isTd?"2px solid "+ACCENT:"1px solid "+(s==="unmarked"?BDR:ATC[s]+"33"),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
+                  h("div",{style:{fontSize:11,fontWeight:isTd?800:500,color:s==="unmarked"?NVY:ATC[s]}},day),
+                  s!=="unmarked"&&s!=="unmarked"?h("div",{style:{fontSize:6,color:ATC[s],fontWeight:700}},ATL[s]?ATL[s].slice(0,2):""):null
+                ));
+              }
+              return cells;
+            })()
+          ),
+          h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,paddingTop:8,borderTop:"1px solid "+BDR}},
+            Object.entries(ATL).filter(function(kv){return kv[0]!=="unmarked";}).map(function(kv){
+              return h("div",{key:kv[0],style:{display:"flex",alignItems:"center",gap:3}},
+                h("div",{style:{width:8,height:8,borderRadius:2,background:ATC[kv[0]]}}),
+                h("span",{style:{fontSize:9,color:GRY}},kv[1])
+              );
+            })
+          )
+        ),
+        // Summary
+        myRecord?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},"Monthly Summary"),
+          h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}},
+            (function(){
+              var p2=0,a2=0,h2=0,l2=0;
+              var dInM=new Date(sAttY,sAttM+1,0).getDate();
+              for(var d2=1;d2<=dInM;d2++){
+                var ds2=sAttY+"-"+String(sAttM+1).padStart(2,"0")+"-"+String(d2).padStart(2,"0");
+                var s2=att[ds2+"_"+myRecord.id]||"unmarked";
+                if(s2==="present")p2++;
+                else if(s2==="absent")a2++;
+                else if(s2==="half")h2++;
+                else if(s2==="pl"||s2==="ul"||s2==="sl"||s2==="cl")l2++;
+              }
+              return [["Present",p2,"#10B981"],["Absent",a2,RED],["Half",h2,AMB],["Leave",l2,ACCENT]];
+            })().map(function(item){
+              return h("div",{key:item[0],style:{background:item[2]+"10",borderRadius:10,padding:"10px",textAlign:"center"}},
+                h("div",{style:{fontSize:20,fontWeight:800,color:item[2]}},item[1]),
+                h("div",{style:{fontSize:10,color:GRY,marginTop:2}},item[0])
+              );
+            })
+          )
+        ):null
+      );
+    }
+
+    // ── Tasks tab ──
+    function empTasks(){
+      var taskInnerTab=empTab==="tasks"?"mine":empTab;
+      var showMine=true;
       if(empSelTask){
         var t=empSelTask;
         var tComments=taskComments[t.id]||[];
         return h("div",{className:"fd"},
-          h("button",{onClick:function(){setEmpSelTask(null);},style:{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:ACCENT,fontSize:13,fontWeight:600,padding:"0 0 12px"}},
+          h("button",{onClick:function(){setEmpSelTask(null);},style:{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:ACCENT,fontSize:13,fontWeight:600,padding:"0 0 14px"}},
             ic("arrow_back",ACCENT,16),"Back"
           ),
-          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)",marginBottom:8}},
-            h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:8}},
+          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 12px rgba(0,0,0,0.08)",marginBottom:8}},
+            h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
               h("div",{style:{fontSize:15,fontWeight:700,color:NVY,flex:1,marginRight:8,lineHeight:1.4}},t.title),
-              h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:20,flexShrink:0,background:t.priority==="high"?"#FEE2E2":t.priority==="medium"?"#FEF3C7":"#D1FAE5",color:t.priority==="high"?"#991B1B":t.priority==="medium"?"#92400E":"#065F46"}},t.priority.toUpperCase())
+              h("div",{style:{fontSize:9,fontWeight:700,padding:"3px 9px",borderRadius:20,flexShrink:0,background:t.priority==="high"?"#FEE2E2":t.priority==="medium"?"#FEF3C7":"#D1FAE5",color:t.priority==="high"?"#991B1B":t.priority==="medium"?"#92400E":"#065F46"}},t.priority.toUpperCase())
             ),
             t.description?h("div",{style:{fontSize:12,color:GRY,marginBottom:10,lineHeight:1.6,paddingBottom:10,borderBottom:"1px solid "+BDR}},t.description):null,
+            // Status steps
+            h("div",{style:{display:"flex",alignItems:"center",marginBottom:12}},
+              ["assigned","in_progress","completed","verified"].map(function(s,i){
+                var states=["assigned","in_progress","completed","verified"];
+                var curIdx=states.indexOf(t.status);
+                var isDone=i<=curIdx;var isCur=i===curIdx;
+                return [
+                  h("div",{key:s,style:{display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+                    h("div",{style:{width:22,height:22,borderRadius:"50%",background:isDone?(isCur?ACCENT:"#10B981"):"#E2E8F0",display:"flex",alignItems:"center",justifyContent:"center"}},
+                      isDone&&!isCur?ic("check","#fff",11):h("div",{style:{width:7,height:7,borderRadius:"50%",background:isCur?"#fff":"#94A3B8"}})
+                    ),
+                    h("div",{style:{fontSize:7,color:isCur?ACCENT:GRY,fontWeight:isCur?700:400,textAlign:"center",maxWidth:38,marginTop:2}},s.replace("_"," "))
+                  ),
+                  i<3?h("div",{key:s+"l",style:{flex:1,height:2,background:i<curIdx?"#10B981":"#E2E8F0",borderRadius:1,margin:"0 2px",marginBottom:14}}):null
+                ];
+              })
+            ),
             h("div",{style:{display:"flex",gap:16}},
-              h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"DEADLINE"),h("div",{style:{fontSize:12,fontWeight:600,color:t.deadline&&new Date(t.deadline)<new Date()&&t.status!=="verified"?RED:NVY,marginTop:2}},t.deadline||"No deadline")),
-              h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"STATUS"),h("div",{style:{fontSize:12,fontWeight:600,color:t.status==="verified"?"#10B981":t.status==="rejected"?RED:ACCENT,marginTop:2}},t.status.replace("_"," ").replace(/\b\w/g,function(c){return c.toUpperCase();})))
-            )
+              h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"DEADLINE"),h("div",{style:{fontSize:12,fontWeight:600,color:t.deadline&&new Date(t.deadline)<new Date()&&t.status!=="verified"?RED:NVY,marginTop:2}},t.deadline||"—")),
+              h("div",null,h("div",{style:{fontSize:9,color:GRY,letterSpacing:1}},"TYPE"),h("div",{style:{fontSize:12,fontWeight:600,color:NVY,marginTop:2}},t.assignType==="individual"?"Direct":t.assignType==="department"?"Team ("+t.assignTarget+")":"Role ("+t.assignTarget+")")))
           ),
           t.rejectionReason?h("div",{style:{background:RED+"10",borderRadius:12,padding:"10px 14px",marginBottom:8,display:"flex",gap:8}},
             ic("cancel",RED,16),
-            h("div",null,h("div",{style:{fontSize:11,fontWeight:700,color:RED}},"Sent back with reason"),h("div",{style:{fontSize:11,color:RED,marginTop:2}},t.rejectionReason))
+            h("div",null,h("div",{style:{fontSize:11,fontWeight:700,color:RED}},"Revision needed"),h("div",{style:{fontSize:11,color:RED,marginTop:2}},t.rejectionReason))
           ):null,
-          // Action buttons
-          t.status==="assigned"?h("button",{onClick:function(){updateTaskStatus(t.id,"in_progress");setEmpSelTask(Object.assign({},t,{status:"in_progress"}));showT("Task started!");},style:{width:"100%",background:ACCENT,border:"none",borderRadius:12,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
-            ic("play_arrow",ACCENT_FG,18),"Start Working"
-          ):null,
-          t.status==="in_progress"||t.status==="rejected"?h("button",{onClick:function(){var note=window.prompt("Add a completion note (optional):")||"";updateTaskStatus(t.id,"completed",note);setEmpSelTask(Object.assign({},t,{status:"completed",completionNote:note}));},style:{width:"100%",background:"#10B981",border:"none",borderRadius:12,padding:"12px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
-            ic("task_alt","#fff",18),"Mark as Complete"
-          ):null,
-          // Comments
+          t.status==="assigned"?h("button",{onClick:function(){updateTaskStatus(t.id,"in_progress");setEmpSelTask(Object.assign({},t,{status:"in_progress"}));showT("Started!");},style:{width:"100%",background:ACCENT,border:"none",borderRadius:12,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("play_arrow",ACCENT_FG,18),"Start Task"):null,
+          (t.status==="in_progress"||t.status==="rejected")&&t.assignType==="individual"?h("button",{onClick:function(){var note=window.prompt("Add completion note (optional):")||"";updateTaskStatus(t.id,"completed",note);setEmpSelTask(Object.assign({},t,{status:"completed",completionNote:note}));showT("Marked complete!");},style:{width:"100%",background:"#10B981",border:"none",borderRadius:12,padding:"12px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("task_alt","#fff",18),"Mark Complete"):null,
           h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},ic("forum",NVY,15)," Comments ("+(tComments.length)+")"),
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10,display:"flex",alignItems:"center",gap:6}},ic("forum",NVY,15),"Comments ("+(tComments.length)+")"),
             h("div",{style:{maxHeight:180,overflowY:"auto",marginBottom:10}},
               tComments.length===0?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY,fontSize:12}},"No comments yet."):
               tComments.map(function(c){
                 var isMe=c.fromEmail===myEmail;
                 return h("div",{key:c.id,style:{marginBottom:10,display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start"}},
-                  h("div",{style:{fontSize:9,color:GRY,marginBottom:3}},isMe?"You":"Manager"),
-                  h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?"#fff":NVY,borderRadius:10,padding:"8px 12px",fontSize:12,maxWidth:"80%"}},c.message)
+                  h("div",{style:{fontSize:9,color:GRY,marginBottom:3}},isMe?"You":c.fromEmail.split("@")[0]),
+                  h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?"#fff":NVY,borderRadius:isMe?"14px 14px 3px 14px":"14px 14px 14px 3px",padding:"8px 12px",fontSize:12,maxWidth:"80%",lineHeight:1.5}},c.message)
                 );
               })
             ),
             h("div",{style:{display:"flex",gap:8}},
-              h("input",{type:"text",value:empTaskComment,onChange:function(e){setEmpTaskComment(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&empTaskComment.trim()){addTaskComment(t.id);setEmpTaskComment("");}},placeholder:"Ask or update...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:22,padding:"10px 14px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+              h("input",{type:"text",value:empTaskComment,onChange:function(e){setEmpTaskComment(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&empTaskComment.trim()){addTaskComment(t.id);setEmpTaskComment("");}},placeholder:"Comment or ask...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:22,padding:"10px 14px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
               h("button",{onClick:function(){if(empTaskComment.trim()){addTaskComment(t.id);setEmpTaskComment("");}},style:{width:40,height:40,background:ACCENT,border:"none",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("send","#fff",16))
             )
           )
         );
       }
 
-      var activeT=myTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress"||t.status==="rejected";});
-      var doneT=myTasks.filter(function(t){return t.status==="completed"||t.status==="verified";});
+      var taskFilter=empTaskComment?"all":"all"; // using taskTab for filter
+      var showMineTab=!empTaskComment||empTaskComment==="_mine";
+      var mineActive=empSelTask===null&&empTab==="tasks";
+      var displayTasks=myDirectTasks;
+      var teamDisplay=myTeamTasks;
 
       return h("div",{className:"fd"},
-        activeT.length===0&&doneT.length===0?h("div",{style:{textAlign:"center",padding:"48px 0",color:GRY}},
-          ic("assignment",GRY,48),
-          h("div",{style:{fontSize:14,marginTop:12,fontWeight:600}},"No tasks assigned yet"),
-          h("div",{style:{fontSize:12,marginTop:6}},"Your employer will assign tasks here")
-        ):null,
-        activeT.length>0?h("div",null,
-          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"ACTIVE"),
-          activeT.map(function(t){
-            var isOverdue=t.deadline&&new Date(t.deadline)<new Date();
-            return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",borderLeft:"3px solid "+(t.status==="rejected"?RED:t.priority==="high"?RED:t.priority==="medium"?AMB:"#10B981")}},
-              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
-                h("div",{style:{fontSize:12,fontWeight:700,color:NVY,flex:1,marginRight:8}},t.title),
-                t.status==="rejected"?h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:"#FEE2E2",color:"#991B1B"}},"Revision needed"):
-                h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:"#FEF9C3",color:"#713F12"}},t.status==="in_progress"?"Active":"New")
-              ),
-              h("div",{style:{fontSize:10,color:isOverdue?RED:GRY,display:"flex",alignItems:"center",gap:4}},
-                ic("calendar_today",isOverdue?RED:GRY,10),
-                t.deadline?(isOverdue?"Overdue: ":"Due: ")+t.deadline:"No deadline"
-              )
-            );
-          })
-        ):null,
-        doneT.length>0?h("div",{style:{marginTop:16}},
-          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"COMPLETED"),
-          doneT.map(function(t){
-            return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",opacity:.7}},
-              h("div",{style:{display:"flex",justifyContent:"space-between"}},
-                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},t.title),
-                h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:t.status==="verified"?"#D1FAE5":"#EFF6FF",color:t.status==="verified"?"#065F46":"#1E40AF"}},t.status==="verified"?"Verified":"Submitted")
-              )
-            );
-          })
-        ):null
+        h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:12,gap:3}},
+          h("button",{onClick:function(){setEmpTaskComment("_mine");},style:{flex:1,background:empTaskComment!=="team"?CARD:"transparent",border:empTaskComment!=="team"?"1px solid "+BDR:"none",borderRadius:9,padding:"8px",color:empTaskComment!=="team"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
+            ic("person",empTaskComment!=="team"?ACCENT:GRY,14),"My Tasks",
+            displayTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length>0?h("span",{style:{background:RED,color:"#fff",fontSize:9,fontWeight:700,borderRadius:10,padding:"0 5px"}},displayTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length):null
+          ),
+          h("button",{onClick:function(){setEmpTaskComment("team");},style:{flex:1,background:empTaskComment==="team"?CARD:"transparent",border:empTaskComment==="team"?"1px solid "+BDR:"none",borderRadius:9,padding:"8px",color:empTaskComment==="team"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
+            ic("groups",empTaskComment==="team"?ACCENT:GRY,14),"Team Tasks",
+            teamDisplay.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length>0?h("span",{style:{background:AMB+"40",color:AMB,fontSize:9,fontWeight:700,borderRadius:10,padding:"0 5px"}},teamDisplay.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length):null
+          )
+        ),
+        (function(){
+          var list=empTaskComment==="team"?teamDisplay:displayTasks;
+          var active=list.filter(function(t){return t.status==="assigned"||t.status==="in_progress"||t.status==="rejected";});
+          var done=list.filter(function(t){return t.status==="completed"||t.status==="verified";});
+          return h("div",null,
+            list.length===0?h("div",{style:{textAlign:"center",padding:"48px 0",color:GRY}},
+              ic("assignment",GRY,48),
+              h("div",{style:{fontSize:14,marginTop:12,fontWeight:600}},empTaskComment==="team"?"No team tasks":"No tasks assigned yet")
+            ):null,
+            active.length>0?h("div",{style:{marginBottom:16}},
+              h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"ACTIVE"),
+              active.map(function(t){
+                var isOverdue=t.deadline&&new Date(t.deadline)<new Date();
+                return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",borderLeft:"3px solid "+(t.status==="rejected"?RED:t.priority==="high"?RED:t.priority==="medium"?AMB:"#10B981")}},
+                  h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
+                    h("div",{style:{fontSize:12,fontWeight:700,color:NVY,flex:1,marginRight:8}},t.title),
+                    t.status==="rejected"?h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:"#FEE2E2",color:"#991B1B"}},"Revision"):
+                    h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:"#FEF9C3",color:"#713F12"}},t.status==="in_progress"?"Active":"New")
+                  ),
+                  h("div",{style:{display:"flex",gap:10,alignItems:"center"}},
+                    h("div",{style:{fontSize:10,color:isOverdue?RED:GRY,display:"flex",alignItems:"center",gap:3,fontWeight:isOverdue?700:400}},
+                      ic("calendar_today",isOverdue?RED:GRY,10),
+                      t.deadline?(isOverdue?"Overdue: ":"Due: ")+t.deadline:"No deadline"
+                    ),
+                    (taskComments[t.id]||[]).length>0?h("div",{style:{fontSize:10,color:GRY,display:"flex",alignItems:"center",gap:2}},ic("forum",GRY,10),(taskComments[t.id]||[]).length):null
+                  )
+                );
+              })
+            ):null,
+            done.length>0?h("div",null,
+              h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"COMPLETED"),
+              done.map(function(t){
+                return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",opacity:.7,borderLeft:"3px solid "+(t.status==="verified"?"#10B981":ACCENT)}},
+                  h("div",{style:{display:"flex",justifyContent:"space-between"}},
+                    h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},t.title),
+                    h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:t.status==="verified"?"#D1FAE5":"#EFF6FF",color:t.status==="verified"?"#065F46":"#1E40AF"}},t.status==="verified"?"Verified":"Submitted")
+                  )
+                );
+              })
+            ):null
+          );
+        })()
       );
     }
 
-    // ── Leave tab (employee) ──
-    function renderEmpLeave(){
-      var leaveBalance={CL:12,SL:6,PL:12,UL:0,EL:2,CO:0,ML:0,PTL:0};
-      Object.keys(leaveBalance).forEach(function(lt){
+    // ── Leave tab ──
+    function empLeave(){
+      var entitlement=myRecord?Number(myRecord.leaveEntitlement||12):12;
+      var leaveByType={};
+      Object.keys(LEAVE_TYPES).forEach(function(lt){
         var used=myLeaves.filter(function(r){return r.leaveType===lt&&r.status==="approved";}).length;
-        leaveBalance[lt]=Math.max(0,leaveBalance[lt]-used);
+        var total=lt==="CL"?Math.round(entitlement*0.4):lt==="SL"?Math.round(entitlement*0.2):lt==="PL"?Math.round(entitlement*0.3):lt==="EL"?2:0;
+        leaveByType[lt]={total:total,used:used,left:Math.max(0,total-used)};
       });
       return h("div",{className:"fd"},
-        // Leave balance
-        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},"Leave Balance"),
-          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
-            [["CL","Casual Leave"],["SL","Sick Leave"],["PL","Paid Leave"],["EL","Emergency Leave"]].map(function(item){
-              return h("div",{key:item[0],style:{background:SFT,borderRadius:10,padding:"10px"}},
-                h("div",{style:{fontSize:18,fontWeight:800,color:leaveBalance[item[0]]>0?ACCENT:RED}},leaveBalance[item[0]]),
-                h("div",{style:{fontSize:10,color:GRY,marginTop:2}},item[1])
+        h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:12,display:"flex",alignItems:"center",gap:6}},ic("event_available",ACCENT,15),"Leave Balance"),
+          h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+            [["CL","Casual Leave"],["SL","Sick Leave"],["PL","Paid Leave"],["EL","Emergency"]].map(function(item){
+              var lb=leaveByType[item[0]]||{total:0,used:0,left:0};
+              var pct=lb.total>0?Math.round(lb.left/lb.total*100):0;
+              return h("div",{key:item[0],style:{background:SFT,borderRadius:12,padding:"12px"}},
+                h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+                  h("div",{style:{fontSize:10,color:GRY,fontWeight:600}},item[1]),
+                  h("div",{style:{fontSize:11,fontWeight:700,color:lb.left>0?ACCENT:RED}},lb.left+"/"+lb.total)
+                ),
+                h("div",{style:{height:5,background:BDR,borderRadius:3,overflow:"hidden"}},
+                  h("div",{style:{height:"100%",background:lb.left>0?ACCENT:RED,borderRadius:3,width:pct+"%"}})
+                )
               );
             })
           )
         ),
-        // Apply leave button
         empShowLeave?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-          h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14}},"Apply for Leave"),
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14,display:"flex",alignItems:"center",gap:8}},ic("edit_calendar",ACCENT,16),"Apply for Leave"),
           lbl("LEAVE TYPE"),
           h("select",{value:empLeaveType,onChange:function(e){setEmpLeaveType(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
             Object.keys(LEAVE_TYPES).map(function(lt){return h("option",{key:lt,value:lt},LEAVE_TYPES[lt].name);})
@@ -3843,148 +3991,143 @@ export default function App(){
           h("div",{style:{display:"flex",gap:8}},
             h("button",{onClick:function(){
               if(!empLeaveFrom||!empLeaveTo)return showT("Select dates","err");
-              if(LEAVE_TYPES[empLeaveType].needsReason&&!empLeaveReason.trim())return showT("Enter reason","err");
+              if(LEAVE_TYPES[empLeaveType]&&LEAVE_TYPES[empLeaveType].needsReason&&!empLeaveReason.trim())return showT("Enter reason","err");
               var req={id:Date.now(),employeeEmail:myEmail,employerEmail:empEmployerEmail,leaveType:empLeaveType,fromDate:empLeaveFrom,toDate:empLeaveTo,reason:empLeaveReason.trim(),status:"pending",adminReply:"",createdAt:new Date().toISOString()};
               setLeaveReqs(function(p){return [req].concat(p);});
               addNotif(empEmployerEmail,myEmail,"leave_requested","Leave request",(gUser?gUser.email.split("@")[0]:""+" applied for "+LEAVE_TYPES[empLeaveType].name),String(req.id),"leave");
               setEmpLeaveFrom("");setEmpLeaveTo("");setEmpLeaveReason("");setEmpShowLeave(false);
               showT("Leave request sent!");
-            },style:{flex:2,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Submit Request"),
+            },style:{flex:2,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer"}},"Submit"),
             h("button",{onClick:function(){setEmpShowLeave(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"12px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
           )
-        ):h("button",{onClick:function(){setEmpShowLeave(true);},style:{width:"100%",background:ACCENT,border:"none",borderRadius:14,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
-          ic("add",ACCENT_FG,18),"Apply Leave"
+        ):h("button",{onClick:function(){setEmpShowLeave(true);},style:{width:"100%",background:ACCENT,border:"none",borderRadius:14,padding:"13px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic("add",ACCENT_FG,18),"Apply for Leave"
         ),
-        // Leave history
         myLeaves.length>0?h("div",null,
-          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"HISTORY"),
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"LEAVE HISTORY"),
           myLeaves.map(function(r){
             return h("div",{key:r.id,style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",borderLeft:"3px solid "+(r.status==="approved"?"#10B981":r.status==="rejected"?RED:AMB)}},
               h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
                 h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},LEAVE_TYPES[r.leaveType]?LEAVE_TYPES[r.leaveType].name:r.leaveType),
-                h("div",{style:{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:20,background:r.status==="approved"?"#D1FAE5":r.status==="rejected"?"#FEE2E2":"#FEF3C7",color:r.status==="approved"?"#065F46":r.status==="rejected"?"#991B1B":"#92400E"}},r.status.charAt(0).toUpperCase()+r.status.slice(1))
+                h("div",{style:{fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:20,background:r.status==="approved"?"#D1FAE5":r.status==="rejected"?"#FEE2E2":"#FEF3C7",color:r.status==="approved"?"#065F46":r.status==="rejected"?"#991B1B":"#92400E"}},r.status.charAt(0).toUpperCase()+r.status.slice(1))
               ),
-              h("div",{style:{fontSize:11,color:GRY}},r.fromDate+" to "+r.toDate),
-              r.adminReply?h("div",{style:{fontSize:11,color:RED,marginTop:4,fontStyle:"italic"}},"Reply: "+r.adminReply):null
+              h("div",{style:{fontSize:11,color:GRY}},r.fromDate+" \u2192 "+r.toDate),
+              r.reason?h("div",{style:{fontSize:11,color:GRY,marginTop:3,fontStyle:"italic"}},"\u201c"+r.reason+"\u201d"):null,
+              r.adminReply?h("div",{style:{fontSize:11,color:RED,marginTop:4}},"Reply: "+r.adminReply):null
             );
           })
         ):null
       );
     }
 
-    // ── Profile tab (employee) ──
-    function renderEmpProfile(){
+    // ── Profile tab ──
+    function empProfile(){
       var emp=myRecord;
       var payData=emp?calcPay(emp,0,0,0,0,0):null;
       return h("div",{className:"fd"},
-        // Profile card
-        h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",textAlign:"center"}},
-          emp?av(emp,60):h("div",{style:{width:60,height:60,borderRadius:"50%",background:ACCENT+"20",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}},ic("person",ACCENT,32)),
-          h("div",{style:{fontSize:16,fontWeight:700,color:NVY,marginTop:10}},emp?emp.name:(suName||gUser.email.split("@")[0])),
-          h("div",{style:{fontSize:12,color:GRY,marginTop:4}},emp?(emp.role||"")+(emp.dept?" \u2022 "+emp.dept:""):"Employee"),
-          emp?h("div",{style:{fontSize:11,color:GRY,marginTop:2}},"Joined: "+emp.joined):null
+        h("div",{style:{background:"linear-gradient(135deg,#0F172A,#1E293B)",borderRadius:20,padding:"20px 16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
+          h("div",{style:{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}),
+          h("div",{style:{width:64,height:64,borderRadius:"50%",background:"linear-gradient(135deg,"+ACCENT+",#7C3AED)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:24,fontWeight:800,color:"#fff"}},
+            (suName||(myRecord&&myRecord.name)||"E")[0].toUpperCase()
+          ),
+          h("div",{style:{fontSize:18,fontWeight:800,color:"#fff"}},emp?emp.name:(suName||gUser.email.split("@")[0])),
+          h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.6)",marginTop:4}},emp?(emp.role||"")+(emp.dept?" \u2022 "+emp.dept:""):"Employee"),
+          emp&&emp.joined?h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:4}},"Joined "+emp.joined):null
         ),
-        // Company details card
         h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
-            org.logo?h("img",{src:org.logo,style:{width:36,height:36,borderRadius:8,objectFit:"contain"}}):
-            h("div",{style:{width:36,height:36,borderRadius:8,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center"}},ic("business",ACCENT,20)),
+          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:org.phone||org.website?10:0}},
+            org.logo?h("img",{src:org.logo,style:{width:40,height:40,borderRadius:10,objectFit:"contain",flexShrink:0}}):
+            h("div",{style:{width:40,height:40,borderRadius:10,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("business",ACCENT,22)),
             h("div",null,
               h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},org.name||"Your Company"),
-              h("div",{style:{fontSize:11,color:GRY,marginTop:2}},org.address||"")
+              org.address?h("div",{style:{fontSize:11,color:GRY,marginTop:2}},org.address):null
             )
           ),
-          org.phone?h("div",{style:{display:"flex",gap:6,alignItems:"center",fontSize:12,color:GRY,marginBottom:4}},ic("phone",GRY,14),org.phone):null,
-          org.website?h("div",{style:{display:"flex",gap:6,alignItems:"center",fontSize:12,color:GRY}},ic("language",GRY,14),org.website):null,
-          h("div",{style:{marginTop:10,paddingTop:10,borderTop:"1px solid "+BDR,display:"flex",gap:8,alignItems:"center"}},
-            h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1}},"EMPLOYER"),
-            h("div",{style:{fontSize:11,color:NVY,fontWeight:600}},empEmployerEmail)
+          org.phone?h("div",{style:{display:"flex",gap:6,alignItems:"center",fontSize:12,color:GRY,marginTop:8,paddingTop:8,borderTop:"1px solid "+BDR}},ic("phone",GRY,13),org.phone):null,
+          h("div",{style:{marginTop:8,paddingTop:8,borderTop:"1px solid "+BDR,display:"flex",gap:6,alignItems:"center",fontSize:11,color:GRY}},
+            ic("mail",GRY,13),"Employer: "+empEmployerEmail
           )
         ),
-        // Salary breakdown
         emp&&payData?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-            h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Salary Breakdown"),
-            h("div",{style:{display:"flex",gap:6}},
-              h("select",{value:empPayMonth,onChange:function(e){setEmpPayMonth(Number(e.target.value));},style:{fontSize:11,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"4px 8px",color:NVY,outline:"none"}},
+            h("div",{style:{fontSize:13,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("payments",ACCENT,15),"Salary Breakdown"),
+            h("div",{style:{display:"flex",gap:5}},
+              h("select",{value:empPayMonth,onChange:function(e){setEmpPayMonth(Number(e.target.value));},style:{fontSize:10,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 6px",color:NVY,outline:"none"}},
                 MOS.map(function(m,i){return h("option",{key:i,value:i},m);})),
-              h("select",{value:empPayYear,onChange:function(e){setEmpPayYear(Number(e.target.value));},style:{fontSize:11,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"4px 8px",color:NVY,outline:"none"}},
+              h("select",{value:empPayYear,onChange:function(e){setEmpPayYear(Number(e.target.value));},style:{fontSize:10,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 6px",color:NVY,outline:"none"}},
                 [curY-1,curY].map(function(y){return h("option",{key:y,value:y},y);}))
             )
           ),
           h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"EARNINGS"),
-          [["Basic",fmt(emp.basic||0)],["HRA",fmt(emp.hra||0)],["Allowances",fmt(emp.allow||0)]].map(function(item){
+          [["Basic",fmt(emp.basic||0),NVY],["HRA",fmt(emp.hra||0),NVY],["Allowances",fmt(emp.allow||0),NVY]].map(function(item){
             return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
-              h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:NVY}},item[1])
+              h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:item[2]}},item[1])
             );
           }),
-          h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:8}},h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},"Gross"),h("span",{style:{fontSize:12,fontWeight:800,color:"#10B981"}},fmt(payData.gr))),
+          h("div",{style:{display:"flex",justifyContent:"space-between",padding:"6px 0",marginBottom:10}},h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},"Gross"),h("span",{style:{fontSize:12,fontWeight:800,color:"#10B981"}},fmt(payData.gr))),
           h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"DEDUCTIONS"),
           [
-            payData.pfE>0?["PF (Employee 12%)","-"+fmt(payData.pfE)]:null,
-            payData.esiE>0?["ESI (Employee 0.75%)","-"+fmt(payData.esiE)]:null,
-            payData.pt>0?["Professional Tax","-"+fmt(payData.pt)]:null,
-            payData.tds>0?["TDS","-"+fmt(payData.tds)]:null,
+            payData.pfE>0?["PF (12%)","-"+fmt(payData.pfE),RED]:null,
+            payData.esiE>0?["ESI (0.75%)","-"+fmt(payData.esiE),RED]:null,
+            payData.pt>0?["Prof. Tax","-"+fmt(payData.pt),AMB]:null,
+            payData.tds>0?["TDS","-"+fmt(payData.tds),RED]:null,
           ].filter(Boolean).map(function(item){
             return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
-              h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:RED}},item[1])
+              h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:item[2]}},item[1])
             );
           }),
-          h("div",{style:{background:"#0F172A",borderRadius:12,padding:"12px 16px",marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            h("span",{style:{fontSize:13,fontWeight:600,color:"rgba(255,255,255,0.7)"}},"Net Take Home"),
-            h("span",{style:{fontSize:20,fontWeight:800,color:"#4ADE80"}},fmt(payData.net))
+          (payData.pfE+payData.esiE+payData.pt+payData.tds)===0?h("div",{style:{fontSize:11,color:GRY,padding:"4px 0"}},"No deductions"):null,
+          h("div",{style:{background:"#0F172A",borderRadius:14,padding:"14px 16px",marginTop:12,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            h("div",{style:{fontSize:13,color:"rgba(255,255,255,0.65)"}},"Net Take Home"),
+            h("div",{style:{fontSize:22,fontWeight:800,color:"#4ADE80"}},fmt(payData.net))
           ),
-          isPaid?h("button",{onClick:function(){showT("Downloading payslip...");},style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",marginTop:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("download",CARD,16),"Download Payslip"):
+          isPaid?h("button",{onClick:function(){showT("Generating payslip...");},style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",marginTop:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("download",CARD,16),"Download Payslip"):
           h("div",{style:{background:AMB+"12",borderRadius:10,padding:"10px",marginTop:10,fontSize:11,color:AMB,textAlign:"center"}},"Payslip download available for Pro employers")
-        ):h("div",{style:{background:SFT,borderRadius:14,padding:"20px",textAlign:"center",color:GRY,fontSize:12,marginBottom:12}},"Your employer hasn't added your salary details yet."),
-        // Sign out
+        ):h("div",{style:{background:SFT,borderRadius:14,padding:"20px",textAlign:"center",color:GRY,fontSize:12,marginBottom:12}},"Salary details not available yet.\nContact your employer."),
         h("button",{onClick:function(){
           _sb.auth.signOut();
           ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-          setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
-          setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
-          setScreen("login");setAuthMode("landing");
+          setGUser(null);setEmps([]);setAtt({});setScreen("login");setAuthMode("landing");
         },style:{width:"100%",background:RED+"12",border:"1.5px solid "+RED+"33",borderRadius:12,padding:"12px",color:RED,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic("logout",RED,16),"Sign Out"
         )
       );
     }
 
-    return h("div",{style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG}},
-      // Employee header
-      h("div",{style:{background:CARD,borderTopLeftRadius:0,borderTopRightRadius:0,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid "+BDR,flexShrink:0}},
+    return h("div",{style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG,overflow:"hidden"}},
+      h("div",{style:{background:CARD,padding:"12px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid "+BDR,flexShrink:0}},
         h("div",null,
           h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},org.name||"Admin HR"),
-          h("div",{style:{fontSize:17,fontWeight:800,color:NVY}},empTab==="home"?"Dashboard":empTab==="tasks"?"My Tasks":empTab==="leave"?"Leave":"My Profile")
-        ),
-        h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
-          h("button",{onClick:function(){setShowNotifs(true);},style:{position:"relative",background:"none",border:"none",cursor:"pointer",padding:2}},
-            ic("notifications",unread>0?ACCENT:GRY,22),
-            unread>0?h("div",{style:{position:"absolute",top:-2,right:-2,width:14,height:14,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center"}},h("div",{style:{fontSize:8,fontWeight:700,color:"#fff"}},unread>9?"9+":String(unread))):null
-          ),
-          h("div",{style:{width:32,height:32,borderRadius:"50%",background:ACCENT+"20",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"},onClick:function(){setEmpTab("profile");}},
-            h("div",{style:{fontSize:11,fontWeight:700,color:ACCENT}},suName?(suName[0]||"E").toUpperCase():(gUser?gUser.email[0].toUpperCase():"E"))
+          h("div",{style:{fontSize:17,fontWeight:800,color:NVY}},
+            empTab==="home"?"Dashboard":empTab==="attendance"?"Attendance":empTab==="tasks"?"Tasks":empTab==="leave"?"Leave":"Profile"
           )
+        ),
+        h("button",{onClick:function(){setShowNotifs(true);},style:{position:"relative",background:"none",border:"none",cursor:"pointer",padding:4}},
+          ic("notifications",unread>0?ACCENT:GRY,24),
+          unread>0?h("div",{style:{position:"absolute",top:0,right:0,width:16,height:16,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center"}},
+            h("div",{style:{fontSize:9,fontWeight:700,color:"#fff"}},unread>9?"9+":String(unread))
+          ):null
         )
       ),
-      // Content
-      h("div",{style:{flex:1,overflowY:"auto",padding:"14px 16px"}},
-        empTab==="home"?renderEmpHome():
-        empTab==="tasks"?renderEmpTasks():
-        empTab==="leave"?renderEmpLeave():
-        renderEmpProfile()
+      h("div",{style:{flex:1,overflowY:"auto",padding:"14px 16px",WebkitOverflowScrolling:"touch"}},
+        empTab==="home"?empHome():
+        empTab==="attendance"?empAttendance():
+        empTab==="tasks"?empTasks():
+        empTab==="leave"?empLeave():
+        empProfile()
       ),
-      // Employee bottom nav
       h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0}},
-        empNavBtn("home","Home","grid"),
-        empNavBtn("tasks","Tasks","assignment"),
-        empNavBtn("leave","Leave","cal"),
-        empNavBtn("profile","Profile","user")
+        empNav("home","Home","grid"),
+        empNav("attendance","Attend","cal"),
+        empNav("tasks","Tasks","assignment"),
+        empNav("leave","Leave","event_available"),
+        empNav("profile","Profile","user")
       ),
       renderNotifPanel(),
       renderInviteModal()
     );
   }
+
   function renderNotifPanel(){
     if(!showNotifs)return null;
     var myNotifs=notifs.filter(function(n){return n.to===gUser.email;});
@@ -4229,21 +4372,33 @@ export default function App(){
   // ── Pro: Invite employee ────────────────────────────────────────────────
   function renderInviteModal(){
     if(!showInvite)return null;
+    var invEmp=inviteEmpId?emps.find(function(e){return e.id===inviteEmpId;}):null;
     return h("div",{style:{position:"fixed",top:0,left:0,right:0,bottom:0,zIndex:998,background:"rgba(0,0,0,0.4)",display:"flex",alignItems:"center",justifyContent:"center",padding:16},onClick:function(){setShowInvite(false);}},
       h("div",{style:{background:CARD,borderRadius:16,padding:20,width:"100%",maxWidth:360,border:"1px solid "+BDR},onClick:function(e){e.stopPropagation();}},
-        h("div",{style:{fontSize:14,fontWeight:700,color:NVY,marginBottom:4}},"Invite Employee to App"),
-        h("div",{style:{fontSize:11,color:GRY,marginBottom:14}},"Employee receives a 6-digit invite code to join your organization"),
-        lbl("EMPLOYEE EMAIL"),
-        h("input",{type:"email",value:inviteEmail,onChange:function(e){setInviteEmail(e.target.value);setShowInviteCode(false);},placeholder:"employee@company.com",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-        h("button",{onClick:generateInviteCode,style:{width:"100%",background:ACCENT,border:"none",borderRadius:10,padding:"11px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10}},"Generate Invite Code"),
-        showInviteCode?h("div",{style:{background:ACCENT+"10",border:"1.5px dashed "+ACCENT+"44",borderRadius:12,padding:14,textAlign:"center"}},
-          h("div",{style:{fontSize:11,color:GRY,marginBottom:6}},"Share this code with "+inviteEmail),
-          h("div",{style:{fontSize:32,fontWeight:700,letterSpacing:10,color:ACCENT,fontFamily:"monospace"}}),
-          h("div",{style:{fontSize:36,fontWeight:700,letterSpacing:8,color:ACCENT,fontFamily:"monospace"}},inviteCode),
-          h("div",{style:{fontSize:10,color:GRY,marginTop:6}},"Valid for 48 hours • One-time use"),
-          h("button",{onClick:function(){try{navigator.clipboard.writeText(inviteCode);}catch(e){}showT("Code copied!");},style:{marginTop:8,background:"none",border:"1px solid "+ACCENT,borderRadius:7,padding:"4px 12px",color:ACCENT,fontSize:11,fontWeight:600,cursor:"pointer"}},"Copy Code")
-        ):null,
-        h("button",{onClick:function(){setShowInvite(false);setInviteEmail("");setShowInviteCode(false);},style:{width:"100%",background:"none",border:"none",color:GRY,fontSize:12,cursor:"pointer",marginTop:8}},"Close")
+        h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},
+          h("div",{style:{width:40,height:40,borderRadius:12,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+            ic("forward_to_inbox",ACCENT,20)
+          ),
+          h("div",null,
+            h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},invEmp?"Invite "+invEmp.name:"Invite Employee"),
+            h("div",{style:{fontSize:11,color:GRY,marginTop:1}},invEmp?invEmp.role||"":"Share invite code to let them join")
+          )
+        ),
+        !showInviteCode?h("div",null,
+          lbl("EMPLOYEE EMAIL"),
+          h("input",{type:"email",value:inviteEmail,onChange:function(e){setInviteEmail(e.target.value);},placeholder:"employee@company.com",style:{width:"100%",marginBottom:4,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+          h("div",{style:{fontSize:10,color:GRY,marginBottom:12}},"The employee must use this exact email to join."),
+          h("button",{onClick:generateInviteCode,style:{width:"100%",background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer"}},"Generate Invite Code")
+        ):h("div",{style:{textAlign:"center"}},
+          h("div",{style:{fontSize:12,color:GRY,marginBottom:6}},"Share this code with "+(invEmp?invEmp.name:inviteEmail)),
+          h("div",{style:{fontSize:42,fontWeight:800,letterSpacing:10,color:ACCENT,fontFamily:"monospace",margin:"12px 0"}},inviteCode),
+          h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:8,padding:"8px 12px",marginBottom:12,fontSize:11,color:AMB,textAlign:"left"}},
+            "\u26a0 Expires in 48 hours \u2022 One-time use only\nEmployee must use email: "+inviteEmail
+          ),
+          h("button",{onClick:function(){try{navigator.clipboard.writeText(inviteCode);}catch(e){}showT("Code copied!");},style:{width:"100%",background:ACCENT,border:"none",borderRadius:10,padding:"11px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8}},"Copy Code"),
+          h("button",{onClick:function(){setShowInviteCode(false);setInviteCode("");},style:{width:"100%",background:"none",border:"1px solid "+BDR,borderRadius:10,padding:"10px",color:GRY,fontSize:12,cursor:"pointer"}},"Generate New Code")
+        ),
+        h("button",{onClick:function(){setShowInvite(false);setInviteEmail("");setShowInviteCode(false);setInviteCode("");setInviteEmpId(null);},style:{width:"100%",background:"none",border:"none",color:GRY,fontSize:12,cursor:"pointer",marginTop:10}},"Close")
       )
     );
   }
