@@ -88,7 +88,7 @@ var SVG_ICONS={
 "close":"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
 "notifications":"M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z",
 "cake":"M12 6c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.3L12 1l-1.5 1.7c-.3.3-.5.8-.5 1.3 0 1.1.9 2 2 2zm6 4H6C4.9 10 4 10.9 4 12v.8c0 1.1.6 2.1 1.5 2.6.4.2.9.3 1.4.2.4-.1.7-.2 1-.5l2-2 2 2c.6.6 1.5.8 2.3.5.2-.1.5-.2.7-.3.9-.5 1.6-1.5 1.6-2.5V12c0-1.1-.9-2-2-2zM5 19h14v2H5zm0-3h14v2H5z",
-"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","bolt":"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","forward_to_inbox":"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4V8l8 5 8-5v5h2V6c0-1.1-.9-2-2-2zm-8 7L4 6h16l-8 5zm7 4l4 4-4 4v-3h-4v-2h4v-3z","play_arrow":"M8 5v14l11-7z","business":"M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z","language":"M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.9 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.66-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z","edit_calendar":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13zM8 10H6v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H6v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z","logout":"M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z","mail":"M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z","phone":"M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
+"workspace_premium":"M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93-2.67-1.14-5-4.43-5-7.93V7.18L12 5zm-1.41 7.41L9 11l-1.41 1.41L10.59 15 16 9.59 14.59 8.17z","briefcase":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-8 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L5.36 7H3l-.92-.74C1.82 5.9 1.64 5.48 1.64 5c0-.78.58-1.36 1.36-1.36h3zM20 20H2V9h18v11z","target":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-12c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z","arrow_right":"M10 17l5-5-5-5v10z","bolt":"M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z","pending_actions":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z","task_alt":"M22 5.18l-1.41-1.42-9.59 9.6-3.54-3.55-1.42 1.41 4.96 4.96 11-11zM5 20v-3h14v3H5z","assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z","send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z","forward_to_inbox":"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H4V8l8 5 8-5v5h2V6c0-1.1-.9-2-2-2zm-8 7L4 6h16l-8 5zm7 4l4 4-4 4v-3h-4v-2h4v-3z","play_arrow":"M8 5v14l11-7z","business":"M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z","language":"M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.9 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.9-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.66-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z","edit_calendar":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13zM8 10H6v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H6v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z","logout":"M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z","mail":"M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z","phone":"M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z","verified":"M23 12l-2.44-2.79.34-3.69-3.61-.82-1.89-3.2L12 2.96 8.6 1.5 6.71 4.69 3.1 5.5l.34 3.7L1 12l2.44 2.79-.34 3.7 3.61.82 1.89 3.2L12 21.04l3.4 1.46 1.89-3.19 3.61-.82-.34-3.69L23 12zm-12.91 4.72l-3.8-3.81 1.48-1.48 2.32 2.33 5.85-5.87 1.48 1.48-7.33 7.35z","add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z","insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z","groups":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V17H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V17h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c.4.68.63 1.46.63 2.29V17H24v-.57c0-.81-.48-1.53-1.22-1.85A6.95 6.95 0 0 0 20 14c-.39 0-.76.04-1.13.1zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z","how_to_reg":"M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11zm-8.38-3.38 3.54-3.54 1.41 1.41-4.95 4.95-2.83-2.83 1.41-1.41 1.42 1.42z","account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z","event_available":"M16.53 11.06 15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
 "delete_forever":"M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z",
 "expand_more":"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z",
 "expand_less":"M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z",
@@ -1116,7 +1116,7 @@ export default function App(){
   var sRole=st("owner"),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee
   var sIsEmp=st(false),isEmployeeSignup=sIsEmp[0],setIsEmployeeSignup=sIsEmp[1];
   var sInvCode=st(""),signupInviteCode=sInvCode[0],setSignupInviteCode=sInvCode[1];
-  var sEmpTab=st("home"),empTab=sEmpTab[0],setEmpTab=sEmpTab[1];
+  var sEmpDT=st("profile"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1]; // employee dashboard tab — starts at profile
   var sEmpData=st(null),empData=sEmpData[0],setEmpData=sEmpData[1]; // full employee record from emps
   var sEmpPayMonth=st(new Date().getMonth()),empPayMonth=sEmpPayMonth[0],setEmpPayMonth=sEmpPayMonth[1];
   var sEmpPayYear=st(new Date().getFullYear()),empPayYear=sEmpPayYear[0],setEmpPayYear=sEmpPayYear[1];
@@ -1551,24 +1551,38 @@ export default function App(){
       if(res.error){showT("Load error: "+res.error.message,"err");return;}
       Promise.all([
         _sb.from("user_orgs").select("email,org_name,org_type,position,full_name,emp_count_range,phone,website"),
-        _sb.from("user_plans").select("email,is_blocked,emp_limit,expires_on,plan")
+        _sb.from("user_plans").select("email,is_blocked,emp_limit,expires_on,plan,role,employer_email")
       ]).then(function(results){
-        var orgsMap={},plansMap={};
+        var orgsMap={},plansMap={},empsByEmployer={};
         (results[0].data||[]).forEach(function(o){orgsMap[o.email]=o;});
-        (results[1].data||[]).forEach(function(p){plansMap[p.email]=p;});
-        var enriched=(res.data||[]).map(function(u){
-          var o=orgsMap[u.email]||{};
-          var p=plansMap[u.email]||{};
-          return Object.assign({},u,{
-            org_name:o.org_name||"",org_type:o.org_type||"",
-            position:o.position||"",full_name:o.full_name||"",
-            emp_count_range:o.emp_count_range||"",
-            phone:o.phone||"",website:o.website||"",
-            is_blocked:p.is_blocked||false,
-            emp_limit:p.emp_limit||u.emp_limit,
-            expires_on:p.expires_on||u.expires_on
-          });
+        (results[1].data||[]).forEach(function(p){
+          plansMap[p.email]=p;
+          // Group employees by employer
+          if(p.role==="employee"&&p.employer_email){
+            if(!empsByEmployer[p.employer_email])empsByEmployer[p.employer_email]=[];
+            empsByEmployer[p.employer_email].push(p);
+          }
         });
+        // Only show employer accounts (role=owner or null/undefined, not employee)
+        var enriched=(res.data||[])
+          .filter(function(u){
+            var p=plansMap[u.email]||{};
+            return p.role!=="employee"; // show only owners/employers
+          })
+          .map(function(u){
+            var o=orgsMap[u.email]||{};
+            var p=plansMap[u.email]||{};
+            return Object.assign({},u,{
+              org_name:o.org_name||"",org_type:o.org_type||"",
+              position:o.position||"",full_name:o.full_name||"",
+              emp_count_range:o.emp_count_range||"",
+              phone:o.phone||"",website:o.website||"",
+              is_blocked:p.is_blocked||false,
+              emp_limit:p.emp_limit||u.emp_limit,
+              expires_on:p.expires_on||u.expires_on,
+              app_employees:empsByEmployer[u.email]||[] // employees who joined app
+            });
+          });
         setAdminUsers(enriched);
       });
     });
@@ -3651,9 +3665,9 @@ null
 
     // ── Nav helper ──
     function empNav(id,label,icon){
-      var active=empTab===id;
+      var active=empDashTab===id;
       var badge=id==="home"&&unread>0?unread:0;
-      return h("button",{onClick:function(){setEmpTab(id);setEmpSelTask(null);},
+      return h("button",{onClick:function(){setEmpDashTab(id);setEmpSelTask(null);},
         style:{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 0",color:active?ACCENT:GRY,position:"relative"}},
         h("div",{style:{padding:"4px 14px",borderRadius:14,background:active?ACCENT_SOFT:"transparent",position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}},
           ic(icon,active?ACCENT:GRY,22),
@@ -3703,7 +3717,7 @@ null
           )
         ),
         // Urgent task
-        urgentTask?h("div",{onClick:function(){setEmpTab("tasks");setEmpSelTask(urgentTask);},style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",borderLeft:"4px solid "+(urgentTask.priority==="high"?RED:urgentTask.priority==="medium"?AMB:"#10B981")}},
+        urgentTask?h("div",{onClick:function(){setEmpDashTab("tasks");setEmpSelTask(urgentTask);},style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",borderLeft:"4px solid "+(urgentTask.priority==="high"?RED:urgentTask.priority==="medium"?AMB:"#10B981")}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},
             h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:.5}},"PRIORITY TASK"),
             h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:20,background:urgentTask.priority==="high"?"#FEE2E2":urgentTask.priority==="medium"?"#FEF3C7":"#D1FAE5",color:urgentTask.priority==="high"?"#991B1B":urgentTask.priority==="medium"?"#92400E":"#065F46"}},urgentTask.priority.toUpperCase())
@@ -3752,7 +3766,6 @@ null
 
     // ── Attendance tab (read-only calendar) ──
     function empAttendance(){
-      var todayDate=attYr+"-"+String(attMo+1).padStart(2,"0")+"-"+String(new Date().getDate()).padStart(2,"0");
       var sAttY=empPayYear,sAttM=empPayMonth;
       return h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
@@ -3822,7 +3835,7 @@ null
 
     // ── Tasks tab ──
     function empTasks(){
-      var taskInnerTab=empTab==="tasks"?"mine":empTab;
+      var taskInnerTab=empDashTab==="tasks"?"mine":empTab;
       var showMine=true;
       if(empSelTask){
         var t=empSelTask;
@@ -3886,7 +3899,7 @@ null
 
       var taskFilter=empTaskComment?"all":"all"; // using taskTab for filter
       var showMineTab=!empTaskComment||empTaskComment==="_mine";
-      var mineActive=empSelTask===null&&empTab==="tasks";
+      var mineActive=empSelTask===null&&empDashTab==="tasks";
       var displayTasks=myDirectTasks;
       var teamDisplay=myTeamTasks;
 
@@ -4027,13 +4040,29 @@ null
       return h("div",{className:"fd"},
         h("div",{style:{background:"linear-gradient(135deg,#0F172A,#1E293B)",borderRadius:20,padding:"20px 16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
           h("div",{style:{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}),
-          h("div",{style:{width:64,height:64,borderRadius:"50%",background:"linear-gradient(135deg,"+ACCENT+",#7C3AED)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:24,fontWeight:800,color:"#fff"}},
-            (suName||(myRecord&&myRecord.name)||"E")[0].toUpperCase()
+          h("div",{style:{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,"+ACCENT+",#7C3AED)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:28,fontWeight:800,color:"#fff"}},
+            (emp?emp.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
           ),
-          h("div",{style:{fontSize:18,fontWeight:800,color:"#fff"}},emp?emp.name:(suName||gUser.email.split("@")[0])),
-          h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.6)",marginTop:4}},emp?(emp.role||"")+(emp.dept?" \u2022 "+emp.dept:""):"Employee"),
-          emp&&emp.joined?h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:4}},"Joined "+emp.joined):null
+          h("div",{style:{fontSize:20,fontWeight:800,color:"#fff"}},emp?emp.name:(suName||gUser.email.split("@")[0])),
+          h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.6)",marginTop:4}},emp?(emp.role||"")+(emp.dept?" • "+emp.dept:""):"Employee"),
+          emp&&emp.joined?h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:4}},"Joined: "+emp.joined):null
         ),
+        emp?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:10}},"PERSONAL DETAILS"),
+          [
+            emp.eid?["Employee ID",emp.eid]:null,
+            emp.mob?["Mobile",emp.mob]:null,
+            emp.email?["Email",emp.email]:null,
+            emp.pan?["PAN",emp.pan.slice(0,3)+"XXXXX"+emp.pan.slice(-2)]:null,
+            emp.uan?["UAN",emp.uan.slice(0,3)+"XXXXX"+emp.uan.slice(-2)]:null,
+            emp.aadhar?["Aadhaar","XXXX XXXX "+emp.aadhar.slice(-4)]:null,
+          ].filter(Boolean).map(function(item){
+            return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid "+BDR}},
+              h("span",{style:{fontSize:12,color:GRY}},item[0]),
+              h("span",{style:{fontSize:12,fontWeight:600,color:NVY}},item[1])
+            );
+          })
+        ):null,
         h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
           h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:org.phone||org.website?10:0}},
             org.logo?h("img",{src:org.logo,style:{width:40,height:40,borderRadius:10,objectFit:"contain",flexShrink:0}}):
@@ -4099,7 +4128,7 @@ null
         h("div",null,
           h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},org.name||"Admin HR"),
           h("div",{style:{fontSize:17,fontWeight:800,color:NVY}},
-            empTab==="home"?"Dashboard":empTab==="attendance"?"Attendance":empTab==="tasks"?"Tasks":empTab==="leave"?"Leave":"Profile"
+            empDashTab==="home"?"Dashboard":empDashTab==="attendance"?"Attendance":empDashTab==="tasks"?"Tasks":empDashTab==="leave"?"Leave":"Profile"
           )
         ),
         h("button",{onClick:function(){setShowNotifs(true);},style:{position:"relative",background:"none",border:"none",cursor:"pointer",padding:4}},
@@ -4110,10 +4139,10 @@ null
         )
       ),
       h("div",{style:{flex:1,overflowY:"auto",padding:"14px 16px",WebkitOverflowScrolling:"touch"}},
-        empTab==="home"?empHome():
-        empTab==="attendance"?empAttendance():
-        empTab==="tasks"?empTasks():
-        empTab==="leave"?empLeave():
+        empDashTab==="home"?empHome():
+        empDashTab==="attendance"?empAttendance():
+        empDashTab==="tasks"?empTasks():
+        empDashTab==="leave"?empLeave():
         empProfile()
       ),
       h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0}},
@@ -4169,7 +4198,7 @@ null
       h("div",{style:{background:SFT,borderRadius:12,padding:16,marginBottom:20,textAlign:"left"}},
         ["Assign and track tasks","Employee self-service portal","KPI & performance tracking","Leave apply & approve workflow","In-app notifications"].map(function(f){
           return h("div",{key:f,style:{display:"flex",gap:8,alignItems:"center",padding:"5px 0"}},
-            ic("check_circle","#10B981",16),
+            ic("arrow_right",ACCENT,18),
             h("div",{style:{fontSize:12,color:NVY}},f)
           );
         })
@@ -4461,7 +4490,7 @@ null
           )
         ),
         t.completionNote?h("div",{style:{background:"#ECFDF5",borderRadius:12,padding:"10px 14px",marginBottom:8,display:"flex",gap:8}},
-          ic("check_circle","#10B981",16),
+          ic("arrow_right",ACCENT,18),
           h("div",null,h("div",{style:{fontSize:11,fontWeight:700,color:"#065F46"}},"Completion note"),h("div",{style:{fontSize:11,color:"#065F46",marginTop:2}},t.completionNote))
         ):null,
         t.status==="completed"?h("div",{style:{display:"flex",gap:8,marginBottom:12}},
@@ -5067,7 +5096,31 @@ null
                     color:blocked?GRN:RED,cursor:isBlocking?"not-allowed":"pointer",
                     opacity:isBlocking?.6:1}
                 },isBlocking?"\u23f3":(blocked?"Unblock":"Block")):null
-              )
+              ),
+              // ── Employee app accounts sub-list ──
+              u.app_employees&&u.app_employees.length>0?h("div",{style:{marginTop:10,borderTop:"1px solid "+BDR,paddingTop:10}},
+                h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8,display:"flex",alignItems:"center",gap:6}},
+                  ic("smartphone",ACCENT,12),"EMPLOYEES ON APP (",u.app_employees.length,")"
+                ),
+                u.app_employees.map(function(emp){
+                  return h("div",{key:emp.email,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px dashed "+BDR}},
+                    h("div",null,
+                      h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},emp.full_name||emp.email.split("@")[0]),
+                      h("div",{style:{fontSize:10,color:GRY}},emp.email)
+                    ),
+                    h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
+                      h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:10,background:"#D1FAE5",color:"#065F46"}},"Active"),
+                      h("button",{onClick:function(){
+                        if(!window.confirm("Remove "+emp.email+" from app?"))return;
+                        _sb.from("user_plans").update({role:"owner",employer_email:""}).eq("email",emp.email)
+                        .then(function(){loadAdminUsers();showT("Employee removed from app");});
+                      },style:{background:RED+"10",border:"1px solid "+RED+"33",borderRadius:6,padding:"2px 6px",fontSize:9,color:RED,cursor:"pointer",fontWeight:600}},"Remove")
+                    )
+                  );
+                })
+              ):isExpanded?h("div",{style:{marginTop:8,paddingTop:8,borderTop:"1px solid "+BDR,fontSize:11,color:GRY,textAlign:"center",display:"flex",gap:6,alignItems:"center",justifyContent:"center"}},
+                ic("smartphone",GRY,14),"No employees on app yet"
+              ):null
             );
           })
         )
