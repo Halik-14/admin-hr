@@ -69,7 +69,7 @@ var SVG_ICONS={
 "check_circle":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
 "currency_rupee":"M17 8H7V6h10zm-5 9l-5-5h3.5c1.93 0 3.5-1.57 3.5-3.5S13.43 5 11.5 5H7v2h4.5C12.88 7 14 8.12 14 9.5S12.88 12 11.5 12H9l5 5z",
 "trending_up":"M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z",
-"calendar_month":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z",
+"calendar_month":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13zM10.5 15.7l-2.8-2.8 1.05-1.05 1.75 1.75 3.75-3.75 1.05 1.05z",
 "download":"M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z",
 "chat":"M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z",
 "edit":"M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z",
@@ -80,9 +80,9 @@ var SVG_ICONS={
 "lock":"M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z",
 "light_mode":"M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-12.37l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0zM7.05 18.36l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0z",
 "dark_mode":"M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z",
-"dashboard":"M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+"dashboard":"M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z",
 "settings":"M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z",
-"payments":"M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z",
+"payments":"M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
 "save":"M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z",
 "search":"M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z",
 "close":"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
@@ -3166,7 +3166,12 @@ null
   function renderPayroll(){
     var depts=[""].concat(getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}));
     var filtEmps=payFilt==="dept"&&payDept?actEmpsForPayroll.filter(function(e){return e.dept===payDept;}):actEmpsForPayroll;
-    var filtGross=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD).gr;},0);
+    var filtGross=filtEmps.reduce(function(a,e){
+      var isFixed=e.salaryType==="fixed";
+      return a+(isFixed?Number(e.fixedSalary||e.monthlyCTC||0):(e.basic||0)+(e.hra||0)+(e.allow||0));
+    },0);
+    var filtAttDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD);return a+d.ad+d.hd+d.ud;},0);
+    var filtTaxDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD);return a+d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;},0);
     var filtNet=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD).net;},0);
     var filtDed=filtGross-filtNet;
     return h("div",{className:"fd"},
@@ -3178,22 +3183,35 @@ null
           pastMonths(payY).map(function(m2){return h("button",{key:m2,onClick:function(){setPayM(m2);},style:{flexShrink:0,background:payM===m2?ACCENT:CARD,border:"1px solid "+(payM===m2?ACCENT:BDR),borderRadius:15,padding:"4px 10px",color:payM===m2?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},MOS[m2]);})
         )
       ),
-      // ── Summary card — NET is the hero number ──
-      h("div",{style:{background:NVY,borderRadius:18,padding:"16px",marginBottom:11,boxShadow:"0 4px 16px rgba(15,23,42,.25)"}},
-        h("div",{style:{fontSize:11,color:"rgba(255,255,255,.55)",marginBottom:4,letterSpacing:.3}},MOS[payM]+" "+payY+(payFilt==="dept"&&payDept?" \u2022 "+payDept:" \u2022 "+filtEmps.length+" Employees")),
-        h("div",{style:{fontSize:11,color:"rgba(255,255,255,.55)",fontWeight:600,letterSpacing:.5,marginBottom:2}},"TOTAL TO PAY"),
-        h("div",{style:{fontSize:32,fontWeight:800,color:"#4ADE80",marginBottom:12,letterSpacing:-.5}},fmt(filtNet)),
-        h("div",{style:{height:1,background:"rgba(255,255,255,.1)",marginBottom:12}}),
-        h("div",{style:{display:"flex",gap:0}},
-          h("div",{style:{flex:1}},
-            h("div",{style:{fontSize:9,color:"rgba(255,255,255,.45)",letterSpacing:1,marginBottom:3}},"GROSS EARNINGS"),
-            h("div",{style:{fontSize:14,fontWeight:700,color:"rgba(255,255,255,.85)"}},fmt(filtGross))
+      // ── Summary card — 3-part formula, dark mode safe ──
+      h("div",{style:{background:"#0F172A",borderRadius:18,padding:"16px",marginBottom:11,boxShadow:"0 4px 24px rgba(0,0,0,.35)"}},
+        h("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:10,letterSpacing:.3}},MOS[payM]+" "+payY+" • "+filtEmps.length+" Employee"+(filtEmps.length===1?"":"s")),
+        // 3-part formula row
+        h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
+          h("div",{style:{flex:1,textAlign:"center"}},
+            h("div",{style:{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:1,marginBottom:4}},"GROSS SALARY"),
+            h("div",{style:{fontSize:15,fontWeight:800,color:"#fff"}},fmt(filtGross))
           ),
-          h("div",{style:{width:1,background:"rgba(255,255,255,.1)",margin:"0 14px"}}),
-          h("div",{style:{flex:1}},
-            h("div",{style:{fontSize:9,color:"rgba(255,255,255,.45)",letterSpacing:1,marginBottom:3}},"TOTAL DEDUCTIONS"),
-            h("div",{style:{fontSize:14,fontWeight:700,color:"#FCA5A5"}},filtDed>0?"-"+fmt(filtDed):"Nil")
+          h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:18,fontWeight:300,flexShrink:0}},"−"),
+          h("div",{style:{flex:1,textAlign:"center"}},
+            h("div",{style:{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:1,marginBottom:4}},"ATTEND. DEDUCT"),
+            h("div",{style:{fontSize:15,fontWeight:800,color:"#FCA5A5"}},filtAttDed>0?fmt(filtAttDed):"Nil")
+          ),
+          h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:18,fontWeight:300,flexShrink:0}},"−"),
+          h("div",{style:{flex:1,textAlign:"center"}},
+            h("div",{style:{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:1,marginBottom:4}},"TAX & DEDUCT"),
+            h("div",{style:{fontSize:15,fontWeight:800,color:"#FCA5A5"}},filtTaxDed>0?fmt(filtTaxDed):"Nil")
+          ),
+          h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:18,fontWeight:300,flexShrink:0}},"="),
+          h("div",{style:{flex:1,textAlign:"center"}},
+            h("div",{style:{fontSize:9,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:1,marginBottom:4}},"NET TO PAY"),
+            h("div",{style:{fontSize:15,fontWeight:800,color:"#4ADE80"}},fmt(filtNet))
           )
+        ),
+        h("div",{style:{height:1,background:"rgba(255,255,255,.08)",marginBottom:10}}),
+        h("div",{style:{textAlign:"center"}},
+          h("div",{style:{fontSize:10,color:"rgba(255,255,255,.35)",marginBottom:3}},"TOTAL TRANSFER THIS MONTH"),
+          h("div",{style:{fontSize:28,fontWeight:900,color:"#4ADE80",letterSpacing:-.5}},fmt(filtNet))
         )
       ),
       h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:11,padding:3,display:"flex",gap:3,marginBottom:8}},
@@ -3248,21 +3266,26 @@ null
                 h("div",{style:{fontSize:20,fontWeight:800,color:"#10B981"}},fmt(d.net))
               )
             ),
-            // Row 2: Gross → Deductions breakdown pill
-            h("div",{style:{background:SFT,borderRadius:10,padding:"8px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:8}},
-              h("div",{style:{flex:1}},
-                h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5}},"GROSS"),
-                h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},fmt(d.gr))
+            // Row 2: Gross - Attend - Tax = Net (3-part formula)
+            h("div",{style:{background:SFT,borderRadius:10,padding:"8px 10px",marginBottom:8,display:"flex",alignItems:"center",gap:4}},
+              h("div",{style:{flex:1,textAlign:"center"}},
+                h("div",{style:{fontSize:8,color:GRY,letterSpacing:.3,marginBottom:1}},"GROSS"),
+                h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},fmt(e.salaryType==="fixed"?Number(e.fixedSalary||e.monthlyCTC||0):(Number(e.basic)||0)+(Number(e.hra)||0)+(Number(e.allow)||0)))
               ),
-              totalDed>0?h("div",{style:{color:GRY,fontSize:14}},"−"):null,
-              totalDed>0?h("div",{style:{flex:1}},
-                h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5}},"DEDUCTIONS"),
-                h("div",{style:{fontSize:13,fontWeight:700,color:RED}},fmt(totalDed))
+              attDed>0?h("div",{style:{color:GRY,fontSize:13,flexShrink:0}},"\u2212"):null,
+              attDed>0?h("div",{style:{flex:1,textAlign:"center"}},
+                h("div",{style:{fontSize:8,color:GRY,letterSpacing:.3,marginBottom:1}},"ABSENT"),
+                h("div",{style:{fontSize:12,fontWeight:700,color:AMB}},fmt(attDed))
               ):null,
-              h("div",{style:{color:GRY,fontSize:14}},"="),
-              h("div",{style:{flex:1,textAlign:"right"}},
-                h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5}},"NET"),
-                h("div",{style:{fontSize:13,fontWeight:800,color:"#10B981"}},fmt(d.net))
+              statDed>0?h("div",{style:{color:GRY,fontSize:13,flexShrink:0}},"\u2212"):null,
+              statDed>0?h("div",{style:{flex:1,textAlign:"center"}},
+                h("div",{style:{fontSize:8,color:GRY,letterSpacing:.3,marginBottom:1}},"TAX/DED"),
+                h("div",{style:{fontSize:12,fontWeight:700,color:RED}},fmt(statDed))
+              ):null,
+              h("div",{style:{color:GRY,fontSize:13,flexShrink:0}},"="),
+              h("div",{style:{flex:1,textAlign:"center"}},
+                h("div",{style:{fontSize:8,color:GRY,letterSpacing:.3,marginBottom:1}},"NET"),
+                h("div",{style:{fontSize:12,fontWeight:800,color:"#10B981"}},fmt(d.net))
               )
             ),
             // Row 3: deduction detail chips (only if deductions exist)
