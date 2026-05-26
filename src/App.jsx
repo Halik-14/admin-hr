@@ -5213,46 +5213,49 @@ null
       return new Date(b.joined_at||0)-new Date(a.joined_at||0);
     });
 
-    return h("div",{className:"fd"},
-        // ── Header ──
-        h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},
-          h("button",{onClick:function(){setShowAdmin(false);setAdminSearch("");setAdminSort("newest");setAdminExpanded(null);},style:{background:"none",border:"none",cursor:"pointer",color:ACCENT,padding:0,display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600}},
-            ic("arrow_back",ACCENT,16),"Back"
-          ),
-          h("div",{style:{flex:1}},
-            h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},"Admin Panel"),
-            h("div",{style:{fontSize:10,color:GRY,marginTop:1}},adminUsers.length+" employers \u2022 "+adminUsers.filter(function(u){return u.plan==="paid";}).length+" paid \u2022 "+adminUsers.filter(function(u){return u.is_blocked;}).length+" blocked")
-          ),
-          h("button",{onClick:function(){loadAdminUsers();showT("Refreshed");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Refresh")
+    return h("div",{style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG,overflow:"hidden"}},
+      // ── Standalone dark header ──
+      h("div",{style:{background:NVY,padding:"12px 16px",display:"flex",alignItems:"center",gap:10,flexShrink:0}},
+        h("button",{onClick:function(){setShowAdmin(false);setAdminSearch("");setAdminSort("newest");setAdminExpanded(null);},style:{background:"rgba(255,255,255,.12)",border:"none",cursor:"pointer",color:"#fff",padding:"6px 10px",borderRadius:8,display:"flex",alignItems:"center",gap:5,fontSize:12,fontWeight:600}},
+          ic("arrow_back","#fff",15),"Back"
         ),
-        h("div",null,
-          // Search
-          h("input",{value:adminSearch,onChange:function(e){setAdminSearch(e.target.value);},placeholder:"Search by email, name or org...",
-            style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"8px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
-          // Sort bar
-          h("div",{style:{display:"flex",gap:5,overflowX:"auto",paddingBottom:2}},
-            [["newest","Newest"],["oldest","Oldest"],["plan","Paid First"],["inactive","Inactive"],["az","A–Z"],["za","Z–A"]].map(function(item){
-              var on=adminSort===item[0];
-              return h("button",{key:item[0],onClick:function(){setAdminSort(item[0]);},
-                style:{flexShrink:0,background:on?NVY:SFT,border:"1px solid "+(on?NVY:BDR),borderRadius:20,
-                  padding:"4px 11px",fontSize:10,fontWeight:on?700:500,
-                  color:on?CARD:GRY,cursor:"pointer",whiteSpace:"nowrap"}},item[1]);
-            })
+        h("div",{style:{flex:1}},
+          h("div",{style:{fontSize:16,fontWeight:800,color:"#fff"}},"Admin Panel"),
+          h("div",{style:{fontSize:10,color:"rgba(255,255,255,.55)",marginTop:1}},
+            adminUsers.length+" employers \u2022 "+adminUsers.filter(function(u){return u.plan==="paid";}).length+" paid \u2022 "+adminUsers.filter(function(u){return u.is_blocked;}).length+" blocked"
           )
         ),
-        // ── Users list ──
-        h("div",{style:{overflowY:"auto",padding:"12px 14px",flex:1}},
-          filtered.length===0?h("div",{style:{textAlign:"center",padding:32,color:GRY,fontSize:13}},
-            adminUsers.length===0?"No users yet. Click Refresh.":"No users match your search."):
-          filtered.map(function(u){
-            var lastLogin=u.last_sign_in_at?new Date(u.last_sign_in_at).toLocaleDateString("en-IN"):"Never";
-            var joined=u.joined_at?new Date(u.joined_at).toLocaleDateString("en-IN"):"—";
-            var confirmed=!!u.email_confirmed_at;
-            var isOwner=u.email===OWNER_EMAIL;
-            var isEditingExp=editExpEmail===u.email;
-            var isExpanded=adminExpanded===u.email;
-            var isBlocking=adminBlocking===u.email;
-            var blocked=u.is_blocked||false;
+        h("button",{onClick:function(){loadAdminUsers();showT("Refreshed");},style:{background:"rgba(255,255,255,.15)",border:"none",borderRadius:8,padding:"6px 11px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer",display:"flex",alignItems:"center",gap:5}},
+          ic("sync","#fff",14),"Refresh"
+        )
+      ),
+      // ── Search + sort ──
+      h("div",{style:{background:CARD,padding:"10px 14px",borderBottom:"1px solid "+BDR,flexShrink:0}},
+        h("input",{value:adminSearch,onChange:function(e){setAdminSearch(e.target.value);},placeholder:"Search by email, name or org...",
+          style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"8px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
+        h("div",{style:{display:"flex",gap:5,overflowX:"auto",paddingBottom:2}},
+          [["newest","Newest"],["oldest","Oldest"],["plan","Paid First"],["inactive","Inactive"],["az","A\u2013Z"],["za","Z\u2013A"]].map(function(item){
+            var on=adminSort===item[0];
+            return h("button",{key:item[0],onClick:function(){setAdminSort(item[0]);},
+              style:{flexShrink:0,background:on?NVY:SFT,border:"1px solid "+(on?NVY:BDR),borderRadius:20,
+                padding:"4px 11px",fontSize:10,fontWeight:on?700:500,
+                color:on?CARD:GRY,cursor:"pointer",whiteSpace:"nowrap"}},item[1]);
+          })
+        )
+      ),
+      // ── Scrollable list ──
+      h("div",{style:{flex:1,overflowY:"auto",padding:"12px 14px",WebkitOverflowScrolling:"touch"}},
+        filtered.length===0?h("div",{style:{textAlign:"center",padding:32,color:GRY,fontSize:13}},
+          adminUsers.length===0?"No users yet. Click Refresh.":"No users match your search."):
+        filtered.map(function(u){
+          var lastLogin=u.last_sign_in_at?new Date(u.last_sign_in_at).toLocaleDateString("en-IN"):"Never";
+          var joined=u.joined_at?new Date(u.joined_at).toLocaleDateString("en-IN"):"—";
+          var confirmed=!!u.email_confirmed_at;
+          var isOwner=u.email===OWNER_EMAIL;
+          var isEditingExp=editExpEmail===u.email;
+          var isExpanded=adminExpanded===u.email;
+          var isBlocking=adminBlocking===u.email;
+          var blocked=u.is_blocked||false;
 
             return h("div",{key:u.email,style:{
               background:blocked?RED+"08":SFT,
@@ -5375,6 +5378,7 @@ null
                   var limNum=lim.trim()?parseInt(lim)||999:null;
                   setUserPlan(u.email,u.plan,{emp_limit:limNum});
                   showT("Limit updated");
+                  setTimeout(function(){loadAdminUsers();},500);
                 },style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 10px",fontSize:11,fontWeight:600,color:NVY,cursor:"pointer"}},"Emp Limit"):null,
                 !isOwner?h("button",{
                   onClick:function(){
