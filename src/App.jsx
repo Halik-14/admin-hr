@@ -5386,23 +5386,7 @@ null
                     borderRadius:8,padding:"7px 10px",fontSize:11,fontWeight:700,
                     color:blocked?GRN:RED,cursor:isBlocking?"not-allowed":"pointer",
                     opacity:isBlocking?.6:1}
-                },isBlocking?"\u23f3":(blocked?"Unblock":"Block")):null,
-                !isOwner?h("button",{
-                  onClick:function(){
-                    if(!window.confirm("DELETE ACCOUNT: "+u.email+"\n\nThis will permanently remove:\n\u2022 All employee records\n\u2022 All attendance data\n\u2022 All payroll history\n\u2022 Organisation profile\n\nAuth account must be deleted separately from Supabase dashboard.\n\nType OK to confirm."))return;
-                    Promise.all([
-                      _sb.from("user_plans").delete().eq("email",u.email),
-                      _sb.from("user_orgs").delete().eq("email",u.email),
-                      _sb.from("user_data").delete().eq("email",u.email),
-                      _sb.from("invite_codes").delete().eq("employer_email",u.email)
-                    ]).then(function(){
-                      showT("Account data deleted. Remove auth from Supabase dashboard.");
-                      loadAdminUsers();
-                      setAdminExpanded(null);
-                    });
-                  },
-                  style:{background:RED+"12",border:"1.5px solid "+RED+"44",borderRadius:8,padding:"7px 10px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:4}
-                },ic("delete_forever",RED,12),"Delete"):null
+                },isBlocking?"\u23f3":(blocked?"Unblock":"Block")):null
               ),
               // ── Employee app accounts sub-list ──
               u.app_employees&&u.app_employees.length>0?h("div",{style:{marginTop:10,borderTop:"1px solid "+BDR,paddingTop:10}},
@@ -5427,6 +5411,25 @@ null
                 })
               ):isExpanded?h("div",{style:{marginTop:8,paddingTop:8,borderTop:"1px solid "+BDR,fontSize:11,color:GRY,textAlign:"center",display:"flex",gap:6,alignItems:"center",justifyContent:"center"}},
                 ic("smartphone",GRY,14),"No employees on app yet"
+              ):null,
+              // ── Delete account — bottom of expanded, deliberate placement ──
+              isExpanded&&!isOwner?h("div",{style:{marginTop:14,paddingTop:12,borderTop:"1px dashed "+RED+"33"}},
+                h("button",{
+                  onClick:function(){
+                    if(!window.confirm("DELETE ACCOUNT\n"+u.email+"\n\nPermanently removes:\n\u2022 All employee & HR records\n\u2022 Attendance & payroll data\n\u2022 Organisation profile\n\u2022 Invite codes\n\nNote: Also delete auth account from Supabase dashboard after this.\n\nAre you sure?"))return;
+                    Promise.all([
+                      _sb.from("user_plans").delete().eq("email",u.email),
+                      _sb.from("user_orgs").delete().eq("email",u.email),
+                      _sb.from("user_data").delete().eq("email",u.email),
+                      _sb.from("invite_codes").delete().eq("employer_email",u.email)
+                    ]).then(function(){
+                      showT("Account deleted. Remove auth from Supabase dashboard.");
+                      loadAdminUsers();
+                      setAdminExpanded(null);
+                    });
+                  },
+                  style:{width:"100%",background:RED+"08",border:"1.5px solid "+RED+"33",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}
+                },ic("delete_forever",RED,15),"Delete This Account Permanently")
               ):null
             );
           })
