@@ -1136,6 +1136,7 @@ export default function App(){
   // ── Pro features state ──
   var sRole=st("owner"),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee
   var sIsEmp=st(false),isEmployeeSignup=sIsEmp[0],setIsEmployeeSignup=sIsEmp[1];
+  var sEmpLimit=st(5),empLimit=sEmpLimit[0],setEmpLimit=sEmpLimit[1]; // set by admin per employer
   var sInvCode=st(""),signupInviteCode=sInvCode[0],setSignupInviteCode=sInvCode[1];
   var sEmpDT=st("profile"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1]; // employee dashboard tab — starts at profile
   var sEmpData=st(null),empData=sEmpData[0],setEmpData=sEmpData[1]; // full employee record from emps
@@ -1293,6 +1294,9 @@ export default function App(){
         var planRes=results[0],orgRes=results[1],dataRes=results[2];
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var isBlocked=(planRes.data&&planRes.data.is_blocked)||false;
+        // emp_limit is set by admin — use it directly, fallback to 5 for free
+        var rawLimit=(planRes.data&&planRes.data.emp_limit!=null)?Number(planRes.data.emp_limit):(plan==="paid"?999:5);
+        setEmpLimit(rawLimit);
         if(isBlocked){
           _sb.auth.signOut();
           setScreen("login");setAuthMode("landing");
@@ -1502,6 +1506,12 @@ export default function App(){
   var EMP_LIMIT=org.emp_limit||(isPaid?org.emp_limit||999:5); // free=5, paid=set by admin
   function needPaid(){showT("This feature requires Paid Plan. Upgrade to access.","err");}
   var actEmps=emps.filter(function(e){return e.status==="active";});
+    // In payroll — only process employees within plan limit
+    var actEmpsForPayroll=(function(){
+      var lim=empLimit||5;
+      var sorted=actEmps.slice().sort(function(a,b){return new Date(a.joined||0)-new Date(b.joined||0);});
+      return sorted.slice(0,lim);
+    })();
   var trmEmps=emps.filter(function(e){return e.status==="terminated"||e.status==="resigned";});
   var tGross=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).gr;},0);
   var tNet=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).net;},0);
@@ -2549,12 +2559,25 @@ export default function App(){
     if(offE)return renderOffboard();
     var q=searchQ.trim().toLowerCase();
     var filteredEmps=q?actEmps.filter(function(e){return(e.name||"").toLowerCase().includes(q)||(e.role||"").toLowerCase().includes(q)||(e.dept||"").toLowerCase().includes(q)||(e.eid||"").toLowerCase().includes(q);}):actEmps;
+    // ── Over-limit: sort active emps by join date, last added = suspended first ──
+    var activeLimit=empLimit||5;
+    var sortedActive=actEmps.slice().sort(function(a,b){return new Date(a.joined||0)-new Date(b.joined||0);});
+    var allowedEmpIds=sortedActive.slice(0,activeLimit).map(function(e){return e.id;});
+    function isOverLimit(e){return actEmps.length>activeLimit&&allowedEmpIds.indexOf(e.id)===-1;}
     var empCountLabel=filteredEmps.length+(q?" found":" MEMBERS");
     return h("div",{className:"fd"},
       h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:11,padding:3,display:"flex",gap:3,marginBottom:11}},
         [["active","Active"],["terminated","Offboarded"]].map(function(item){return h("button",{key:item[0],onClick:function(){setEmpTab(item[0]);},style:{flex:1,background:empTab===item[0]?ACCENT:"transparent",border:"none",borderRadius:9,padding:"8px",color:empTab===item[0]?ACCENT_FG:GRY,fontSize:12,fontWeight:600,cursor:"pointer"}},item[1]);})
       ),
       empTab==="active"?h("div",null,
+        // Over-limit warning
+        actEmps.length>(empLimit||5)?h("div",{style:{background:RED+"10",border:"1px solid "+RED+"33",borderRadius:12,padding:"10px 14px",marginBottom:10,display:"flex",gap:8,alignItems:"flex-start"}},
+          ic("warning",RED,16),
+          h("div",null,
+            h("div",{style:{fontSize:12,fontWeight:700,color:RED}},actEmps.length+" employees — Plan limit: "+(empLimit||5)),
+            h("div",{style:{fontSize:11,color:GRY,marginTop:2}},"Last "+(actEmps.length-(empLimit||5))+" employee(s) suspended. Contact us to upgrade your limit.")
+          )
+        ):null,
         h("div",{style:{display:"flex",gap:9,marginBottom:11}},
           h("div",{style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:12,padding:"11px 14px",display:"flex",gap:8,alignItems:"center",boxShadow:T.SHADOW}},
             ic("search",GRY,16),
@@ -2591,25 +2614,31 @@ null
           return sorted;
         })().map(function(e){
           var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),payWD=getWorkingDays(att,e.id,curY,curM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM),payWD);
-          return h("div",{key:e.id,className:"rh",onClick:function(){setSelE(e);},style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"13px 14px",display:"flex",gap:12,alignItems:"center",marginBottom:9,boxShadow:T.SHADOW,cursor:"pointer"}},
+          var overLim=isOverLimit(e);
+          return h("div",{key:e.id,className:"rh",onClick:function(){if(!overLim)setSelE(e);},style:{background:overLim?SFT:CARD,border:"1px solid "+(overLim?RED+"33":BDR),borderRadius:14,padding:"13px 14px",display:"flex",gap:12,alignItems:"center",marginBottom:9,boxShadow:T.SHADOW,cursor:overLim?"default":"pointer",opacity:overLim?.65:1}},
             av(e,44),
             h("div",{style:{flex:1,minWidth:0}},
               h("div",{style:{fontSize:14,fontWeight:600,color:NVY,letterSpacing:-.1}},e.name),
-              h("div",{style:{fontSize:11,color:GRY,marginTop:1}},e.role+" \u2022 "+e.dept),
-              h("div",{style:{display:"flex",gap:5,marginTop:3,alignItems:"center"}},
-                h("div",{style:{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:10,background:e.salaryType==="fixed"?ACCENT+"12":"#10B981"+"12",color:e.salaryType==="fixed"?ACCENT:"#10B981"}},
-                  e.salaryType==="fixed"?"Fixed":"Split"
+              overLim?h("div",{style:{display:"flex",alignItems:"center",gap:5,marginTop:3}},
+                h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,background:RED+"15",color:RED}},"Suspended — Plan limit reached"),
+                ic("lock",RED,11)
+              ):h("div",null,
+                h("div",{style:{fontSize:11,color:GRY,marginTop:1}},e.role+" \u2022 "+e.dept),
+                h("div",{style:{display:"flex",gap:5,marginTop:3,alignItems:"center"}},
+                  h("div",{style:{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:10,background:e.salaryType==="fixed"?ACCENT+"12":"#10B981"+"12",color:e.salaryType==="fixed"?ACCENT:"#10B981"}},
+                    e.salaryType==="fixed"?"Fixed":"Split"
+                  ),
+                  h("div",{style:{fontSize:10,color:GRY,opacity:.8}},e.eid+" \u2022 Joined "+e.joined)
                 ),
-                h("div",{style:{fontSize:10,color:GRY,opacity:.8}},e.eid+" \u2022 Joined "+e.joined)
-              ),
-              h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginTop:4}},"Net "+fmt(d.net)+" / mo")
+                h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginTop:4}},"Net "+fmt(d.net)+" / mo")
+              )
             ),
-            h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
-            isPaid?h("button",{onClick:function(ev){ev.stopPropagation();setInviteEmpId(e.id);setInviteEmail(e.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},title:"Invite to app",style:{background:ACCENT+"15",border:"1px solid "+ACCENT+"33",borderRadius:8,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},
-              ic("forward_to_inbox",ACCENT,14)
-            ):null,
-            ic(ICONS.chev,GRY,16)
-          )
+            overLim?null:h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
+              isPaid?h("button",{onClick:function(ev){ev.stopPropagation();setInviteEmpId(e.id);setInviteEmail(e.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},title:"Invite to app",style:{background:ACCENT+"15",border:"1px solid "+ACCENT+"33",borderRadius:8,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},
+                ic("forward_to_inbox",ACCENT,14)
+              ):null,
+              ic(ICONS.chev,GRY,16)
+            )
           );
         })
       ):h("div",null,
@@ -3136,7 +3165,7 @@ null
 
   function renderPayroll(){
     var depts=[""].concat(getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}));
-    var filtEmps=payFilt==="dept"&&payDept?actEmps.filter(function(e){return e.dept===payDept;}):actEmps;
+    var filtEmps=payFilt==="dept"&&payDept?actEmpsForPayroll.filter(function(e){return e.dept===payDept;}):actEmpsForPayroll;
     var filtGross=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD).gr;},0);
     var filtNet=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD).net;},0);
     var filtDed=filtGross-filtNet;
@@ -5033,6 +5062,7 @@ null
   else if(screen==="setup")appContent=setupScreen;
   // ── Route to employee dashboard if role is employee ──
   else if(userRole==="employee"||userRole==="terminated_employee")appContent=renderEmployeeDashboard();
+  else if(showAdmin)appContent=renderAdminPanel();
   else{
     var tabContent;
     if(tab==="dashboard")tabContent=renderDashboard();
@@ -5049,7 +5079,7 @@ null
             h("div",{onClick:function(){
               var OWNER_EMAIL="authorhalik@gmail.com";
               if(gUser&&gUser.email===OWNER_EMAIL){
-                setShowAdmin(true);loadAdminUsers();
+                setShowAdmin(true);loadAdminUsers();setTab("settings");
               }
             },style:{cursor:"pointer"}},logoSVG(38)),
             h("div",null,
@@ -5079,7 +5109,7 @@ null
             prof?h("div",{style:{position:"absolute",top:42,right:0,background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:6,minWidth:185,boxShadow:T.SHADOW_LG,zIndex:200}},
               h("div",{style:{padding:"7px 11px",borderBottom:"1px solid "+BDR,marginBottom:3}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:org.position),h("div",{style:{fontSize:11,color:GRY}},org.name),h("div",{style:{fontSize:10,color:GRY}},gUser?gUser.email:"")),
 
-              isAdmin?h("button",{onClick:function(){setShowAdmin(true);setProf(false);loadAdminUsers();},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
+              isAdmin?h("button",{onClick:function(){setShowAdmin(true);loadAdminUsers();setTab("settings");setTab("settings");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
               h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need support for Admin HR. My account: "+(gUser?gUser.email:"")),"_blank");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:TEL,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},ic(ICONS.wa,TEL,14),"Contact Support"),
               h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
                 h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);setAuthPwd("");setAuthPwd2("");setTimeout(function(){_sb.auth.signOut();var _email=gUser&&gUser.email?gUser.email:"";["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});if(_email)["hr_emps_","hr_att_","hr_inc_"].forEach(function(k){try{localStorage.removeItem(k+_email);}catch(e){}});setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});lsSet("hr_login_time",null);setScreen("login");setProf(false);},800);showT("Signing out...");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
@@ -5183,20 +5213,19 @@ null
       return new Date(b.joined_at||0)-new Date(a.joined_at||0);
     });
 
-    return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"}},
-      h("div",{style:{background:CARD,borderRadius:"20px 20px 0 0",width:"100%",maxWidth:430,height:"92vh",display:"flex",flexDirection:"column",animation:"sU .3s ease"}},
+    return h("div",{className:"fd"},
         // ── Header ──
-        h("div",{style:{padding:"14px 16px 10px",borderBottom:"1px solid "+BDR,flexShrink:0}},
-          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-            h("div",null,
-              h("div",{style:{fontSize:15,fontWeight:800,color:NVY}},"Admin Panel"),
-              h("div",{style:{fontSize:10,color:GRY,marginTop:1}},adminUsers.length+" users \u2022 "+adminUsers.filter(function(u){return u.plan==="paid";}).length+" paid \u2022 "+adminUsers.filter(function(u){return u.is_blocked;}).length+" blocked")
-            ),
-            h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
-              h("button",{onClick:function(){loadAdminUsers();showT("Refreshed");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Refresh"),
-              h("button",{onClick:function(){setShowAdmin(false);setAdminSearch("");setAdminSort("newest");setAdminExpanded(null);},style:{background:"none",border:"none",fontSize:22,cursor:"pointer",color:GRY,lineHeight:1}},"×")
-            )
+        h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},
+          h("button",{onClick:function(){setShowAdmin(false);setAdminSearch("");setAdminSort("newest");setAdminExpanded(null);},style:{background:"none",border:"none",cursor:"pointer",color:ACCENT,padding:0,display:"flex",alignItems:"center",gap:4,fontSize:13,fontWeight:600}},
+            ic("arrow_back",ACCENT,16),"Back"
           ),
+          h("div",{style:{flex:1}},
+            h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},"Admin Panel"),
+            h("div",{style:{fontSize:10,color:GRY,marginTop:1}},adminUsers.length+" employers \u2022 "+adminUsers.filter(function(u){return u.plan==="paid";}).length+" paid \u2022 "+adminUsers.filter(function(u){return u.is_blocked;}).length+" blocked")
+          ),
+          h("button",{onClick:function(){loadAdminUsers();showT("Refreshed");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},"Refresh")
+        ),
+        h("div",null,
           // Search
           h("input",{value:adminSearch,onChange:function(e){setAdminSearch(e.target.value);},placeholder:"Search by email, name or org...",
             style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"8px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
@@ -5357,7 +5386,23 @@ null
                     borderRadius:8,padding:"7px 10px",fontSize:11,fontWeight:700,
                     color:blocked?GRN:RED,cursor:isBlocking?"not-allowed":"pointer",
                     opacity:isBlocking?.6:1}
-                },isBlocking?"\u23f3":(blocked?"Unblock":"Block")):null
+                },isBlocking?"\u23f3":(blocked?"Unblock":"Block")):null,
+                !isOwner?h("button",{
+                  onClick:function(){
+                    if(!window.confirm("DELETE ACCOUNT: "+u.email+"\n\nThis will permanently remove:\n\u2022 All employee records\n\u2022 All attendance data\n\u2022 All payroll history\n\u2022 Organisation profile\n\nAuth account must be deleted separately from Supabase dashboard.\n\nType OK to confirm."))return;
+                    Promise.all([
+                      _sb.from("user_plans").delete().eq("email",u.email),
+                      _sb.from("user_orgs").delete().eq("email",u.email),
+                      _sb.from("user_data").delete().eq("email",u.email),
+                      _sb.from("invite_codes").delete().eq("employer_email",u.email)
+                    ]).then(function(){
+                      showT("Account data deleted. Remove auth from Supabase dashboard.");
+                      loadAdminUsers();
+                      setAdminExpanded(null);
+                    });
+                  },
+                  style:{background:RED+"12",border:"1.5px solid "+RED+"44",borderRadius:8,padding:"7px 10px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer",display:"flex",alignItems:"center",gap:4}
+                },ic("delete_forever",RED,12),"Delete"):null
               ),
               // ── Employee app accounts sub-list ──
               u.app_employees&&u.app_employees.length>0?h("div",{style:{marginTop:10,borderTop:"1px solid "+BDR,paddingTop:10}},
@@ -5386,8 +5431,7 @@ null
             );
           })
         )
-      )
-    );
+      );
   }
   function renderPFDlPicker(){
     if(!showPFDl)return null;
@@ -5549,7 +5593,7 @@ null
         h("div",{style:{fontSize:12,color:CARD,fontWeight:600}},"\u2728 New update available!"),
         h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
       ):null,
-      showAdmin?renderAdminPanel():null,
+      // admin panel handled via screen routing below
       renderPFDlPicker(),
       renderSalRegPicker(),
       renderECRPicker(),
