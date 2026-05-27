@@ -96,7 +96,7 @@ var SVG_ICONS={
 "check":"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
 "fact_check":"M20 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L11 14.17l7.59-7.59L20 8l-9 9zm7-9h-4V6h4v2z",
 "savings":"M11 18v-1.26l-1-.27V15h3l.5 2 1.5-.5-.5-2H13v-1.5c1.66 0 3-1.34 3-3S14.66 7 13 7c-1.66 0-3 1.34-3 3H8c0-2.76 2.24-5 5-5 2.76 0 5 2.24 5 5 0 1.86-1.01 3.47-2.5 4.34V18h-4zm1 3c-.55 0-1-.45-1-1h2c0 .55-.45 1-1 1zM5 7l-2 2 2 2 2-2-2-2zm0 6l-2-2-2 2 2 2 2-2zm4-7.27L7 3.73 5 6l2 2.27L9 5.73z",
-"account_balance":"M4 10v7h3v-7H4zm6 0v7h3v-7h-3zm-5 8v-2H3v2H2v2h20v-2h-1v-2h-2v2H5zm11-8v7h3v-7h-3zM11.5 1L2 6v2h19V6l-9.5-5z","supervisor_account":"M16.5 12c1.38 0 2.49-1.12 2.49-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5S15.12 12 16.5 12zM9 11c1.66 0 2.99-1.34 2.99-3S10.66 5 9 5C7.34 5 6 6.34 6 8s1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V19h11v-2.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V19h7v-2.25c0-.85.33-2.34 2.37-3.47C10.5 13.1 9.66 13 9 13z","event_available":"M16.53 11.06L15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z","account_balance_wallet":"M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
+"account_balance":"M4 10v7h3v-7H4zm6 0v7h3v-7h-3zm-5 8v-2H3v2H2v2h20v-2h-1v-2h-2v2H5zm11-8v7h3v-7h-3zM11.5 1L2 6v2h19V6l-9.5-5z","price_check":"M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7zm11.77 8.27L14 18.54l-2.27-2.27 1.27-1.27 1 1 2.5-2.5 1.27 1.27z","supervisor_account":"M16.5 12c1.38 0 2.49-1.12 2.49-2.5S17.88 7 16.5 7C15.12 7 14 8.12 14 9.5S15.12 12 16.5 12zM9 11c1.66 0 2.99-1.34 2.99-3S10.66 5 9 5C7.34 5 6 6.34 6 8s1.34 3 3 3zm7.5 3c-1.83 0-5.5.92-5.5 2.75V19h11v-2.25c0-1.83-3.67-2.75-5.5-2.75zM9 13c-2.33 0-7 1.17-7 3.5V19h7v-2.25c0-.85.33-2.34 2.37-3.47C10.5 13.1 9.66 13 9 13z","event_available":"M16.53 11.06L15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z","account_balance_wallet":"M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
 "sync_alt":"M12 18V6l-3 3-1.4-1.4L12 3l4.4 4.6L15 9l-3-3zm3 3l-4.4-4.6L12 15l3 3 1.4-1.4L12 21l-4.4-4.6L9 18l3-3v12",
 "cloud_upload":"M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z",
 "people_alt":"M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.74 1.17-.52 2.61-.9 4.24-.9zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V18h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4 3.43c0-.81-.48-1.53-1.22-1.85C21.93 14.21 20.99 14 20 14c-.39 0-.76.04-1.13.1.4.68.63 1.46.63 2.29V18H24v-1.57zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z",
@@ -2382,7 +2382,7 @@ export default function App(){
     var statCards=[
       {l:"Total Team",v:actEmps.length,ico:"supervisor_account",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active"},
       {l:"Present Today",v:presentCount,ico:"event_available",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today"},
-      {l:"Gross Payroll",v:fmt(tGross),ico:"currency_rupee",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY},
+      {l:"Gross Payroll",v:fmt(tGross),ico:"price_check",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY},
       {l:"Net Payable",v:fmt(tNet),ico:"account_balance_wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions"},
     ];
     var hr=now.getHours(),greet=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
@@ -3259,7 +3259,7 @@ null
               h("div",{style:{flex:1}},
                 h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},e.name),
                 h("div",{style:{fontSize:10,color:GRY,marginTop:1}},[e.role,e.dept].filter(Boolean).join(" \u2022 ")||"No designation"),
-                e.salaryType?h("div",{style:{fontSize:9,fontWeight:700,display:"inline-block",padding:"1px 6px",borderRadius:8,background:e.salaryType==="fixed"?"#FEF3C7":"#EFF6FF",color:e.salaryType==="fixed"?"#92400E":"#1E40AF",marginTop:3}},e.salaryType==="fixed"?"Fixed Salary":"Split Salary"):null
+                h("div",{style:{fontSize:9,fontWeight:700,display:"inline-block",padding:"1px 6px",borderRadius:8,background:e.salaryType==="fixed"?"#FEF3C7":"#EFF6FF",color:e.salaryType==="fixed"?"#92400E":"#1E40AF",marginTop:3}},e.salaryType==="fixed"?"Fixed Salary":"Split Salary")
               ),
               h("div",{style:{textAlign:"right",flexShrink:0}},
                 h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:1}},"TO PAY"),
@@ -3320,17 +3320,22 @@ null
                 h("input",{type:"number",value:editPayInc,onChange:function(ev){setEditPayInc(ev.target.value);},placeholder:"0",style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
                 h("button",{onClick:function(){var k=e.id+"_"+payY+"_"+payM;setIncentives(function(p){var o=Object.assign({},p);o[k]=Number(editPayInc)||0;return o;});showT("Saved!");},style:{display:"flex",alignItems:"center",gap:4,background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,CARD,13),"Save")
               ),
-              // ── Formula: Gross − Deductions = Net ──
+              // ── Formula: Actual − Absent − Tax = Net ──
               h("div",{style:{display:"flex",alignItems:"stretch",gap:4,marginBottom:12}},
                 h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:10,padding:"10px",textAlign:"center"}},
-                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"GROSS"),
-                  h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},fmt(d.gr))
+                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"ACTUAL"),
+                  h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},fmt(isFixed?Number(e.fixedSalary||e.monthlyCTC||0):(Number(e.basic)||0)+(Number(e.hra)||0)+(Number(e.allow)||0)))
                 ),
-                h("div",{style:{display:"flex",alignItems:"center",padding:"0 4px",color:GRY,fontSize:18,fontWeight:300}},"\u2212"),
-                h("div",{style:{flex:1,background:RED+"10",borderRadius:10,padding:"10px",textAlign:"center"}},
-                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"DEDUCTIONS"),
-                  h("div",{style:{fontSize:16,fontWeight:800,color:RED}},fmt(totalDed))
-                ),
+                attDed>0?h("div",{style:{display:"flex",alignItems:"center",padding:"0 4px",color:GRY,fontSize:18,fontWeight:300}},"\u2212"):null,
+                attDed>0?h("div",{style:{flex:1,background:AMB+"12",borderRadius:10,padding:"10px",textAlign:"center"}},
+                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"ABSENT"),
+                  h("div",{style:{fontSize:16,fontWeight:800,color:AMB}},fmt(attDed))
+                ):null,
+                statDed>0?h("div",{style:{display:"flex",alignItems:"center",padding:"0 4px",color:GRY,fontSize:18,fontWeight:300}},"\u2212"):null,
+                statDed>0?h("div",{style:{flex:1,background:RED+"10",borderRadius:10,padding:"10px",textAlign:"center"}},
+                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"TAX/DED"),
+                  h("div",{style:{fontSize:16,fontWeight:800,color:RED}},fmt(statDed))
+                ):null,
                 h("div",{style:{display:"flex",alignItems:"center",padding:"0 4px",color:GRY,fontSize:18,fontWeight:300}},"="),
                 h("div",{style:{flex:1,background:"#10B981"+"12",borderRadius:10,padding:"10px",textAlign:"center"}},
                   h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"NET PAY"),
@@ -3340,9 +3345,9 @@ null
               // ── Earnings breakdown ──
               h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"EARNINGS BREAKDOWN"),
               [
-                e.salaryType==="fixed"?["Fixed Salary",fmt(d.basicBase),NVY]:["Basic (Effective)",fmt(d.eb),NVY],
-                e.salaryType==="fixed"?null:["HRA",fmt(e.hra||0),NVY],
-                e.salaryType==="fixed"?null:["Allowances",fmt(e.allow||0),NVY],
+                isFixed?["Fixed Salary",fmt(Number(e.fixedSalary||e.monthlyCTC||0)),NVY]:["Basic",fmt(e.basic||0),NVY],
+                isFixed?null:["HRA",fmt(e.hra||0),NVY],
+                isFixed?null:["Allowances",fmt(e.allow||0),NVY],
                 d.inc>0?["Incentive",fmt(d.inc),"#059669"]:null,
                 d.shiftAllow>0?["Shift Allowance",fmt(d.shiftAllow),TEL]:null,
               ].filter(Boolean).map(function(item){
@@ -3351,17 +3356,18 @@ null
                   h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1])
                 );
               }),
+              attDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px dashed "+BDR}},
+                h("span",{style:{fontSize:11,color:GRY}},"Absent/Half deduction"),
+                h("span",{style:{fontSize:11,fontWeight:600,color:AMB}},"-"+fmt(attDed))
+              ):null,
               h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",marginBottom:10}},
-                h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Gross Total"),
+                h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Effective Gross"),
                 h("span",{style:{fontSize:11,fontWeight:800,color:"#10B981"}},fmt(d.gr))
               ),
               // ── Deductions breakdown ──
-              totalDed>0?h("div",null,
+              statDed>0?h("div",null,
                 h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"DEDUCTIONS BREAKDOWN"),
                 [
-                  d.ad>0?["Absent ("+ma.absent+" day"+(ma.absent>1?"s":"")+")","-"+fmt(d.ad),RED]:null,
-                  d.hd>0?["Half Day ("+ma.half+" day"+(ma.half>1?"s":"")+")","-"+fmt(d.hd),AMB]:null,
-                  d.ud>0?["Unpaid Leave ("+ma.unpaid+" day"+(ma.unpaid>1?"s":"")+")","-"+fmt(d.ud),RED]:null,
                   d.pfE>0?["PF — Employee (12%)","-"+fmt(d.pfE),NVY]:null,
                   d.esiE>0?["ESI — Employee (0.75%)","-"+fmt(d.esiE),TEL]:null,
                   d.pt>0?["Professional Tax","-"+fmt(d.pt),AMB]:null,
@@ -3376,7 +3382,7 @@ null
                 }),
                 h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",marginBottom:8}},
                   h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Total Deductions"),
-                  h("span",{style:{fontSize:11,fontWeight:800,color:RED}},"-"+fmt(totalDed))
+                  h("span",{style:{fontSize:11,fontWeight:800,color:RED}},"-"+fmt(statDed))
                 )
               ):null,
               // ── Working days ──
