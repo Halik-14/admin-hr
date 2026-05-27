@@ -3275,85 +3275,81 @@ null
               h("button",{onClick:function(){sharePayslip(e,d,payM,payY);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.wa,NVY,13),"WA"),
               h("button",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:isO?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isO?ACCENT_FG:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isO?"expand_less":"expand_more",isO?CARD:NVY,13),isO?"Hide":"Details")
             ),
-            isO?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginTop:4}},
+            isO?h("div",{style:{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:"12px",border:"1px solid "+BDR,marginTop:4}},
               lbl("INCENTIVE (Rs.)"),
               h("div",{style:{display:"flex",gap:6,marginBottom:12}},
                 h("input",{type:"number",value:editPayInc,onChange:function(ev){setEditPayInc(ev.target.value);},placeholder:"0",style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
                 h("button",{onClick:function(){var k=e.id+"_"+payY+"_"+payM;setIncentives(function(p){var o=Object.assign({},p);o[k]=Number(editPayInc)||0;return o;});showT("Saved!");},style:{display:"flex",alignItems:"center",gap:4,background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,CARD,13),"Save")
               ),
-              // ── Formula: Actual − Absent − Tax = Net ──
-              h("div",{style:{display:"flex",alignItems:"stretch",gap:4,marginBottom:12}},
-                h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:10,padding:"10px",textAlign:"center"}},
-                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"ACTUAL"),
-                  h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},fmt(isFixed?Number(e.fixedSalary||e.monthlyCTC||0):(Number(e.basic)||0)+(Number(e.hra)||0)+(Number(e.allow)||0)))
-                ),
-                attDed>0?h("div",{style:{display:"flex",alignItems:"center",padding:"0 4px",color:GRY,fontSize:18,fontWeight:300}},"\u2212"):null,
-                attDed>0?h("div",{style:{flex:1,background:AMB+"12",borderRadius:10,padding:"10px",textAlign:"center"}},
-                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"ABSENT"),
-                  h("div",{style:{fontSize:16,fontWeight:800,color:AMB}},fmt(attDed))
-                ):null,
-                statDed>0?h("div",{style:{display:"flex",alignItems:"center",padding:"0 4px",color:GRY,fontSize:18,fontWeight:300}},"\u2212"):null,
-                statDed>0?h("div",{style:{flex:1,background:RED+"10",borderRadius:10,padding:"10px",textAlign:"center"}},
-                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"TAX/DED"),
-                  h("div",{style:{fontSize:16,fontWeight:800,color:RED}},fmt(statDed))
-                ):null,
-                h("div",{style:{display:"flex",alignItems:"center",padding:"0 4px",color:GRY,fontSize:18,fontWeight:300}},"="),
-                h("div",{style:{flex:1,background:"#10B981"+"12",borderRadius:10,padding:"10px",textAlign:"center"}},
-                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"NET PAY"),
-                  h("div",{style:{fontSize:16,fontWeight:800,color:"#10B981"}},fmt(d.net))
+              // ── Formula: compact single row inside tinted box ──
+              h("div",{style:{background:"rgba(0,0,0,0.04)",borderRadius:10,padding:"10px 12px",marginBottom:10}},
+                h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:2}},
+                  h("div",{style:{textAlign:"center",flex:1}},
+                    h("div",{style:{fontSize:8,color:GRY,letterSpacing:.4,marginBottom:2}},"ACTUAL"),
+                    h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},fmt(isFixed?Number(e.fixedSalary||e.monthlyCTC||0):(Number(e.basic)||0)+(Number(e.hra)||0)+(Number(e.allow)||0)))
+                  ),
+                  attDed>0?h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"\u2212"):null,
+                  attDed>0?h("div",{style:{textAlign:"center",flex:1}},
+                    h("div",{style:{fontSize:8,color:AMB,letterSpacing:.4,marginBottom:2}},"ABSENT"),
+                    h("div",{style:{fontSize:13,fontWeight:800,color:AMB}},fmt(attDed))
+                  ):null,
+                  statDed>0?h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"\u2212"):null,
+                  statDed>0?h("div",{style:{textAlign:"center",flex:1}},
+                    h("div",{style:{fontSize:8,color:RED,letterSpacing:.4,marginBottom:2}},"TAX/DED"),
+                    h("div",{style:{fontSize:13,fontWeight:800,color:RED}},fmt(statDed))
+                  ):null,
+                  h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"="),
+                  h("div",{style:{textAlign:"center",flex:1}},
+                    h("div",{style:{fontSize:8,color:"#10B981",letterSpacing:.4,marginBottom:2}},"NET PAY"),
+                    h("div",{style:{fontSize:13,fontWeight:800,color:"#10B981"}},fmt(d.net))
+                  )
                 )
               ),
               // ── Earnings breakdown ──
-              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"EARNINGS BREAKDOWN"),
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4}},"EARNINGS"),
               [
                 isFixed?["Fixed Salary",fmt(Number(e.fixedSalary||e.monthlyCTC||0)),NVY]:["Basic",fmt(e.basic||0),NVY],
                 isFixed?null:["HRA",fmt(e.hra||0),NVY],
                 isFixed?null:["Allowances",fmt(e.allow||0),NVY],
                 d.inc>0?["Incentive",fmt(d.inc),"#059669"]:null,
-                d.shiftAllow>0?["Shift Allowance",fmt(d.shiftAllow),TEL]:null,
+                d.shiftAllow>0?["Shift Allow.",fmt(d.shiftAllow),TEL]:null,
+                attDed>0?["Absent/Half","-"+fmt(attDed),AMB]:null,
               ].filter(Boolean).map(function(item){
-                return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px dashed "+BDR}},
+                return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},
                   h("span",{style:{fontSize:11,color:GRY}},item[0]),
                   h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1])
                 );
               }),
-              attDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px dashed "+BDR}},
-                h("span",{style:{fontSize:11,color:GRY}},"Absent/Half deduction"),
-                h("span",{style:{fontSize:11,fontWeight:600,color:AMB}},"-"+fmt(attDed))
-              ):null,
-              h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",marginBottom:10}},
-                h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Effective Gross"),
-                h("span",{style:{fontSize:11,fontWeight:800,color:"#10B981"}},fmt(d.gr))
+              h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:8}},
+                h("span",{style:{fontSize:11,fontWeight:600,color:NVY}},"Effective Gross"),
+                h("span",{style:{fontSize:11,fontWeight:800,color:NVY}},fmt(d.gr))
               ),
               // ── Deductions breakdown ──
               statDed>0?h("div",null,
-                h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"DEDUCTIONS BREAKDOWN"),
+                h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4}},"DEDUCTIONS"),
                 [
-                  d.pfE>0?["PF — Employee (12%)","-"+fmt(d.pfE),NVY]:null,
-                  d.esiE>0?["ESI — Employee (0.75%)","-"+fmt(d.esiE),TEL]:null,
-                  d.pt>0?["Professional Tax","-"+fmt(d.pt),AMB]:null,
+                  d.pfE>0?["PF (Emp 12%)","-"+fmt(d.pfE),NVY]:null,
+                  d.esiE>0?["ESI (Emp 0.75%)","-"+fmt(d.esiE),TEL]:null,
+                  d.pt>0?["Prof. Tax","-"+fmt(d.pt),AMB]:null,
                   d.tds>0?["TDS","-"+fmt(d.tds),RED]:null,
-                  d.hi>0?["Health Insurance","-"+fmt(d.hi),"#EC4899"]:null,
-                  d.cd>0?["Custom Deductions","-"+fmt(d.cd),GRY]:null,
+                  d.hi>0?["Health Ins.","-"+fmt(d.hi),"#EC4899"]:null,
+                  d.cd>0?["Other","-"+fmt(d.cd),GRY]:null,
                 ].filter(Boolean).map(function(item){
-                  return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px dashed "+BDR}},
+                  return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},
                     h("span",{style:{fontSize:11,color:GRY}},item[0]),
                     h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1])
                   );
                 }),
-                h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",marginBottom:8}},
-                  h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Total Deductions"),
+                h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:8}},
+                  h("span",{style:{fontSize:11,fontWeight:600,color:NVY}},"Total Deductions"),
                   h("span",{style:{fontSize:11,fontWeight:800,color:RED}},"-"+fmt(statDed))
                 )
               ):null,
-              // ── Working days ──
-              h("div",{style:{fontSize:10,color:GRY,marginBottom:10,paddingBottom:8,borderBottom:"1px solid "+BDR}},
-                "Working days: "+(d.wDays||26)+" \u2022 Per day: "+fmt(d.pd||0)
-              ),
-              // ── Net take home ──
-              h("div",{style:{background:"#0F172A",borderRadius:10,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-                h("span",{style:{fontSize:13,fontWeight:600,color:"rgba(255,255,255,.65)"}},"Net Take Home"),
-                h("span",{style:{fontSize:18,fontWeight:800,color:"#4ADE80"}},fmt(d.net))
+              // ── Working days + net ──
+              h("div",{style:{fontSize:10,color:GRY,marginBottom:8}},"Working days: "+(d.wDays||26)+" \u2022 Per day rate: "+fmt(d.pd||0)),
+              h("div",{style:{background:"#0F172A",borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+                h("span",{style:{fontSize:12,fontWeight:600,color:"rgba(255,255,255,.6)"}},"Net Take Home"),
+                h("span",{style:{fontSize:16,fontWeight:800,color:"#4ADE80"}},fmt(d.net))
               )
             ):null
           );
