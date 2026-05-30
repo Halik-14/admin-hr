@@ -1827,8 +1827,7 @@ export default function App(){
 
   function sharePayslip(emp,d,m2,y){
     // Generate PDF and share via native share sheet (WhatsApp supports file sharing)
-    var appLabel="Admin HR"+(org.name?" | "+org.name:"");
-    var text=appLabel+" - Payslip\n"+emp.name+" | "+MOS[m2]+" "+y+"\nNet Pay: "+fmtIN(d.net);
+    var text=(org.name||"")+( org.name?" - Payslip\n":"")+emp.name+" | "+MOS[m2]+" "+y+"\nNet Pay: "+fmtIN(d.net);
     try{
       // Generate payslip PDF using jsPDF
       var doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
@@ -1909,7 +1908,7 @@ export default function App(){
   function shareAtt(emp){
     if(!emp.mob){showT("No mobile number saved","err");return;}
     var ma=mAtt(emp.id,attY,attM);
-    var text=(org.name||"Admin HR")+" - Attendance Report\n"+emp.name+" | "+MOS[attM]+" "+attY+"\n\nPresent: "+ma.present+" days\nAbsent: "+ma.absent+" days\nHalf Day: "+ma.half+" days\nPaid Leave: "+ma.paidLeave+" days\nUnpaid: "+ma.unpaid+" days\n\nGenerated via Admin HR app";
+    var text=(org.name||"")+(org.name?" - Attendance Report\n":"")+emp.name+" | "+MOS[attM]+" "+attY+"\n\nPresent: "+ma.present+" days\nAbsent: "+ma.absent+" days\nHalf Day: "+ma.half+" days\nPaid Leave: "+ma.paidLeave+" days\nUnpaid: "+ma.unpaid+" days\n\nGenerated via Admin HR app";
     window.open("https://wa.me/91"+emp.mob+"?text="+encodeURIComponent(text),"_blank");
   }
 
@@ -3141,7 +3140,7 @@ null
             ),
             h("div",{style:{display:"flex",gap:5,marginTop:5,marginLeft:45}},
               h("button",{onClick:function(){setSheetE(e);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},"Sheet"),
-              h("button",{onClick:function(){shareAtt(e);},style:{display:"flex",alignItems:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},ic(ICONS.wa,NVY,11),"WA")
+              h("button",{onClick:function(){shareAtt(e);},style:{display:"flex",alignItems:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},ic(ICONS.wa,"#25D366",11),"WhatsApp")
             )
           );
         })
@@ -3206,7 +3205,7 @@ null
         h("div",null,h("div",{style:{fontSize:14,fontWeight:800,color:NVY}},sheetE.name),h("div",{style:{fontSize:11,color:GRY}},MOS[mo]+" "+yr)),
         h("div",{style:{display:"flex",gap:5}},
           h("button",{onClick:isPaid?function(){var recs={};Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+sheetE.id)&&kv[0].startsWith(yr+"-"+String(mo+1).padStart(2,"0"));}).forEach(function(kv){recs[kv[0].split("_")[0]]=kv[1];});makeAttPDF(sheetE.name,yr,mo,recs,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}:needPaid,style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 10px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.dl:"lock",CARD,13),isPaid?"PDF":"PDF"),
-          h("button",{onClick:function(){shareAtt(sheetE);},style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 10px",fontSize:11,color:NVY,fontWeight:700,cursor:"pointer"}},ic(ICONS.wa,NVY,13),"WA")
+          h("button",{onClick:function(){shareAtt(sheetE);},style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 10px",fontSize:11,color:NVY,fontWeight:700,cursor:"pointer"}},ic(ICONS.wa,"#25D366",13),"WhatsApp")
         )
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5,marginBottom:10}},
@@ -3380,7 +3379,7 @@ null
                     h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"),
                     h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er")
                   ):h("button",{onClick:needPaid,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"),
-              h("button",{onClick:function(){sharePayslip(e,d,payM,payY);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.wa,NVY,13),"WA"),
+              h("button",{onClick:function(){sharePayslip(e,d,payM,payY);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:"#25D366"+"15",border:"1px solid #25D366"+"44",borderRadius:8,padding:"7px",color:"#128C7E",fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.wa,"#25D366",13),"WhatsApp"),
               h("button",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:isO?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isO?ACCENT_FG:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isO?"expand_less":"expand_more",isO?CARD:NVY,13),isO?"Hide":"Details")
             ),
             isO?h("div",{style:{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:"12px",border:"1px solid "+BDR,marginTop:4}},
