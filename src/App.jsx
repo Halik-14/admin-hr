@@ -136,7 +136,7 @@ var SVG_ICONS={
 "wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28A2 2 0 0 0 22 15v-6a2 2 0 0 0-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z M16 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
 "badge":"M20 7h-5.5l-2-2h-5C6.34 5 5 6.34 5 7.5v9C5 17.66 6.34 19 7.5 19h13c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-8.5 2c1.24 0 2.25 1.01 2.25 2.25S12.74 13.5 11.5 13.5 9.25 12.49 9.25 11.25 10.26 9 11.5 9zm4.5 8h-9v-.75c0-1.5 3-2.25 4.5-2.25s4.5.75 4.5 2.25V17z",
 "monetization_on":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
-};
+,"grid":"M3 3h8v8H3zm0 10h8v8H3zm10-10h8v8h-8zm0 10h8v8h-8z","cal":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z","user":"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z","arrow_back":"M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z","warning":"M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z","cancel":"M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z","calendar_today":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z","person":"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z","home":"M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"};
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
   cal:"calendar_month",dl:"download",wa:"whatsapp",mail:"chat",edit:"edit",
@@ -1198,7 +1198,8 @@ export default function App(){
   var sWarnDate=st(todayStr),warnDate=sWarnDate[0],setWarnDate=sWarnDate[1];
   var sWarnEmpId=st(null),warnEmpId=sWarnEmpId[0],setWarnEmpId=sWarnEmpId[1];
   var sInvCode=st(""),signupInviteCode=sInvCode[0],setSignupInviteCode=sInvCode[1];
-  var sEmpDT=st("profile"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1]; // employee dashboard tab — starts at profile
+  var sEmpDT=st("profile"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1];
+  var sEmpTT=st("mine"),empTaskTab=sEmpTT[0],setEmpTaskTab=sEmpTT[1];
   var sEmpData=st(null),empData=sEmpData[0],setEmpData=sEmpData[1]; // full employee record from emps
   var sEmpPayMonth=st(new Date().getMonth()),empPayMonth=sEmpPayMonth[0],setEmpPayMonth=sEmpPayMonth[1];
   var sEmpPayYear=st(new Date().getFullYear()),empPayYear=sEmpPayYear[0],setEmpPayYear=sEmpPayYear[1];
@@ -1343,6 +1344,8 @@ export default function App(){
   se(function(){
 
     function loadUserData(user){
+    // Run cleanup on every 10th login (random)
+    if(Math.random()<0.1){_sb.rpc("cleanup_old_records").then(function(){});}
       var em=user.email;
       setGUser({name:em.split("@")[0],email:em,photo:""});
       lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
@@ -4310,25 +4313,23 @@ null
         );
       }
 
-      var taskFilter=empTaskComment?"all":"all"; // using taskTab for filter
-      var showMineTab=!empTaskComment||empTaskComment==="_mine";
-      var mineActive=empSelTask===null&&empDashTab==="tasks";
       var displayTasks=myDirectTasks;
       var teamDisplay=myTeamTasks;
+      var showingTeam=empTaskTab==="team";
 
       return h("div",{className:"fd"},
         h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:12,gap:3}},
-          h("button",{onClick:function(){setEmpTaskComment("_mine");},style:{flex:1,background:empTaskComment!=="team"?CARD:"transparent",border:empTaskComment!=="team"?"1px solid "+BDR:"none",borderRadius:9,padding:"8px",color:empTaskComment!=="team"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
-            ic("person",empTaskComment!=="team"?ACCENT:GRY,14),"My Tasks",
+          h("button",{onClick:function(){setEmpTaskTab("mine");},style:{flex:1,background:!showingTeam?CARD:"transparent",border:!showingTeam?"1px solid "+BDR:"none",borderRadius:9,padding:"8px",color:!showingTeam?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
+            ic("person",!showingTeam?ACCENT:GRY,14),"My Tasks",
             displayTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length>0?h("span",{style:{background:RED,color:"#fff",fontSize:9,fontWeight:700,borderRadius:10,padding:"0 5px"}},displayTasks.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length):null
           ),
-          h("button",{onClick:function(){setEmpTaskComment("team");},style:{flex:1,background:empTaskComment==="team"?CARD:"transparent",border:empTaskComment==="team"?"1px solid "+BDR:"none",borderRadius:9,padding:"8px",color:empTaskComment==="team"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
-            ic("groups",empTaskComment==="team"?ACCENT:GRY,14),"Team Tasks",
+          h("button",{onClick:function(){setEmpTaskTab("team");},style:{flex:1,background:showingTeam?CARD:"transparent",border:showingTeam?"1px solid "+BDR:"none",borderRadius:9,padding:"8px",color:showingTeam?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
+            ic("groups",showingTeam?ACCENT:GRY,14),"Team Tasks",
             teamDisplay.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length>0?h("span",{style:{background:AMB+"40",color:AMB,fontSize:9,fontWeight:700,borderRadius:10,padding:"0 5px"}},teamDisplay.filter(function(t){return t.status==="assigned"||t.status==="in_progress";}).length):null
           )
         ),
         (function(){
-          var list=empTaskComment==="team"?teamDisplay:displayTasks;
+          var list=showingTeam?teamDisplay:displayTasks;
           var active=list.filter(function(t){return t.status==="assigned"||t.status==="in_progress"||t.status==="rejected";});
           var done=list.filter(function(t){return t.status==="completed"||t.status==="verified";});
           return h("div",null,
@@ -4420,6 +4421,10 @@ null
               if(LEAVE_TYPES[empLeaveType]&&LEAVE_TYPES[empLeaveType].needsReason&&!empLeaveReason.trim())return showT("Enter reason","err");
               var req={id:Date.now(),employeeEmail:myEmail,employerEmail:empEmployerEmail,leaveType:empLeaveType,fromDate:empLeaveFrom,toDate:empLeaveTo,reason:empLeaveReason.trim(),status:"pending",adminReply:"",createdAt:new Date().toISOString()};
               setLeaveReqs(function(p){return [req].concat(p);});
+              _sb.from("leave_requests").insert({id:req.id,employee_email:myEmail,
+                employer_email:empEmployerEmail,leave_type:empLeaveType,
+                from_date:empLeaveFrom,to_date:empLeaveTo,reason:empLeaveReason.trim(),
+                status:"pending",admin_reply:""}).then(function(){});
               addNotif(empEmployerEmail,myEmail,"leave_requested","Leave request",(gUser?gUser.email.split("@")[0]:""+" applied for "+LEAVE_TYPES[empLeaveType].name),String(req.id),"leave");
               setEmpLeaveFrom("");setEmpLeaveTo("");setEmpLeaveReason("");setEmpShowLeave(false);
               showT("Leave request sent!");
@@ -4576,7 +4581,7 @@ null
       ):null,
       h("div",{style:{background:CARD,padding:"12px 16px 10px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid "+BDR,flexShrink:0}},
         h("div",null,
-          h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},org.name||"Admin HR"),
+          h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},org.name||"HR Portal"),
           h("div",{style:{fontSize:17,fontWeight:800,color:NVY}},
             empDashTab==="home"?"Dashboard":empDashTab==="attendance"?"Attendance":empDashTab==="tasks"?"Tasks":empDashTab==="leave"?"Leave":"Profile"
           )
@@ -4598,7 +4603,7 @@ null
         empProfile()
       ),
       h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0}},
-        isTerminated?null:empNav("home","Home","grid"),
+        isTerminated?null:empNav("home","Home","home"),
         empNav("attendance","Attend","cal"),
         isTerminated?null:empNav("tasks","Tasks","assignment"),
         isTerminated?null:empNav("leave","Leave","event_available"),
