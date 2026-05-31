@@ -1827,6 +1827,20 @@ export default function App(){
     });
   }
   // ── DATA SYNC ──────────────────────────────────────────────────────────────
+  function refreshEmployeeData(){
+    // Re-fetch employer attendance + employee list from Supabase
+    if(!empEmployerEmail)return;
+    _sb.from("user_data").select("emps_json,att_json,inc_json").eq("email",empEmployerEmail).maybeSingle()
+    .then(function(res){
+      if(res.data){try{
+        setEmps(JSON.parse(res.data.emps_json||"[]"));
+        setAtt(JSON.parse(res.data.att_json||"{}"));
+        setIncentives(JSON.parse(res.data.inc_json||"{}"));
+        showT("Attendance updated ✅");
+      }catch(e){}}
+    });
+  }
+
   function syncToSupabase(empData,attData,incData,shiftsData,remData,notData,revData,emailOverride){
     var email=(emailOverride)||(gUser&&gUser.email)||lsGet("hr_last_email","");
     if(!email)return;
@@ -4106,7 +4120,11 @@ null
     function empNav(id,label,icon){
       var active=empDashTab===id;
       var badge=id==="home"&&unread>0?unread:0;
-      return h("button",{onClick:function(){setEmpDashTab(id);setEmpSelTask(null);},
+      return h("button",{onClick:function(){
+        setEmpDashTab(id);setEmpSelTask(null);
+        // Auto-sync attendance data when switching to attendance tab
+        if(id==="attendance"&&empEmployerEmail)refreshEmployeeData();
+      },
         style:{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,padding:"6px 0",color:active?ACCENT:GRY,position:"relative"}},
         h("div",{style:{padding:"4px 14px",borderRadius:14,background:active?ACCENT_SOFT:"transparent",position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}},
           ic(icon,active?ACCENT:GRY,22),
@@ -4208,8 +4226,13 @@ null
       var sAttY=empPayYear,sAttM=empPayMonth;
       return h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-          h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},MOS[sAttM]+" "+sAttY),
-          h("div",{style:{fontSize:11,color:GRY}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
+          h("div",null,
+            h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},MOS[sAttM]+" "+sAttY),
+            h("div",{style:{fontSize:10,color:GRY}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
+          ),
+          h("button",{onClick:refreshEmployeeData,
+            style:{display:"flex",alignItems:"center",gap:5,background:ACCENT+"12",border:"1px solid "+ACCENT+"33",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:700,color:ACCENT,cursor:"pointer"}},
+            ic("refresh",ACCENT,14),"Sync")
         ),
         h("div",{style:{display:"flex",gap:6,marginBottom:12,overflowX:"auto"}},
           MOS.map(function(m,i){
