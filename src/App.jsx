@@ -1344,15 +1344,16 @@ export default function App(){
   se(function(){
 
     function loadUserData(user){
-    // Run cleanup on every 10th login (random)
-    if(Math.random()<0.1){try{_sb.rpc("cleanup_old_records").then(function(){});}catch(e){}}
       var em=user.email;
       setGUser({name:em.split("@")[0],email:em,photo:""});
       lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
-      // Safety timeout — if loading takes >10s, fall back to setup
-      var loadTimeout=setTimeout(function(){
-        setScreen(function(s){return s==="loading"?"setup":s;});
-      },10000);
+      // Safety: if Supabase takes >12s, go to cached or setup
+      var loadTimer=setTimeout(function(){
+        var cached=lsGet("hr_org_"+em,null);
+        if(cached&&cached.name){setOrg(cached);setScreen("app");}
+        else{setScreen("setup");}
+      },12000);
+      function done(){clearTimeout(loadTimer);}
       Promise.all([
         _sb.from("user_plans").select("*").eq("email",em).maybeSingle(),
         _sb.from("user_orgs").select("*").eq("email",em).maybeSingle(),
@@ -1361,71 +1362,33 @@ export default function App(){
         var planRes=results[0],orgRes=results[1],dataRes=results[2];
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var isBlocked=(planRes.data&&planRes.data.is_blocked)||false;
-        // emp_limit is set by admin — use it directly, fallback to 5 for free
         var rawLimit=(planRes.data&&planRes.data.emp_limit!=null)?Number(planRes.data.emp_limit):(plan==="paid"?999:5);
         setEmpLimit(rawLimit);
         if(isBlocked){
+          done();
           _sb.auth.signOut();
           setScreen("login");setAuthMode("landing");
-          setTimeout(function(){showT("Your account has been suspended. Contact support.","err");},500);
+          setTimeout(function(){showT("Account suspended. Contact support.","err");},500);
           return;
         }
         setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
         var role=(planRes.data&&planRes.data.role)||"owner";
-        var employerEmail=(planRes.data&&planRes.data.employer_email)||"";
-        var terminatedAt=(planRes.data&&planRes.data.terminated_at)||null;
         setUserRole(role);
-        setEmpEmployerEmail(employerEmail);
-
-        // ── Employee account — not supported, redirect to landing ──
-        if(role==="employee"){
+        // Employee accounts not supported
+        if(role==="employee"||role==="terminated_employee"){
+          done();
           _sb.auth.signOut();
           setScreen("login");setAuthMode("landing");
-          showT("Employee portal is currently unavailable.","err");
+          setTimeout(function(){showT("Employee portal unavailable.","err");},400);
           return;
         }
-        if(false){
-          if(!employerEmail){setScreen("app");return;}
-          // Set display name from user_orgs full_name
-          var empFullName=(orgRes.data&&orgRes.data.full_name)||em.split("@")[0];
-          setGUser({name:empFullName,email:em,photo:""});
-          lsSet("hr_guser",{name:empFullName,email:em,photo:""});
-          setSuName(empFullName); // used in employee dashboard greeting
-          // Load employer's org info (company name, logo)
-          Promise.all([
-            _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website").eq("email",employerEmail).maybeSingle(),
-            _sb.from("user_data").select("emps_json,att_json,inc_json").eq("email",employerEmail).maybeSingle(),
-            _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
-          ]).then(function(empResults){
-            var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
-            // Set org to employer's org for display in employee header
-            setOrg({
-              name:(empOrg&&empOrg.org_name)||"",
-              logo:(empOrg&&empOrg.logo_base64)||"",
-              address:(empOrg&&empOrg.address)||"",
-              phone:(empOrg&&empOrg.phone)||"",
-              website:(empOrg&&empOrg.website)||"",
-              email:employerEmail,
-              plan:(empPlan&&empPlan.plan)||"free",
-              emp_limit:(empPlan&&empPlan.emp_limit)||null
-            });
-            // Load employer's employee data
-            if(empData){try{
-              setEmps(JSON.parse(empData.emps_json||"[]"));
-              setAtt(JSON.parse(empData.att_json||"{}"));
-              setIncentives(JSON.parse(empData.inc_json||"{}"));
-            }catch(e){}}
-            _dataLoaded.current=false;
-            setScreen("app"); // routes to renderEmployeeDashboard() via userRole check
-          }).catch(function(){setScreen("app");});
-          return;
-        }
-
-        // ── Owner/Admin flow ─────────────────────────────────────────────
+        // Owner/Admin flow
         if(orgRes.data&&orgRes.data.org_name){
           var o={
             name:orgRes.data.org_name,email:em,
-            position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
+            position:orgRes.data.position||"",
+            type:orgRes.data.org_type||"",
+            plan:plan,
             emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
             expires_on:(planRes.data&&planRes.data.expires_on)||null,
             address:(orgRes.data&&orgRes.data.address)||"",
@@ -1433,26 +1396,27 @@ export default function App(){
             phone:(orgRes.data&&orgRes.data.phone)||"",
             website:(orgRes.data&&orgRes.data.website)||""
           };
-          lsSet("hr_org_"+em,o);setOrg(o);
-          if(dataRes.data){try{
-            setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
-            setAtt(JSON.parse(dataRes.data.att_json||"{}"));
-            setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
-            setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
-            setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
-            setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
-            setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
-            lsSet("hr_last_sync",dataRes.data.updated_at);
-          }catch(e){}}
-          _dataLoaded.current=false;
-          clearTimeout(loadTimeout);
+          lsSet("hr_org_"+em,o);
+          setOrg(o);
+          if(dataRes.data){
+            try{setEmps(JSON.parse(dataRes.data.emps_json||"[]"));}catch(e){}
+            try{setAtt(JSON.parse(dataRes.data.att_json||"{}"));}catch(e){}
+            try{setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));}catch(e){}
+            try{setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));}catch(e){}
+            try{setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));}catch(e){}
+            try{setNotices(JSON.parse(dataRes.data.notices_json||"[]"));}catch(e){}
+            try{setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));}catch(e){}
+            try{lsSet("hr_last_sync",dataRes.data.updated_at);}catch(e){}
+          }
+          done();
           setScreen("app");
         } else {
-          clearTimeout(loadTimeout);
+          // No org setup yet
+          done();
           setScreen("setup");
         }
       }).catch(function(){
-        clearTimeout(loadTimeout);
+        done();
         var cached=lsGet("hr_org_"+em,null);
         if(cached&&cached.name){setOrg(cached);setScreen("app");}
         else setScreen("setup");
