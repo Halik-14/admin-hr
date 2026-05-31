@@ -1547,56 +1547,55 @@ export default function App(){
   se(function(){
     if(!gUser||!gUser.email||userRole==="employee")return;
     var em=gUser.email;
+    // Use individual queries so one failure doesn't block others
+    var safeGet=function(table,filter){
+      try{return _sb.from(table).select("*").eq(filter[0],filter[1]).then(function(r){return r.data||[];}).catch(function(){return[];});}
+      catch(e){return Promise.resolve([]);}
+    };
     Promise.all([
-      _sb.from("tasks").select("*").eq("employer_email",em),
-      _sb.from("leave_requests").select("*").eq("employer_email",em),
-      _sb.from("loans").select("*").eq("employer_email",em),
-      _sb.from("expenses").select("*").eq("employer_email",em),
-      _sb.from("warnings").select("*").eq("employer_email",em),
-      _sb.from("notifications").select("*").eq("to_email",em)
+      safeGet("tasks",["employer_email",em]),
+      safeGet("leave_requests",["employer_email",em]),
+      safeGet("loans",["employer_email",em]),
+      safeGet("expenses",["employer_email",em]),
+      safeGet("warnings",["employer_email",em]),
+      safeGet("notifications",["to_email",em])
     ]).then(function(results){
-      // Tasks
-      if(results[0].data) setTasks((results[0].data||[]).map(function(t){
+      try{setTasks((results[0]||[]).map(function(t){
         return {id:t.id,employerEmail:t.employer_email,createdBy:t.created_by,
           assignType:t.assign_type,assignTarget:t.assign_target,title:t.title,
           description:t.description,priority:t.priority,deadline:t.deadline,
           status:t.status,completionNote:t.completion_note,rejectionReason:t.rejection_reason,
           createdAt:t.created_at,updatedAt:t.updated_at};
-      }));
-      // Leave requests
-      if(results[1].data) setLeaveReqs((results[1].data||[]).map(function(r){
+      }));}catch(e){}
+      try{setLeaveReqs((results[1]||[]).map(function(r){
         return {id:r.id,employeeEmail:r.employee_email,employerEmail:r.employer_email,
           fromDate:r.from_date,toDate:r.to_date,leaveType:r.leave_type,reason:r.reason,
           status:r.status,adminReply:r.admin_reply,createdAt:r.created_at};
-      }));
-      // Loans
-      if(results[2].data) setLoans((results[2].data||[]).map(function(l){
+      }));}catch(e){}
+      try{setLoans((results[2]||[]).map(function(l){
         return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,
           employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,
           monthlyDeduction:l.monthly_deduction,paidAmount:l.paid_amount,status:l.status,
           createdAt:l.created_at};
-      }));
-      // Expenses
-      if(results[3].data) setExpenses((results[3].data||[]).map(function(ex){
+      }));}catch(e){}
+      try{setExpenses((results[3]||[]).map(function(ex){
         return {id:ex.id,employerEmail:ex.employer_email,employeeId:ex.employee_id,
           employeeEmail:ex.employee_email,employeeName:ex.employee_name,title:ex.title,
           amount:ex.amount,category:ex.category,description:ex.description,
           status:ex.status,adminNote:ex.admin_note,month:ex.month,year:ex.year,
           createdAt:ex.created_at};
-      }));
-      // Warnings
-      if(results[4].data) setWarnings((results[4].data||[]).map(function(w){
+      }));}catch(e){}
+      try{setWarnings((results[4]||[]).map(function(w){
         return {id:w.id,employerEmail:w.employer_email,employeeId:w.employee_id,
           employeeName:w.employee_name,incidentDate:w.incident_date,incident:w.incident,
           actionRequired:w.action_required,warningType:w.warning_type,
           acknowledged:w.acknowledged,createdAt:w.created_at};
-      }));
-      // Notifications
-      if(results[5].data) setNotifs((results[5].data||[]).map(function(n){
+      }));}catch(e){}
+      try{setNotifs((results[5]||[]).map(function(n){
         return {id:n.id,to:n.to_email,from:n.from_email,type:n.type,
           title:n.title,message:n.message,refId:n.ref_id,read:n.read,createdAt:n.created_at};
-      }));
-    }).catch(function(err){console.log("Data load error:",err);});
+      }));}catch(e){}
+    }).catch(function(){});
   },[gUser]);
 
   function pastMonths(y){var r=[];for(var m2=0;m2<=(y===curY?curM:11);m2++)r.push(m2);return r;}
