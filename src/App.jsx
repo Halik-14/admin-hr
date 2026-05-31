@@ -1345,10 +1345,14 @@ export default function App(){
 
     function loadUserData(user){
     // Run cleanup on every 10th login (random)
-    if(Math.random()<0.1){_sb.rpc("cleanup_old_records").then(function(){});}
+    if(Math.random()<0.1){try{_sb.rpc("cleanup_old_records").then(function(){});}catch(e){}}
       var em=user.email;
       setGUser({name:em.split("@")[0],email:em,photo:""});
       lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
+      // Safety timeout — if loading takes >10s, fall back to setup
+      var loadTimeout=setTimeout(function(){
+        setScreen(function(s){return s==="loading"?"setup":s;});
+      },10000);
       Promise.all([
         _sb.from("user_plans").select("*").eq("email",em).maybeSingle(),
         _sb.from("user_orgs").select("*").eq("email",em).maybeSingle(),
@@ -1441,11 +1445,14 @@ export default function App(){
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
           _dataLoaded.current=false;
+          clearTimeout(loadTimeout);
           setScreen("app");
         } else {
+          clearTimeout(loadTimeout);
           setScreen("setup");
         }
       }).catch(function(){
+        clearTimeout(loadTimeout);
         var cached=lsGet("hr_org_"+em,null);
         if(cached&&cached.name){setOrg(cached);setScreen("app");}
         else setScreen("setup");
