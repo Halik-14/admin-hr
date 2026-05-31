@@ -1638,13 +1638,30 @@ export default function App(){
 
   function cycleAtt(date,id){
     var cur=getAtt(date,id),nxt=ATO[(ATO.indexOf(cur)+1)%ATO.length];
-    setAtt(function(v){var o=Object.assign({},v);o[ak(date,id)]=nxt;return o;});
+    var newAtt;
+    setAtt(function(v){var o=Object.assign({},v);o[ak(date,id)]=nxt;newAtt=o;return o;});
     var emp=emps.find(function(e){return e.id===id;});
     showT((emp?emp.name:"")+": "+ATL[nxt]);
+    // Save to Supabase immediately
+    var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
+    if(email){
+      setTimeout(function(){
+        _sb.from("user_data").update({att_json:JSON.stringify(newAtt||{})}).eq("email",email)
+        .then(function(){});
+      },300);
+    }
   }
   function markHolidayAll(date){
-    setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[ak(date,e.id)]="holiday";});return o;});
+    var newAtt;
+    setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[ak(date,e.id)]="holiday";});newAtt=o;return o;});
     showT("Holiday marked for all");
+    var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
+    if(email){
+      setTimeout(function(){
+        _sb.from("user_data").update({att_json:JSON.stringify(newAtt||{})}).eq("email",email)
+        .then(function(){});
+      },300);
+    }
   }
 
   function checkEmpLimit(){
@@ -3218,7 +3235,13 @@ null
       ),
       h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Tap to cycle status. Paid Leave = no deduction."),
       h("div",{style:{display:"flex",gap:7,marginBottom:9}},
-        h("button",{onClick:function(){setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[todayDate+"_"+e.id]="present";});return o;});showT("All marked Present");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:GRN+"14",border:"1px solid "+GRN+"55",borderRadius:10,padding:"9px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("check_circle",GRN,15),"Mark All Present"),
+        h("button",{onClick:function(){
+          var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
+          var newAtt;
+          setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[todayDate+"_"+e.id]="present";});newAtt=o;return o;});
+          showT("All marked Present");
+          if(email)setTimeout(function(){_sb.from("user_data").update({att_json:JSON.stringify(newAtt||{})}).eq("email",email).then(function(){});},300);
+        },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:GRN+"14",border:"1px solid "+GRN+"55",borderRadius:10,padding:"9px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("check_circle",GRN,15),"Mark All Present"),
         h("button",{onClick:function(){markHolidayAll(todayDate);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"14",border:"1px solid "+AMB+"55",borderRadius:10,padding:"9px",color:AMB,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.sun,AMB,15),"Mark All Holiday")
       ),
       isPaid?dlBtn("Download Attendance Report",function(){makeAttSummaryPDF(actEmps,att,attM,attY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance Report — Paid Plan"),
