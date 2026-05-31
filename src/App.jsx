@@ -1042,7 +1042,7 @@ export default function App(){
   applyTheme(themeMode);  // Sync module-level colors to current theme on every render
   var CSS_SPIN="@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}"; var CSS_LIVE=buildCSS(); // Rebuild CSS string for current theme
 
-  var sS=st("loading"),screen=sS[0],setScreen=sS[1];
+  var sS=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?"app":"login";}),screen=sS[0],setScreen=sS[1];
   var sSessionChecked=st(false),sessionChecked=sSessionChecked[0],setSessionChecked=sSessionChecked[1];
   var sUPD=st(false),showUpdate=sUPD[0],setShowUpdate=sUPD[1];
   var sRPW=st(false),showResetPw=sRPW[0],setShowResetPw=sRPW[1];
