@@ -4637,6 +4637,9 @@ null,
     );
   }
 
+  // ── Force hide splash screen ──
+  try{if(window.__hideSplash)window.__hideSplash("");}catch(e){}
+
   // ── Screen routing ──────────────────────────────────────────────
   var appContent;
   if(screen==="login"){
@@ -4649,7 +4652,8 @@ null,
   } else {
     // ── App shell: sticky header + scrollable content + bottom nav ──
     var selEmp=selE;
-    var mainContent=
+    var mainContent;
+    try{mainContent=
       selEmp?renderEmpDetail():
       editE?renderEditEmp():
       offE?renderOffboard():
@@ -4660,6 +4664,7 @@ null,
       tab==="settings"?renderSettings():
       tab==="work"?(proTab==="tasks"?renderTasks():proTab==="kpi"?renderKPI():renderExpenses()):
       renderDashboard();
+    }catch(err){mainContent=h("div",{style:{padding:24,color:RED,fontSize:12,textAlign:"center"}},"Error: "+String(err)+". Please refresh.");}
 
     appContent=h("div",{style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG,overflow:"hidden"}},
       // Header
@@ -4675,7 +4680,7 @@ null,
         ),
         h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
           isPaid?h("button",{onClick:function(){setShowUpdate(false);},style:{display:"none"}}):null,
-          isAdmin?h("button",{onClick:function(){setShowAdmin(true);loadAdminUsers();},style:{background:"none",border:"none",cursor:"pointer",color:GRY,fontSize:10,fontWeight:700,padding:"4px 8px",borderRadius:6,background:SFT}},"\u2605 Admin"):null,
+          isAdmin?h("button",{onClick:function(){setShowAdmin(true);loadAdminUsers();},style:{background:SFT,border:"none",cursor:"pointer",color:GRY,fontSize:10,fontWeight:700,padding:"4px 8px",borderRadius:6}},"\u2605 Admin"):null,
           h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:36,height:36,borderRadius:"50%",background:org.logo?"none":ACCENT+"15",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}},
             org.logo?h("img",{src:org.logo,style:{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}):
             h("div",{style:{fontSize:14,fontWeight:700,color:ACCENT}},org.name?(org.name[0]||"?").toUpperCase():"?")
@@ -4695,8 +4700,7 @@ null,
           setTimeout(function(){
             var em=gUser&&gUser.email?gUser.email:"";
             _sb.auth.signOut();
-            ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-            if(em)["hr_org_"].forEach(function(k){try{localStorage.removeItem(k+em);}catch(e){}});
+            ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time","hr_org_"+em].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
             setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
             setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
             setScreen("login");setAuthMode("landing");setProf(false);
