@@ -1427,15 +1427,23 @@ export default function App(){
     var loaded=false;
     var sub=_sb.auth.onAuthStateChange(function(event,session){
       if((event==="INITIAL_SESSION"||event==="SIGNED_IN")&&session&&session.user){
-        if(loaded)return; // prevent double-load on app open
-        // Don't interfere if employee OTP flow is handling it
+        if(loaded)return;
         loaded=true;
+        var cachedUser=lsGet("hr_guser",null);
+        // If app already loaded from cache — don't touch it on INITIAL_SESSION
+        if(event==="INITIAL_SESSION"&&cachedUser&&cachedUser.email&&cachedUser.email===session.user.email){
+          // Already loaded — do nothing, user sees the app immediately
+          setTimeout(function(){loaded=false;},3000);
+          return;
+        }
+        // New signin or different user — load fresh
         loadUserData(session.user);
-        // Reset after 3s so next OTP login works
         setTimeout(function(){loaded=false;},3000);
       }
       if(event==="INITIAL_SESSION"&&!session){
-        setScreen("login");setAuthMode("landing");
+        // No session — only go to login if NOT already loaded from cache
+        var gu=lsGet("hr_guser",null);
+        if(!gu||!gu.email){setScreen("login");setAuthMode("landing");}
       }
       if(event==="SIGNED_OUT"){
         loaded=false;
@@ -4629,6 +4637,89 @@ null,
     );
   }
 
+  // ── Screen routing ──────────────────────────────────────────────
+  var appContent;
+  if(screen==="login"){
+    appContent=isPasswordReset?setPasswordScreen:
+      authMode==="otp"?otpScreen:landingScreen;
+  } else if(screen==="setup"){
+    appContent=setupScreen;
+  } else if(showAdmin){
+    appContent=renderAdminPanel();
+  } else {
+    // ── App shell: sticky header + scrollable content + bottom nav ──
+    var selEmp=selE;
+    var mainContent=
+      selEmp?renderEmpDetail():
+      editE?renderEditEmp():
+      offE?renderOffboard():
+      tab==="dashboard"?renderDashboard():
+      tab==="employees"?renderEmployees():
+      tab==="attendance"?(sheetE?renderAttSheet():attInnerTab==="leaves"?renderLeavesTab():renderAttendance()):
+      tab==="payroll"?renderPayroll():
+      tab==="settings"?renderSettings():
+      tab==="work"?(proTab==="tasks"?renderTasks():proTab==="kpi"?renderKPI():renderExpenses()):
+      renderDashboard();
+
+    appContent=h("div",{style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG,overflow:"hidden"}},
+      // Header
+      h("div",{style:{background:CARD,padding:"10px 16px 8px",borderBottom:"1px solid "+BDR,flexShrink:0,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        h("div",null,
+          h("div",{style:{fontSize:10,color:GRY,fontWeight:500}},org.name||""),
+          h("div",{style:{fontSize:18,fontWeight:800,color:NVY}},
+            selE?"Employee":editE?"Edit Employee":offE?"Offboard":
+            tab==="dashboard"?"Dashboard":tab==="employees"?"Team":
+            tab==="attendance"?"Attendance":tab==="payroll"?"Payroll":
+            tab==="work"?"Work":"Settings"
+          )
+        ),
+        h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+          isPaid?h("button",{onClick:function(){setShowUpdate(false);},style:{display:"none"}}):null,
+          isAdmin?h("button",{onClick:function(){setShowAdmin(true);loadAdminUsers();},style:{background:"none",border:"none",cursor:"pointer",color:GRY,fontSize:10,fontWeight:700,padding:"4px 8px",borderRadius:6,background:SFT}},"\u2605 Admin"):null,
+          h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:36,height:36,borderRadius:"50%",background:org.logo?"none":ACCENT+"15",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}},
+            org.logo?h("img",{src:org.logo,style:{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}):
+            h("div",{style:{fontSize:14,fontWeight:700,color:ACCENT}},org.name?(org.name[0]||"?").toUpperCase():"?")
+          )
+        )
+      ),
+      // Profile dropdown
+      prof?h("div",{style:{position:"absolute",top:60,right:16,background:CARD,borderRadius:12,boxShadow:"0 4px 20px rgba(0,0,0,.12)",zIndex:100,minWidth:180,border:"1px solid "+BDR,overflow:"hidden"}},
+        h("div",{style:{padding:"10px 14px",borderBottom:"1px solid "+BDR}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:""),
+          h("div",{style:{fontSize:10,color:GRY,marginTop:2}},gUser?gUser.email:"")
+        ),
+        isAdmin?h("button",{onClick:function(){setShowAdmin(true);setProf(false);loadAdminUsers();},style:{width:"100%",background:"none",border:"none",borderRadius:0,padding:"8px 14px",textAlign:"left",fontSize:12,fontWeight:700,color:ACCENT,cursor:"pointer"}},"Admin Panel"):null,
+        h("button",{onClick:function(){setTab("settings");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:0,padding:"8px 14px",textAlign:"left",fontSize:12,color:NVY,cursor:"pointer"}},"Settings"),
+        h("button",{onClick:function(){
+          syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
+          setTimeout(function(){
+            var em=gUser&&gUser.email?gUser.email:"";
+            _sb.auth.signOut();
+            ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+            if(em)["hr_org_"].forEach(function(k){try{localStorage.removeItem(k+em);}catch(e){}});
+            setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
+            setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
+            setScreen("login");setAuthMode("landing");setProf(false);
+          },500);
+          showT("Signing out...");
+        },style:{width:"100%",background:"none",border:"none",borderRadius:0,padding:"8px 14px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
+      ):null,
+      // Main content
+      h("div",{style:{flex:1,overflowY:"auto",padding:"14px 16px",WebkitOverflowScrolling:"touch"}},
+        mainContent
+      ),
+      // Bottom nav
+      (selE||editE||offE)?null:
+      h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0}},
+        navBtn2("dashboard","Home","dashboard",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        navBtn2("employees","Team","group",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        navBtn2("attendance","Attend","calendar_month",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        navBtn2("payroll","Payroll","payments",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        navBtn2("work","Work","bolt",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE)
+      )
+    );
+  }
+
   return h("div",{style:{fontFamily:"Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",background:PAGE,minHeight:"100vh",display:"flex",justifyContent:"center",transition:"background .25s"}},
     h("style",{dangerouslySetInnerHTML:{__html:CSS_SPIN+CSS_LIVE}}),
     h("div",{style:{width:"100%",maxWidth:430,minHeight:"100vh",position:"relative",display:"flex",flexDirection:"column"}},
@@ -4636,14 +4727,12 @@ null,
         h("div",{style:{fontSize:12,color:CARD,fontWeight:600}},"\u2728 New update available!"),
         h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
       ):null,
-      // admin panel handled via screen routing below
       renderPFDlPicker(),
       renderSalRegPicker(),
       renderECRPicker(),
       renderPayDlPicker(),
       renderAttDlPicker(),
-      appContent,
-      renderNotifPanel()
+      appContent
     )
   );
 }
