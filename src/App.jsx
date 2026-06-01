@@ -101,7 +101,7 @@ var SVG_ICONS={
 "assignment":"M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z",
 "forum":"M21 6.5h-2v9H6v2c0 .55.45 1 1 1h11l4 4v-15c0-.55-.45-1-1-1zm-4 6V3.5c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1V17l4-4h10c.55 0 1-.45 1-1z",
 "send":"M2.01 21L23 12 2.01 3 2 10l15 2-15 2z",
-"event_note":"M21 3h-1V1h-2v2H6V1H4v2H3c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H3V8h18v13zM5 10h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zm4 0h2v2h-2zM5 13h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zM5 16h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zm4 0h2v2h-2z","workspace_premium":"M12 2C9.38 2 7.25 4.13 7.25 6.75c0 2.16 1.4 4.01 3.35 4.61L9.5 14h5l-1.1-2.64C15.35 10.76 16.75 8.91 16.75 6.75 16.75 4.13 14.62 2 12 2zm0 8c-1.79 0-3.25-1.46-3.25-3.25S10.21 3.5 12 3.5s3.25 1.46 3.25 3.25S13.79 10 12 10zm-3 6h6l1 6H8l1-6z","receipt":"M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z","receipt_long":"M19.5 3.5 18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2v14H3v3c0 1.66 1.34 3 3 3h12c1.66 0 3-1.34 3-3V2l-1.5 1.5zM19 19c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h13v1zm1-3H6V4h14v12zM8 7h8v2H8zm0 4h8v2H8z","refresh":"M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z",
+"refresh":"M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z",
 "cases":"M20 6h-2.18c.07-.44.18-.88.18-1.36C18 2.98 16.02 1 13.64 1c-1.3 0-2.46.56-3.28 1.44L10 2.78l-.36-.34C8.82 1.56 7.66 1 6.36 1 3.98 1 2 2.98 2 5.36c0 .48.11.92.18 1.36H0v2h2v12a2 2 0 002 2h16a2 2 0 002-2V8h2V6h-4zm-6.36-3.36c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L13.36 7H11l-.92-.74C9.82 5.9 9.64 5.48 9.64 5c0-.78.58-1.36 1.36-1.36h3zm-7.28 0c.78 0 1.36.58 1.36 1.36 0 .48-.18.9-.44 1.26L6.36 7H4v-.18c-.07-.28-.18-.93 0-1.82.18-.78.58-1.36 1.36-1.36h1.72zM4 20V9h6v11H4zm8 0h-2V9h2v11zm6 0h-4V9h4v11z",
 "paid":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.88 14.76V18h-1.75v-1.29c-1.54-.4-2.63-1.55-2.63-3.03h1.77c0 .87.7 1.43 1.94 1.43 1.07 0 1.73-.47 1.73-1.24 0-.65-.44-1.03-1.7-1.33l-.79-.2c-1.88-.46-2.82-1.37-2.82-2.88 0-1.44 1.02-2.53 2.5-2.88V5.24h1.75v1.34c1.42.38 2.38 1.49 2.38 2.9h-1.77c0-.87-.6-1.43-1.7-1.43s-1.62.46-1.62 1.16c0 .63.44.98 1.63 1.26l.79.2c1.91.47 2.89 1.36 2.89 2.91-.01 1.55-1.04 2.66-2.6 3.18z",
 "local_atm":"M11 17h2v-1h1c.55 0 1-.45 1-1v-3c0-.55-.45-1-1-1h-3v-1h4V8h-2V7h-2v1h-1c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h3v1H9v2h2v1zm9-13H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V6h16v12z",
@@ -136,7 +136,7 @@ var SVG_ICONS={
 "wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28A2 2 0 0 0 22 15v-6a2 2 0 0 0-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z M16 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z",
 "badge":"M20 7h-5.5l-2-2h-5C6.34 5 5 6.34 5 7.5v9C5 17.66 6.34 19 7.5 19h13c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zm-8.5 2c1.24 0 2.25 1.01 2.25 2.25S12.74 13.5 11.5 13.5 9.25 12.49 9.25 11.25 10.26 9 11.5 9zm4.5 8h-9v-.75c0-1.5 3-2.25 4.5-2.25s4.5.75 4.5 2.25V17z",
 "monetization_on":"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"
-,"grid":"M3 3h8v8H3zm0 10h8v8H3zm10-10h8v8h-8zm0 10h8v8h-8z","cal":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z","user":"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z","arrow_back":"M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z","warning":"M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z","cancel":"M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z","calendar_today":"M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z","person":"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z","home":"M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"};
+,"event_note":"M21 3h-1V1h-2v2H6V1H4v2H3c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H3V8h18v13zM5 10h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zm4 0h2v2h-2zM5 13h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zM5 16h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zm4 0h2v2h-2z","receipt_long":"M19.5 3.5 18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2v14H3v3c0 1.66 1.34 3 3 3h12c1.66 0 3-1.34 3-3V2l-1.5 1.5zM19 19c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h13v1zm1-3H6V4h14v12zM8 7h8v2H8zm0 4h8v2H8z","warning":"M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z","home":"M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"};
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
   cal:"calendar_month",dl:"download",wa:"whatsapp",mail:"chat",edit:"edit",
@@ -179,8 +179,7 @@ function calcPay(e,absent,half,unpaid,inc,shiftAllow,workingDays){
   var esiE=(e.esi&&gr<=21000)?Math.round(gr*.0075):0,esiR=(e.esi&&gr<=21000)?Math.round(gr*.0325):0;
   var pt2=e.pt?(gr>=15000?200:0):0,tds=e.tds!==false?calcTax(gr*12):0,hi=e.hi||0;
   var cd=(e.customs||[]).reduce(function(a,c){return a+(Number(c.amt)||0);},0);
-  var loanDed=0;try{if(typeof getMonthlyLoanDeduction==="function")loanDed=getMonthlyLoanDeduction(e.id)||0;}catch(ex){loanDed=0;}
-return{gr:Math.round(gr),eb:Math.round(eb),ad:Math.round(ad),hd:Math.round(hd),ud:Math.round(ud),pfE:pfE,pfR:pfR,esiE:esiE,esiR:esiR,pt:pt2,tds:tds,hi:hi,cd:cd,loanDed:Math.round(loanDed),net:Math.round(gr-pfE-esiE-pt2-tds-hi-cd-loanDed),pfMode:e.pfMode||"capped",inc:inc,shiftAllow:shiftAllow,wDays:wDays,isFixed:isFixed,basicBase:Math.round(basicBase),pd:Math.round(pd)};
+  return{gr:Math.round(gr),eb:Math.round(eb),ad:Math.round(ad),hd:Math.round(hd),ud:Math.round(ud),pfE:pfE,pfR:pfR,esiE:esiE,esiR:esiR,pt:pt2,tds:tds,hi:hi,cd:cd,net:Math.round(gr-pfE-esiE-pt2-tds-hi-cd),pfMode:e.pfMode||"capped",inc:inc,shiftAllow:shiftAllow,wDays:wDays,isFixed:isFixed,basicBase:Math.round(basicBase),pd:Math.round(pd)};
 }
 function getWorkingDays(att,empId,year,month){
   // Count days in month minus holidays from attendance records
@@ -1168,38 +1167,13 @@ export default function App(){
   var sESDir=st("asc"),empSortDir=sESDir[0],setEmpSortDir=sESDir[1];
   // ── Pro features state ──
   var sRole=st("owner"),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee
+  var sLoans=st([]),loans=sLoans[0],setLoans=sLoans[1];
+  var sExpenses=st([]),expenses=sExpenses[0],setExpenses=sExpenses[1];
+  var sWarnings=st([]),warnings=sWarnings[0],setWarnings=sWarnings[1];
   var sIsEmp=st(false),isEmployeeSignup=sIsEmp[0],setIsEmployeeSignup=sIsEmp[1];
   var sEmpLimit=st(5),empLimit=sEmpLimit[0],setEmpLimit=sEmpLimit[1]; // set by admin per employer
-  // ── Loan & Advance state ──
-  var sLoans=st([]),loans=sLoans[0],setLoans=sLoans[1];
-  var sShowLoan=st(false),showLoanForm=sShowLoan[0],setShowLoanForm=sShowLoan[1];
-  var sLoanAmt=st(""),loanAmt=sLoanAmt[0],setLoanAmt=sLoanAmt[1];
-  var sLoanPurpose=st(""),loanPurpose=sLoanPurpose[0],setLoanPurpose=sLoanPurpose[1];
-  var sLoanDeduct=st(""),loanDeduct=sLoanDeduct[0],setLoanDeduct=sLoanDeduct[1];
-  var sLoanDate=st(todayStr),loanDate=sLoanDate[0],setLoanDate=sLoanDate[1];
-  // ── Expense Reimbursement state ──
-  var sExpenses=st([]),expenses=sExpenses[0],setExpenses=sExpenses[1];
-  var sShowExpForm=st(false),showExpForm=sShowExpForm[0],setShowExpForm=sShowExpForm[1];
-  var sExpTitle=st(""),expTitle=sExpTitle[0],setExpTitle=sExpTitle[1];
-  var sExpAmt=st(""),expAmt=sExpAmt[0],setExpAmt=sExpAmt[1];
-  var sExpCat=st("travel"),expCat=sExpCat[0],setExpCat=sExpCat[1];
-  var sExpDesc=st(""),expDesc=sExpDesc[0],setExpDesc=sExpDesc[1];
-  var sExpEmpId=st(""),expEmpId=sExpEmpId[0],setExpEmpId=sExpEmpId[1];
-  var sExpTab=st("pending"),expTab=sExpTab[0],setExpTab=sExpTab[1];
-  // ── Warning Letter state ──
-  var sWarnings=st([]),warnings=sWarnings[0],setWarnings=sWarnings[1];
-  var sShowWarnForm=st(false),showWarnForm=sShowWarnForm[0],setShowWarnForm=sShowWarnForm[1];
-  var sWarnType=st("written"),warnType=sWarnType[0],setWarnType=sWarnType[1];
-  var curFY2=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
-  var sAnnEmpId=st(""),annEmpId=sAnnEmpId[0],setAnnEmpId=sAnnEmpId[1];
-  var sAnnFY=st(curFY2),annFY=sAnnFY[0],setAnnFY=sAnnFY[1];
-  var sWarnIncident=st(""),warnIncident=sWarnIncident[0],setWarnIncident=sWarnIncident[1];
-  var sWarnAction=st(""),warnAction=sWarnAction[0],setWarnAction=sWarnAction[1];
-  var sWarnDate=st(todayStr),warnDate=sWarnDate[0],setWarnDate=sWarnDate[1];
-  var sWarnEmpId=st(null),warnEmpId=sWarnEmpId[0],setWarnEmpId=sWarnEmpId[1];
   var sInvCode=st(""),signupInviteCode=sInvCode[0],setSignupInviteCode=sInvCode[1];
-  var sEmpDT=st("profile"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1];
-  var sEmpTT=st("mine"),empTaskTab=sEmpTT[0],setEmpTaskTab=sEmpTT[1];
+  var sEmpDT=st("profile"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1]; // employee dashboard tab — starts at profile
   var sEmpData=st(null),empData=sEmpData[0],setEmpData=sEmpData[1]; // full employee record from emps
   var sEmpPayMonth=st(new Date().getMonth()),empPayMonth=sEmpPayMonth[0],setEmpPayMonth=sEmpPayMonth[1];
   var sEmpPayYear=st(new Date().getFullYear()),empPayYear=sEmpPayYear[0],setEmpPayYear=sEmpPayYear[1];
@@ -1338,6 +1312,8 @@ export default function App(){
 
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
+  // Also force hide on every render so splash never sticks
+  try{if(window.__hideSplash)window.__hideSplash("");}catch(e){}
 
 
 
@@ -1347,13 +1323,6 @@ export default function App(){
       var em=user.email;
       setGUser({name:em.split("@")[0],email:em,photo:""});
       lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
-      // Safety: if Supabase takes >12s, go to cached or setup
-      var loadTimer=setTimeout(function(){
-        var cached=lsGet("hr_org_"+em,null);
-        if(cached&&cached.name){setOrg(cached);setScreen("app");}
-        else{setScreen("setup");}
-      },12000);
-      function done(){clearTimeout(loadTimer);}
       Promise.all([
         _sb.from("user_plans").select("*").eq("email",em).maybeSingle(),
         _sb.from("user_orgs").select("*").eq("email",em).maybeSingle(),
@@ -1362,33 +1331,83 @@ export default function App(){
         var planRes=results[0],orgRes=results[1],dataRes=results[2];
         var plan=(planRes.data&&planRes.data.plan)||"free";
         var isBlocked=(planRes.data&&planRes.data.is_blocked)||false;
+        // emp_limit is set by admin — use it directly, fallback to 5 for free
         var rawLimit=(planRes.data&&planRes.data.emp_limit!=null)?Number(planRes.data.emp_limit):(plan==="paid"?999:5);
         setEmpLimit(rawLimit);
         if(isBlocked){
-          done();
           _sb.auth.signOut();
           setScreen("login");setAuthMode("landing");
-          setTimeout(function(){showT("Account suspended. Contact support.","err");},500);
+          setTimeout(function(){showT("Your account has been suspended. Contact support.","err");},500);
           return;
         }
         setIsAdmin((planRes.data&&planRes.data.is_admin)||false);
         var role=(planRes.data&&planRes.data.role)||"owner";
+        var employerEmail=(planRes.data&&planRes.data.employer_email)||"";
+        var terminatedAt=(planRes.data&&planRes.data.terminated_at)||null;
         setUserRole(role);
-        // Employee accounts not supported
+        setEmpEmployerEmail(employerEmail);
+
+        // ── Check terminated employee — 10 day access window ──
+        if(role==="terminated_employee"){
+          if(terminatedAt){
+            var termDate=new Date(terminatedAt);
+            var daysSince=Math.floor((new Date()-termDate)/86400000);
+            if(daysSince>10){
+              // Access expired — block
+              _sb.auth.signOut();
+              setScreen("login");setAuthMode("landing");
+              setTimeout(function(){showT("Your access period has ended. Contact your employer.","err");},500);
+              return;
+            }
+          }
+          // Within 10 days — treat as read-only employee
+          role="terminated_employee";
+          setUserRole("terminated_employee");
+        }
+
+        // ── Employee: load employer's data ──────────────────────────────
         if(role==="employee"||role==="terminated_employee"){
-          done();
-          _sb.auth.signOut();
-          setScreen("login");setAuthMode("landing");
-          setTimeout(function(){showT("Employee portal unavailable.","err");},400);
+          if(!employerEmail){setScreen("app");return;}
+          // Set display name from user_orgs full_name
+          var empFullName=(orgRes.data&&orgRes.data.full_name)||em.split("@")[0];
+          setGUser({name:empFullName,email:em,photo:""});
+          lsSet("hr_guser",{name:empFullName,email:em,photo:""});
+          setSuName(empFullName); // used in employee dashboard greeting
+          // Load employer's org info (company name, logo)
+          Promise.all([
+            _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_data").select("emps_json,att_json,inc_json").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
+          ]).then(function(empResults){
+            var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
+            // Set org to employer's org for display in employee header
+            setOrg({
+              name:(empOrg&&empOrg.org_name)||"",
+              logo:(empOrg&&empOrg.logo_base64)||"",
+              address:(empOrg&&empOrg.address)||"",
+              phone:(empOrg&&empOrg.phone)||"",
+              website:(empOrg&&empOrg.website)||"",
+              email:employerEmail,
+              plan:(empPlan&&empPlan.plan)||"free",
+              emp_limit:(empPlan&&empPlan.emp_limit)||null
+            });
+            // Load employer's employee data
+            if(empData){try{
+              setEmps(JSON.parse(empData.emps_json||"[]"));
+              setAtt(JSON.parse(empData.att_json||"{}"));
+              setIncentives(JSON.parse(empData.inc_json||"{}"));
+            }catch(e){}}
+            _dataLoaded.current=false;
+            setScreen("app");
+          }).catch(function(){setScreen("app");});
           return;
         }
-        // Owner/Admin flow
+
+        // ── Owner/Admin flow ─────────────────────────────────────────────
         if(orgRes.data&&orgRes.data.org_name){
           var o={
             name:orgRes.data.org_name,email:em,
-            position:orgRes.data.position||"",
-            type:orgRes.data.org_type||"",
-            plan:plan,
+            position:orgRes.data.position||"",type:orgRes.data.org_type||"",plan:plan,
             emp_limit:(planRes.data&&planRes.data.emp_limit!=null)?planRes.data.emp_limit:null,
             expires_on:(planRes.data&&planRes.data.expires_on)||null,
             address:(orgRes.data&&orgRes.data.address)||"",
@@ -1396,27 +1415,23 @@ export default function App(){
             phone:(orgRes.data&&orgRes.data.phone)||"",
             website:(orgRes.data&&orgRes.data.website)||""
           };
-          lsSet("hr_org_"+em,o);
-          setOrg(o);
-          if(dataRes.data){
-            try{setEmps(JSON.parse(dataRes.data.emps_json||"[]"));}catch(e){}
-            try{setAtt(JSON.parse(dataRes.data.att_json||"{}"));}catch(e){}
-            try{setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));}catch(e){}
-            try{setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));}catch(e){}
-            try{setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));}catch(e){}
-            try{setNotices(JSON.parse(dataRes.data.notices_json||"[]"));}catch(e){}
-            try{setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));}catch(e){}
-            try{lsSet("hr_last_sync",dataRes.data.updated_at);}catch(e){}
-          }
-          done();
+          lsSet("hr_org_"+em,o);setOrg(o);
+          if(dataRes.data){try{
+            setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
+            setAtt(JSON.parse(dataRes.data.att_json||"{}"));
+            setIncentives(JSON.parse(dataRes.data.inc_json||"{}"));
+            setShifts(JSON.parse(dataRes.data.shifts_json||"{}"));
+            setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
+            setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
+            setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+            lsSet("hr_last_sync",dataRes.data.updated_at);
+          }catch(e){}}
+          _dataLoaded.current=false;
           setScreen("app");
         } else {
-          // No org setup yet
-          done();
           setScreen("setup");
         }
       }).catch(function(){
-        done();
         var cached=lsGet("hr_org_"+em,null);
         if(cached&&cached.name){setOrg(cached);setScreen("app");}
         else setScreen("setup");
@@ -1427,23 +1442,15 @@ export default function App(){
     var loaded=false;
     var sub=_sb.auth.onAuthStateChange(function(event,session){
       if((event==="INITIAL_SESSION"||event==="SIGNED_IN")&&session&&session.user){
-        if(loaded)return;
+        if(loaded)return; // prevent double-load on app open
+        // Don't interfere if employee OTP flow is handling it
         loaded=true;
-        var cachedUser=lsGet("hr_guser",null);
-        // If app already loaded from cache — don't touch it on INITIAL_SESSION
-        if(event==="INITIAL_SESSION"&&cachedUser&&cachedUser.email&&cachedUser.email===session.user.email){
-          // Already loaded — do nothing, user sees the app immediately
-          setTimeout(function(){loaded=false;},3000);
-          return;
-        }
-        // New signin or different user — load fresh
         loadUserData(session.user);
+        // Reset after 3s so next OTP login works
         setTimeout(function(){loaded=false;},3000);
       }
       if(event==="INITIAL_SESSION"&&!session){
-        // No session — only go to login if NOT already loaded from cache
-        var gu=lsGet("hr_guser",null);
-        if(!gu||!gu.email){setScreen("login");setAuthMode("landing");}
+        setScreen("login");setAuthMode("landing");
       }
       if(event==="SIGNED_OUT"){
         loaded=false;
@@ -1459,6 +1466,24 @@ export default function App(){
     };
   },[]);
 
+
+  se(function(){
+    if(!gUser||!gUser.email||userRole==="employee")return;
+    var em=gUser.email;
+    var safe=function(table,col,val){
+      try{return _sb.from(table).select("*").eq(col,val).then(function(r){return r.data||[];}).catch(function(){return[];});}
+      catch(e){return Promise.resolve([]);}
+    };
+    Promise.all([
+      safe("loans","employer_email",em),
+      safe("expenses","employer_email",em),
+      safe("warnings","employer_email",em)
+    ]).then(function(res){
+      try{setLoans((res[0]||[]).map(function(l){return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,employee_id:l.employee_id,employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,monthlyDeduction:l.monthly_deduction,monthly_deduction:l.monthly_deduction,paidAmount:l.paid_amount,paid_amount:l.paid_amount,status:l.status,createdAt:l.created_at};}));}catch(e){}
+      try{setExpenses((res[1]||[]).map(function(ex){return {id:ex.id,employerEmail:ex.employer_email,employeeId:ex.employee_id,employeeName:ex.employee_name,title:ex.title,amount:ex.amount,category:ex.category,description:ex.description,status:ex.status,month:ex.month,year:ex.year,createdAt:ex.created_at};}));}catch(e){}
+      try{setWarnings((res[2]||[]).map(function(w){return {id:w.id,employerEmail:w.employer_email,employeeId:w.employee_id,employee_id:w.employee_id,employeeName:w.employee_name,incidentDate:w.incident_date,incident:w.incident,actionRequired:w.action_required,warningType:w.warning_type,acknowledged:w.acknowledged,createdAt:w.created_at};}));}catch(e){}
+    }).catch(function(){});
+  },[gUser]);
 
   se(function(){
     lsSet("hr_org",org);
@@ -1514,62 +1539,6 @@ export default function App(){
 
 
   function showT(msg,type){setToast({msg:msg,type:type||"ok"});setTimeout(function(){setToast(null);},2500);}
-
-  // ── Load tasks, leaves, loans, expenses, warnings from Supabase ──
-  se(function(){
-    if(!gUser||!gUser.email||userRole==="employee")return;
-    var em=gUser.email;
-    // Use individual queries so one failure doesn't block others
-    var safeGet=function(table,filter){
-      try{return _sb.from(table).select("*").eq(filter[0],filter[1]).then(function(r){return r.data||[];}).catch(function(){return[];});}
-      catch(e){return Promise.resolve([]);}
-    };
-    Promise.all([
-      safeGet("tasks",["employer_email",em]),
-      safeGet("leave_requests",["employer_email",em]),
-      safeGet("loans",["employer_email",em]),
-      safeGet("expenses",["employer_email",em]),
-      safeGet("warnings",["employer_email",em]),
-      safeGet("notifications",["to_email",em])
-    ]).then(function(results){
-      try{setTasks((results[0]||[]).map(function(t){
-        return {id:t.id,employerEmail:t.employer_email,createdBy:t.created_by,
-          assignType:t.assign_type,assignTarget:t.assign_target,title:t.title,
-          description:t.description,priority:t.priority,deadline:t.deadline,
-          status:t.status,completionNote:t.completion_note,rejectionReason:t.rejection_reason,
-          createdAt:t.created_at,updatedAt:t.updated_at};
-      }));}catch(e){}
-      try{setLeaveReqs((results[1]||[]).map(function(r){
-        return {id:r.id,employeeEmail:r.employee_email,employerEmail:r.employer_email,
-          fromDate:r.from_date,toDate:r.to_date,leaveType:r.leave_type,reason:r.reason,
-          status:r.status,adminReply:r.admin_reply,createdAt:r.created_at};
-      }));}catch(e){}
-      try{setLoans((results[2]||[]).map(function(l){
-        return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,
-          employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,
-          monthlyDeduction:l.monthly_deduction,paidAmount:l.paid_amount,status:l.status,
-          createdAt:l.created_at};
-      }));}catch(e){}
-      try{setExpenses((results[3]||[]).map(function(ex){
-        return {id:ex.id,employerEmail:ex.employer_email,employeeId:ex.employee_id,
-          employeeEmail:ex.employee_email,employeeName:ex.employee_name,title:ex.title,
-          amount:ex.amount,category:ex.category,description:ex.description,
-          status:ex.status,adminNote:ex.admin_note,month:ex.month,year:ex.year,
-          createdAt:ex.created_at};
-      }));}catch(e){}
-      try{setWarnings((results[4]||[]).map(function(w){
-        return {id:w.id,employerEmail:w.employer_email,employeeId:w.employee_id,
-          employeeName:w.employee_name,incidentDate:w.incident_date,incident:w.incident,
-          actionRequired:w.action_required,warningType:w.warning_type,
-          acknowledged:w.acknowledged,createdAt:w.created_at};
-      }));}catch(e){}
-      try{setNotifs((results[5]||[]).map(function(n){
-        return {id:n.id,to:n.to_email,from:n.from_email,type:n.type,
-          title:n.title,message:n.message,refId:n.ref_id,read:n.read,createdAt:n.created_at};
-      }));}catch(e){}
-    }).catch(function(){});
-  },[gUser]);
-
   function pastMonths(y){var r=[];for(var m2=0;m2<=(y===curY?curM:11);m2++)r.push(m2);return r;}
   function pastYears(){var r=[];for(var y=2020;y<=curY;y++)r.push(y);return r;}
   function ak(date,id){return date+"_"+id;}
@@ -1603,30 +1572,13 @@ export default function App(){
 
   function cycleAtt(date,id){
     var cur=getAtt(date,id),nxt=ATO[(ATO.indexOf(cur)+1)%ATO.length];
-    var newAtt;
-    setAtt(function(v){var o=Object.assign({},v);o[ak(date,id)]=nxt;newAtt=o;return o;});
+    setAtt(function(v){var o=Object.assign({},v);o[ak(date,id)]=nxt;return o;});
     var emp=emps.find(function(e){return e.id===id;});
     showT((emp?emp.name:"")+": "+ATL[nxt]);
-    // Save to Supabase immediately
-    var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
-    if(email){
-      setTimeout(function(){
-        _sb.from("user_data").update({att_json:JSON.stringify(newAtt||{})}).eq("email",email)
-        .then(function(){});
-      },300);
-    }
   }
   function markHolidayAll(date){
-    var newAtt;
-    setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[ak(date,e.id)]="holiday";});newAtt=o;return o;});
+    setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[ak(date,e.id)]="holiday";});return o;});
     showT("Holiday marked for all");
-    var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
-    if(email){
-      setTimeout(function(){
-        _sb.from("user_data").update({att_json:JSON.stringify(newAtt||{})}).eq("email",email)
-        .then(function(){});
-      },300);
-    }
   }
 
   function checkEmpLimit(){
@@ -1695,7 +1647,17 @@ export default function App(){
     setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);
     showT("Offboarded. Employee app access will end in 10 days.");
     syncToSupabase(newEmps,att,incentives,shifts,reminders,notices,revisions,em);
-// Employee app access not applicable
+    // Find employee app account by email and update to terminated_employee
+    var offEmp=newEmps.find(function(e){return e.id===offE.id;});
+    if(offEmp&&offEmp.email){
+      _sb.from("user_plans")
+        .update({role:"terminated_employee",terminated_at:todayStr})
+        .eq("employer_email",em)
+        .eq("email",offEmp.email)
+      .then(function(r){
+        if(!r.error)console.log("Employee app access set to terminate in 10 days");
+      });
+    }
   }
   function handleEmailChange(){
     var newEm=newEmailVal.trim().toLowerCase();
@@ -1782,7 +1744,6 @@ export default function App(){
     });
   }
   // ── DATA SYNC ──────────────────────────────────────────────────────────────
-
   function syncToSupabase(empData,attData,incData,shiftsData,remData,notData,revData,emailOverride){
     var email=(emailOverride)||(gUser&&gUser.email)||lsGet("hr_last_email","");
     if(!email)return;
@@ -2125,6 +2086,7 @@ export default function App(){
     ),
     authBtn(authLoading?"Please wait...":"Sign In",function(){setAuthErr("");setAuthMode("signin");}),
     authBtn("Create Account",function(){setAuthErr("");setIsEmployeeSignup(false);setAuthMode("signup");},"secondary"),
+
     h("div",{style:{textAlign:"center",marginTop:16,fontSize:11,color:T.AUTH_LABEL}},
       "Need help? ",
       h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},"Contact Support")
@@ -2273,6 +2235,7 @@ export default function App(){
       }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
     })
   ),true);
+
 
   var setPasswordScreen=authWrap(h("div",{key:"setpw",style:{textAlign:"center"}},
 
@@ -2683,7 +2646,8 @@ export default function App(){
           var totalGrat=actEmps.reduce(function(a,e){return a+calcGratuity(e).amount;},0);
           return[["PF (Emp+Er)",fmt(tot.pf),NVY],["ESI (Emp+Er)",fmt(tot.esi),TEL],["Prof. Tax",fmt(tot.pt),AMB],["TDS",fmt(tot.td),RED],["Gratuity Accrued",fmt(totalGrat)+(eligCount>0?" ("+eligCount+" eligible)":""),GRN]].map(function(item){return row(item[0],item[1],item[2]);});
         })()
-      ),0),
+      ),0)
+    ,
       renderComplianceCard()
     );
   }
@@ -2770,7 +2734,7 @@ null
               )
             ),
             overLim?null:h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
-null,
+
               ic(ICONS.chev,GRY,16)
             )
           );
@@ -2825,6 +2789,7 @@ null,
       ),
       h("div",{style:{display:"flex",gap:7,marginBottom:10}},
         h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:9,padding:"9px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
+        isPaid?h("button",{onClick:function(){setInviteEmpId(selE.id);setInviteEmail(selE.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"15",border:"1px solid "+ACCENT+"44",borderRadius:9,padding:"9px 12px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("forward_to_inbox",ACCENT,13),"Invite"):null,
         h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1px solid "+RED,borderRadius:9,padding:"9px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard")
       ),
       card(h("div",null,h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:7}},"Personal Info"),[["Mobile",selE.mob],["Email",selE.email],["PAN",selE.pan],["UAN",selE.uan]].filter(function(i){return i[1];}).map(function(i){return row(i[0],i[1]);}))),
@@ -2999,13 +2964,11 @@ null,
             ):null
           ):null
         ),0);
-      })(),
-      // ── Loan & Advance ──
+      })()
+    );
       card(h("div",null,renderLoanSection(selE))),
       card(renderGratuityCard(selE)),
-      // ── Warning Letters ──
       card(h("div",null,renderWarningSection(selE)))
-    );
   }
 
   function renderEditEmp(){
@@ -3155,13 +3118,7 @@ null,
       ),
       h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Tap to cycle status. Paid Leave = no deduction."),
       h("div",{style:{display:"flex",gap:7,marginBottom:9}},
-        h("button",{onClick:function(){
-          var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
-          var newAtt;
-          setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[todayDate+"_"+e.id]="present";});newAtt=o;return o;});
-          showT("All marked Present");
-          if(email)setTimeout(function(){_sb.from("user_data").update({att_json:JSON.stringify(newAtt||{})}).eq("email",email).then(function(){});},300);
-        },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:GRN+"14",border:"1px solid "+GRN+"55",borderRadius:10,padding:"9px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("check_circle",GRN,15),"Mark All Present"),
+        h("button",{onClick:function(){setAtt(function(v){var o=Object.assign({},v);actEmps.forEach(function(e){o[todayDate+"_"+e.id]="present";});return o;});showT("All marked Present");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:GRN+"14",border:"1px solid "+GRN+"55",borderRadius:10,padding:"9px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("check_circle",GRN,15),"Mark All Present"),
         h("button",{onClick:function(){markHolidayAll(todayDate);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"14",border:"1px solid "+AMB+"55",borderRadius:10,padding:"9px",color:AMB,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.sun,AMB,15),"Mark All Holiday")
       ),
       isPaid?dlBtn("Download Attendance Report",function(){makeAttSummaryPDF(actEmps,att,attM,attY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance Report — Paid Plan"),
@@ -3359,9 +3316,8 @@ null,
         )
       ),
       h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:11,padding:3,display:"flex",gap:3,marginBottom:8}},
-        [["emp","Employee"],["dept","Dept"],["er","Employer"],["annual","Annual"]].map(function(item){return h("button",{key:item[0],onClick:function(){setRepV(item[0]);},style:{flex:1,background:repV===item[0]?ACCENT:"transparent",border:"none",borderRadius:9,padding:"6px 2px",color:repV===item[0]?ACCENT_FG:GRY,fontSize:10,fontWeight:600,cursor:"pointer"}},item[1]);})
+        [["emp","Employee"],["dept","Department"],["er","Employer"],["annual","Annual"]].map(function(item){return h("button",{key:item[0],onClick:function(){setRepV(item[0]);},style:{flex:1,background:repV===item[0]?ACCENT:"transparent",border:"none",borderRadius:9,padding:"7px",color:repV===item[0]?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);})
       ),
-      repV==="annual"?renderAnnualStatement():
       repV==="dept"?h("div",null,
         h("div",{style:{display:"flex",gap:7,marginBottom:11,alignItems:"center"}},
           h("select",{value:payDept,onChange:function(e){setPayDept(e.target.value);},style:{flex:1,marginBottom:0,fontSize:12,padding:"8px 10px"}},
@@ -3479,7 +3435,6 @@ null,
                   d.tds>0?["TDS","-"+fmt(d.tds),RED]:null,
                   d.hi>0?["Health Ins.","-"+fmt(d.hi),"#EC4899"]:null,
                   d.cd>0?["Other","-"+fmt(d.cd),GRY]:null,
-                  d.loanDed>0?["Loan Deduction","-"+fmt(d.loanDed),AMB]:null,
                 ].filter(Boolean).map(function(item){
                   return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},
                     h("span",{style:{fontSize:11,color:GRY}},item[0]),
@@ -3908,7 +3863,7 @@ null,
         .then(function(r){
           setAuthLoading(false);
           if(r.error){setAuthErr(r.error.message);return;}
-          setOtpSent(true);setAuthMode("emp-otp");
+          setOtpSent(true);setAuthMode("otp");
           lsSet("hr_last_email",email);
           lsSet("hr_emp_invite",JSON.stringify({code:signupInviteCode.trim(),employerEmail:res.data.employer_email}));
         });
@@ -3981,7 +3936,6 @@ null,
   }
 
   // ── Employee dashboard ──────────────────────────────────────────────────
-
   function renderNotifPanel(){
     if(!showNotifs)return null;
     var myNotifs=notifs.filter(function(n){return n.to===gUser.email;});
@@ -4224,6 +4178,507 @@ null,
   }
 
   // ── Pro: Invite employee ────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════
+  // FEATURE 1: LOAN & ADVANCE
+  // ══════════════════════════════════════════════════════════════
+  function renderLoanSection(emp){
+    if(!emp)return null;
+    var empLoans=(loans||[]).filter(function(l){return l.employeeId===emp.id||l.employee_id===emp.id;});
+    var activeLoan=empLoans.find(function(l){return l.status==="active";});
+    var balance=activeLoan?Math.max(0,(activeLoan.amount||0)-(activeLoan.paidAmount||activeLoan.paid_amount||0)):0;
+    var sLA=React.useState(""),loanAmt=sLA[0],setLoanAmt=sLA[1];
+    var sLP=React.useState(""),loanPurpose=sLP[0],setLoanPurpose=sLP[1];
+    var sLM=React.useState(""),loanMon=sLM[0],setLoanMon=sLM[1];
+    var sLP2=React.useState(""),payAmt=sLP2[0],setPayAmt=sLP2[1];
+    var sLF=React.useState(false),showForm=sLF[0],setShowForm=sLF[1];
+    function saveLoan(){
+      if(!loanAmt||!loanMon)return showT("Enter amount and monthly deduction","err");
+      var loan={id:Date.now(),employerEmail:gUser.email,employeeId:emp.id,employee_id:emp.id,
+        employeeName:emp.name,amount:Number(loanAmt),purpose:loanPurpose,
+        monthlyDeduction:Number(loanMon),monthly_deduction:Number(loanMon),
+        paidAmount:0,paid_amount:0,status:"active",date:new Date().toISOString().split("T")[0],
+        createdAt:new Date().toISOString()};
+      setLoans(function(p){return [loan].concat(p||[]);});
+      _sb.from("loans").insert({id:String(loan.id),employer_email:gUser.email,employee_id:emp.id,
+        employee_name:emp.name,amount:loan.amount,purpose:loan.purpose,date:loan.date,
+        monthly_deduction:loan.monthlyDeduction,paid_amount:0,status:"active"}).then(function(){});
+      setLoanAmt("");setLoanPurpose("");setLoanMon("");setShowForm(false);showT("Loan recorded");
+    }
+    function recordPayment(){
+      if(!activeLoan||!payAmt)return showT("Enter payment amount","err");
+      var newPaid=(activeLoan.paidAmount||activeLoan.paid_amount||0)+Number(payAmt);
+      var newStatus=newPaid>=(activeLoan.amount||0)?"cleared":"active";
+      setLoans(function(p){return (p||[]).map(function(l){
+        if(l.id===activeLoan.id)return Object.assign({},l,{paidAmount:newPaid,paid_amount:newPaid,status:newStatus});
+        return l;
+      });});
+      _sb.from("loans").update({paid_amount:newPaid,status:newStatus}).eq("id",String(activeLoan.id)).then(function(){});
+      setPayAmt("");showT(newStatus==="cleared"?"Loan fully cleared!":"Payment recorded");
+    }
+    return h("div",null,
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:AMB+"15",display:"flex",alignItems:"center",justifyContent:"center"}},ic("account_balance",AMB,17)),
+        h("div",{style:{flex:1}},
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Loans & Advance"),
+          h("div",{style:{fontSize:10,color:GRY}},"Salary advance tracking")
+        ),
+        !activeLoan?h("button",{onClick:function(){setShowForm(!showForm);},
+          style:{background:ACCENT,border:"none",borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},
+          showForm?"Cancel":"+ New Loan"):null
+      ),
+      activeLoan?h("div",{style:{background:AMB+"12",borderRadius:12,padding:"12px 14px",marginBottom:10,border:"1px solid "+AMB+"33"}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
+          h("div",null,
+            h("div",{style:{fontSize:10,color:GRY}},"Outstanding Balance"),
+            h("div",{style:{fontSize:22,fontWeight:800,color:AMB}},fmt(balance))
+          ),
+          h("div",{style:{textAlign:"right"}},
+            h("div",{style:{fontSize:10,color:GRY}},"Total Loan"),
+            h("div",{style:{fontSize:14,fontWeight:600,color:NVY}},fmt(activeLoan.amount||0))
+          )
+        ),
+        h("div",{style:{fontSize:11,color:GRY,marginBottom:10}},
+          "Monthly deduction: "+fmt(activeLoan.monthlyDeduction||activeLoan.monthly_deduction||0)+
+          (activeLoan.purpose?" • "+activeLoan.purpose:"")
+        ),
+        h("div",{style:{display:"flex",gap:6}},
+          h("input",{type:"number",value:payAmt,onChange:function(e){setPayAmt(e.target.value);},
+            placeholder:"Payment amount",
+            style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+          h("button",{onClick:recordPayment,
+            style:{background:GRN,border:"none",borderRadius:8,padding:"8px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Record")
+        )
+      ):null,
+      showForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
+        lbl("LOAN AMOUNT (₹)"),
+        h("input",{type:"number",value:loanAmt,onChange:function(e){setLoanAmt(e.target.value);},
+          placeholder:"e.g. 10000",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:8}}),
+        lbl("PURPOSE (OPTIONAL)"),
+        h("input",{type:"text",value:loanPurpose,onChange:function(e){setLoanPurpose(e.target.value);},
+          placeholder:"e.g. Medical emergency",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:8}}),
+        lbl("MONTHLY DEDUCTION (₹)"),
+        h("input",{type:"number",value:loanMon,onChange:function(e){setLoanMon(e.target.value);},
+          placeholder:"e.g. 2000",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}),
+        h("button",{onClick:saveLoan,style:{width:"100%",background:NVY,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Loan")
+      ):null,
+      empLoans.filter(function(l){return l.status==="cleared";}).length>0?h("div",null,
+        h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:1,marginTop:8,marginBottom:4}},"PAST LOANS"),
+        empLoans.filter(function(l){return l.status==="cleared";}).map(function(l){
+          return h("div",{key:l.id,style:{display:"flex",justifyContent:"space-between",padding:"5px 0",borderTop:"1px solid "+BDR,fontSize:11}},
+            h("span",{style:{color:GRY}},(l.purpose||"Loan")+" • "+fmt(l.amount||0)),
+            h("span",{style:{color:GRN,fontWeight:600}},"Cleared")
+          );
+        })
+      ):null
+    );
+  }
+
+  function getMonthlyLoanDeduction(empId){
+    var activeLoan=(loans||[]).find(function(l){return (l.employeeId===empId||l.employee_id===empId)&&l.status==="active";});
+    return activeLoan?(activeLoan.monthlyDeduction||activeLoan.monthly_deduction||0):0;
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // FEATURE 2: EXPENSE REIMBURSEMENT
+  // ══════════════════════════════════════════════════════════════
+  function renderExpenses(){
+    var sEF=React.useState("pending"),expFilt=sEF[0],setExpFilt=sEF[1];
+    var sEA=React.useState(false),showExpForm=sEA[0],setShowExpForm=sEA[1];
+    var sEN=React.useState(""),expEmpId=sEN[0],setExpEmpId=sEN[1];
+    var sET=React.useState(""),expTitle=sET[0],setExpTitle=sET[1];
+    var sEAmt=React.useState(""),expAmt=sEAmt[0],setExpAmt=sEAmt[1];
+    var sECat=React.useState("travel"),expCat=sECat[0],setExpCat=sECat[1];
+    var sED=React.useState(""),expDesc=sED[0],setExpDesc=sED[1];
+    var filtered=(expenses||[]).filter(function(e){return expFilt==="all"||e.status===expFilt;});
+    var cats={travel:"Travel",food:"Food",purchase:"Purchase",medical:"Medical",other:"Other"};
+    function addExpense(){
+      if(!expEmpId||!expTitle||!expAmt)return showT("Fill all required fields","err");
+      var emp=emps.find(function(e){return String(e.id)===expEmpId;});
+      if(!emp)return;
+      var exp={id:Date.now(),employerEmail:gUser.email,employeeId:emp.id,employeeName:emp.name,
+        title:expTitle,amount:Number(expAmt),category:expCat,description:expDesc,
+        status:"pending",month:curM,year:curY,createdAt:new Date().toISOString()};
+      setExpenses(function(p){return [exp].concat(p||[]);});
+      _sb.from("expenses").insert({id:String(exp.id),employer_email:gUser.email,
+        employee_id:emp.id,employee_name:emp.name,title:expTitle,amount:exp.amount,
+        category:expCat,description:expDesc,status:"pending",month:curM,year:curY}).then(function(){});
+      setExpEmpId("");setExpTitle("");setExpAmt("");setExpDesc("");setShowExpForm(false);
+      showT("Expense claim added");
+    }
+    return h("div",null,
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+        h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Expense Reimbursement"),
+        h("button",{onClick:function(){setShowExpForm(!showExpForm);},
+          style:{background:ACCENT,border:"none",borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},
+          showExpForm?"Cancel":"+ Add")
+      ),
+      showExpForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:12}},
+        lbl("EMPLOYEE"),
+        h("select",{value:expEmpId,onChange:function(e){setExpEmpId(e.target.value);},
+          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}},
+          h("option",{value:""},"Select employee"),
+          emps.filter(function(e){return e.status==="active";}).map(function(e){
+            return h("option",{key:e.id,value:String(e.id)},e.name);
+          })
+        ),
+        lbl("TITLE"),
+        h("input",{value:expTitle,onChange:function(e){setExpTitle(e.target.value);},placeholder:"e.g. Client visit travel",
+          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},
+            lbl("AMOUNT (₹)"),
+            h("input",{type:"number",value:expAmt,onChange:function(e){setExpAmt(e.target.value);},placeholder:"0",
+              style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+          ),
+          h("div",{style:{flex:1}},
+            lbl("CATEGORY"),
+            h("select",{value:expCat,onChange:function(e){setExpCat(e.target.value);},
+              style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},
+              Object.entries(cats).map(function(c){return h("option",{key:c[0],value:c[0]},c[1]);})
+            )
+          )
+        ),
+        lbl("DESCRIPTION"),
+        h("input",{value:expDesc,onChange:function(e){setExpDesc(e.target.value);},placeholder:"Optional details",
+          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
+        h("button",{onClick:addExpense,style:{width:"100%",background:NVY,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Add Expense Claim")
+      ):null,
+      h("div",{style:{display:"flex",gap:5,marginBottom:10}},
+        ["all","pending","approved","rejected"].map(function(f){
+          var on=expFilt===f;
+          return h("button",{key:f,onClick:function(){setExpFilt(f);},
+            style:{flex:1,background:on?NVY:SFT,border:"none",borderRadius:8,padding:"6px 4px",
+              fontSize:10,fontWeight:on?700:500,color:on?CARD:GRY,cursor:"pointer"}},
+            f.charAt(0).toUpperCase()+f.slice(1));
+        })
+      ),
+      filtered.length===0?h("div",{style:{textAlign:"center",padding:"20px",color:GRY,fontSize:12}},"No "+expFilt+" expenses"):
+      filtered.map(function(ex){
+        return h("div",{key:ex.id,style:{background:CARD,borderRadius:12,padding:"11px 13px",marginBottom:8,border:"1px solid "+BDR}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
+            h("div",{style:{fontSize:13,fontWeight:600,color:NVY}},ex.title),
+            h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},fmt(ex.amount||0))
+          ),
+          h("div",{style:{fontSize:11,color:GRY,marginBottom:6}},
+            ex.employeeName+" • "+(cats[ex.category]||ex.category)
+          ),
+          h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
+            h("div",{style:{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,
+              background:ex.status==="approved"?GRN+"15":ex.status==="rejected"?RED+"15":AMB+"15",
+              color:ex.status==="approved"?GRN:ex.status==="rejected"?RED:AMB}},
+              ex.status.toUpperCase()
+            ),
+            ex.status==="pending"?h("button",{onClick:function(){
+              setExpenses(function(p){return (p||[]).map(function(e){return e.id===ex.id?Object.assign({},e,{status:"approved"}):e;});});
+              _sb.from("expenses").update({status:"approved"}).eq("id",String(ex.id)).then(function(){});
+              showT("Expense approved");
+            },style:{background:GRN+"15",border:"1px solid "+GRN+"33",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,color:GRN,cursor:"pointer"}},"Approve"):null,
+            ex.status==="pending"?h("button",{onClick:function(){
+              setExpenses(function(p){return (p||[]).map(function(e){return e.id===ex.id?Object.assign({},e,{status:"rejected"}):e;});});
+              _sb.from("expenses").update({status:"rejected"}).eq("id",String(ex.id)).then(function(){});
+              showT("Expense rejected");
+            },style:{background:RED+"15",border:"1px solid "+RED+"33",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,color:RED,cursor:"pointer"}},"Reject"):null
+          )
+        );
+      })
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // FEATURE 3: STATUTORY COMPLIANCE CALENDAR
+  // ══════════════════════════════════════════════════════════════
+  function renderComplianceCard(){
+    var today2=new Date();
+    var m=today2.getMonth(),y=today2.getFullYear();
+    var nextM=m===11?0:m+1,nextY=m===11?y+1:y;
+    function daysLeft(day,mo,yr){
+      var due=new Date(yr,mo,day);
+      var diff=Math.round((due-today2)/86400000);
+      return diff;
+    }
+    var items=[
+      {name:"PF Payment",day:15,m:m,y:y,desc:"EPF monthly contribution"},
+      {name:"ESI Payment",day:15,m:m,y:y,desc:"ESIC monthly contribution"},
+      {name:"TDS Payment",day:7,m:nextM,y:nextY,desc:"Tax deducted at source"},
+      {name:"PT Payment",day:20,m:m,y:y,desc:"Professional tax"},
+      {name:"ESI Return",day:11,m:nextM,y:nextY,desc:"ESIC half-yearly return"},
+    ];
+    return h("div",{style:{marginTop:16}},
+      h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:8,display:"flex",alignItems:"center",gap:6}},
+        ic("event_note",ACCENT,16),"Compliance Due Dates"
+      ),
+      h("div",{style:{background:CARD,borderRadius:14,border:"1px solid "+BDR,overflow:"hidden"}},
+        items.map(function(item,i){
+          var dl=daysLeft(item.day,item.m,item.y);
+          var color=dl<0?RED:dl<=3?RED:dl<=7?AMB:GRN;
+          var label=dl<0?"Overdue by "+Math.abs(dl)+"d":dl===0?"Due TODAY":dl===1?"Tomorrow":dl+"d left";
+          return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderBottom:i<items.length-1?"1px solid "+BDR:"none"}},
+            h("div",{style:{width:38,height:38,borderRadius:10,background:color+"12",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}},
+              h("div",{style:{fontSize:13,fontWeight:800,color:color}},item.day),
+              h("div",{style:{fontSize:7,color:color,fontWeight:600}},["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][item.m])
+            ),
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},item.name),
+              h("div",{style:{fontSize:10,color:GRY}},item.desc)
+            ),
+            h("div",{style:{fontSize:10,fontWeight:700,color:color,background:color+"12",borderRadius:10,padding:"3px 8px",flexShrink:0,whiteSpace:"nowrap"}},label)
+          );
+        })
+      ),
+      h("div",{style:{fontSize:9,color:GRY,marginTop:5,textAlign:"center"}},"Verify exact dates with your CA • Varies by business type")
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // FEATURE 4: GRATUITY CALCULATOR
+  // ══════════════════════════════════════════════════════════════
+  function renderGratuityCard(emp){
+    if(!emp||!emp.joined)return null;
+    var joined=new Date(emp.joined);
+    var today2=new Date();
+    var totalMonths=(today2.getFullYear()-joined.getFullYear())*12+(today2.getMonth()-joined.getMonth());
+    var years=Math.floor(totalMonths/12);
+    var months=totalMonths%12;
+    var eligible=years>=5;
+    var isFixed=emp.salaryType==="fixed";
+    var basicSalary=isFixed?Number(emp.fixedSalary||emp.monthlyCTC||0):Number(emp.basic||0);
+    var gratuity=eligible?Math.round(basicSalary*15*years/26):0;
+    return h("div",null,
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:"#8B5CF6"+"15",display:"flex",alignItems:"center",justifyContent:"center"}},ic("workspace_premium","#8B5CF6",17)),
+        h("div",null,
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Gratuity Calculator"),
+          h("div",{style:{fontSize:10,color:GRY}},"As per Payment of Gratuity Act")
+        )
+      ),
+      h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+        h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
+          h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},years+"y "+months+"m"),
+          h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"SERVICE")
+        ),
+        h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
+          h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},fmt(basicSalary)),
+          h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"BASIC SALARY")
+        ),
+        h("div",{style:{flex:1,background:eligible?"#8B5CF6"+"12":SFT,borderRadius:10,padding:"10px",textAlign:"center",border:eligible?"1px solid #8B5CF6"+"33":"none"}},
+          h("div",{style:{fontSize:16,fontWeight:800,color:eligible?"#8B5CF6":GRY}},eligible?fmt(gratuity):"—"),
+          h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"GRATUITY")
+        )
+      ),
+      !eligible?h("div",{style:{background:AMB+"10",borderRadius:10,padding:"8px 12px",border:"1px solid "+AMB+"33",fontSize:11,color:AMB}},
+        "⏳ Eligible after 5 years of service. "+(5-years)+" year"+(5-years===1?"":"s")+" remaining."
+      ):h("div",{style:{background:"#8B5CF6"+"10",borderRadius:10,padding:"8px 12px",border:"1px solid #8B5CF6"+"33",fontSize:11,color:"#8B5CF6"}},
+        "✓ Eligible • Formula: Basic × 15 × "+years+" years ÷ 26 = "+fmt(gratuity)
+      )
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // FEATURE 5: WARNING LETTER
+  // ══════════════════════════════════════════════════════════════
+  function generateWarningPDF(warn,emp){
+    try{
+      var doc=new window.jspdf.jsPDF();
+      doc.setFontSize(16);doc.setFont(undefined,"bold");
+      doc.text(org.name||"Company",105,20,{align:"center"});
+      doc.setFontSize(13);doc.text("WARNING LETTER",105,30,{align:"center"});
+      doc.setFontSize(10);doc.setFont(undefined,"normal");
+      doc.text("Date: "+new Date().toLocaleDateString("en-IN"),15,45);
+      doc.text("To: "+emp.name,15,53);
+      doc.text("Employee ID: "+(emp.eid||"—"),15,59);
+      doc.text("Department: "+(emp.dept||"—"),15,65);
+      doc.setFont(undefined,"bold");doc.text("Subject: Warning Letter — "+(warn.warningType||"Written").toUpperCase(),15,75);doc.setFont(undefined,"normal");
+      doc.setLineWidth(0.3);doc.line(15,78,195,78);
+      var body="This letter is to formally warn you regarding the following incident."+
+        "\n\nIncident Date: "+warn.incidentDate+
+        "\n\nIncident Details:\n"+warn.incident+
+        "\n\nAction Required:\n"+warn.actionRequired+
+        "\n\nThis is a formal "+(warn.warningType||"written")+" warning. Repetition may lead to further disciplinary action."+
+        "\n\nWe expect immediate improvement. Please acknowledge receipt of this letter.";
+      var lines=doc.splitTextToSize(body,175);
+      doc.text(lines,15,86);
+      var y2=86+lines.length*5+15;
+      doc.text("Authorised Signatory",15,y2);doc.text("_______________________",15,y2+6);
+      doc.text(org.name||"Company",15,y2+12);
+      doc.save("Warning-"+emp.name.replace(/\s/g,"-")+"-"+warn.incidentDate+".pdf");
+      showT("Warning letter downloaded");
+    }catch(e){showT("PDF error. Check jsPDF loaded.","err");}
+  }
+
+  function renderWarningSection(emp){
+    if(!emp)return null;
+    var empWarnings=(warnings||[]).filter(function(w){return w.employeeId===emp.id||w.employee_id===emp.id;});
+    var sWF=React.useState(false),showWarnForm=sWF[0],setShowWarnForm=sWF[1];
+    var sWI=React.useState(""),warnIncident=sWI[0],setWarnIncident=sWI[1];
+    var sWD=React.useState(""),warnDate=sWD[0],setWarnDate=sWD[1];
+    var sWA=React.useState(""),warnAction=sWA[0],setWarnAction=sWA[1];
+    var sWT=React.useState("written"),warnType=sWT[0],setWarnType=sWT[1];
+    function issueWarning(){
+      if(!warnIncident||!warnDate)return showT("Fill incident details","err");
+      var warn={id:Date.now(),employerEmail:gUser.email,employeeId:emp.id,employee_id:emp.id,
+        employeeName:emp.name,incidentDate:warnDate,incident:warnIncident,
+        actionRequired:warnAction,warningType:warnType,acknowledged:false,
+        createdAt:new Date().toISOString()};
+      setWarnings(function(p){return [warn].concat(p||[]);});
+      _sb.from("warnings").insert({id:String(warn.id),employer_email:gUser.email,
+        employee_id:emp.id,employee_name:emp.name,incident_date:warnDate,incident:warnIncident,
+        action_required:warnAction,warning_type:warnType,acknowledged:false}).then(function(){});
+      generateWarningPDF(warn,emp);
+      setShowWarnForm(false);setWarnIncident("");setWarnDate("");setWarnAction("");
+      showT("Warning issued and PDF downloaded");
+    }
+    return h("div",null,
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:RED+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("warning",RED,17)),
+        h("div",{style:{flex:1}},
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Warning Letters"),
+          h("div",{style:{fontSize:10,color:GRY}},empWarnings.length+" issued")
+        ),
+        h("button",{onClick:function(){setShowWarnForm(!showWarnForm);},
+          style:{background:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},
+          showWarnForm?"Cancel":"+ Issue")
+      ),
+      showWarnForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},
+            lbl("INCIDENT DATE"),
+            h("input",{type:"date",value:warnDate,onChange:function(e){setWarnDate(e.target.value);},
+              style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+          ),
+          h("div",{style:{flex:1}},
+            lbl("WARNING TYPE"),
+            h("select",{value:warnType,onChange:function(e){setWarnType(e.target.value);},
+              style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},
+              h("option",{value:"verbal"},"Verbal"),
+              h("option",{value:"written"},"Written"),
+              h("option",{value:"final"},"Final")
+            )
+          )
+        ),
+        lbl("INCIDENT DESCRIPTION"),
+        h("textarea",{value:warnIncident,onChange:function(e){setWarnIncident(e.target.value);},
+          placeholder:"Describe the incident in detail...",rows:3,
+          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}),
+        lbl("ACTION REQUIRED"),
+        h("input",{value:warnAction,onChange:function(e){setWarnAction(e.target.value);},
+          placeholder:"e.g. Immediate improvement in attendance",
+          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
+        h("button",{onClick:issueWarning,style:{width:"100%",background:RED,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"Issue Warning & Download PDF")
+      ):null,
+      empWarnings.length>0?h("div",null,
+        empWarnings.map(function(w){
+          return h("div",{key:w.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderTop:"1px solid "+BDR}},
+            h("div",null,
+              h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},(w.warningType||"Written").charAt(0).toUpperCase()+(w.warningType||"Written").slice(1)+" Warning"),
+              h("div",{style:{fontSize:10,color:GRY}},w.incidentDate+" • "+((w.incident||"").substring(0,30)+(w.incident&&w.incident.length>30?"...":"")))
+            ),
+            h("button",{onClick:function(){generateWarningPDF(w,emp);},
+              style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:600,color:NVY,cursor:"pointer",display:"flex",alignItems:"center",gap:4}},
+              ic("download",NVY,11),"PDF")
+          );
+        })
+      ):null
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // FEATURE 6: ANNUAL SALARY STATEMENT
+  // ══════════════════════════════════════════════════════════════
+  function renderAnnualStatement(){
+    var sAE=React.useState(""),annEmpId=sAE[0],setAnnEmpId=sAE[1];
+    var curFY=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
+    var sAFY=React.useState(curFY),annFY=sAFY[0],setAnnFY=sAFY[1];
+    function generateAnnualStatement(emp,fy){
+      try{
+        var doc=new window.jspdf.jsPDF();
+        doc.setFontSize(14);doc.setFont(undefined,"bold");
+        doc.text(org.name||"Company",105,18,{align:"center"});
+        doc.setFontSize(11);doc.text("ANNUAL SALARY STATEMENT",105,26,{align:"center"});
+        doc.setFontSize(9);doc.setFont(undefined,"normal");
+        doc.text("FY "+fy+"-"+(fy+1)+" (April "+fy+" to March "+(fy+1)+")",105,32,{align:"center"});
+        doc.setLineWidth(0.3);doc.line(10,35,200,35);
+        doc.text("Employee: "+emp.name,12,42);
+        doc.text("ID: "+(emp.eid||"—"),12,48);
+        doc.text("Designation: "+(emp.role||"—"),80,42);
+        doc.text("Department: "+(emp.dept||"—"),80,48);
+        doc.setFont(undefined,"bold");
+        var headers=["Month","Gross","Absent Ded.","Tax/Ded.","Net Pay"];
+        var colX=[12,60,100,140,170];
+        headers.forEach(function(h2,i){doc.text(h2,colX[i],58);});
+        doc.setFont(undefined,"normal");doc.line(10,60,200,60);
+        var months=["April","May","June","July","August","September","October","November","December","January","February","March"];
+        var totGross=0,totAtt=0,totTax=0,totNet=0;
+        var y2=65;
+        months.forEach(function(mName,mi){
+          var mo=mi+3>11?mi+3-12:mi+3;
+          var yr=mi<9?fy:fy+1;
+          var mAtt2=mAtt(emp.id,yr,mo);
+          var inc=getInc(emp.id,yr,mo);
+          var wD=getWorkingDays(att,emp.id,yr,mo);
+          var d=calcPay(emp,mAtt2.absent,mAtt2.half,mAtt2.unpaid,inc,0,wD);
+          var isFixed2=emp.salaryType==="fixed";
+          var gross=isFixed2?Number(emp.fixedSalary||emp.monthlyCTC||0):(Number(emp.basic||0)+Number(emp.hra||0)+Number(emp.allow||0));
+          var attDed2=d.ad+d.hd+d.ud;
+          var taxDed=d.pfE+d.esiE+d.pt+d.tds;
+          totGross+=gross;totAtt+=attDed2;totTax+=taxDed;totNet+=d.net;
+          doc.text(mName,colX[0],y2);
+          doc.text(fmtIN(gross),colX[1],y2);
+          doc.text(attDed2>0?"-"+fmtIN(attDed2):"—",colX[2],y2);
+          doc.text(taxDed>0?"-"+fmtIN(taxDed):"—",colX[3],y2);
+          doc.text(fmtIN(d.net),colX[4],y2);
+          y2+=6;
+        });
+        doc.line(10,y2,200,y2);y2+=5;
+        doc.setFont(undefined,"bold");
+        doc.text("TOTAL",colX[0],y2);
+        doc.text(fmtIN(totGross),colX[1],y2);
+        doc.text("-"+fmtIN(totAtt),colX[2],y2);
+        doc.text("-"+fmtIN(totTax),colX[3],y2);
+        doc.text(fmtIN(totNet),colX[4],y2);
+        doc.setFont(undefined,"normal");y2+=12;
+        doc.setFontSize(8);
+        doc.text("Note: This is a salary reference document, not a Form 16. For income tax filing, obtain Form 16 from your employer.",12,y2);
+        doc.save("Salary-Statement-"+emp.name.replace(/\s/g,"-")+"-FY"+fy+"-"+(fy+1)+".pdf");
+        showT("Annual statement downloaded");
+      }catch(e){showT("PDF error","err");}
+    }
+    return card(h("div",null,
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:ACCENT+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("receipt_long",ACCENT,17)),
+        h("div",null,
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Annual Salary Statement"),
+          h("div",{style:{fontSize:10,color:GRY}},"For CA / ITR filing reference")
+        )
+      ),
+      h("div",{style:{background:ACCENT+"08",borderRadius:10,padding:"9px 12px",marginBottom:12,fontSize:11,color:GRY,border:"1px solid "+ACCENT+"22"}},
+        "ℹ️ Not a Form 16. Use as salary reference for income tax filing. Share with your CA."
+      ),
+      lbl("SELECT EMPLOYEE"),
+      h("select",{value:annEmpId,onChange:function(e){setAnnEmpId(e.target.value);},
+        style:{width:"100%",marginBottom:10,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},
+        h("option",{value:""},"— Choose Employee —"),
+        emps.filter(function(e){return e.status==="active";}).map(function(e){
+          return h("option",{key:e.id,value:String(e.id)},e.name+(e.eid?" ("+e.eid+")":""));
+        })
+      ),
+      lbl("FINANCIAL YEAR"),
+      h("select",{value:String(annFY),onChange:function(e){setAnnFY(Number(e.target.value));},
+        style:{width:"100%",marginBottom:14,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},
+        [curFY,curFY-1,curFY-2].map(function(fy){
+          return h("option",{key:fy,value:String(fy)},"FY "+fy+"-"+(fy+1)+" (Apr "+fy+" – Mar "+(fy+1)+")");
+        })
+      ),
+      h("button",{onClick:function(){
+        if(!annEmpId)return showT("Select an employee","err");
+        var emp=emps.find(function(e){return String(e.id)===annEmpId;});
+        if(!emp)return showT("Employee not found","err");
+        generateAnnualStatement(emp,annFY);
+      },style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"13px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        ic("download",CARD,16),"Generate & Download PDF"
+      )
+    ));
+  }
+
 
   function renderAdminPanel(){
     function inactiveDays(t){if(!t)return 9999;return Math.floor((new Date()-new Date(t))/86400000);}
@@ -4445,45 +4900,6 @@ null,
       )
     );
   }
-
-  function renderAnnualStatement(){
-    var curFY=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
-    return card(h("div",null,
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:36,height:36,borderRadius:10,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("description",ACCENT,18)),
-        h("div",null,
-          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Annual Salary Statement"),
-          h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"FY reference for CA/tax filing")
-        )
-      ),
-      h("div",{style:{background:ACCENT+"08",borderRadius:10,padding:"10px 12px",marginBottom:12,border:"1px solid "+ACCENT+"22",fontSize:11,color:GRY,lineHeight:1.6}},
-        "ℹ️ Not a Form 16. Use this as salary reference for income tax filing (ITR). Share with your CA."
-      ),
-      lbl("SELECT EMPLOYEE"),
-      h("select",{value:annEmpId,onChange:function(e){setAnnEmpId(e.target.value);},
-        style:{width:"100%",marginBottom:10,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
-        [h("option",{key:"",value:""},"-- Choose Employee --")].concat(
-          actEmps.map(function(e){return h("option",{key:e.id,value:String(e.id)},e.name+(e.eid?" ("+e.eid+")":""));})
-        )
-      ),
-      lbl("FINANCIAL YEAR"),
-      h("select",{value:String(annFY),onChange:function(e){setAnnFY(Number(e.target.value));},
-        style:{width:"100%",marginBottom:14,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
-        [curFY,curFY-1,curFY-2].map(function(y){
-          return h("option",{key:y,value:String(y)},"FY "+y+"-"+(y+1)+"  (Apr "+y+" – Mar "+(y+1)+")");
-        })
-      ),
-      h("button",{onClick:function(){
-        if(!annEmpId)return showT("Select an employee","err");
-        var emp=actEmps.find(function(e){return String(e.id)===annEmpId;});
-        if(!emp)return showT("Employee not found","err");
-        generateAnnualStatement(emp,annFY);
-      },style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"13px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
-        ic("download",CARD,16),"Generate & Download PDF"
-      )
-    ));
-  }
-
   function renderPFDlPicker(){
     if(!showPFDl)return null;
     return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(e){if(e.target===e.currentTarget)setShowPFDl(false);}},
@@ -4637,7 +5053,7 @@ null,
     );
   }
 
-  // ── Force hide splash screen ──
+  // ── Force hide splash immediately ──
   try{if(window.__hideSplash)window.__hideSplash("");}catch(e){}
 
   // ── Screen routing ──────────────────────────────────────────────
@@ -4650,72 +5066,31 @@ null,
   } else if(showAdmin){
     appContent=renderAdminPanel();
   } else {
-    // ── App shell: sticky header + scrollable content + bottom nav ──
-    var selEmp=selE;
+    // ── Full app shell ──
     var mainContent;
-    try{mainContent=
-      selEmp?renderEmpDetail():
-      editE?renderEditEmp():
-      offE?renderOffboard():
-      tab==="dashboard"?renderDashboard():
-      tab==="employees"?renderEmployees():
-      tab==="attendance"?(sheetE?renderAttSheet():attInnerTab==="leaves"?renderLeavesTab():renderAttendance()):
-      tab==="payroll"?renderPayroll():
-      tab==="settings"?renderSettings():
-      tab==="work"?(proTab==="tasks"?renderTasks():proTab==="kpi"?renderKPI():renderExpenses()):
-      renderDashboard();
-    }catch(err){mainContent=h("div",{style:{padding:24,color:RED,fontSize:12,textAlign:"center"}},"Error: "+String(err)+". Please refresh.");}
-
-    appContent=h("div",{style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG,overflow:"hidden"}},
-      // Header
-      h("div",{style:{background:CARD,padding:"10px 16px 8px",borderBottom:"1px solid "+BDR,flexShrink:0,display:"flex",justifyContent:"space-between",alignItems:"center"}},
-        h("div",null,
-          h("div",{style:{fontSize:10,color:GRY,fontWeight:500}},org.name||""),
-          h("div",{style:{fontSize:18,fontWeight:800,color:NVY}},
-            selE?"Employee":editE?"Edit Employee":offE?"Offboard":
-            tab==="dashboard"?"Dashboard":tab==="employees"?"Team":
-            tab==="attendance"?"Attendance":tab==="payroll"?"Payroll":
-            tab==="work"?"Work":"Settings"
-          )
-        ),
-        h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
-          isPaid?h("button",{onClick:function(){setShowUpdate(false);},style:{display:"none"}}):null,
-          isAdmin?h("button",{onClick:function(){setShowAdmin(true);loadAdminUsers();},style:{background:SFT,border:"none",cursor:"pointer",color:GRY,fontSize:10,fontWeight:700,padding:"4px 8px",borderRadius:6}},"\u2605 Admin"):null,
-          h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:36,height:36,borderRadius:"50%",background:org.logo?"none":ACCENT+"15",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",flexShrink:0}},
-            org.logo?h("img",{src:org.logo,style:{width:36,height:36,borderRadius:"50%",objectFit:"cover"}}):
-            h("div",{style:{fontSize:14,fontWeight:700,color:ACCENT}},org.name?(org.name[0]||"?").toUpperCase():"?")
-          )
-        )
-      ),
-      // Profile dropdown
-      prof?h("div",{style:{position:"absolute",top:60,right:16,background:CARD,borderRadius:12,boxShadow:"0 4px 20px rgba(0,0,0,.12)",zIndex:100,minWidth:180,border:"1px solid "+BDR,overflow:"hidden"}},
-        h("div",{style:{padding:"10px 14px",borderBottom:"1px solid "+BDR}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:""),
-          h("div",{style:{fontSize:10,color:GRY,marginTop:2}},gUser?gUser.email:"")
-        ),
-        isAdmin?h("button",{onClick:function(){setShowAdmin(true);setProf(false);loadAdminUsers();},style:{width:"100%",background:"none",border:"none",borderRadius:0,padding:"8px 14px",textAlign:"left",fontSize:12,fontWeight:700,color:ACCENT,cursor:"pointer"}},"Admin Panel"):null,
-        h("button",{onClick:function(){setTab("settings");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:0,padding:"8px 14px",textAlign:"left",fontSize:12,color:NVY,cursor:"pointer"}},"Settings"),
-        h("button",{onClick:function(){
-          syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
-          setTimeout(function(){
-            var em=gUser&&gUser.email?gUser.email:"";
-            _sb.auth.signOut();
-            ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time","hr_org_"+em].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-            setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
-            setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
-            setScreen("login");setAuthMode("landing");setProf(false);
-          },500);
-          showT("Signing out...");
-        },style:{width:"100%",background:"none",border:"none",borderRadius:0,padding:"8px 14px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
-      ):null,
-      // Main content
-      h("div",{style:{flex:1,overflowY:"auto",padding:"14px 16px",WebkitOverflowScrolling:"touch"}},
-        mainContent
-      ),
-      // Bottom nav
+    try{
+      mainContent=
+        selE?renderEmpDetail():
+        editE?renderEditEmp():
+        offE?renderOffboard():
+        tab==="dashboard"?renderDashboard():
+        tab==="employees"?renderEmployees():
+        tab==="attendance"?(sheetE?renderAttSheet():attInnerTab==="leaves"?renderLeavesTab():renderAttendance()):
+        tab==="payroll"?renderPayroll():
+        tab==="settings"?renderSettings():
+        tab==="work"?(proTab==="tasks"?renderTasks():proTab==="kpi"?renderKPI():proTab==="expenses"?renderExpenses():renderTasks()):
+        renderDashboard();
+    }catch(err){
+      mainContent=h("div",{style:{padding:32,textAlign:"center"}},
+        h("div",{style:{fontSize:13,color:RED,marginBottom:12}},"Something went wrong loading this page."),
+        h("button",{onClick:function(){window.location.reload();},style:{background:NVY,color:CARD,border:"none",borderRadius:10,padding:"10px 24px",fontSize:13,cursor:"pointer"}},"Refresh")
+      );
+    }
+    appContent=h("div",{className:"fd",style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG,overflow:"hidden"}},
+      mainContent,
       (selE||editE||offE)?null:
-      h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0}},
-        navBtn2("dashboard","Home","dashboard",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+      h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0,boxShadow:"0 -1px 8px rgba(0,0,0,.06)"}},
+        navBtn2("dashboard","Home","home",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
         navBtn2("employees","Team","group",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
         navBtn2("attendance","Attend","calendar_month",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
         navBtn2("payroll","Payroll","payments",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
@@ -4730,13 +5105,15 @@ null,
       showUpdate?h("div",{style:{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,zIndex:9999,background:"#0F172A",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,boxShadow:"0 2px 12px rgba(0,0,0,.3)"}},
         h("div",{style:{fontSize:12,color:CARD,fontWeight:600}},"\u2728 New update available!"),
         h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
-      ):null,
+      ):repV==="annual"?renderAnnualStatement():null,
+      // admin panel handled via screen routing below
       renderPFDlPicker(),
       renderSalRegPicker(),
       renderECRPicker(),
       renderPayDlPicker(),
       renderAttDlPicker(),
-      appContent
+      appContent,
+      renderNotifPanel()
     )
   );
 }
