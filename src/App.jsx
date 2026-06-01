@@ -3969,6 +3969,13 @@ null
   }
 
   // ── Pro: Tasks screen ───────────────────────────────────────────────────
+  function renderPro(){
+    return proTab==="tasks"?renderTasks():
+      proTab==="kpi"?renderKPI():
+      proTab==="expenses"?renderExpenses():
+      renderTasks();
+  }
+
   function renderTasks(){
     if(!isPaid)return h("div",{style:{padding:24,textAlign:"center"}},
       h("div",{style:{fontSize:48,marginBottom:12}},"⭐"),
@@ -5053,49 +5060,96 @@ null
     );
   }
 
-  // ── Force hide splash immediately ──
+  // ── Force hide splash ──
   try{if(window.__hideSplash)window.__hideSplash("");}catch(e){}
 
-  // ── Screen routing ──────────────────────────────────────────────
   var appContent;
-  if(screen==="login"){
-    appContent=isPasswordReset?setPasswordScreen:
-      authMode==="otp"?otpScreen:landingScreen;
-  } else if(screen==="setup"){
-    appContent=setupScreen;
-  } else if(showAdmin){
-    appContent=renderAdminPanel();
-  } else {
-    // ── Full app shell ──
-    var mainContent;
-    try{
-      mainContent=
-        selE?renderEmpDetail():
-        editE?renderEditEmp():
-        offE?renderOffboard():
-        tab==="dashboard"?renderDashboard():
-        tab==="employees"?renderEmployees():
-        tab==="attendance"?(sheetE?renderAttSheet():attInnerTab==="leaves"?renderLeavesTab():renderAttendance()):
-        tab==="payroll"?renderPayroll():
-        tab==="settings"?renderSettings():
-        tab==="work"?(proTab==="tasks"?renderTasks():proTab==="kpi"?renderKPI():proTab==="expenses"?renderExpenses():renderTasks()):
-        renderDashboard();
-    }catch(err){
-      mainContent=h("div",{style:{padding:32,textAlign:"center"}},
-        h("div",{style:{fontSize:13,color:RED,marginBottom:12}},"Something went wrong loading this page."),
-        h("button",{onClick:function(){window.location.reload();},style:{background:NVY,color:CARD,border:"none",borderRadius:10,padding:"10px 24px",fontSize:13,cursor:"pointer"}},"Refresh")
-      );
-    }
-    appContent=h("div",{className:"fd",style:{display:"flex",flexDirection:"column",height:"100vh",background:T.BG,overflow:"hidden"}},
-      mainContent,
-      (selE||editE||offE)?null:
-      h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0,boxShadow:"0 -1px 8px rgba(0,0,0,.06)"}},
-        navBtn2("dashboard","Home","home",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
-        navBtn2("employees","Team","group",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
-        navBtn2("attendance","Attend","calendar_month",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
-        navBtn2("payroll","Payroll","payments",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
-        navBtn2("work","Work","bolt",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE)
-      )
+  if(screen==="loading")appContent=loadingScreen;
+  else if(screen==="login")appContent=isPasswordReset?setPasswordScreen:
+    (authMode==="otp"||authMode==="signup-otp")?otpScreen:
+    authMode==="signup"?signupScreen:
+    authMode==="signin"?signinScreen:
+    landingScreen;
+  else if(screen==="setup")appContent=setupScreen;
+  else if(showAdmin)appContent=renderAdminPanel();
+  else{
+    var tabContent;
+    if(tab==="dashboard")tabContent=renderDashboard();
+    else if(tab==="employees")tabContent=renderEmployees();
+    else if(tab==="attendance")tabContent=renderAttendance();
+    else if(tab==="payroll")tabContent=renderPayroll();
+    else if(tab==="pro")tabContent=renderPro();
+    else tabContent=renderSettings();
+
+    appContent=h("div",null,
+      h("div",{style:{background:CARD,padding:"14px 16px 12px",borderBottom:"1px solid "+BDR,position:"sticky",top:0,zIndex:50}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:11}},
+            h("div",{onClick:function(){
+              if(gUser&&gUser.email===OWNER_EMAIL){setShowAdmin(true);loadAdminUsers();setTab("settings");}
+            },style:{cursor:"pointer"}},logoSVG(38)),
+            h("div",null,
+              h("div",{style:{fontSize:9,color:GRY,letterSpacing:1.8,textTransform:"uppercase",fontWeight:600}},"Admin HR"),
+              h("div",{style:{fontSize:18,fontWeight:700,color:NVY,marginTop:1,letterSpacing:-.2}},tab==="dashboard"?"Dashboard":tab==="employees"?"Team":tab==="attendance"?"Attendance":tab==="payroll"?"Payroll":tab==="pro"?"Work":"Settings")
+            )
+          ),
+          h("div",{style:{display:"flex",alignItems:"center",gap:8,position:"relative"}},
+            h("button",{onClick:function(){syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);showT("Saving to cloud...");},title:"Save to cloud",style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}},
+              isSyncing
+                ?h("div",{style:{width:16,height:16,border:"2px solid "+BDR,borderTop:"2px solid "+TEL,borderRadius:"50%",animation:"spin .8s linear infinite"}}):
+                ic("cloud_upload",lastSync?GRN:GRY,18),
+              lastSync?h("div",{style:{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",background:GRN,border:"1px solid "+CARD}}):null
+            ),
+            h("button",{onClick:function(){setTab("settings");},title:"Settings",style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},
+              ic("settings",NVY,19)),
+            h("div",{style:{position:"relative",flexShrink:0}},
+              h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:38,height:38,borderRadius:11,background:NVY,border:isPaid?"2.5px solid #FCD34D":"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",padding:0,boxShadow:isPaid?"0 0 8px #FCD34D88":"none"}},
+                gUser&&gUser.photo?h("img",{src:gUser.photo,width:38,height:38,style:{borderRadius:9,display:"block"}}):ic(ICONS.user,CARD,19)
+              ),
+              isPaid?h("div",{style:{position:"absolute",bottom:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"linear-gradient(135deg,#FCD34D,#FF9900)",display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid "+CARD,zIndex:2}},
+                h("svg",{width:9,height:9,viewBox:"0 0 24 24",fill:"#0F172A"},h("path",{d:"M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"}))
+              ):null
+            ),
+            prof?h("div",{style:{position:"absolute",top:42,right:0,background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:6,minWidth:185,boxShadow:T.SHADOW_LG,zIndex:200}},
+              h("div",{style:{padding:"7px 11px",borderBottom:"1px solid "+BDR,marginBottom:3}},
+                h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:org.position),
+                h("div",{style:{fontSize:11,color:GRY}},org.name),
+                h("div",{style:{fontSize:10,color:GRY}},gUser?gUser.email:"")
+              ),
+              isAdmin?h("button",{onClick:function(){setShowAdmin(true);loadAdminUsers();setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
+              h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need support for Admin HR. My account: "+(gUser?gUser.email:"")),"_blank");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:TEL,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},ic(ICONS.wa,TEL,14),"Contact Support"),
+              h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
+                h("button",{onClick:function(){
+                  syncToSupabase(emps,att,incentives,shifts,reminders,notices,revisions);
+                  setTimeout(function(){
+                    _sb.auth.signOut();
+                    var _em=gUser&&gUser.email?gUser.email:"";
+                    ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+                    if(_em){["hr_emps_","hr_att_","hr_inc_"].forEach(function(k){try{localStorage.removeItem(k+_em);}catch(e){}});}
+                    setGUser(null);setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
+                    setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
+                    lsSet("hr_login_time",null);setScreen("login");setProf(false);
+                  },800);showT("Signing out...");
+                },style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:RED,cursor:"pointer"}},"Sign Out")
+              )
+            ):null
+          )
+        )
+      ),
+      h("div",{style:{padding:14,paddingBottom:110,overflowY:"auto"},onClick:function(){if(prof)setProf(false);}},tabContent),
+      h("div",{style:{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:CARD,borderTop:"1px solid "+BDR,display:"flex",padding:"6px 0 16px",boxShadow:T.SHADOW_NAV,zIndex:50}},
+        navBtn2("dashboard","Home","grid",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        navBtn2("employees","Team","team",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        navBtn2("attendance","Attend","cal",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        navBtn2("payroll","Payroll","pay",tab,setTab,setSelE,setEditE,setSheetE,setOffE,setEditPayE),
+        h("button",{onClick:function(){setTab("pro");setSelE(null);setEditE(null);setSheetE(null);setOffE(null);setEditPayE(null);},style:{flex:1,background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"6px 0",color:tab==="pro"?ACCENT:GRY,transition:"color .15s"}},
+          h("div",{style:{position:"relative",padding:"5px 14px",borderRadius:14,background:tab==="pro"?ACCENT_SOFT:"transparent",transition:"background .15s",display:"flex",alignItems:"center",justifyContent:"center"}},
+            ic(ICONS.work,tab==="pro"?ACCENT:GRY,22)
+          ),
+          h("div",{style:{fontSize:10,fontWeight:tab==="pro"?700:500,letterSpacing:.2}},"Work")
+        )
+      ),
+      toast?h("div",{style:{position:"fixed",top:18,left:"50%",transform:"translateX(-50%)",background:toast.type==="err"?RED:(themeMode==="light"?"#0F172A":"#fff"),color:toast.type==="err"?"#fff":(themeMode==="light"?"#fff":"#0F172A"),padding:"10px 20px",borderRadius:30,fontSize:13,fontWeight:600,zIndex:999,whiteSpace:"nowrap",boxShadow:T.SHADOW_LG,animation:"fU .2s ease"}},toast.msg):null
     );
   }
 
