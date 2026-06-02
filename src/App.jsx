@@ -1184,7 +1184,8 @@ export default function App(){
   var sWarnDate=st(""),warnDate=sWarnDate[0],setWarnDate=sWarnDate[1];
   var sWarnAction=st(""),warnAction=sWarnAction[0],setWarnAction=sWarnAction[1];
   var sWarnType=st("written"),warnType=sWarnType[0],setWarnType=sWarnType[1];
-  var sAttRptRange=st("month"),attRptRange=sAttRptRange[0],setAttRptRange=sAttRptRange[1];
+  var sAttRptRange=st("day"),attRptRange=sAttRptRange[0],setAttRptRange=sAttRptRange[1];
+  var sAttView=st("calendar"),attView=sAttView[0],setAttView=sAttView[1];
   var sAnnEmpId=st(""),annEmpId=sAnnEmpId[0],setAnnEmpId=sAnnEmpId[1];
   var curFY2=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
   var sAnnFY=st(curFY2),annFY=sAnnFY[0],setAnnFY=sAnnFY[1];
@@ -3148,14 +3149,14 @@ null
     return h("div",{className:"fd"},
       // Calendar / Report toggle
       h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:14,gap:3}},
-        h("button",{onClick:function(){setAttRptRange("calendar");},style:{flex:1,background:attRptRange!=="report"?CARD:"transparent",border:attRptRange!=="report"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attRptRange!=="report"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
-          ic("calendar_month",attRptRange!=="report"?ACCENT:GRY,16),"Attendance"
+        h("button",{onClick:function(){setAttView("calendar");},style:{flex:1,background:attView!=="report"?CARD:"transparent",border:attView!=="report"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView!=="report"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
+          ic("calendar_month",attView!=="report"?ACCENT:GRY,16),"Attendance"
         ),
-        h("button",{onClick:function(){setAttRptRange("report");},style:{flex:1,background:attRptRange==="report"?CARD:"transparent",border:attRptRange==="report"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attRptRange==="report"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
-          ic("insights",attRptRange==="report"?ACCENT:GRY,16),"Report"
+        h("button",{onClick:function(){setAttView("report");},style:{flex:1,background:attView==="report"?CARD:"transparent",border:attView==="report"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="report"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
+          ic("insights",attView==="report"?ACCENT:GRY,16),"Report"
         )
       ),
-      attRptRange==="report"?renderAttendanceReport():h("div",null,
+      attView==="report"?renderAttendanceReport():h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
           h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},MOS[attM]+" "+attY),
           h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
@@ -5429,82 +5430,186 @@ null
   function renderAttendanceReport(){
     var today2=new Date();
     var todayStr=today2.getFullYear()+"-"+String(today2.getMonth()+1).padStart(2,"0")+"-"+String(today2.getDate()).padStart(2,"0");
-    function getStats(){
-      var label="",empStats={};
-      actEmps.forEach(function(e){empStats[e.id]={p:0,a:0,h:0,l:0,total:0,name:e.name,dept:e.dept||""};});
-      if(attRptRange==="day"){
-        label="Today";
-        actEmps.forEach(function(e){var v=att[todayStr+"_"+e.id]||"unmarked";if(v==="present")empStats[e.id].p++;else if(v==="absent")empStats[e.id].a++;else if(v==="half")empStats[e.id].h++;else if(v==="paid"||v==="unpaid")empStats[e.id].l++;empStats[e.id].total++;});
+    var rng=["day","week","month","year"].indexOf(attRptRange)>=0?attRptRange:"day";
+
+    function buildDates(){
+      var s,e,label;
+      var t=new Date(today2);
+      if(rng==="day"){
+        return {dates:[todayStr],label:"Today — "+today2.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"}),single:true};
+      } else if(rng==="week"){
+        s=new Date(t);s.setDate(t.getDate()-t.getDay());
+        e=new Date(t);e.setDate(t.getDate()+(6-t.getDay()));
+        label="This Week ("+s.toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" - "+e.toLocaleDateString("en-IN",{day:"numeric",month:"short"})+")";
+      } else if(rng==="month"){
+        s=new Date(curY,curM,1);e=new Date(curY,curM+1,0);
+        label=MOS[curM]+" "+curY;
       } else {
-        var start=new Date(today2),end=new Date(today2);
-        if(attRptRange==="week"){label="This Week";start.setDate(today2.getDate()-today2.getDay());}
-        else if(attRptRange==="year"){label=String(curY);start=new Date(curY,0,1);end=new Date(curY,11,31);}
-        else{label=MOS[curM]+" "+curY;start=new Date(curY,curM,1);end=new Date(curY,curM+1,0);}
-        for(var d2=new Date(start);d2<=end;d2.setDate(d2.getDate()+1)){
-          var ds=d2.getFullYear()+"-"+String(d2.getMonth()+1).padStart(2,"0")+"-"+String(d2.getDate()).padStart(2,"0");
-          actEmps.forEach(function(e){var v=att[ds+"_"+e.id]||"unmarked";if(v==="present")empStats[e.id].p++;else if(v==="absent")empStats[e.id].a++;else if(v==="half")empStats[e.id].h++;else if(v==="paid"||v==="unpaid")empStats[e.id].l++;empStats[e.id].total++;});
-        }
+        s=new Date(curY,0,1);e=new Date(curY,11,31);
+        label="Year "+curY;
       }
-      var totP=0,totA=0,totH=0,totL=0,totMarked=0;
-      Object.values(empStats).forEach(function(s){totP+=s.p;totA+=s.a;totH+=s.h;totL+=s.l;totMarked+=s.p+s.a+s.h+s.l;});
-      var absentees=Object.values(empStats).filter(function(s){return s.a>0;}).sort(function(a,b){return b.a-a.a;});
-      return {label:label,totP:totP,totA:totA,totH:totH,totL:totL,totMarked:totMarked,absentees:absentees};
+      var dates=[];
+      for(var d2=new Date(s);d2<=e;d2.setDate(d2.getDate()+1)){
+        dates.push(d2.getFullYear()+"-"+String(d2.getMonth()+1).padStart(2,"0")+"-"+String(d2.getDate()).padStart(2,"0"));
+      }
+      return {dates:dates,label:label,single:false};
     }
-    var stats=getStats();
-    var pct=function(n){return stats.totMarked>0?Math.round(n*100/stats.totMarked):0;};
-    function donut(p,color){
-      var r=28,cx=36,cy=36,circ=2*Math.PI*r,dash=circ*p/100;
-      return h("svg",{width:72,height:72,viewBox:"0 0 72 72"},
-        h("circle",{cx:cx,cy:cy,r:r,fill:"none",stroke:BDR,strokeWidth:8}),
-        h("circle",{cx:cx,cy:cy,r:r,fill:"none",stroke:color,strokeWidth:8,
-          strokeDasharray:dash+" "+(circ-dash),strokeDashoffset:circ/4,strokeLinecap:"round"})
+
+    var range=buildDates();
+    var totalEmps=actEmps.length;
+
+    var empStats=actEmps.map(function(emp){
+      var p=0,a=0,hd=0,l=0,u=0;
+      range.dates.forEach(function(ds){
+        var v=att[ds+"_"+emp.id]||"unmarked";
+        if(v==="present")p++;
+        else if(v==="absent")a++;
+        else if(v==="half")hd++;
+        else if(v==="paid"||v==="unpaid")l++;
+        else u++;
+      });
+      return {id:emp.id,name:emp.name,dept:emp.dept||"",p:p,a:a,h:hd,l:l,u:u};
+    });
+
+    var totP=empStats.reduce(function(s,e){return s+e.p;},0);
+    var totA=empStats.reduce(function(s,e){return s+e.a;},0);
+    var totH=empStats.reduce(function(s,e){return s+e.h;},0);
+    var totL=empStats.reduce(function(s,e){return s+e.l;},0);
+    var totalDays=range.dates.length;
+
+    // For today: group by status
+    var gr_present=empStats.filter(function(e){return e.p>0;});
+    var gr_absent=empStats.filter(function(e){return e.a>0;});
+    var gr_half=empStats.filter(function(e){return e.h>0;});
+    var gr_leave=empStats.filter(function(e){return e.l>0;});
+    var gr_unmarked=empStats.filter(function(e){return e.p===0&&e.a===0&&e.h===0&&e.l===0;});
+
+    // For multi-day: sort by count desc
+    var sorted_absent=empStats.filter(function(e){return e.a>0;}).sort(function(a,b){return b.a-a.a;});
+    var sorted_present=empStats.filter(function(e){return e.p>0;}).sort(function(a,b){return b.p-a.p;});
+    var sorted_leave=empStats.filter(function(e){return e.l>0;}).sort(function(a,b){return b.l-a.l;});
+
+    var donuts=range.single?[
+      {label:"Present",count:gr_present.length,total:totalEmps,color:"#10B981"},
+      {label:"Absent",count:gr_absent.length,total:totalEmps,color:RED},
+      {label:"Half Day",count:gr_half.length,total:totalEmps,color:AMB},
+      {label:"Leave",count:gr_leave.length,total:totalEmps,color:"#8B5CF6"},
+    ]:[
+      {label:"Present",count:totP,total:totalEmps*totalDays,color:"#10B981"},
+      {label:"Absent",count:totA,total:totalEmps*totalDays,color:RED},
+      {label:"Half Day",count:totH,total:totalEmps*totalDays,color:AMB},
+      {label:"Leave",count:totL,total:totalEmps*totalDays,color:"#8B5CF6"},
+    ];
+
+    function donut(count,total,color){
+      var pct=total>0?Math.round(count*100/total):0;
+      var r=28,cx=36,cy=36,circ=2*Math.PI*r,dash=circ*pct/100;
+      return h("div",{style:{position:"relative",width:72,height:72}},
+        h("svg",{width:72,height:72,viewBox:"0 0 72 72"},
+          h("circle",{cx:cx,cy:cy,r:r,fill:"none",stroke:BDR,strokeWidth:8}),
+          pct>0?h("circle",{cx:cx,cy:cy,r:r,fill:"none",stroke:color,strokeWidth:8,
+            strokeDasharray:dash+" "+(circ-dash),strokeDashoffset:circ/4,strokeLinecap:"round"}):null
+        ),
+        h("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
+          h("div",{style:{fontSize:13,fontWeight:800,color:pct>0?color:GRY}},pct+"%"),
+          h("div",{style:{fontSize:8,color:GRY}},count+(range.single?" emp":" days"))
+        )
       );
     }
-    var charts=[["Present",stats.totP,"#10B981"],["Absent",stats.totA,RED],["Half",stats.totH,AMB],["Leave",stats.totL,"#8B5CF6"]];
+
+    function empRow(e,badge,badgeColor){
+      return h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid "+BDR}},
+        h("div",{style:{width:28,height:28,borderRadius:"50%",background:NVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:CARD,flexShrink:0}},
+          (e.name||"?").charAt(0).toUpperCase()),
+        h("div",{style:{flex:1,minWidth:0}},
+          h("div",{style:{fontSize:12,fontWeight:600,color:NVY,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.name),
+          h("div",{style:{fontSize:10,color:GRY}},e.dept)
+        ),
+        h("div",{style:{fontSize:11,fontWeight:700,color:badgeColor,background:badgeColor+"12",borderRadius:8,padding:"2px 8px",flexShrink:0}},badge)
+      );
+    }
+
+    function section(title,icon,color,rows,badgeFn){
+      if(!rows||rows.length===0)return null;
+      return h("div",{style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:10,border:"1px solid "+BDR}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8}},
+          ic(icon,color,15),
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},title),
+          h("div",{style:{marginLeft:"auto",background:color+"12",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700,color:color}},rows.length)
+        ),
+        rows.slice(0,8).map(function(e){return empRow(e,badgeFn(e),color);}),
+        rows.length>8?h("div",{style:{textAlign:"center",padding:"6px 0",fontSize:11,color:GRY}},"+"+( rows.length-8)+" more"):null
+      );
+    }
+
     function shareWA(){
       var num=(waOfficial||"").replace(/[^0-9]/g,"");
-      if(!num){showT("Set official WA number in Settings > Company","err");return;}
-      var txt=(org.name||"Company")+" - Attendance Report\n"+stats.label+"\n"
-        +"Present: "+stats.totP+" ("+pct(stats.totP)+"%)\n"
-        +"Absent: "+stats.totA+" ("+pct(stats.totA)+"%)\n"
-        +"Half Day: "+stats.totH+"\nLeave: "+stats.totL
-        +(stats.absentees.length>0?"\n\nAbsentees: "+stats.absentees.slice(0,5).map(function(e){return e.name+(e.a>1?" ("+e.a+"d)":"");}).join(", ")+"":"")
-        +"\n\nSent via Admin HR";
-      window.open("https://wa.me/"+num+"?text="+encodeURIComponent(txt),"_blank");
+      if(!num){showT("Set higher official WA number in Settings > Account","err");return;}
+      var lines=[(org.name||"Company")+" - Attendance Report",range.label,"---"];
+      if(range.single){
+        lines.push("Present: "+gr_present.length+"/"+totalEmps);
+        lines.push("Absent: "+gr_absent.length+"/"+totalEmps);
+        if(gr_half.length)lines.push("Half Day: "+gr_half.length);
+        if(gr_leave.length)lines.push("On Leave: "+gr_leave.length);
+        if(gr_unmarked.length)lines.push("Unmarked: "+gr_unmarked.length);
+        if(gr_absent.length)lines.push("Absent: "+gr_absent.map(function(e){return e.name;}).join(", "));
+      } else {
+        lines.push("Total Present Days: "+totP);
+        lines.push("Total Absent Days: "+totA);
+        if(totH)lines.push("Half Days: "+totH);
+        if(totL)lines.push("Leave Days: "+totL);
+        if(sorted_absent.length)lines.push("Most Absent: "+sorted_absent.slice(0,3).map(function(e){return e.name+" ("+e.a+"d)";}).join(", "));
+      }
+      lines.push("---");lines.push("Sent via Admin HR");
+      window.open("https://wa.me/"+num+"?text="+encodeURIComponent(lines.join("\n")),"_blank");
     }
+
     return h("div",{className:"fd"},
       h("div",{style:{display:"flex",background:SFT,borderRadius:10,padding:3,marginBottom:14,gap:3}},
         [["day","Today"],["week","Week"],["month","Month"],["year","Year"]].map(function(item){
-          var on=attRptRange===item[0];
+          var on=rng===item[0];
           return h("button",{key:item[0],onClick:function(){setAttRptRange(item[0]);},
             style:{flex:1,background:on?CARD:"transparent",border:on?"1px solid "+BDR:"none",
-              borderRadius:8,padding:"7px 4px",fontSize:11,fontWeight:on?700:500,color:on?NVY:GRY,cursor:"pointer"}},item[1]);
+              borderRadius:8,padding:"7px 4px",fontSize:11,fontWeight:on?700:500,
+              color:on?NVY:GRY,cursor:"pointer"}},item[1]);
         })
       ),
-      h("div",{style:{fontSize:12,fontWeight:600,color:GRY,textAlign:"center",marginBottom:12}},stats.label),
-      h("div",{style:{display:"flex",justifyContent:"space-around",background:CARD,borderRadius:14,padding:"16px 8px",border:"1px solid "+BDR,marginBottom:12}},
-        charts.map(function(c){return h("div",{key:c[0],style:{textAlign:"center"}},
-          h("div",{style:{position:"relative",width:72,height:72,margin:"0 auto 6px"}},
-            donut(pct(c[1]),c[2]),
-            h("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
-              h("div",{style:{fontSize:13,fontWeight:800,color:c[2]}},pct(c[1])+"%"),
-              h("div",{style:{fontSize:8,color:GRY}},c[1]+"d")
-            )
-          ),
-          h("div",{style:{fontSize:10,fontWeight:600,color:NVY}},c[0])
+      h("div",{style:{fontSize:11,fontWeight:600,color:GRY,textAlign:"center",marginBottom:12}},range.label),
+      h("div",{style:{display:"flex",justifyContent:"space-around",background:CARD,borderRadius:14,padding:"14px 8px",border:"1px solid "+BDR,marginBottom:12}},
+        donuts.map(function(d){return h("div",{key:d.label,style:{textAlign:"center"}},
+          donut(d.count,d.total,d.color),
+          h("div",{style:{fontSize:10,fontWeight:600,color:NVY,marginTop:4}},d.label)
         );})
       ),
-      stats.absentees.length>0?h("div",{style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:12,border:"1px solid "+BDR}},
-        h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:10}},ic("warning",RED,14)," Absentees ("+stats.absentees.length+")"),
-        stats.absentees.map(function(e){return h("div",{key:e.name,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:"1px solid "+BDR}},
-          h("div",null,h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),h("div",{style:{fontSize:10,color:GRY}},e.dept)),
-          h("div",{style:{background:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:700,color:RED}},e.a+" absent")
+      h("div",{style:{display:"flex",gap:6,marginBottom:12}},
+        (range.single?[
+          {label:"Present",val:gr_present.length+"/"+totalEmps,color:"#10B981"},
+          {label:"Absent",val:gr_absent.length+"/"+totalEmps,color:RED},
+          {label:"Leave",val:gr_leave.length+"/"+totalEmps,color:"#8B5CF6"},
+          {label:"Unmarked",val:gr_unmarked.length+"/"+totalEmps,color:GRY},
+        ]:[
+          {label:"Present Days",val:totP,color:"#10B981"},
+          {label:"Absent Days",val:totA,color:RED},
+          {label:"Half Days",val:totH,color:AMB},
+          {label:"Leave Days",val:totL,color:"#8B5CF6"},
+        ]).map(function(s){return h("div",{key:s.label,style:{flex:1,background:s.color+"10",borderRadius:10,padding:"8px 4px",textAlign:"center",border:"1px solid "+s.color+"22"}},
+          h("div",{style:{fontSize:15,fontWeight:800,color:s.color}},s.val),
+          h("div",{style:{fontSize:8,color:GRY,marginTop:2}},s.label)
         );})
-      ):h("div",{style:{background:"#10B98112",borderRadius:12,padding:"12px 14px",marginBottom:12,border:"1px solid #10B98133",display:"flex",alignItems:"center",gap:8}},
-        ic("task_alt","#10B981",18),h("div",{style:{fontSize:12,fontWeight:600,color:"#10B981"}},"No absences this period")
       ),
-      h("button",{onClick:shareWA,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"#25D36615",border:"1.5px solid #25D36644",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,color:"#128C7E",cursor:"pointer"}},
-        ic("whatsapp","#25D366",18),"Share on WhatsApp"
+      range.single?(
+        section("Present","task_alt","#10B981",gr_present,function(){return "Present";}),
+        section("Absent","cancel",RED,gr_absent,function(){return "Absent";}),
+        gr_half.length?section("Half Day","schedule",AMB,gr_half,function(){return "Half Day";}):null,
+        gr_leave.length?section("On Leave","event_busy","#8B5CF6",gr_leave,function(){return "On Leave";}):null,
+        gr_unmarked.length?section("Not Marked","help",GRY,gr_unmarked,function(){return "Unmarked";}):null
+      ):(
+        section("Most Present","task_alt","#10B981",sorted_present,function(e){return e.p+"d";}),
+        section("Most Absent","cancel",RED,sorted_absent,function(e){return e.a+"d";}),
+        sorted_leave.length?section("Most Leave","event_busy","#8B5CF6",sorted_leave,function(e){return e.l+"d";}):null
+      ),
+      h("button",{onClick:shareWA,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"#25D36615",border:"1.5px solid #25D36644",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,color:"#128C7E",cursor:"pointer",marginTop:4}},
+        ic("whatsapp","#25D366",18),"Share Report on WhatsApp"
       )
     );
   }
