@@ -2964,11 +2964,11 @@ null
             ):null
           ):null
         ),0);
-      })()
-    );
+      })(),
       card(h("div",null,renderLoanSection(selE))),
       card(renderGratuityCard(selE)),
       card(h("div",null,renderWarningSection(selE)))
+    );
   }
 
   function renderEditEmp(){
@@ -3469,7 +3469,8 @@ null
               h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,15),"Employee Copy"),
               h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1.5px solid "+BDR,borderRadius:12,padding:"11px",color:NVY,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,15),"Employer Copy")
             ):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Payroll PDF — Paid Plan Only")
-      )
+      ),
+      repV==="annual"?renderAnnualStatement():null
     );
   }
 
@@ -3970,29 +3971,35 @@ null
 
   // ── Pro: Tasks screen ───────────────────────────────────────────────────
   function renderPro(){
-    return proTab==="tasks"?renderTasks():
-      proTab==="kpi"?renderKPI():
-      proTab==="expenses"?renderExpenses():
-      renderTasks();
-  }
-
-  function renderTasks(){
     if(!isPaid)return h("div",{style:{padding:24,textAlign:"center"}},
-      h("div",{style:{fontSize:48,marginBottom:12}},"⭐"),
+      h("div",{style:{fontSize:48,marginBottom:12}},"\u2605"),
       h("div",{style:{fontSize:18,fontWeight:700,color:NVY,marginBottom:8}},"Admin HR Pro"),
-      h("div",{style:{fontSize:13,color:GRY,marginBottom:20,lineHeight:1.6}},"Task management, KPI tracking, employee portal and more — unlock with Admin HR Pro."),
-      h("div",{style:{background:SFT,borderRadius:12,padding:16,marginBottom:20,textAlign:"left"}},
-        ["Assign and track tasks","Employee self-service portal","KPI & performance tracking","Leave apply & approve workflow","In-app notifications"].map(function(f){
-          return h("div",{key:f,style:{display:"flex",gap:8,alignItems:"center",padding:"5px 0"}},
-            ic("arrow_right",ACCENT,18),
-            h("div",{style:{fontSize:12,color:NVY}},f)
-          );
-        })
-      ),
+      h("div",{style:{fontSize:13,color:GRY,marginBottom:20,lineHeight:1.6}},"Unlock Tasks, KPI tracking, Expense reimbursements and more with Admin HR Pro."),
       h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro"),"_blank");},style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
         ic("whatsapp","#25D366",18),"Contact to Upgrade"
       )
     );
+    return h("div",{className:"fd"},
+      // ── Tab switcher ──
+      h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:14,gap:3}},
+        [["tasks","Tasks","assignment"],["kpi","KPI","insights"],["expenses","Expenses","receipt"]].map(function(item){
+          var on=proTab===item[0];
+          return h("button",{key:item[0],onClick:function(){setProTab(item[0]);},
+            style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:on?CARD:"transparent",
+              border:on?"1px solid "+BDR:"none",borderRadius:9,padding:"8px 6px",
+              color:on?NVY:GRY,fontSize:11,fontWeight:on?700:500,cursor:"pointer"}},
+            ic(item[2],on?ACCENT:GRY,14),item[1]);
+        })
+      ),
+      // ── Content ──
+      proTab==="tasks"?renderTasksContent():
+      proTab==="kpi"?renderKPI():
+      proTab==="expenses"?renderExpenses():
+      renderTasksContent()
+    );
+  }
+
+  function renderTasksContent(){
 
     var myTasks=tasks;
     var filteredTasks=taskTab==="all"?myTasks:myTasks.filter(function(t){return t.status===taskTab;});
@@ -5159,8 +5166,7 @@ null
       showUpdate?h("div",{style:{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,zIndex:9999,background:"#0F172A",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,boxShadow:"0 2px 12px rgba(0,0,0,.3)"}},
         h("div",{style:{fontSize:12,color:CARD,fontWeight:600}},"\u2728 New update available!"),
         h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
-      ):repV==="annual"?renderAnnualStatement():null,
-      // admin panel handled via screen routing below
+      ):null,
       renderPFDlPicker(),
       renderSalRegPicker(),
       renderECRPicker(),
