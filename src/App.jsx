@@ -476,7 +476,7 @@ function makeAttPDF(name,y,m,recs,orgName,orgEmail,orgPos,logoSrc,orgAddress,com
     downloadPDF(doc.output("blob"),fname+"-"+MOS[m]+"-"+y+".pdf");
   },function(){alert("PDF library failed to load.");});
 }
-function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo){
+function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=14,cw=W-mg*2,rh=10;
@@ -551,7 +551,7 @@ function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddre
   },function(){alert("PDF library failed to load.");});
 }
 
-function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo){
+function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=14,cw=W-mg*2,rh=10;
@@ -828,7 +828,7 @@ function generateECR(emps,m,y,mAttFn,incFn){
 }
 
 // ── SALARY REGISTER PDF (Statutory format) ────────────────────────────────
-function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo){
+function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
     var W=297,H=210,mg=10,cw=W-mg*2,rh=8.5;
@@ -2119,7 +2119,7 @@ export default function App(){
       h("div",{style:{fontSize:11,color:T.AUTH_LABEL,whiteSpace:"nowrap"}},"Are you an employee?"),
       h("div",{style:{flex:1,height:1,background:T.AUTH_INPUT_BDR}})
     ),
-    authBtn("Join with Invite Code",function(){setAuthErr("");setIsEmployeeSignup(true);setAuthMode("emp-signup");},"secondary"),
+
     h("div",{style:{textAlign:"center",marginTop:16,fontSize:11,color:T.AUTH_LABEL}},
       "Need help? ",
       h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},"Contact Support")
@@ -2792,9 +2792,6 @@ null
               )
             ),
             overLim?null:h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
-              isPaid?h("button",{onClick:function(ev){ev.stopPropagation();setInviteEmpId(e.id);setInviteEmail(e.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},title:"Invite to app",style:{background:ACCENT+"15",border:"1px solid "+ACCENT+"33",borderRadius:8,width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},
-                ic("forward_to_inbox",ACCENT,14)
-              ):null,
               ic(ICONS.chev,GRY,16)
             )
           );
@@ -3254,7 +3251,7 @@ null
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
         h("div",null,h("div",{style:{fontSize:14,fontWeight:800,color:NVY}},sheetE.name),h("div",{style:{fontSize:11,color:GRY}},MOS[mo]+" "+yr)),
         h("div",{style:{display:"flex",gap:5}},
-          h("button",{onClick:isPaid?function(){var recs={};Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+sheetE.id)&&kv[0].startsWith(yr+"-"+String(mo+1).padStart(2,"0"));}).forEach(function(kv){recs[kv[0].split("_")[0]]=kv[1];});makeAttPDF(sheetE.name,yr,mo,recs,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}:needPaid,style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 10px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.dl:"lock",CARD,13),isPaid?"PDF":"PDF"),
+          h("button",{onClick:isPaid?function(){var recs={};Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+sheetE.id)&&kv[0].startsWith(yr+"-"+String(mo+1).padStart(2,"0"));}).forEach(function(kv){recs[kv[0].split("_")[0]]=kv[1];});try{makeAttPDF(sheetE.name,yr,mo,recs,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 10px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.dl:"lock",CARD,13),isPaid?"PDF":"PDF"),
           h("button",{onClick:function(){shareAtt(sheetE);},style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 10px",fontSize:11,color:NVY,fontWeight:700,cursor:"pointer"}},ic(ICONS.wa,"#25D366",13),"WhatsApp")
         )
       ),
@@ -3778,7 +3775,7 @@ null
                 h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Payment of Wages Act format")
               )
             ),
-            h("button",{onClick:isPaid?function(){makeSalaryRegisterPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}:needPaid,
+            h("button",{onClick:isPaid?function(){try{makeSalaryRegisterPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,
               style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
               ic(isPaid?ICONS.dl:"lock","#fff",12),isPaid?"PDF":"Paid")
           ),
@@ -3812,7 +3809,7 @@ null
               )
             ),
             h("div",{style:{display:"flex",gap:5}},
-              h("button",{onClick:isPaid?function(){try{makeEmpPDF(emps,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("Error: "+ex.message,"err");}}:needPaid,
+              h("button",{onClick:isPaid?function(){try{makeEmpPDF(emps,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,
                 style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
                 ic(isPaid?ICONS.dl:"lock","#fff",12),"PDF"),
               h("button",{onClick:isPaid?function(){makeEmpCSV(emps);}:needPaid,
@@ -5430,78 +5427,102 @@ null
   function renderAttendanceReport(){
     var today2=new Date();
     var todayStr=today2.getFullYear()+"-"+String(today2.getMonth()+1).padStart(2,"0")+"-"+String(today2.getDate()).padStart(2,"0");
+    // rng is independent of attView toggle
     var rng=["day","week","month","year"].indexOf(attRptRange)>=0?attRptRange:"day";
 
-    function buildDates(){
-      var s,e,label;
+    function buildRange(){
+      var s,e,label,workLabel;
       var t=new Date(today2);
       if(rng==="day"){
-        return {dates:[todayStr],label:"Today — "+today2.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"}),single:true};
+        return {dates:[todayStr],label:"Today  —  "+today2.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"}),single:true,workDays:1};
       } else if(rng==="week"){
-        s=new Date(t);s.setDate(t.getDate()-t.getDay());
-        e=new Date(t);e.setDate(t.getDate()+(6-t.getDay()));
-        label="This Week ("+s.toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" - "+e.toLocaleDateString("en-IN",{day:"numeric",month:"short"})+")";
+        s=new Date(t);s.setDate(t.getDate()-t.getDay()+1);// Mon
+        e=new Date(s);e.setDate(s.getDate()+6);
+        label="This Week  ("+s.toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" - "+e.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+")";
       } else if(rng==="month"){
         s=new Date(curY,curM,1);e=new Date(curY,curM+1,0);
         label=MOS[curM]+" "+curY;
       } else {
         s=new Date(curY,0,1);e=new Date(curY,11,31);
-        label="Year "+curY;
+        label="Year  "+curY;
       }
       var dates=[];
-      for(var d2=new Date(s);d2<=e;d2.setDate(d2.getDate()+1)){
+      for(var d2=new Date(s);d2<=e&&d2<=today2;d2.setDate(d2.getDate()+1)){
         dates.push(d2.getFullYear()+"-"+String(d2.getMonth()+1).padStart(2,"0")+"-"+String(d2.getDate()).padStart(2,"0"));
       }
-      return {dates:dates,label:label,single:false};
+      // Count working days (exclude holidays)
+      var workDays=dates.filter(function(ds){
+        // Check if all employees are marked holiday
+        var anyHol=actEmps.some(function(e){return att[ds+"_"+e.id]==="holiday";});
+        return !anyHol;
+      }).length||dates.length;
+      return {dates:dates,label:label,single:false,workDays:workDays};
     }
 
-    var range=buildDates();
+    var range=buildRange();
     var totalEmps=actEmps.length;
+    if(totalEmps===0)return h("div",{style:{textAlign:"center",padding:32,color:GRY,fontSize:13}},"No active employees.");
 
+    // ── Per-employee stats ──
     var empStats=actEmps.map(function(emp){
-      var p=0,a=0,hd=0,l=0,u=0;
+      var p=0,a=0,hd=0,l=0,hol=0,u=0;
       range.dates.forEach(function(ds){
         var v=att[ds+"_"+emp.id]||"unmarked";
         if(v==="present")p++;
         else if(v==="absent")a++;
         else if(v==="half")hd++;
         else if(v==="paid"||v==="unpaid")l++;
+        else if(v==="holiday")hol++;
         else u++;
       });
-      return {id:emp.id,name:emp.name,dept:emp.dept||"",p:p,a:a,h:hd,l:l,u:u};
+      var marked=p+a+hd+l;
+      var attRate=marked>0?Math.round((p+hd*0.5)*100/marked):0;
+      return {id:emp.id,name:emp.name,dept:emp.dept||"General",p:p,a:a,h:hd,l:l,hol:hol,u:u,marked:marked,attRate:attRate};
     });
 
+    // ── Aggregates ──
     var totP=empStats.reduce(function(s,e){return s+e.p;},0);
     var totA=empStats.reduce(function(s,e){return s+e.a;},0);
     var totH=empStats.reduce(function(s,e){return s+e.h;},0);
     var totL=empStats.reduce(function(s,e){return s+e.l;},0);
-    var totalDays=range.dates.length;
+    var totalMarked=totP+totA+totH+totL;
+    var overallAttRate=totalMarked>0?Math.round((totP+totH*0.5)*100/totalMarked):0;
 
-    // For today: group by status
+    // ── Today groupings ──
     var gr_present=empStats.filter(function(e){return e.p>0;});
     var gr_absent=empStats.filter(function(e){return e.a>0;});
     var gr_half=empStats.filter(function(e){return e.h>0;});
     var gr_leave=empStats.filter(function(e){return e.l>0;});
     var gr_unmarked=empStats.filter(function(e){return e.p===0&&e.a===0&&e.h===0&&e.l===0;});
 
-    // For multi-day: sort by count desc
+    // ── Multi-day sorted lists ──
     var sorted_absent=empStats.filter(function(e){return e.a>0;}).sort(function(a,b){return b.a-a.a;});
     var sorted_present=empStats.filter(function(e){return e.p>0;}).sort(function(a,b){return b.p-a.p;});
     var sorted_leave=empStats.filter(function(e){return e.l>0;}).sort(function(a,b){return b.l-a.l;});
+    var sorted_att=empStats.slice().sort(function(a,b){return a.attRate-b.attRate;});// lowest first for concern
 
+    // ── Department summary ──
+    var depts={};
+    empStats.forEach(function(e){
+      if(!depts[e.dept])depts[e.dept]={name:e.dept,p:0,a:0,l:0,h:0,count:0};
+      depts[e.dept].p+=e.p;depts[e.dept].a+=e.a;depts[e.dept].l+=e.l;depts[e.dept].h+=e.h;depts[e.dept].count++;
+    });
+    var deptList=Object.values(depts).filter(function(d){return d.count>0;});
+
+    // ── Donut ──
     var donuts=range.single?[
       {label:"Present",count:gr_present.length,total:totalEmps,color:"#10B981"},
       {label:"Absent",count:gr_absent.length,total:totalEmps,color:RED},
       {label:"Half Day",count:gr_half.length,total:totalEmps,color:AMB},
       {label:"Leave",count:gr_leave.length,total:totalEmps,color:"#8B5CF6"},
     ]:[
-      {label:"Present",count:totP,total:totalEmps*totalDays,color:"#10B981"},
-      {label:"Absent",count:totA,total:totalEmps*totalDays,color:RED},
-      {label:"Half Day",count:totH,total:totalEmps*totalDays,color:AMB},
-      {label:"Leave",count:totL,total:totalEmps*totalDays,color:"#8B5CF6"},
+      {label:"Present",count:totP,total:totalMarked||1,color:"#10B981"},
+      {label:"Absent",count:totA,total:totalMarked||1,color:RED},
+      {label:"Half Day",count:totH,total:totalMarked||1,color:AMB},
+      {label:"Leave",count:totL,total:totalMarked||1,color:"#8B5CF6"},
     ];
 
-    function donut(count,total,color){
+    function donutSVG(count,total,color){
       var pct=total>0?Math.round(count*100/total):0;
       var r=28,cx=36,cy=36,circ=2*Math.PI*r,dash=circ*pct/100;
       return h("div",{style:{position:"relative",width:72,height:72}},
@@ -5512,59 +5533,71 @@ null
         ),
         h("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
           h("div",{style:{fontSize:13,fontWeight:800,color:pct>0?color:GRY}},pct+"%"),
-          h("div",{style:{fontSize:8,color:GRY}},count+(range.single?" emp":" days"))
+          h("div",{style:{fontSize:8,color:GRY,marginTop:1}},count+(range.single?" emp":" days"))
         )
       );
     }
 
-    function empRow(e,badge,badgeColor){
-      return h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid "+BDR}},
-        h("div",{style:{width:28,height:28,borderRadius:"50%",background:NVY,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:CARD,flexShrink:0}},
+    function empRow(e,badge,badgeColor,sub){
+      return h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:9,padding:"7px 0",borderBottom:"1px solid "+BDR}},
+        h("div",{style:{width:30,height:30,borderRadius:"50%",background:NVY+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:NVY,flexShrink:0}},
           (e.name||"?").charAt(0).toUpperCase()),
         h("div",{style:{flex:1,minWidth:0}},
           h("div",{style:{fontSize:12,fontWeight:600,color:NVY,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.name),
-          h("div",{style:{fontSize:10,color:GRY}},e.dept)
+          h("div",{style:{fontSize:10,color:GRY}},e.dept+(sub?" — "+sub:""))
         ),
         h("div",{style:{fontSize:11,fontWeight:700,color:badgeColor,background:badgeColor+"12",borderRadius:8,padding:"2px 8px",flexShrink:0}},badge)
       );
     }
 
-    function section(title,icon,color,rows,badgeFn){
+    function section(title,icon,color,rows,badgeFn,subFn){
       if(!rows||rows.length===0)return null;
       return h("div",{style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:10,border:"1px solid "+BDR}},
-        h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8,paddingBottom:8,borderBottom:"1px solid "+BDR}},
           ic(icon,color,15),
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},title),
-          h("div",{style:{marginLeft:"auto",background:color+"12",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700,color:color}},rows.length)
+          h("div",{style:{marginLeft:"auto",background:color+"12",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700,color:color}},rows.length+" emp")
         ),
-        rows.slice(0,8).map(function(e){return empRow(e,badgeFn(e),color);}),
-        rows.length>8?h("div",{style:{textAlign:"center",padding:"6px 0",fontSize:11,color:GRY}},"+"+( rows.length-8)+" more"):null
+        rows.slice(0,10).map(function(e){return empRow(e,badgeFn(e),color,subFn?subFn(e):null);}),
+        rows.length>10?h("div",{style:{textAlign:"center",padding:"6px 0",fontSize:11,color:GRY}},"+"+( rows.length-10)+" more"):null
       );
     }
 
     function shareWA(){
       var num=(waOfficial||"").replace(/[^0-9]/g,"");
-      if(!num){showT("Set higher official WA number in Settings > Account","err");return;}
-      var lines=[(org.name||"Company")+" - Attendance Report",range.label,"---"];
+      if(!num){showT("Set higher official WhatsApp number in Settings > Account","err");return;}
+      var lines=[
+        (org.name||"Company")+" — Attendance Report",
+        range.label,
+        "Period: "+range.dates[0]+" to "+range.dates[range.dates.length-1],
+        "Total Employees: "+totalEmps,
+        "Overall Attendance Rate: "+overallAttRate+"%",
+        "---"
+      ];
       if(range.single){
         lines.push("Present: "+gr_present.length+"/"+totalEmps);
         lines.push("Absent: "+gr_absent.length+"/"+totalEmps);
         if(gr_half.length)lines.push("Half Day: "+gr_half.length);
         if(gr_leave.length)lines.push("On Leave: "+gr_leave.length);
-        if(gr_unmarked.length)lines.push("Unmarked: "+gr_unmarked.length);
-        if(gr_absent.length)lines.push("Absent: "+gr_absent.map(function(e){return e.name;}).join(", "));
+        if(gr_unmarked.length)lines.push("Not Marked: "+gr_unmarked.length);
+        if(gr_absent.length)lines.push("\nAbsent Today: "+gr_absent.map(function(e){return e.name;}).join(", "));
       } else {
         lines.push("Total Present Days: "+totP);
         lines.push("Total Absent Days: "+totA);
-        if(totH)lines.push("Half Days: "+totH);
-        if(totL)lines.push("Leave Days: "+totL);
-        if(sorted_absent.length)lines.push("Most Absent: "+sorted_absent.slice(0,3).map(function(e){return e.name+" ("+e.a+"d)";}).join(", "));
+        lines.push("Leave Days: "+totL);
+        if(sorted_absent.length)lines.push("\nHighest Absence:\n"+sorted_absent.slice(0,5).map(function(e,i){return (i+1)+". "+e.name+" — "+e.a+" days";}).join("\n"));
+        if(overallAttRate<90)lines.push("\nAttention: Attendance rate below 90%");
       }
-      lines.push("---");lines.push("Sent via Admin HR");
+      lines.push("\n---");
+      lines.push("Sent via Admin HR");
       window.open("https://wa.me/"+num+"?text="+encodeURIComponent(lines.join("\n")),"_blank");
     }
 
+    var attRateColor=overallAttRate>=95?"#10B981":overallAttRate>=85?AMB:RED;
+
     return h("div",{className:"fd"},
+
+      // ── Range tabs ──
       h("div",{style:{display:"flex",background:SFT,borderRadius:10,padding:3,marginBottom:14,gap:3}},
         [["day","Today"],["week","Week"],["month","Month"],["year","Year"]].map(function(item){
           var on=rng===item[0];
@@ -5574,45 +5607,106 @@ null
               color:on?NVY:GRY,cursor:"pointer"}},item[1]);
         })
       ),
-      h("div",{style:{fontSize:11,fontWeight:600,color:GRY,textAlign:"center",marginBottom:12}},range.label),
+
+      // ── Summary header card ──
+      h("div",{style:{background:NVY,borderRadius:14,padding:"14px",marginBottom:12}},
+        h("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:2}},range.label),
+        h("div",{style:{display:"flex",alignItems:"flex-end",justifyContent:"space-between",marginBottom:12}},
+          h("div",null,
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)",letterSpacing:1,marginBottom:3}},"ATTENDANCE RATE"),
+            h("div",{style:{fontSize:32,fontWeight:900,color:overallAttRate>=95?"#4ADE80":overallAttRate>=85?"#FCD34D":"#F87171",letterSpacing:-.5}},overallAttRate+"%"),
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,.4)"}},range.single?(gr_present.length+" of "+totalEmps+" present"):(totalMarked+" marked days tracked"))
+          ),
+          h("div",{style:{textAlign:"right"}},
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)",marginBottom:4}},"EMPLOYEES"),
+            h("div",{style:{fontSize:20,fontWeight:800,color:"#fff"}},totalEmps),
+            overallAttRate<90?h("div",{style:{fontSize:10,color:"#F87171",fontWeight:600,marginTop:4}},"Below 90% threshold"):null
+          )
+        ),
+        // Mini stats row
+        h("div",{style:{display:"flex",gap:6}},
+          [
+            {l:"Present",v:range.single?gr_present.length:totP,c:"#4ADE80"},
+            {l:"Absent",v:range.single?gr_absent.length:totA,c:"#F87171"},
+            {l:"Half Day",v:range.single?gr_half.length:totH,c:"#FCD34D"},
+            {l:"Leave",v:range.single?gr_leave.length:totL,c:"#A78BFA"},
+          ].map(function(s){return h("div",{key:s.l,style:{flex:1,background:"rgba(255,255,255,.08)",borderRadius:8,padding:"6px 4px",textAlign:"center"}},
+            h("div",{style:{fontSize:14,fontWeight:800,color:s.c}},s.v),
+            h("div",{style:{fontSize:8,color:"rgba(255,255,255,.4)",marginTop:1}},s.l)
+          );})
+        )
+      ),
+
+      // ── Donut charts ──
       h("div",{style:{display:"flex",justifyContent:"space-around",background:CARD,borderRadius:14,padding:"14px 8px",border:"1px solid "+BDR,marginBottom:12}},
         donuts.map(function(d){return h("div",{key:d.label,style:{textAlign:"center"}},
-          donut(d.count,d.total,d.color),
+          donutSVG(d.count,d.total,d.color),
           h("div",{style:{fontSize:10,fontWeight:600,color:NVY,marginTop:4}},d.label)
         );})
       ),
-      h("div",{style:{display:"flex",gap:6,marginBottom:12}},
-        (range.single?[
-          {label:"Present",val:gr_present.length+"/"+totalEmps,color:"#10B981"},
-          {label:"Absent",val:gr_absent.length+"/"+totalEmps,color:RED},
-          {label:"Leave",val:gr_leave.length+"/"+totalEmps,color:"#8B5CF6"},
-          {label:"Unmarked",val:gr_unmarked.length+"/"+totalEmps,color:GRY},
-        ]:[
-          {label:"Present Days",val:totP,color:"#10B981"},
-          {label:"Absent Days",val:totA,color:RED},
-          {label:"Half Days",val:totH,color:AMB},
-          {label:"Leave Days",val:totL,color:"#8B5CF6"},
-        ]).map(function(s){return h("div",{key:s.label,style:{flex:1,background:s.color+"10",borderRadius:10,padding:"8px 4px",textAlign:"center",border:"1px solid "+s.color+"22"}},
-          h("div",{style:{fontSize:15,fontWeight:800,color:s.color}},s.val),
-          h("div",{style:{fontSize:8,color:GRY,marginTop:2}},s.label)
-        );})
-      ),
+
+      // ── Department breakdown (multi-day only) ──
+      !range.single&&deptList.length>1?h("div",{style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:10,border:"1px solid "+BDR}},
+        h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:10,paddingBottom:8,borderBottom:"1px solid "+BDR}},"Department Breakdown"),
+        deptList.map(function(d){
+          var dTotal=d.p+d.a+d.h+d.l;
+          var dRate=dTotal>0?Math.round((d.p+d.h*0.5)*100/dTotal):0;
+          var dc=dRate>=95?"#10B981":dRate>=85?AMB:RED;
+          return h("div",{key:d.name,style:{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:"1px solid "+BDR}},
+            h("div",{style:{flex:1,fontSize:12,fontWeight:600,color:NVY}},d.name),
+            h("div",{style:{fontSize:10,color:GRY}},d.count+" emp"),
+            // Mini bar
+            h("div",{style:{width:60,height:6,background:BDR,borderRadius:3,overflow:"hidden"}},
+              h("div",{style:{width:dRate+"%",height:"100%",background:dc,borderRadius:3,transition:"width .3s"}})
+            ),
+            h("div",{style:{fontSize:11,fontWeight:700,color:dc,minWidth:32,textAlign:"right"}},dRate+"%")
+          );
+        })
+      ):null,
+
+      // ── Low attendance alert ──
+      !range.single&&sorted_att.filter(function(e){return e.attRate<75&&e.marked>3;}).length>0?
+      h("div",{style:{background:RED+"10",borderRadius:12,padding:"10px 14px",marginBottom:10,border:"1px solid "+RED+"33"}},
+        h("div",{style:{fontSize:11,fontWeight:700,color:RED,marginBottom:6}},"Attendance Concern — Below 75%"),
+        sorted_att.filter(function(e){return e.attRate<75&&e.marked>3;}).map(function(e){
+          return h("div",{key:e.id,style:{display:"flex",justifyContent:"space-between",padding:"4px 0",fontSize:11}},
+            h("span",{style:{color:NVY,fontWeight:600}},e.name),
+            h("span",{style:{color:RED,fontWeight:700}},e.attRate+"% ("+e.a+" absent / "+e.marked+" days)")
+          );
+        })
+      ):null,
+
+      // ── Employee sections ──
       range.single?(
-        section("Present","task_alt","#10B981",gr_present,function(){return "Present";}),
-        section("Absent","cancel",RED,gr_absent,function(){return "Absent";}),
-        gr_half.length?section("Half Day","schedule",AMB,gr_half,function(){return "Half Day";}):null,
-        gr_leave.length?section("On Leave","event_busy","#8B5CF6",gr_leave,function(){return "On Leave";}):null,
-        gr_unmarked.length?section("Not Marked","help",GRY,gr_unmarked,function(){return "Unmarked";}):null
+        h("div",null,
+          section("Present Today","task_alt","#10B981",gr_present,function(){return "Present";},null),
+          section("Absent Today","cancel",RED,gr_absent,function(){return "Absent";},null),
+          gr_half.length?section("Half Day","schedule",AMB,gr_half,function(){return "Half Day";},null):null,
+          gr_leave.length?section("On Leave","event_busy","#8B5CF6",gr_leave,function(){return "Leave";},null):null,
+          gr_unmarked.length>0?h("div",{style:{background:GRY+"10",borderRadius:14,padding:"12px 14px",marginBottom:10,border:"1px solid "+BDR}},
+            h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:8,paddingBottom:8,borderBottom:"1px solid "+BDR}},
+              ic("help",GRY,14),
+              h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Not Yet Marked"),
+              h("div",{style:{marginLeft:"auto",background:GRY+"12",borderRadius:20,padding:"2px 10px",fontSize:11,fontWeight:700,color:GRY}},gr_unmarked.length+" emp")
+            ),
+            gr_unmarked.map(function(e){return empRow(e,"Unmarked",GRY,e.dept);})
+          ):null
+        )
       ):(
-        section("Most Present","task_alt","#10B981",sorted_present,function(e){return e.p+"d";}),
-        section("Most Absent","cancel",RED,sorted_absent,function(e){return e.a+"d";}),
-        sorted_leave.length?section("Most Leave","event_busy","#8B5CF6",sorted_leave,function(e){return e.l+"d";}):null
+        h("div",null,
+          section("Highest Attendance","task_alt","#10B981",sorted_present,function(e){return e.p+"d present";},function(e){return e.attRate+"% rate";}),
+          section("Highest Absence","cancel",RED,sorted_absent,function(e){return e.a+"d absent";},function(e){return e.marked+" days tracked";}),
+          sorted_leave.length?section("Most Leave","event_busy","#8B5CF6",sorted_leave,function(e){return e.l+"d leave";},null):null
+        )
       ),
+
+      // ── WA Share ──
       h("button",{onClick:shareWA,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"#25D36615",border:"1.5px solid #25D36644",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,color:"#128C7E",cursor:"pointer",marginTop:4}},
         ic("whatsapp","#25D366",18),"Share Report on WhatsApp"
       )
     );
   }
+
 
   function getMonthlyLoanDeduction(empId){
     var a=(loans||[]).find(function(l){return (l.employeeId===empId||l.employee_id===empId)&&l.status==="active";});
@@ -5891,6 +5985,7 @@ null
   }
 
   function renderAdminPanel(){
+    var now=new Date(); // triggers re-render each second via parent now state
     function inactiveDays(t){if(!t)return 9999;return Math.floor((new Date()-new Date(t))/86400000);}
     function planExpired(u){return u.expires_on&&new Date(u.expires_on)<new Date();}
 
@@ -5997,10 +6092,7 @@ null
                     h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},u.emp_limit!=null?u.emp_limit:(paid?"\u221e":"5")),
                     h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"LIMIT")
                   ),
-                  h("div",{style:{background:SFT,borderRadius:8,padding:"5px 8px",textAlign:"center",minWidth:44}},
-                    h("div",{style:{fontSize:13,fontWeight:800,color:"#10B981"}},(u.app_employees||[]).length),
-                    h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"ON APP")
-                  ),
+
                   h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"5px 8px",display:"flex",alignItems:"center",gap:5}},
                     h("div",{style:{width:6,height:6,borderRadius:"50%",background:actColor,flexShrink:0}}),
                     h("div",null,
@@ -6059,8 +6151,18 @@ null
                   [
                     ["Joined",u.joined_at?new Date(u.joined_at).toLocaleDateString("en-IN"):"—"],
                     ["Last login",u.last_sign_in_at?new Date(u.last_sign_in_at).toLocaleDateString("en-IN"):"Never"],
-                    ["Email",u.email_confirmed_at?"\u2713 Verified":"\u26a0 Not verified"],
-                    u.expires_on?["Plan expires",new Date(u.expires_on).toLocaleDateString("en-IN")+(planExpired(u)?" (EXPIRED)":"")]:null,
+                    ["Email",u.email_confirmed_at?"Verified":"Not verified"],
+                    u.expires_on?(function(){
+                    var expDate=new Date(u.expires_on);
+                    expDate.setHours(23,59,59,999);
+                    var diff=expDate-new Date();
+                    if(diff<=0)return ["Plan Expiry",new Date(u.expires_on).toLocaleDateString("en-IN")+" — EXPIRED"];
+                    var dd=Math.floor(diff/86400000);
+                    var hh=Math.floor((diff%86400000)/3600000);
+                    var mm=Math.floor((diff%3600000)/60000);
+                    var ss=Math.floor((diff%60000)/1000);
+                    return ["Expiry Countdown (DD:HH:MM:SS)",String(dd).padStart(2,"0")+":"+String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0")];
+                  })():null,
                     u.org_type?["Org type",u.org_type]:null,
                   ].filter(Boolean).map(function(item){
                     return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"66"}},
@@ -6070,25 +6172,7 @@ null
                   })
                 ),
 
-                // Employees on app
-                h("div",{style:{padding:"0 14px 10px"}},
-                  h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"EMPLOYEES ON APP"),
-                  (u.app_employees||[]).length===0?
-                  h("div",{style:{fontSize:11,color:GRY,fontStyle:"italic"}},"None yet"):
-                  (u.app_employees||[]).map(function(emp){
-                    return h("div",{key:emp.email,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 0",borderBottom:"1px solid "+BDR+"66"}},
-                      h("div",null,
-                        h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},emp.full_name||emp.email.split("@")[0]),
-                        h("div",{style:{fontSize:10,color:GRY}},emp.email)
-                      ),
-                      h("button",{onClick:function(){
-                        if(!window.confirm("Remove "+emp.email+" from app?"))return;
-                        _sb.from("user_plans").update({role:"owner",employer_email:""}).eq("email",emp.email)
-                        .then(function(){loadAdminUsers();showT("Removed");});
-                      },style:{background:RED+"10",border:"1px solid "+RED+"33",borderRadius:6,padding:"3px 8px",fontSize:10,color:RED,cursor:"pointer",fontWeight:600}},"Remove")
-                    );
-                  })
-                ),
+
 
                 // Delete — bottom, intentional
                 !isOwner?h("div",{style:{padding:"0 14px 12px"}},
@@ -6253,9 +6337,9 @@ null
         h("button",{onClick:function(){
           setShowAttDl(false);
           if(attDlAll){
-            makeAttSummaryYearPDF(actEmps,att,attDlY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");
+            try{makeAttSummaryYearPDF(actEmps,att,attDlY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}
           } else {
-            makeAttSummaryPDF(actEmps,att,attDlM,attDlY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");
+            try{makeAttSummaryPDF(actEmps,att,attDlM,attDlY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}
           }
         },style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download PDF")
