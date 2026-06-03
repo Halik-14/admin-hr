@@ -6229,21 +6229,39 @@ null
                     ic(isExpanded?"expand_less":"expand_more",GRY,18)
                   )
                 ),
-                // Row 2: 3 stats + last active
+                // Row 2: stats + last active + expiry countdown
                 h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
                   // Limit
                   h("div",{style:{background:SFT,borderRadius:8,padding:"5px 8px",textAlign:"center",minWidth:44}},
                     h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},u.emp_limit!=null?u.emp_limit:(paid?"\u221e":"5")),
                     h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"LIMIT")
                   ),
-
                   h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"5px 8px",display:"flex",alignItems:"center",gap:5}},
                     h("div",{style:{width:6,height:6,borderRadius:"50%",background:actColor,flexShrink:0}}),
                     h("div",null,
                       h("div",{style:{fontSize:8,color:GRY}},"LAST LOGIN"),
                       h("div",{style:{fontSize:10,fontWeight:600,color:actColor}},actLabel)
                     )
-                  )
+                  ),
+                  u.expires_on&&paid?(function(){
+                    var expDate=new Date(u.expires_on);
+                    expDate.setHours(23,59,59,999);
+                    var diff=expDate-now;
+                    if(diff<=0)return h("div",{style:{background:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"5px 8px",textAlign:"center",flexShrink:0}},
+                      h("div",{style:{fontSize:9,fontWeight:800,color:RED,fontFamily:"monospace"}},"EXPIRED"),
+                      h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"EXPIRY")
+                    );
+                    var dd=Math.floor(diff/86400000);
+                    var hh=Math.floor((diff%86400000)/3600000);
+                    var mm=Math.floor((diff%3600000)/60000);
+                    var ss=Math.floor((diff%60000)/1000);
+                    var countdown=String(dd).padStart(2,"0")+":"+String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0");
+                    var expColor=dd<=3?RED:dd<=7?AMB:GRN;
+                    return h("div",{style:{background:expColor+"12",border:"1px solid "+expColor+"33",borderRadius:8,padding:"5px 8px",textAlign:"center",flexShrink:0}},
+                      h("div",{style:{fontSize:9,fontWeight:800,color:expColor,fontFamily:"monospace",letterSpacing:.5}},countdown),
+                      h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"DD:HH:MM:SS")
+                    );
+                  })():null
                 )
               ),
 
@@ -6296,17 +6314,7 @@ null
                     ["Joined",u.joined_at?new Date(u.joined_at).toLocaleDateString("en-IN"):"—"],
                     ["Last login",u.last_sign_in_at?new Date(u.last_sign_in_at).toLocaleDateString("en-IN"):"Never"],
                     ["Email",u.email_confirmed_at?"Verified":"Not verified"],
-                    u.expires_on?(function(){
-                    var expDate=new Date(u.expires_on);
-                    expDate.setHours(23,59,59,999);
-                    var diff=expDate-new Date();
-                    if(diff<=0)return ["Plan Expiry",new Date(u.expires_on).toLocaleDateString("en-IN")+" — EXPIRED"];
-                    var dd=Math.floor(diff/86400000);
-                    var hh=Math.floor((diff%86400000)/3600000);
-                    var mm=Math.floor((diff%3600000)/60000);
-                    var ss=Math.floor((diff%60000)/1000);
-                    return ["Expiry Countdown (DD:HH:MM:SS)",String(dd).padStart(2,"0")+":"+String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0")];
-                  })():null,
+                    u.expires_on?["Plan Expiry",new Date(u.expires_on).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(planExpired(u)?" — EXPIRED":"")]:null,
                     u.org_type?["Org type",u.org_type]:null,
                   ].filter(Boolean).map(function(item){
                     return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"66"}},
