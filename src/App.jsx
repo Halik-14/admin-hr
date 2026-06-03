@@ -3301,31 +3301,33 @@ null
           var s=getAtt(todayDate,e.id),ma=mAtt(e.id,attY,attM);
           // Per-employee working days = marked days EXCLUDING holidays
           var daysInMo2=new Date(attY,attM+1,0).getDate();
-          var empWorkingDays=0,empPresentDays=0;
+          var empWorkingDays=0,empPresentDays=0,empAbsent=0,empHalf=0;
           for(var dd=1;dd<=daysInMo2;dd++){
             var ds3=attY+"-"+String(attM+1).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
             var v3=att[ds3+"_"+e.id];
+            // Working days = any status EXCEPT unmarked and holiday
             if(v3&&v3!=="unmarked"&&v3!=="holiday"){
               empWorkingDays++;
-              if(v3==="present")empPresentDays++;
-              else if(v3==="half")empPresentDays+=0.5;
+              if(v3==="present"){empPresentDays++;} 
+              else if(v3==="half"){empHalf++;empPresentDays+=0.5;}
+              else if(v3==="absent"){empAbsent++;}
             }
           }
           var empAttRate=empWorkingDays>0?Math.round(empPresentDays*100/empWorkingDays):0;
           var attRateCol=empAttRate>=95?"#10B981":empAttRate>=80?AMB:empAttRate>0?RED:GRY;
-          return h("div",{key:e.id,style:{borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none",paddingBottom:7,marginBottom:7}},
+          // Display: "18.5 / 22 days" where half day = 0.5
+          var presentDisplay=empHalf>0?(empPresentDays%1===0?empPresentDays:empPresentDays.toFixed(1)):empPresentDays;
+          return h("div",{key:e.id,style:{borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none",paddingBottom:8,marginBottom:8}},
             h("div",{onClick:function(){cycleAtt(todayDate,e.id);},className:"rh",style:{display:"flex",alignItems:"center",gap:9,cursor:"pointer",borderRadius:6,padding:"2px 2px"}},
               av(e,36),
               h("div",{style:{flex:1,minWidth:0}},
                 h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
-                h("div",{style:{fontSize:10,color:GRY}},[e.role,e.dept].filter(Boolean).join(" • ")||"No designation")
+                h("div",{style:{fontSize:10,color:GRY}},[e.role,e.dept].filter(Boolean).join(" \u2022 ")||"No designation"),
+                empWorkingDays>0?h("div",{style:{fontSize:10,fontWeight:600,color:attRateCol,marginTop:3}},
+                  presentDisplay+" / "+empWorkingDays+" days"+(empHalf>0?" (incl. "+empHalf+" half)":"")
+                ):h("div",{style:{fontSize:10,color:GRY,marginTop:3}},"No days marked")
               ),
-              h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3,flexShrink:0}},
-                h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:15,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35"}},ATL[s]),
-                empWorkingDays>0?h("div",{style:{fontSize:11,fontWeight:700,color:attRateCol}},
-                  Math.floor(empPresentDays)+" / "+empWorkingDays
-                ):h("div",{style:{fontSize:10,color:GRY}},"—")
-              )
+              h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:15,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35",flexShrink:0}},ATL[s])
             ),
             h("div",{style:{display:"flex",gap:5,marginTop:5,marginLeft:45}},
               h("button",{onClick:function(){setSheetE(e);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},"Sheet"),
