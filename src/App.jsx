@@ -3299,13 +3299,13 @@ null
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
         actEmps.map(function(e,i){
           var s=getAtt(todayDate,e.id),ma=mAtt(e.id,attY,attM);
-          // Per-employee working days = days with any marking in month
+          // Per-employee working days = marked days EXCLUDING holidays
           var daysInMo2=new Date(attY,attM+1,0).getDate();
           var empWorkingDays=0,empPresentDays=0;
           for(var dd=1;dd<=daysInMo2;dd++){
             var ds3=attY+"-"+String(attM+1).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
             var v3=att[ds3+"_"+e.id];
-            if(v3&&v3!=="unmarked"){
+            if(v3&&v3!=="unmarked"&&v3!=="holiday"){
               empWorkingDays++;
               if(v3==="present")empPresentDays++;
               else if(v3==="half")empPresentDays+=0.5;
@@ -3316,14 +3316,16 @@ null
           return h("div",{key:e.id,style:{borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none",paddingBottom:7,marginBottom:7}},
             h("div",{onClick:function(){cycleAtt(todayDate,e.id);},className:"rh",style:{display:"flex",alignItems:"center",gap:9,cursor:"pointer",borderRadius:6,padding:"2px 2px"}},
               av(e,36),
-              h("div",{style:{flex:1}},
+              h("div",{style:{flex:1,minWidth:0}},
                 h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
-                h("div",{style:{fontSize:10,color:GRY}},[e.role,e.dept].filter(Boolean).join(" • ")||"No designation"),
-                empWorkingDays>0?h("div",{style:{fontSize:9,color:attRateCol,fontWeight:600,marginTop:1}},
-                  Math.floor(empPresentDays)+" / "+empWorkingDays+" days"+(empWorkingDays>1?" ("+empAttRate+"%)":"")
-                ):h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"Not marked yet")
+                h("div",{style:{fontSize:10,color:GRY}},[e.role,e.dept].filter(Boolean).join(" • ")||"No designation")
               ),
-              h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:15,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35",flexShrink:0}},ATL[s])
+              h("div",{style:{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3,flexShrink:0}},
+                h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:15,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35"}},ATL[s]),
+                empWorkingDays>0?h("div",{style:{fontSize:11,fontWeight:700,color:attRateCol}},
+                  Math.floor(empPresentDays)+" / "+empWorkingDays
+                ):h("div",{style:{fontSize:10,color:GRY}},"—")
+              )
             ),
             h("div",{style:{display:"flex",gap:5,marginTop:5,marginLeft:45}},
               h("button",{onClick:function(){setSheetE(e);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},"Sheet"),
