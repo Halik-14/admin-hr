@@ -428,48 +428,100 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
 }
 function makePayrollPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign){
   loadJsPDFGlobal(function(JsPDF){
-    var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
-    var W=297,H=210,mg=14,cw=W-mg*2,rh=9;
+    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,H=297,mg=12;
     var nd=new Date();
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"PAYROLL REPORT",MOS[m]+" "+y+" | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"");
-    var cols=showEmployer?["EMPLOYEE NAME","DEPARTMENT","GROSS","DEDUCTIONS","NET PAY","TOTAL CTC"]:["EMPLOYEE NAME","DEPARTMENT","GROSS","DEDUCTIONS","NET PAY"];
-    var cws=showEmployer?[62,45,35,35,35,37]:[72,50,40,40,47];
-    var cx=[mg];for(var ci=0;ci<cws.length-1;ci++)cx.push(cx[ci]+cws[ci]);
-    doc.setDrawColor(180,195,215);doc.setLineWidth(0.4);doc.line(mg,ry,mg+cw,ry);
-    doc.setFontSize(8);doc.setFont("helvetica","bold");doc.setTextColor(100,115,135);
-    cols.forEach(function(col,i){doc.text(col,cx[i]+3,ry+6);});
-    ry+=rh;
-    doc.setDrawColor(180,195,215);doc.line(mg,ry,mg+cw,ry);ry+=1;
-    var tG=0,tN=0,tP=0,tE=0,tD=0;
-    emps.forEach(function(emp,ei){
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,showEmployer?"PAYROLL REPORT (EMPLOYER)":"PAYROLL REPORT",MOS[m]+" "+String(y)+" — Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"");
+
+    var cols=showEmployer?[
+      {label:"EMPLOYEE NAME",align:"l"},
+      {label:"DEPT",align:"l"},
+      {label:"GROSS",align:"r"},
+      {label:"DEDUCTIONS",align:"r"},
+      {label:"NET PAY",align:"r"},
+      {label:"EMPLOYER PF",align:"r"},
+      {label:"EMPLOYER ESI",align:"r"},
+      {label:"TOTAL CTC",align:"r"},
+    ]:[
+      {label:"EMPLOYEE NAME",align:"l"},
+      {label:"DEPARTMENT",align:"l"},
+      {label:"GROSS EARNINGS",align:"r"},
+      {label:"DEDUCTIONS",align:"r"},
+      {label:"NET PAY",align:"r"},
+    ];
+
+    var cws=showEmployer?[46,22,18,20,20,18,18,22]:[52,34,34,30,38];
+    // Scale to fit exactly
+    var cw=W-mg*2;
+    var cwSum=cws.reduce(function(a,b){return a+b;},0);
+    var scale=cw/cwSum;
+    cws=cws.map(function(w){return Math.round(w*scale*100)/100;});
+
+    var rows=[];
+    var tG=0,tN=0,tD=0,tPR=0,tER=0;
+
+    emps.forEach(function(emp){
       var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
-      tG+=d.gr;tN+=d.net;tP+=d.pfR;tE+=d.esiR;tD+=(d.gr-d.net);
-      if(ei%2===0){doc.setFillColor(247,249,252);doc.rect(mg,ry,cw,rh,"F");}
-      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-      doc.text((emp.name||"").substring(0,22),cx[0]+3,ry+6);
-      doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
-      doc.text((emp.dept||"").substring(0,18),cx[1]+3,ry+6);
-      doc.setTextColor(60,80,180);doc.text(fmtIN(d.gr),cx[2]+cws[2]-3,ry+6,{align:"right"});
-      doc.setTextColor(200,40,40);doc.text(fmtIN(d.gr-d.net),cx[3]+cws[3]-3,ry+6,{align:"right"});
-      doc.setTextColor(5,140,90);doc.setFont("helvetica","bold");doc.text(fmtIN(d.net),cx[4]+cws[4]-3,ry+6,{align:"right"});
-      if(showEmployer){doc.setTextColor(180,110,0);doc.setFont("helvetica","normal");doc.text(fmtIN(d.gr+d.pfR+d.esiR),cx[5]+cws[5]-3,ry+6,{align:"right"});}
-      ry+=rh;
-      if(ry>H-28){doc.addPage();ry=14;}
+      var ded=d.gr-d.net;
+      tG+=d.gr;tN+=d.net;tD+=ded;tPR+=d.pfR;tER+=d.esiR;
+      if(showEmployer){
+        rows.push([
+          {val:(emp.name||"").substring(0,24),bold:true},
+          {val:(emp.dept||"-").substring(0,11),color:[100,116,139]},
+          {val:fmtIN(d.gr),color:[60,80,180]},
+          {val:fmtIN(ded),color:[200,40,40]},
+          {val:fmtIN(d.net),bold:true,color:[5,140,90]},
+          {val:fmtIN(d.pfR),color:[80,100,200]},
+          {val:fmtIN(d.esiR),color:[5,140,90]},
+          {val:fmtIN(d.gr+d.pfR+d.esiR),bold:true,color:[160,100,0]},
+        ]);
+      } else {
+        rows.push([
+          {val:(emp.name||"").substring(0,28),bold:true},
+          {val:(emp.dept||"-").substring(0,16),color:[100,116,139]},
+          {val:fmtIN(d.gr),color:[60,80,180]},
+          {val:fmtIN(ded),color:[200,40,40]},
+          {val:fmtIN(d.net),bold:true,color:[5,140,90]},
+        ]);
+      }
     });
-    ry+=4;
-    doc.setDrawColor(180,195,215);doc.setLineWidth(0.5);doc.line(mg,ry,mg+cw,ry);ry+=6;
-    doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-    doc.text("TOTAL NET PAYABLE",mg+3,ry+4);
-    doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(5,120,80);
-    doc.text(fmtIN(tN),mg+cw,ry+4,{align:"right"});
-    ry+=10;doc.setDrawColor(180,195,215);doc.line(mg,ry,mg+cw,ry);ry+=5;
-    doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(100,115,135);
-    doc.text(showEmployer?"Gross: "+fmtIN(tG)+"   Deductions: "+fmtIN(tD)+"   Total CTC: "+fmtIN(tG+tP+tE):"Gross: "+fmtIN(tG)+"   Deductions: "+fmtIN(tD),mg+3,ry+4);
+
+    // Totals row
+    if(showEmployer){
+      rows.push([
+        {val:"TOTAL",bold:true},
+        {val:""},
+        {val:fmtIN(tG),bold:true,color:[160,185,255]},
+        {val:fmtIN(tD),bold:true,color:[255,150,150]},
+        {val:fmtIN(tN),bold:true,color:[100,255,160]},
+        {val:fmtIN(tPR),color:[160,185,255]},
+        {val:fmtIN(tER),color:[150,230,190]},
+        {val:fmtIN(tG+tPR+tER),bold:true,color:[255,210,120]},
+      ]);
+    } else {
+      rows.push([
+        {val:"TOTAL",bold:true},
+        {val:""},
+        {val:fmtIN(tG),bold:true,color:[160,185,255]},
+        {val:fmtIN(tD),bold:true,color:[255,150,150]},
+        {val:fmtIN(tN),bold:true,color:[100,255,160]},
+      ]);
+    }
+
+    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9,fontSize:8,totalsRow:true});
+    ry+=8;
+
+    // Summary line
+    doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
+    doc.text("Total Gross: "+fmtIN(tG)+"   Total Deductions: "+fmtIN(tD)+"   Total Net: "+fmtIN(tN)+(showEmployer?"   Total CTC: "+fmtIN(tG+tPR+tER):""),mg,ry);
+
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     var suffix=showEmployer?"-Employer":"-Employee";
-    downloadPDF(doc.output("blob"),"Payroll"+suffix+"-"+MOS[m]+"-"+y+".pdf");
+    downloadPDF(doc.output("blob"),"Payroll"+suffix+"-"+MOS[m]+"-"+String(y)+".pdf");
   },function(){alert("PDF library failed to load.");});
 }
+
+
 function makeAttPDF(name,y,m,recs,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
@@ -924,8 +976,10 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
 
     emps.filter(function(e){return e.status==="active";}).forEach(function(emp,ei){
       var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
-      var daysWork=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.paid||0)+(ma.holiday||0));
-      var daysPaid=Math.max(0,26-(ma.absent||0)-(ma.unpaid||0));
+      // Days Worked = physically present (excludes leave, includes holiday if worked)
+      var daysWork=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.holiday||0));
+      // Days Paid = entitled to pay (present + half + paid leave + holiday)
+      var daysPaid=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.paid||0)+(ma.holiday||0));
       var totalDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd+d.ad+d.hd+d.ud;
       totW+=daysWork;totD+=daysPaid;totB+=d.eb;totH+=(emp.hra||0);
       totA+=(emp.allow||0);totG+=d.gr;totPF+=d.pfE;totESI+=d.esiE;
@@ -3245,10 +3299,30 @@ null
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
         actEmps.map(function(e,i){
           var s=getAtt(todayDate,e.id),ma=mAtt(e.id,attY,attM);
+          // Per-employee working days = days with any marking in month
+          var daysInMo2=new Date(attY,attM+1,0).getDate();
+          var empWorkingDays=0,empPresentDays=0;
+          for(var dd=1;dd<=daysInMo2;dd++){
+            var ds3=attY+"-"+String(attM+1).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
+            var v3=att[ds3+"_"+e.id];
+            if(v3&&v3!=="unmarked"){
+              empWorkingDays++;
+              if(v3==="present")empPresentDays++;
+              else if(v3==="half")empPresentDays+=0.5;
+            }
+          }
+          var empAttRate=empWorkingDays>0?Math.round(empPresentDays*100/empWorkingDays):0;
+          var attRateCol=empAttRate>=95?"#10B981":empAttRate>=80?AMB:empAttRate>0?RED:GRY;
           return h("div",{key:e.id,style:{borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none",paddingBottom:7,marginBottom:7}},
             h("div",{onClick:function(){cycleAtt(todayDate,e.id);},className:"rh",style:{display:"flex",alignItems:"center",gap:9,cursor:"pointer",borderRadius:6,padding:"2px 2px"}},
               av(e,36),
-              h("div",{style:{flex:1}},h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),h("div",{style:{fontSize:10,color:GRY}},[e.role,e.dept].filter(Boolean).join(" • ")||"No designation")),
+              h("div",{style:{flex:1}},
+                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
+                h("div",{style:{fontSize:10,color:GRY}},[e.role,e.dept].filter(Boolean).join(" • ")||"No designation"),
+                empWorkingDays>0?h("div",{style:{fontSize:9,color:attRateCol,fontWeight:600,marginTop:1}},
+                  Math.floor(empPresentDays)+" / "+empWorkingDays+" days"+(empWorkingDays>1?" ("+empAttRate+"%)":"")
+                ):h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"Not marked yet")
+              ),
               h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:15,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35",flexShrink:0}},ATL[s])
             ),
             h("div",{style:{display:"flex",gap:5,marginTop:5,marginLeft:45}},
