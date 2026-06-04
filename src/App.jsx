@@ -346,6 +346,119 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
   return ry;
 }
 
+
+function makeOfferLetterPDF(emp,org,authPos,authSign){
+  loadJsPDFGlobal(function(JsPDF){
+    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,H=297,mg=20;
+
+    // Header - clean company letterhead
+    doc.setFillColor(30,58,138);doc.rect(0,0,W,28,"F");
+    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    doc.text(org.name||"Company",mg,12);
+    doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(200,215,255);
+    if(org.address)doc.text(org.address,mg,19);
+    doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,12,{align:"right"});
+
+    // Title
+    var ry=44;
+    doc.setDrawColor(30,58,138);doc.setLineWidth(0.5);doc.line(mg,ry,W-mg,ry);ry+=8;
+    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);
+    doc.text("APPOINTMENT LETTER",W/2,ry+4,{align:"center"});ry+=14;
+    doc.setDrawColor(30,58,138);doc.line(mg,ry,W-mg,ry);ry+=10;
+
+    // Addressee
+    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);
+    doc.text("Dear "+emp.name+",",mg,ry);ry+=8;
+
+    // Opening
+    doc.setFontSize(9.5);doc.setFont("helvetica","normal");doc.setTextColor(60,80,100);
+    var openText="We are pleased to offer you the position of "+
+      (emp.role||"Employee")+" at "+
+      (org.name||"our organization")+
+      ". This letter confirms the terms and conditions of your employment as agreed upon.";
+    var openLines=doc.splitTextToSize(openText,W-mg*2);
+    doc.text(openLines,mg,ry);ry+=openLines.length*5+6;
+
+    // Terms table
+    var rows2=[
+      ["Position / Designation",(emp.role||"-")],
+      ["Department",(emp.dept||"-")],
+      ["Date of Joining",(emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-")],
+      ["Employee ID",(emp.eid||"To be assigned")],
+      ["Monthly CTC","Rs."+fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0))],
+      ["Annual CTC","Rs."+fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0)*12)],
+      ["Employment Type","Full-Time, Permanent"],
+      ["Probation Period","3 months from date of joining"],
+      ["Working Hours","As per company policy"],
+      ["Leave Entitlement",(emp.leaveEntitlement?emp.leaveEntitlement+" days paid leave per year":"As per company policy")],
+    ];
+
+    // Section header
+    doc.setFillColor(239,246,255);doc.rect(mg,ry,W-mg*2,7,"F");
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);
+    doc.text("TERMS OF EMPLOYMENT",mg+3,ry+5);ry+=9;
+
+    rows2.forEach(function(row,i){
+      if(i%2===0){doc.setFillColor(249,251,253);doc.rect(mg,ry,W-mg*2,7,"F");}
+      doc.setFont("helvetica","normal");doc.setTextColor(80,100,130);doc.setFontSize(8.5);
+      doc.text(row[0],mg+3,ry+5);
+      doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text(String(row[1]),mg+85,ry+5);
+      doc.setDrawColor(220,230,245);doc.line(mg,ry+7,W-mg,ry+7);
+      ry+=7;
+    });
+    ry+=8;
+
+    // Terms & conditions
+    doc.setFillColor(239,246,255);doc.rect(mg,ry,W-mg*2,7,"F");
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);
+    doc.text("TERMS AND CONDITIONS",mg+3,ry+5);ry+=11;
+
+    var terms=[
+      "1. This offer is contingent upon satisfactory background verification and document submission.",
+      "2. You are required to maintain strict confidentiality regarding company information.",
+      "3. Either party may terminate this employment with 30 days written notice during probation.",
+      "4. You will be governed by the company's HR policies, which may be amended from time to time.",
+      "5. This letter supersedes any prior verbal or written discussions regarding this employment.",
+    ];
+    doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(60,80,100);
+    terms.forEach(function(t){
+      var tLines=doc.splitTextToSize(t,W-mg*2-4);
+      doc.text(tLines,mg+2,ry);ry+=tLines.length*4.5+2;
+    });
+    ry+=6;
+
+    // Acceptance
+    doc.setFontSize(9.5);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);
+    var acceptText="Please sign and return a copy of this letter as confirmation of your acceptance of this offer. We look forward to having you as part of our team.";
+    var acceptLines=doc.splitTextToSize(acceptText,W-mg*2);
+    doc.text(acceptLines,mg,ry);ry+=acceptLines.length*5+12;
+
+    // Signature blocks
+    var sigY=Math.max(ry,220);
+    doc.setDrawColor(150,165,185);
+    doc.line(mg,sigY,mg+60,sigY);
+    doc.line(W-mg-60,sigY,W-mg,sigY);
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+    doc.text(authSign||org.name||"Authorised Signatory",mg,sigY+5);
+    doc.text(emp.name,W-mg-60,sigY+5);
+    doc.setFont("helvetica","normal");doc.setTextColor(100,120,145);
+    doc.text(authPos||"Authorised Signatory",mg,sigY+9);
+    doc.text("Employee Signature",W-mg-60,sigY+9);
+    doc.text(org.name||"",mg,sigY+13);
+
+    // Footer
+    doc.setDrawColor(30,58,138);doc.setLineWidth(0.4);doc.line(mg,H-14,W-mg,H-14);
+    doc.setFontSize(7.5);doc.setTextColor(100,120,145);
+    doc.text(org.name||"",mg,H-8);
+    doc.text("Generated by Admin HR",W-mg,H-8,{align:"right"});
+
+    downloadPDF(doc.output("blob"),"Offer-Letter-"+(emp.name||"Employee").replace(/s/g,"-")+".pdf");
+    showT("Offer letter downloaded");
+  },function(){showT("PDF library error","err");});
+}
+
 function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
@@ -1284,6 +1397,7 @@ export default function App(){
   var sAuthPos=st(lsGet("hr_auth_pos","")),authPos=sAuthPos[0],setAuthPos=sAuthPos[1];
   var sAuthSign=st(lsGet("hr_auth_sign","")),authSign=sAuthSign[0],setAuthSign=sAuthSign[1];
   var sWaOfficial=st(lsGet("hr_wa_official","")),waOfficial=sWaOfficial[0],setWaOfficial=sWaOfficial[1];
+  var sOnboard=st(function(){return lsGet("hr_onboard_done",false);}),onboardDone=sOnboard[0],setOnboardDone=sOnboard[1];
   var sHolidays=st([]),holidays2=sHolidays[0],setHolidays2=sHolidays[1];
   var sShowHolForm=st(false),showHolForm=sShowHolForm[0],setShowHolForm=sShowHolForm[1];
   var sHolName=st(""),holName=sHolName[0],setHolName=sHolName[1];
@@ -2230,25 +2344,100 @@ export default function App(){
   var authErr2=function(){return authErr?h("div",{style:{background:RED+"15",border:"1px solid "+RED+"44",borderRadius:8,padding:"8px 12px",marginBottom:10,fontSize:12,color:RED,fontWeight:500}},authErr):null;};
 
   // ── Landing screen ──
-  var landingScreen=authWrap(h("div",{key:"land"},
-    h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:32}},
-      logoSVG(72),
-      h("div",{style:{fontSize:26,fontWeight:800,color:T.AUTH_TEXT,marginTop:18,letterSpacing:-.5}},"Admin HR"),
-      h("div",{style:{fontSize:13,color:T.AUTH_LABEL,marginTop:5,textAlign:"center",lineHeight:1.5}},"Smart HR Management\nfor Indian Businesses")
-    ),
-    authBtn(authLoading?"Please wait...":"Sign In",function(){setAuthErr("");setAuthMode("signin");}),
-    authBtn("Create Account",function(){setAuthErr("");setIsEmployeeSignup(false);setAuthMode("signup");},"secondary"),
-    h("div",{style:{position:"relative",margin:"16px 0",display:"flex",alignItems:"center",gap:10}},
-      h("div",{style:{flex:1,height:1,background:T.AUTH_INPUT_BDR}}),
-      h("div",{style:{fontSize:11,color:T.AUTH_LABEL,whiteSpace:"nowrap"}},"Are you an employee?"),
-      h("div",{style:{flex:1,height:1,background:T.AUTH_INPUT_BDR}})
+  var landingScreen=h("div",{style:{minHeight:"100vh",background:themeMode==="dark"?"#0A0F1E":"#F0F4FF",overflowY:"auto",display:"flex",flexDirection:"column"}},
+    // ── Hero section ──
+    h("div",{style:{background:themeMode==="dark"?"linear-gradient(135deg,#0F172A 0%,#1E3A5F 100%)":"linear-gradient(135deg,#1E3A8A 0%,#2563EB 60%,#0EA5E9 100%)",padding:"40px 24px 48px",position:"relative",overflow:"hidden"}},
+      // Decorative circles
+      h("div",{style:{position:"absolute",top:-40,right:-40,width:180,height:180,borderRadius:"50%",background:"rgba(255,255,255,.05)"}}),
+      h("div",{style:{position:"absolute",bottom:-20,left:-30,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,.04)"}}),
+      h("div",{style:{maxWidth:420,margin:"0 auto",textAlign:"center",position:"relative",zIndex:1}},
+        // Logo + name
+        h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:12,marginBottom:20}},
+          logoSVG(44),
+          h("div",{style:{fontSize:26,fontWeight:900,color:"#fff",letterSpacing:-.5}},"Admin HR")
+        ),
+        // Tagline
+        h("div",{style:{fontSize:28,fontWeight:800,color:"#fff",lineHeight:1.25,marginBottom:10,letterSpacing:-.3}},
+          "HR made simple for Indian businesses"
+        ),
+        h("div",{style:{fontSize:14,color:"rgba(255,255,255,.75)",lineHeight:1.6,marginBottom:28}},
+          "Attendance, payroll, PF/ESI compliance — all in one mobile app. No complexity, no per-employee pricing."
+        ),
+        // CTA buttons
+        h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+          h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},
+            style:{background:"#fff",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:800,color:"#1E3A8A",cursor:"pointer",letterSpacing:-.2,boxShadow:"0 4px 20px rgba(0,0,0,.15)"}},
+            "Start Free — No Credit Card"
+          ),
+          h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},
+            style:{background:"rgba(255,255,255,.12)",border:"1.5px solid rgba(255,255,255,.3)",borderRadius:14,padding:"13px",fontSize:14,fontWeight:700,color:"#fff",cursor:"pointer"}},
+            "Sign In"
+          )
+        ),
+        h("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:12}},"Free up to 5 employees. No credit card needed.")
+      )
     ),
 
-    h("div",{style:{textAlign:"center",marginTop:16,fontSize:11,color:T.AUTH_LABEL}},
-      "Need help? ",
-      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},"Contact Support")
+    // ── Features section ──
+    h("div",{style:{padding:"32px 20px",maxWidth:440,margin:"0 auto",width:"100%",boxSizing:"border-box"}},
+      h("div",{style:{fontSize:13,fontWeight:700,color:themeMode==="dark"?GRY:"#64748B",textAlign:"center",letterSpacing:1,marginBottom:20}},"EVERYTHING YOU NEED"),
+      [
+        {icon:"calendar_month",color:"#2563EB",bg:"#EFF6FF",title:"Smart Attendance",desc:"Mark & track attendance with one tap. Holiday calendar, leave balance, reports."},
+        {icon:"payments",color:"#059669",bg:"#F0FDF4",title:"Auto Payroll",desc:"PF, ESI, PT, TDS calculated automatically. Payslips generated instantly."},
+        {icon:"picture_as_pdf",color:"#DC2626",bg:"#FEF2F2",title:"Statutory PDFs",desc:"Salary register, PF/ESI challan, attendance summary — download in seconds."},
+        {icon:"insights",color:"#7C3AED",bg:"#F5F3FF",title:"Reports & Analytics",desc:"Attendance rate, department breakdown, absentee alerts — share via WhatsApp."},
+        {icon:"account_balance",color:"#D97706",bg:"#FFFBEB",title:"Loans & Compliance",desc:"Loan tracking, gratuity calculator, warning letters, annual salary statements."},
+        {icon:"cloud_upload",color:"#0EA5E9",bg:"#F0F9FF",title:"Cloud Backup",desc:"All data synced securely. Access from any device, any time."},
+      ].map(function(f){return h("div",{key:f.title,style:{display:"flex",gap:14,padding:"14px 0",borderBottom:"1px solid "+(themeMode==="dark"?BDR:"#E2E8F0")}},
+        h("div",{style:{width:44,height:44,borderRadius:12,background:themeMode==="dark"?f.color+"22":f.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid "+(themeMode==="dark"?f.color+"44":f.color+"22")}},
+          ic(f.icon,f.color,20)
+        ),
+        h("div",null,
+          h("div",{style:{fontSize:14,fontWeight:700,color:themeMode==="dark"?T.AUTH_TEXT:"#0F172A",marginBottom:3}},f.title),
+          h("div",{style:{fontSize:12,color:themeMode==="dark"?T.AUTH_LABEL:"#64748B",lineHeight:1.5}},f.desc)
+        )
+      );})
+    ),
+
+    // ── Pricing section ──
+    h("div",{style:{background:themeMode==="dark"?"#0F172A":"#1E3A8A",padding:"28px 20px",margin:"0 0 0 0"}},
+      h("div",{style:{maxWidth:440,margin:"0 auto"}},
+        h("div",{style:{fontSize:13,fontWeight:700,color:"rgba(255,255,255,.5)",textAlign:"center",letterSpacing:1,marginBottom:16}},"SIMPLE PRICING"),
+        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}},
+          [
+            {plan:"Free",price:"0",period:"forever",emp:"Up to 5 emp",color:"rgba(255,255,255,.1)",highlight:false},
+            {plan:"Pro",price:"2,999",period:"per year",emp:"Up to 25 emp",color:"#2563EB",highlight:true},
+          ].map(function(p){return h("div",{key:p.plan,style:{background:p.highlight?"#fff":p.color,borderRadius:14,padding:"16px 14px",textAlign:"center",border:p.highlight?"none":"1px solid rgba(255,255,255,.15)"}},
+            h("div",{style:{fontSize:12,fontWeight:700,color:p.highlight?"#1E3A8A":"rgba(255,255,255,.6)",letterSpacing:.5,marginBottom:6}},p.plan.toUpperCase()),
+            h("div",{style:{fontSize:22,fontWeight:900,color:p.highlight?"#1E3A8A":"#fff",letterSpacing:-.5}},p.price==="-"?"Custom":"Rs."+p.price),
+            h("div",{style:{fontSize:10,color:p.highlight?"#64748B":"rgba(255,255,255,.5)",marginBottom:8}},p.period),
+            h("div",{style:{fontSize:11,fontWeight:600,color:p.highlight?"#2563EB":"rgba(255,255,255,.7)",background:p.highlight?"#EFF6FF":"rgba(255,255,255,.1)",borderRadius:20,padding:"3px 10px",display:"inline-block"}},p.emp)
+          );})
+        ),
+        h("div",{style:{background:"rgba(255,255,255,.08)",borderRadius:12,padding:"12px 14px",border:"1px solid rgba(255,255,255,.15)"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:"#fff",marginBottom:6}},"Business — Rs.5,999/year"),
+          h("div",{style:{fontSize:11,color:"rgba(255,255,255,.6)"}},"Up to 50 employees. All Pro features + priority WhatsApp support.")
+        )
+      )
+    ),
+
+    // ── Footer CTA ──
+    h("div",{style:{padding:"24px 20px 32px",maxWidth:440,margin:"0 auto",width:"100%",boxSizing:"border-box",textAlign:"center"}},
+      h("div",{style:{fontSize:16,fontWeight:700,color:themeMode==="dark"?T.AUTH_TEXT:"#0F172A",marginBottom:6}},"Ready to simplify your HR?"),
+      h("div",{style:{fontSize:12,color:themeMode==="dark"?T.AUTH_LABEL:"#64748B",marginBottom:16}},"Join hundreds of Indian businesses using Admin HR"),
+      h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},
+        style:{width:"100%",background:"#1E3A8A",border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:800,color:"#fff",cursor:"pointer",letterSpacing:-.2}},
+        "Create Free Account"
+      ),
+      h("div",{style:{fontSize:11,color:themeMode==="dark"?T.AUTH_LABEL:"#94A3B8",marginTop:12}},
+        "Questions? ",
+        h("span",{style:{color:TEL,cursor:"pointer",fontWeight:600},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},"Chat with us on WhatsApp")
+      ),
+      h("div",{style:{fontSize:10,color:themeMode==="dark"?T.AUTH_LABEL:"#94A3B8",marginTop:16,letterSpacing:.5}},
+        "Proudly built in India • Made for Indian Businesses"
+      )
     )
-  ));
+  );
 
   // ── Sign In screen ──
   var signinScreen=authWrap(h("div",{key:"signin"},
@@ -2674,6 +2863,7 @@ export default function App(){
     var bdayUrgent=bRemind.some(function(e){var dob=new Date(e.dob),tdDate=new Date(now.getFullYear(),now.getMonth(),now.getDate()),bday=new Date(now.getFullYear(),dob.getMonth(),dob.getDate());if(bday<tdDate)bday.setFullYear(now.getFullYear()+1);return Math.ceil((bday-tdDate)/86400000)<=1;});
     var showRemSection=true; // Always show reminder card so user can add reminders
     return h("div",{className:"fd"},
+      !onboardDone?renderOnboarding():null,
       h("div",{style:{background:NVY,borderRadius:18,padding:"18px 18px 20px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:T.SHADOW_LG}},
         h("div",{style:{position:"absolute",right:-30,top:-30,width:120,height:120,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.05)":"rgba(0,0,0,.10)"}}),
         h("div",{style:{position:"absolute",right:30,bottom:-40,width:80,height:80,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.04)":"rgba(0,0,0,.08)"}}),
@@ -2968,10 +3158,12 @@ null
           h("div",{style:{fontSize:10,color:CARD,opacity:.55}},"Joined: "+selE.joined)
         )
       ),
-      h("div",{style:{display:"flex",gap:7,marginBottom:10}},
-        h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:9,padding:"9px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
-        isPaid?h("button",{onClick:function(){setInviteEmpId(selE.id);setInviteEmail(selE.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"15",border:"1px solid "+ACCENT+"44",borderRadius:9,padding:"9px 12px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("forward_to_inbox",ACCENT,13),"Invite"):null,
-        h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1px solid "+RED,borderRadius:9,padding:"9px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard")
+      h("div",{style:{display:"flex",flexDirection:"column",gap:7,marginBottom:10}},
+        h("div",{style:{display:"flex",gap:7}},
+          h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:9,padding:"9px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
+          h("button",{onClick:function(){makeOfferLetterPDF(selE,org,authPos,authSign);},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"15",border:"1px solid "+ACCENT+"33",borderRadius:9,padding:"9px 12px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("description",ACCENT,13),"Offer Letter")
+        ),
+        h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1px solid "+RED,borderRadius:9,padding:"9px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard Employee")
       ),
       card(h("div",null,h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:7}},"Personal Info"),[["Mobile",selE.mob],["Email",selE.email],["PAN",selE.pan],["UAN",selE.uan]].filter(function(i){return i[1];}).map(function(i){return row(i[0],i[1]);}))),
       card(h("div",null,h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:7}},selE.salaryType==="fixed"?"Fixed Salary":"Salary (50/20/30)"),
@@ -6283,6 +6475,66 @@ null
     );
   }
 
+
+  function renderOnboarding(){
+    var hasEmp=actEmps.length>0;
+    var hasAtt=(function(){
+      var keys=Object.keys(att);
+      return keys.some(function(k){return att[k]==="present"||att[k]==="absent";});
+    })();
+    var hasPayslip=isPaid||(actEmps.length>0&&emps.some(function(e){return e.monthlyCTC||e.fixedSalary;}));
+    var steps=[
+      {id:"emp",done:hasEmp,title:"Add your first employee",desc:"Enter employee details, salary, and compliance info",icon:"person_add",color:"#2563EB",action:function(){setTab("employees");setOnboardDone(true);lsSet("hr_onboard_done",true);}},
+      {id:"att",done:hasAtt,title:"Mark today's attendance",desc:"Tap employee names to mark present, absent or leave",icon:"calendar_month",color:"#059669",action:function(){setTab("attendance");setOnboardDone(true);lsSet("hr_onboard_done",true);}},
+      {id:"pay",done:hasPayslip,title:"Generate your first payslip",desc:"View calculated salary with PF, ESI deductions",icon:"payments",color:"#7C3AED",action:function(){setTab("payroll");setOnboardDone(true);lsSet("hr_onboard_done",true);}},
+    ];
+    var doneCount=steps.filter(function(s){return s.done;}).length;
+    var allDone=doneCount===steps.length;
+    if(allDone){
+      // Auto-dismiss
+      setOnboardDone(true);lsSet("hr_onboard_done",true);
+      return null;
+    }
+    return h("div",{style:{background:"linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%)",borderRadius:18,padding:"20px 18px",marginBottom:16,position:"relative",overflow:"hidden"}},
+      // Decorative
+      h("div",{style:{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}),
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}},
+        h("div",null,
+          h("div",{style:{fontSize:17,fontWeight:800,color:"#fff",marginBottom:4}},"Welcome to Admin HR!"),
+          h("div",{style:{fontSize:12,color:"rgba(255,255,255,.7)"}},doneCount+" of "+steps.length+" steps complete")
+        ),
+        h("button",{onClick:function(){setOnboardDone(true);lsSet("hr_onboard_done",true);},
+          style:{background:"rgba(255,255,255,.12)",border:"none",borderRadius:8,padding:"4px 10px",fontSize:11,color:"rgba(255,255,255,.8)",cursor:"pointer",fontWeight:600}},
+          "Skip")
+      ),
+      // Progress bar
+      h("div",{style:{background:"rgba(255,255,255,.2)",borderRadius:99,height:5,marginBottom:16,overflow:"hidden"}},
+        h("div",{style:{width:(doneCount/steps.length*100)+"%",height:"100%",background:"#fff",borderRadius:99,transition:"width .4s"}})
+      ),
+      // Steps
+      steps.map(function(step,i){
+        return h("div",{key:step.id,onClick:step.done?null:step.action,
+          style:{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:12,
+            background:step.done?"rgba(255,255,255,.08)":"rgba(255,255,255,.12)",
+            marginBottom:i<steps.length-1?8:0,
+            cursor:step.done?"default":"pointer",
+            border:step.done?"1px solid rgba(255,255,255,.1)":"1px solid rgba(255,255,255,.25)"}},
+          // Step icon/check
+          h("div",{style:{width:36,height:36,borderRadius:10,
+            background:step.done?"rgba(255,255,255,.15)":step.color,
+            display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+            step.done?ic("task_alt","#4ADE80",18):ic(step.icon,"#fff",18)
+          ),
+          h("div",{style:{flex:1,minWidth:0}},
+            h("div",{style:{fontSize:13,fontWeight:700,color:step.done?"rgba(255,255,255,.5)":"#fff",
+              textDecoration:step.done?"line-through":"none"}},step.title),
+            !step.done?h("div",{style:{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}},step.desc):null
+          ),
+          !step.done?h("div",{style:{color:"rgba(255,255,255,.6)",fontSize:16,flexShrink:0}},"›"):null
+        );
+      })
+    );
+  }
 
   function renderAdminPanel(){
     var now=new Date(); // triggers re-render each second via parent now state
