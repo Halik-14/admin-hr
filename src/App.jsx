@@ -2347,193 +2347,183 @@ export default function App(){
 
   // ── Landing screen ──
   var landingScreen=(function(){
-    var isDark=themeMode==="dark";
 
-    /* Marquee CSS injected once */
-    if(!document.getElementById("adminhr-marquee-css")){
-      var s=document.createElement("style");
-      s.id="adminhr-marquee-css";
-      s.textContent=[
-        "@keyframes marquee-ltr{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}",
-        "@keyframes marquee-rtl{0%{transform:translateX(-50%)}100%{transform:translateX(0%)}}",
-        ".mq-ltr{display:flex;width:max-content;animation:marquee-ltr 18s linear infinite}",
-        ".mq-rtl{display:flex;width:max-content;animation:marquee-rtl 18s linear infinite}",
-        ".mq-wrap{overflow:hidden;width:100%;mask-image:linear-gradient(to right,transparent 0,black 60px,black calc(100% - 60px),transparent 100%);-webkit-mask-image:linear-gradient(to right,transparent 0,black 60px,black calc(100% - 60px),transparent 100%)}",
-      ].join("");
-      document.head.appendChild(s);
+    /* ── inject marquee CSS once ── */
+    if(!document.getElementById("ahr-css")){
+      var st=document.createElement("style");st.id="ahr-css";
+      st.textContent=
+        "@keyframes mltr{from{transform:translateX(0)}to{transform:translateX(-50%)}}" +
+        "@keyframes mrtl{from{transform:translateX(-50%)}to{transform:translateX(0)}}" +
+        ".mltr{display:flex;width:max-content;animation:mltr 22s linear infinite;gap:10px}" +
+        ".mrtl{display:flex;width:max-content;animation:mrtl 22s linear infinite;gap:10px}" +
+        ".mwrap{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 60px,#000 calc(100% - 60px),transparent);mask:linear-gradient(90deg,transparent,#000 60px,#000 calc(100% - 60px),transparent)}";
+      document.head.appendChild(st);
     }
 
-    /* Feature tiles — monochrome (app theme) */
+    /* ── Feature data: icon + title + brief ── */
     var feats=[
-      {icon:"calendar_month", title:"Attendance"},
-      {icon:"payments",       title:"Payroll"},
-      {icon:"fact_check",     title:"Compliance"},
-      {icon:"insights",       title:"Analytics"},
-      {icon:"account_balance",title:"PF & ESI"},
-      {icon:"workspace_premium",title:"Gratuity"},
-      {icon:"description",    title:"Offer Letter"},
-      {icon:"warning",        title:"Warnings"},
-      {icon:"event_available",title:"Leave Balance"},
-      {icon:"cloud_upload",   title:"Cloud Sync"},
+      {icon:"calendar_month",  title:"Attendance",   brief:"One-tap daily marking"},
+      {icon:"payments",        title:"Payroll",       brief:"PF, ESI, PT auto-calc"},
+      {icon:"fact_check",      title:"Compliance",    brief:"Every statutory PDF"},
+      {icon:"insights",        title:"Analytics",     brief:"Reports via WhatsApp"},
+      {icon:"account_balance", title:"PF & ESI",      brief:"Challan in one click"},
+      {icon:"workspace_premium",title:"Gratuity",     brief:"Auto calculated"},
+      {icon:"description",     title:"Offer Letter",  brief:"PDF in seconds"},
+      {icon:"warning",         title:"Warnings",      brief:"Formal letter + PDF"},
+      {icon:"event_available", title:"Leave Balance", brief:"Per-employee tracking"},
+      {icon:"cloud_upload",    title:"Cloud Sync",    brief:"Auto backup, any device"},
     ];
 
-    /* Colors based on theme */
-    var BG   =isDark?"#0F172A":"#0F172A";  /* whole page = dark navy */
-    var CARD =isDark?"rgba(255,255,255,.07)":"rgba(255,255,255,.07)";
-    var CARDH=isDark?"rgba(255,255,255,.12)":"rgba(255,255,255,.12)";
-    var T1   ="#FFFFFF";
-    var T2   ="rgba(255,255,255,.55)";
-    var BD   ="rgba(255,255,255,.1)";
-    var ICO  ="rgba(255,255,255,.85)";
-    var SECTION_BG="rgba(255,255,255,.04)";
+    /* ── All white on dark navy ── */
+    var BG   = "#0F172A";
+    var CARD = "rgba(255,255,255,0.07)";
+    var T1   = "#FFFFFF";
+    var T2   = "rgba(255,255,255,0.55)";
+    var T3   = "rgba(255,255,255,0.35)";
+    var BD   = "rgba(255,255,255,0.10)";
+    var WHT  = "#FFFFFF";
 
+    /* Feature tile — white icon + white text */
     function tile(f,key){
       return h("div",{key:key,style:{
-          flexShrink:0,
-          background:CARD,border:"1px solid "+BD,
-          borderRadius:12,padding:"10px 14px",
-          display:"flex",alignItems:"center",gap:8,
-          marginRight:8,
-        }},
-        ic(f.icon,ICO,15),
-        h("span",{style:{fontSize:11,fontWeight:700,color:T1,whiteSpace:"nowrap"}}),f.title
+        flexShrink:0,width:110,
+        background:CARD,
+        border:"1px solid "+BD,
+        borderRadius:12,
+        padding:"10px 10px 10px 10px",
+        display:"flex",flexDirection:"column",gap:5,
+        marginRight:10,
+      }},
+        h("div",{style:{
+          width:30,height:30,borderRadius:8,
+          background:"rgba(255,255,255,0.10)",
+          display:"flex",alignItems:"center",justifyContent:"center",
+          marginBottom:2,
+        }},ic(f.icon,"rgba(255,255,255,0.9)",15)),
+        h("div",{style:{fontSize:11,fontWeight:800,color:T1,lineHeight:1.2}},f.title),
+        h("div",{style:{fontSize:9,color:T2,lineHeight:1.3}},f.brief)
       );
     }
 
-    /* double the array so seamless loop */
-    var double=feats.concat(feats);
-    var row1=double;
-    var row2=double.slice().reverse();
+    /* double arrays for seamless loop */
+    var d1=feats.concat(feats);
+    var d2=feats.slice().reverse().concat(feats.slice().reverse());
 
     return h("div",{style:{
-        position:"fixed",inset:0,background:BG,
-        display:"flex",flexDirection:"column",
-        maxWidth:430,margin:"0 auto",
-        overflow:"hidden",
-      }},
+      position:"fixed",inset:0,background:BG,
+      display:"flex",flexDirection:"column",
+      maxWidth:430,margin:"0 auto",
+      overflow:"hidden",
+    }},
 
-      /* ══════ HERO (top half — dark navy) ══════ */
+      /* ═══ 1. HEADER ═══ */
       h("div",{style:{
-          flexShrink:0,
-          display:"flex",flexDirection:"column",
-          alignItems:"center",justifyContent:"center",
-          padding:"28px 24px 20px",
-          textAlign:"center",
-        }},
-
-        /* logo */
-        h("div",{style:{marginBottom:10}},logoSVG(52)),
-
-        /* app name */
-        h("div",{style:{fontSize:24,fontWeight:900,color:T1,letterSpacing:-.4,marginBottom:6}},"Admin HR"),
-
-        /* tagline — 2 lines */
-        h("div",{style:{fontSize:13,color:T2,lineHeight:1.65,maxWidth:280,marginBottom:20}},
-          "Smart HR management for Indian businesses. Attendance, payroll, PF/ESI — all in one app."
-        ),
-
-        /* CTA buttons */
-        h("div",{style:{display:"flex",gap:10,width:"100%",maxWidth:280}},
+        flexShrink:0,
+        display:"flex",flexDirection:"column",
+        alignItems:"center",
+        padding:"24px 24px 18px",
+        textAlign:"center",
+      }},
+        logoSVG(48),
+        h("div",{style:{fontSize:22,fontWeight:900,color:T1,letterSpacing:-.4,marginTop:10,marginBottom:6}},
+          "Admin HR"),
+        h("div",{style:{fontSize:12,color:T2,lineHeight:1.65,maxWidth:270,marginBottom:18}},
+          "Smart HR management for Indian businesses. Attendance, payroll & compliance — all in one app."),
+        h("div",{style:{display:"flex",gap:8,width:"100%",maxWidth:260}},
           h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{
-              flex:1,background:"#FFFFFF",border:"none",
-              borderRadius:10,padding:"11px",
-              fontSize:13,fontWeight:800,color:"#0F172A",
-              cursor:"pointer",letterSpacing:-.1,
-            }},"Start Free"),
+            flex:1,background:WHT,border:"none",borderRadius:10,padding:"11px",
+            fontSize:12,fontWeight:800,color:"#0F172A",cursor:"pointer",
+          }},"Start Free"),
           h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{
-              flex:1,background:"rgba(255,255,255,.1)",
-              border:"1px solid rgba(255,255,255,.25)",
-              borderRadius:10,padding:"11px",
-              fontSize:13,fontWeight:700,color:"#FFFFFF",
-              cursor:"pointer",
-            }},"Sign In")
+            flex:1,background:"rgba(255,255,255,0.10)",
+            border:"1px solid rgba(255,255,255,0.25)",
+            borderRadius:10,padding:"11px",
+            fontSize:12,fontWeight:700,color:WHT,cursor:"pointer",
+          }},"Sign In")
         )
       ),
 
-      /* ══════ SCROLLING FEATURE ROWS ══════ */
-      h("div",{style:{flexShrink:0,paddingBottom:6}},
-        /* row 1: left → right */
-        h("div",{className:"mq-wrap",style:{marginBottom:6}},
-          h("div",{className:"mq-ltr"},
-            row1.map(function(f,i){return tile(f,"r1"+i);})
-          )
-        ),
-        /* row 2: right → left */
-        h("div",{className:"mq-wrap"},
-          h("div",{className:"mq-rtl"},
-            row2.map(function(f,i){return tile(f,"r2"+i);})
-          )
-        )
+      /* ═══ 2. MOVING ROWS ═══ */
+      h("div",{style:{flexShrink:0,paddingBottom:8}},
+        h("div",{className:"mwrap",style:{marginBottom:8}},
+          h("div",{className:"mltr"},d1.map(function(f,i){return tile(f,"a"+i);}))),
+        h("div",{className:"mwrap"},
+          h("div",{className:"mrtl"},d2.map(function(f,i){return tile(f,"b"+i);})))
       ),
 
-      /* ══════ PRICING + BUILT FOR ══════ */
-      h("div",{style:{flexShrink:0,padding:"10px 16px 0",display:"flex",gap:10}},
-
-        /* Pricing card */
-        h("div",{style:{flex:1,background:SECTION_BG,borderRadius:14,border:"1px solid "+BD,padding:"12px 14px"}},
-          h("div",{style:{fontSize:9,fontWeight:700,color:T2,letterSpacing:1.5,marginBottom:10}},"PRICING"),
-          [
-            {name:"Free",  price:"₹0",        sub:"5 employees"},
-            {name:"Pro",   price:"₹2,999/yr",  sub:"25 employees"},
-            {name:"Business",price:"₹5,999/yr",sub:"50 employees"},
-          ].map(function(p,i){
-            var isLast=i===2;
-            return h("div",{key:p.name,style:{
-                paddingBottom:isLast?0:8,marginBottom:isLast?0:8,
-                borderBottom:isLast?"none":"1px solid "+BD,
+      /* ═══ 3. BUILT FOR ═══ */
+      h("div",{style:{flexShrink:0,padding:"8px 14px 6px"}},
+        h("div",{style:{background:CARD,border:"1px solid "+BD,borderRadius:14,padding:"10px 14px"}},
+          h("div",{style:{fontSize:8,fontWeight:700,color:T3,letterSpacing:1.8,marginBottom:8}},
+            "BUILT FOR"),
+          h("div",{style:{display:"flex",gap:6}},
+            [{icon:"rocket_launch",l:"Startups",s:"5–20 employees"},
+             {icon:"store",        l:"Retail & Trade",s:"Shops to chains"},
+             {icon:"factory",      l:"Manufacturing",s:"10–50 workers"},
+             {icon:"groups",       l:"Any Business",s:"That pays salaries"},
+            ].map(function(t){
+              return h("div",{key:t.l,style:{
+                flex:1,display:"flex",flexDirection:"column",
+                alignItems:"center",gap:3,
+                padding:"8px 2px",
+                background:"rgba(255,255,255,0.04)",
+                borderRadius:9,border:"1px solid "+BD,
               }},
-              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-end"}},
-                h("span",{style:{fontSize:11,fontWeight:700,color:T1}}),p.name,
-                h("span",{style:{fontSize:12,fontWeight:900,color:T1,letterSpacing:-.2}}),p.price
-              ),
-              h("div",{style:{fontSize:9,color:T2,marginTop:1}}),p.sub
-            );
-          })
-        ),
-
-        /* Built for card */
-        h("div",{style:{flex:1,background:SECTION_BG,borderRadius:14,border:"1px solid "+BD,padding:"12px 14px"}},
-          h("div",{style:{fontSize:9,fontWeight:700,color:T2,letterSpacing:1.5,marginBottom:10}},"BUILT FOR"),
-          [
-            {icon:"rocket_launch", l:"Startups"},
-            {icon:"store",         l:"Retail & Trade"},
-            {icon:"factory",       l:"Manufacturing"},
-            {icon:"groups",        l:"Any Business"},
-          ].map(function(t,i){
-            var isLast=i===3;
-            return h("div",{key:t.l,style:{
-                display:"flex",alignItems:"center",gap:7,
-                paddingBottom:isLast?0:7,marginBottom:isLast?0:7,
-                borderBottom:isLast?"none":"1px solid "+BD,
-              }},
-              ic(t.icon,T2,12),
-              h("span",{style:{fontSize:11,fontWeight:600,color:T1}}),t.l
-            );
-          })
+                ic(t.icon,"rgba(255,255,255,0.6)",14),
+                h("div",{style:{fontSize:9,fontWeight:700,color:T1,textAlign:"center",lineHeight:1.15}},t.l),
+                h("div",{style:{fontSize:7,color:T2,textAlign:"center",lineHeight:1.2}},t.s)
+              );
+            })
+          )
         )
       ),
 
-      /* ══════ CONTACT + QUOTE ══════ */
-      h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"10px 16px 14px"}},
+      /* ═══ 4. PRICING ═══ */
+      h("div",{style:{flexShrink:0,padding:"0 14px 6px"}},
+        h("div",{style:{background:CARD,border:"1px solid "+BD,borderRadius:14,padding:"10px 14px"}},
+          h("div",{style:{fontSize:8,fontWeight:700,color:T3,letterSpacing:1.8,marginBottom:8}},"PRICING"),
+          h("div",{style:{display:"flex",gap:8}},
+            [{n:"Free",    p:"₹0",         sub:"5 employees",  hi:false},
+             {n:"Pro",     p:"₹2,999/yr",  sub:"25 employees", hi:true},
+             {n:"Business",p:"₹5,999/yr",  sub:"50 employees", hi:false},
+            ].map(function(pr){
+              return h("div",{key:pr.n,style:{
+                flex:1,
+                background:pr.hi?"rgba(255,255,255,0.13)":"rgba(255,255,255,0.04)",
+                border:pr.hi?"1px solid rgba(255,255,255,0.3)":"1px solid "+BD,
+                borderRadius:10,padding:"8px 6px",textAlign:"center",
+              }},
+                h("div",{style:{fontSize:9,fontWeight:700,color:pr.hi?T1:T2,marginBottom:3}},pr.n),
+                h("div",{style:{fontSize:11,fontWeight:900,color:T1,letterSpacing:-.3}}),pr.p,
+                h("div",{style:{fontSize:8,color:T2,marginTop:2}}),pr.sub
+              );
+            })
+          )
+        )
+      ),
+
+      /* ═══ 5. CONTACT + QUOTE ═══ */
+      h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 14px 14px"}},
         /* contact strip */
         h("div",{style:{
-            display:"flex",justifyContent:"space-between",alignItems:"center",
-            background:SECTION_BG,borderRadius:10,border:"1px solid "+BD,
-            padding:"8px 12px",marginBottom:10,
-          }},
+          display:"flex",justifyContent:"space-between",alignItems:"center",
+          background:CARD,border:"1px solid "+BD,borderRadius:10,
+          padding:"8px 12px",marginBottom:10,
+        }},
           h("div",{style:{fontSize:10,color:T2}},"Need help?"),
-          h("div",{
-              style:{fontSize:11,fontWeight:700,color:"#25D366",cursor:"pointer"},
-              onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
-            ic("whatsapp","#25D366",13),
-            h("span",{style:{marginLeft:5}},"WhatsApp Support")
+          h("div",{style:{display:"flex",alignItems:"center",gap:5,cursor:"pointer"},
+            onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
+            ic("whatsapp","#25D366",14),
+            h("span",{style:{fontSize:11,fontWeight:700,color:"#25D366"}},
+              "WhatsApp Support")
           )
         ),
         /* quote */
         h("div",{style:{textAlign:"center"}},
-          h("div",{style:{fontSize:11,fontStyle:"italic",color:T2,lineHeight:1.6,marginBottom:4}},
-            "\"Your employees are your greatest asset. Manage them well.\""),
-          h("div",{style:{fontSize:9,color:"rgba(255,255,255,.25)",letterSpacing:.5}},"PROUDLY BUILT IN INDIA")
+          h("div",{style:{fontSize:11,fontStyle:"italic",color:T2,lineHeight:1.65,marginBottom:6}},
+            "“Your employees are your greatest asset.”"),
+          h("div",{style:{fontSize:9,letterSpacing:1.5,color:T3,fontWeight:700}},
+            "PROUDLY BUILT IN INDIA")
         )
       )
     );
