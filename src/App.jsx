@@ -2349,104 +2349,223 @@ export default function App(){
   var landingScreen=(function(){
     var slide=sLandSlide[0],setSlide=sLandSlide[1];
     var isDark=themeMode==="dark";
-    var bg=isDark?"#242323":"#F8FAFF";
-    var navBg=isDark?"#2e2d2d":"#0F172A";
-    var cardBg=isDark?"#2e2d2d":"#FFFFFF";
-    var textPrimary=isDark?"#FFFFFF":"#0F172A";
-    var textSub=isDark?"#9a9a9a":"#64748B";
-    var borderCol=isDark?"#3a3939":"#E2E8F0";
-    var accentCol=isDark?"#FFFFFF":"#0F172A";
+
+    /* exact app palette */
+    var BG   =isDark?"#1a1919":"#F1F5F9";
+    var CARD2=isDark?"#2e2d2d":"#FFFFFF";
+    var NAV  =isDark?"#2e2d2d":"#0F172A";
+    var T1   =isDark?"#FFFFFF":"#0F172A";
+    var T2   =isDark?"#9a9a9a":"#64748B";
+    var BD   =isDark?"#3a3939":"#E2E8F0";
+    var ACC  =isDark?"#FFFFFF":"#0F172A";
+
     var slides=[
-      {icon:"calendar_month",title:"Smart Attendance",sub:"One tap. Done.",desc:"Mark, track and report attendance — with holiday calendar, leave balance, and WhatsApp sharing built in.",badge:"Startups & small teams"},
-      {icon:"payments",title:"Auto Payroll",sub:"PF, ESI, PT — zero effort.",desc:"All Indian statutory deductions calculated automatically. Payslips and salary registers in seconds.",badge:"Wholesale & retail shops"},
-      {icon:"fact_check",title:"Statutory Compliance",sub:"Stay audit-ready, always.",desc:"Salary register, PF/ESI challan, attendance summary — every document you need, download-ready anytime.",badge:"Manufacturing & trade"},
-      {icon:"insights",title:"Reports & Analytics",sub:"Know your team, clearly.",desc:"Attendance rates, absentee alerts, department breakdowns. Share instant reports via WhatsApp.",badge:"Any Indian business"},
+      {icon:"calendar_month",title:"Smart Attendance",sub:"Mark in one tap",badge:"Startups & small teams",desc:"Holiday calendar, leave balance, real-time reports — all automatic."},
+      {icon:"payments",       title:"Auto Payroll",   sub:"PF, ESI, PT done",badge:"Wholesale & retail",   desc:"Every Indian statutory deduction calculated. Payslips in seconds."},
+      {icon:"fact_check",     title:"Compliance PDFs",sub:"Always audit-ready",badge:"Manufacturing & trade",desc:"Salary register, PF/ESI challan, attendance summary — one tap download."},
+      {icon:"insights",       title:"HR Analytics",   sub:"Know your team",   badge:"Any Indian business",  desc:"Attendance rates, absentee alerts, WhatsApp sharing — instant."},
     ];
-    var cur=slides[slide%slides.length];
-    return h("div",{style:{height:"100vh",background:bg,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",overflow:"hidden"}},
-      h("div",{style:{background:navBg,padding:"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
+    var si=slide%4;
+    var cur=slides[si];
+
+    /* feature pill data */
+    var pills=[
+      {icon:"event_available", label:"Leave Tracking",  clr:"#059669"},
+      {icon:"account_balance", label:"PF & ESI",         clr:"#2563EB"},
+      {icon:"fact_check",      label:"Compliance",       clr:"#DC2626"},
+      {icon:"workspace_premium",label:"Gratuity",        clr:"#7C3AED"},
+      {icon:"description",     label:"Offer Letter",     clr:"#0EA5E9"},
+      {icon:"warning",         label:"Warnings",         clr:"#D97706"},
+      {icon:"whatsapp",        label:"WhatsApp",         clr:"#25D366"},
+      {icon:"cloud_upload",    label:"Cloud Sync",       clr:"#64748B"},
+    ];
+
+    return h("div",{style:{
+        position:"fixed",inset:0,background:BG,
+        display:"flex",flexDirection:"column",
+        maxWidth:430,margin:"0 auto",
+        fontFamily:"inherit",overflow:"hidden",
+      }},
+
+      /* ── 1. NAV ── */
+      h("div",{style:{
+          background:NAV,flexShrink:0,
+          padding:"10px 18px",
+          display:"flex",alignItems:"center",justifyContent:"space-between",
+        }},
         h("div",{style:{display:"flex",alignItems:"center",gap:9}},
-          logoSVG(30),
-          h("div",{style:{fontSize:17,fontWeight:900,color:"#FFFFFF",letterSpacing:-.3}},"Admin HR")
+          logoSVG(28),
+          h("span",{style:{fontSize:16,fontWeight:900,color:"#fff",letterSpacing:-.3}},"Admin HR")
         ),
-        h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},
-          style:{background:"rgba(255,255,255,.13)",border:"1px solid rgba(255,255,255,.2)",borderRadius:20,padding:"5px 14px",fontSize:12,fontWeight:700,color:"#FFFFFF",cursor:"pointer"}},
-          "Sign In")
+        h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+          h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},
+            style:{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.22)",
+              borderRadius:20,padding:"5px 13px",fontSize:11,fontWeight:700,
+              color:"#fff",cursor:"pointer",letterSpacing:.2}},
+            "Sign In"),
+          h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},
+            style:{background:"#fff",border:"none",
+              borderRadius:20,padding:"5px 13px",fontSize:11,fontWeight:800,
+              color:"#0F172A",cursor:"pointer",letterSpacing:.2}},
+            "Start Free")
+        )
       ),
-      h("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"8px 22px 0",minHeight:0}},
-        h("div",{style:{background:isDark?"rgba(255,255,255,.08)":"rgba(15,23,42,.06)",border:"1px solid "+(isDark?"rgba(255,255,255,.12)":"rgba(15,23,42,.08)"),borderRadius:20,padding:"4px 14px",fontSize:10,fontWeight:700,color:textSub,letterSpacing:.5,marginBottom:14}},
-          cur.badge.toUpperCase()
+
+      /* ── 2. HERO SLIDER ── */
+      h("div",{style:{
+          flex:1,minHeight:0,
+          display:"flex",flexDirection:"column",
+          alignItems:"center",justifyContent:"center",
+          padding:"0 24px",
+          textAlign:"center",
+        }},
+        /* slide badge */
+        h("div",{style:{
+            display:"inline-flex",alignItems:"center",gap:5,
+            background:CARD2,border:"1px solid "+BD,
+            borderRadius:20,padding:"4px 12px",marginBottom:12,
+          }},
+          h("div",{style:{width:6,height:6,borderRadius:"50%",background:"#10B981",flexShrink:0}}),
+          h("span",{style:{fontSize:10,fontWeight:700,color:T2,letterSpacing:.5}}),cur.badge
         ),
-        h("div",{style:{width:80,height:80,borderRadius:24,background:isDark?"rgba(255,255,255,.07)":"rgba(15,23,42,.05)",border:"1.5px solid "+(isDark?"rgba(255,255,255,.1)":"rgba(15,23,42,.08)"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}},
-          ic(cur.icon,accentCol,36)
+        /* icon box */
+        h("div",{style:{
+            width:74,height:74,borderRadius:22,marginBottom:14,
+            background:isDark?"rgba(255,255,255,.06)":"rgba(15,23,42,.05)",
+            border:"1.5px solid "+BD,
+            display:"flex",alignItems:"center",justifyContent:"center",
+          }},
+          ic(cur.icon,ACC,32)
         ),
-        h("div",{style:{fontSize:10,fontWeight:700,color:textSub,letterSpacing:1.8,marginBottom:6,textAlign:"center"}},cur.sub.toUpperCase()),
-        h("div",{style:{fontSize:26,fontWeight:900,color:textPrimary,lineHeight:1.15,marginBottom:10,letterSpacing:-.5,textAlign:"center"}},cur.title),
-        h("div",{style:{fontSize:13,color:textSub,lineHeight:1.6,textAlign:"center",maxWidth:290}},cur.desc),
-        h("div",{style:{display:"flex",justifyContent:"center",gap:6,marginTop:14}},
-          slides.map(function(s,i){
-            var active=i===slide%slides.length;
-            return h("div",{key:i,onClick:function(){setSlide(i);},
-              style:{width:active?20:6,height:6,borderRadius:99,background:active?accentCol:(isDark?"#4a4a4a":"#CBD5E1"),cursor:"pointer",transition:"all .3s"}});
+        /* sub label */
+        h("div",{style:{fontSize:10,fontWeight:700,color:T2,letterSpacing:2,marginBottom:6}},
+          cur.sub.toUpperCase()),
+        /* title */
+        h("div",{style:{fontSize:24,fontWeight:900,color:T1,lineHeight:1.2,
+            letterSpacing:-.4,marginBottom:8}},
+          cur.title),
+        /* desc */
+        h("div",{style:{fontSize:12,color:T2,lineHeight:1.6,maxWidth:270}},
+          cur.desc),
+        /* dots */
+        h("div",{style:{display:"flex",gap:5,marginTop:14,justifyContent:"center"}},
+          [0,1,2,3].map(function(i){
+            var on=i===si;
+            return h("div",{key:i,onClick:function(){setSlide(i);},style:{
+                width:on?18:6,height:6,borderRadius:99,cursor:"pointer",
+                background:on?ACC:(isDark?"#444":"#CBD5E1"),
+                transition:"width .25s",
+              }});
           })
         )
       ),
-      h("div",{style:{overflowX:"auto",display:"flex",gap:6,padding:"6px 18px",flexShrink:0,WebkitOverflowScrolling:"touch"}},
-        [{icon:"event_available",label:"Leave Tracking",color:"#059669"},{icon:"account_balance",label:"PF & ESI",color:"#2563EB"},{icon:"fact_check",label:"Compliance",color:"#DC2626"},{icon:"workspace_premium",label:"Gratuity",color:"#7C3AED"},{icon:"description",label:"Offer Letter",color:"#0EA5E9"},{icon:"warning",label:"Warnings",color:"#D97706"},{icon:"whatsapp",label:"WhatsApp",color:"#25D366"},{icon:"cloud_upload",label:"Cloud Sync",color:"#64748B"}].map(function(f){
-          return h("div",{key:f.label,style:{display:"flex",alignItems:"center",gap:5,background:f.color+"15",border:"1px solid "+f.color+"33",borderRadius:20,padding:"5px 11px",flexShrink:0}},
-            ic(f.icon,f.color,12),
-            h("div",{style:{fontSize:10,fontWeight:700,color:f.color,whiteSpace:"nowrap"}},f.label)
-          );
-        })
-      ),
-      h("div",{style:{padding:"0 18px 8px",flexShrink:0}},
-        h("div",{style:{background:cardBg,borderRadius:14,border:"1px solid "+borderCol,padding:"10px 14px"}},
-          h("div",{style:{fontSize:9,fontWeight:700,color:textSub,letterSpacing:1.5,marginBottom:8}},"BUILT FOR"),
-          h("div",{style:{display:"flex",gap:6}},
-            [{icon:"rocket_launch",label:"Startups"},{icon:"store",label:"Retail & Trade"},{icon:"factory",label:"Manufacturing"},{icon:"groups",label:"Any Business"}].map(function(t){
-              return h("div",{key:t.label,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 4px",background:bg,borderRadius:9,border:"1px solid "+borderCol}},
-                ic(t.icon,accentCol,16),
-                h("div",{style:{fontSize:9,fontWeight:600,color:textSub,textAlign:"center",lineHeight:1.2}},t.label)
-              );
-            })
-          )
-        )
-      ),
-      h("div",{style:{padding:"0 18px 8px",flexShrink:0}},
-        h("div",{style:{display:"flex",gap:5,background:cardBg,borderRadius:14,border:"1px solid "+borderCol,padding:"8px 12px",alignItems:"center"}},
-          h("div",{style:{fontSize:9,fontWeight:700,color:textSub,letterSpacing:1,marginRight:4,flexShrink:0}},"PRICING"),
-          [{plan:"Free",price:"₹0",emp:"5 emp",bold:false},{plan:"Pro",price:"₹2,999/yr",emp:"25 emp",bold:true},{plan:"Business",price:"₹5,999/yr",emp:"50 emp",bold:false}].map(function(p){
-            return h("div",{key:p.plan,style:{flex:1,background:p.bold?navBg:bg,borderRadius:8,padding:"6px 4px",textAlign:"center",border:p.bold?"none":"1px solid "+borderCol}},
-              h("div",{style:{fontSize:9,fontWeight:700,color:p.bold?"rgba(255,255,255,.5)":textSub,marginBottom:1}},p.plan),
-              h("div",{style:{fontSize:10,fontWeight:900,color:p.bold?"#fff":textPrimary,letterSpacing:-.2}},p.price),
-              h("div",{style:{fontSize:8,color:p.bold?"rgba(255,255,255,.45)":textSub,marginTop:1}},p.emp)
+
+      /* ── 3. FEATURE PILLS (2 rows, horizontal) ── */
+      h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
+        h("div",{style:{display:"flex",flexWrap:"wrap",gap:5,justifyContent:"center"}},
+          pills.map(function(f){
+            return h("div",{key:f.label,style:{
+                display:"flex",alignItems:"center",gap:4,
+                background:f.clr+"16",border:"1px solid "+f.clr+"30",
+                borderRadius:20,padding:"4px 10px",flexShrink:0,
+              }},
+              ic(f.icon,f.clr,11),
+              h("span",{style:{fontSize:9,fontWeight:700,color:f.clr,whiteSpace:"nowrap"}},f.label)
             );
           })
         )
       ),
-      h("div",{style:{padding:"0 18px 10px",flexShrink:0}},
-        // Start free — primary CTA
-        h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},
-          style:{width:"100%",background:navBg,border:"none",borderRadius:12,padding:"14px",fontSize:14,fontWeight:800,color:"#FFFFFF",cursor:"pointer",letterSpacing:-.2,marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
-          ic("rocket_launch","#FFFFFF",15),"Start Free — No Credit Card"
-        ),
-        // Sign in — secondary, styled differently
-        h("div",{style:{display:"flex",alignItems:"center",gap:10}},
-          h("div",{style:{flex:1,height:1,background:borderCol}}),
-          h("div",{style:{fontSize:10,color:textSub,whiteSpace:"nowrap"}},"Already have an account?"),
-          h("div",{style:{flex:1,height:1,background:borderCol}})
-        ),
-        h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},
-          style:{width:"100%",background:"transparent",border:"1.5px solid "+borderCol,borderRadius:12,padding:"11px",fontSize:13,fontWeight:700,color:textPrimary,cursor:"pointer",marginTop:8,letterSpacing:-.1}},
-          "Sign In"
-        ),
-        // Footer
-        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}},
-          h("div",{style:{fontSize:9,color:textSub}},"Proudly built in India"),
-          h("span",{style:{fontSize:10,fontWeight:700,color:"#25D366",cursor:"pointer"},
-            onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
-            "WhatsApp Support")
+
+      /* ── 4. BUILT-FOR STRIP ── */
+      h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
+        h("div",{style:{
+            background:CARD2,borderRadius:12,border:"1px solid "+BD,
+            padding:"8px 12px",
+            display:"flex",alignItems:"center",gap:6,
+          }},
+          h("span",{style:{fontSize:9,fontWeight:700,color:T2,letterSpacing:1,marginRight:2,whiteSpace:"nowrap"}},"BUILT FOR"),
+          [{icon:"rocket_launch",label:"Startups"},
+           {icon:"store",        label:"Retail"},
+           {icon:"factory",      label:"Manufacturing"},
+           {icon:"groups",       label:"Any Business"},
+          ].map(function(t){
+            return h("div",{key:t.label,style:{
+                flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,
+                background:BG,borderRadius:8,padding:"6px 2px",
+                border:"1px solid "+BD,
+              }},
+              ic(t.icon,T2,14),
+              h("span",{style:{fontSize:8,fontWeight:600,color:T2,textAlign:"center",lineHeight:1.1}},t.label)
+            );
+          })
         )
+      ),
+
+      /* ── 5. PRICING ── */
+      h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
+        h("div",{style:{
+            display:"flex",gap:4,background:CARD2,
+            borderRadius:12,border:"1px solid "+BD,
+            padding:"8px 10px",alignItems:"center",
+          }},
+          h("span",{style:{fontSize:9,fontWeight:700,color:T2,letterSpacing:.8,flexShrink:0,marginRight:2}},"PRICING"),
+          [{plan:"Free",price:"₹0",emp:"5 emp",bold:false},
+           {plan:"Pro",  price:"₹2,999/yr",emp:"25 emp",bold:true},
+           {plan:"Biz",  price:"₹5,999/yr",emp:"50 emp",bold:false},
+          ].map(function(p){
+            return h("div",{key:p.plan,style:{
+                flex:1,background:p.bold?NAV:BG,
+                borderRadius:8,padding:"5px 4px",textAlign:"center",
+                border:p.bold?"none":"1px solid "+BD,
+              }},
+              h("div",{style:{fontSize:8,fontWeight:700,
+                  color:p.bold?"rgba(255,255,255,.5)":T2,marginBottom:1}},p.plan),
+              h("div",{style:{fontSize:10,fontWeight:900,
+                  color:p.bold?"#fff":T1,letterSpacing:-.2}},p.price),
+              h("div",{style:{fontSize:8,
+                  color:p.bold?"rgba(255,255,255,.4)":T2,marginTop:1}},p.emp)
+            );
+          })
+        )
+      ),
+
+      /* ── 6. CTA ── */
+      h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
+        h("button",{
+            onClick:function(){setAuthErr("");setAuthMode("signup");},
+            style:{
+              width:"100%",background:NAV,border:"none",
+              borderRadius:12,padding:"13px",
+              fontSize:14,fontWeight:800,color:"#fff",
+              cursor:"pointer",letterSpacing:-.2,
+              display:"flex",alignItems:"center",justifyContent:"center",gap:7,
+              marginBottom:7,
+            }},
+          ic("rocket_launch","#fff",14),"Start Free — No Credit Card"
+        ),
+        h("button",{
+            onClick:function(){setAuthErr("");setAuthMode("signin");},
+            style:{
+              width:"100%",background:"transparent",
+              border:"1.5px solid "+BD,
+              borderRadius:12,padding:"11px",
+              fontSize:12,fontWeight:700,color:T2,
+              cursor:"pointer",letterSpacing:.1,
+            }},
+          "Already have an account?  Sign In"
+        )
+      ),
+
+      /* ── 7. FOOTER ── */
+      h("div",{style:{
+          flexShrink:0,padding:"0 18px 10px",
+          display:"flex",justifyContent:"space-between",alignItems:"center",
+        }},
+        h("span",{style:{fontSize:9,color:T2}},"Proudly built in India"),
+        h("span",{
+            style:{fontSize:10,fontWeight:700,color:"#25D366",cursor:"pointer"},
+            onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
+          "WhatsApp Support")
       )
     );
   })();
