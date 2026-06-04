@@ -2348,182 +2348,190 @@ export default function App(){
   // ── Landing screen ──
   var landingScreen=(function(){
 
-    /* ── inject marquee CSS once ── */
+    /* inject marquee CSS once */
     if(!document.getElementById("ahr-css")){
-      var st=document.createElement("style");st.id="ahr-css";
-      st.textContent=
+      var st2=document.createElement("style");st2.id="ahr-css";
+      st2.textContent=
         "@keyframes mltr{from{transform:translateX(0)}to{transform:translateX(-50%)}}" +
         "@keyframes mrtl{from{transform:translateX(-50%)}to{transform:translateX(0)}}" +
-        ".mltr{display:flex;width:max-content;animation:mltr 22s linear infinite;gap:10px}" +
-        ".mrtl{display:flex;width:max-content;animation:mrtl 22s linear infinite;gap:10px}" +
-        ".mwrap{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 60px,#000 calc(100% - 60px),transparent);mask:linear-gradient(90deg,transparent,#000 60px,#000 calc(100% - 60px),transparent)}";
-      document.head.appendChild(st);
+        ".mltr{display:flex;width:max-content;animation:mltr 24s linear infinite}" +
+        ".mrtl{display:flex;width:max-content;animation:mrtl 24s linear infinite}" +
+        ".mwrap{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,black 50px,black calc(100% - 50px),transparent);mask:linear-gradient(90deg,transparent,black 50px,black calc(100% - 50px),transparent)}";
+      document.head.appendChild(st2);
     }
 
-    /* ── Feature data: icon + title + brief ── */
+    /* exact app theme colors */
+    var isDark=themeMode==="dark";
+    var PG  =isDark?"#242323":"#F1F5F9";
+    var CRD =isDark?"#2e2d2d":"#FFFFFF";
+    var NVY2=isDark?"#FFFFFF":"#0F172A";
+    var GRY2=isDark?"#9a9a9a":"#64748B";
+    var BDR2=isDark?"#3a3939":"#E2E8F0";
+    var SFT2=isDark?"#2a2929":"#F8FAFF";
+    /* header is always dark navy — brand color */
+    var HDR ="#0F172A";
+    var H_T1="#FFFFFF";
+    var H_T2="rgba(255,255,255,0.55)";
+    var H_BD="rgba(255,255,255,0.12)";
+
     var feats=[
-      {icon:"calendar_month",  title:"Attendance",   brief:"One-tap daily marking"},
-      {icon:"payments",        title:"Payroll",       brief:"PF, ESI, PT auto-calc"},
-      {icon:"fact_check",      title:"Compliance",    brief:"Every statutory PDF"},
-      {icon:"insights",        title:"Analytics",     brief:"Reports via WhatsApp"},
-      {icon:"account_balance", title:"PF & ESI",      brief:"Challan in one click"},
-      {icon:"workspace_premium",title:"Gratuity",     brief:"Auto calculated"},
-      {icon:"description",     title:"Offer Letter",  brief:"PDF in seconds"},
-      {icon:"warning",         title:"Warnings",      brief:"Formal letter + PDF"},
-      {icon:"event_available", title:"Leave Balance", brief:"Per-employee tracking"},
-      {icon:"cloud_upload",    title:"Cloud Sync",    brief:"Auto backup, any device"},
+      {icon:"calendar_month",  title:"Attendance",    brief:"One-tap daily marking"},
+      {icon:"payments",        title:"Payroll",        brief:"PF, ESI, PT auto-calc"},
+      {icon:"fact_check",      title:"Compliance",     brief:"Every statutory PDF"},
+      {icon:"insights",        title:"Analytics",      brief:"Reports via WhatsApp"},
+      {icon:"account_balance", title:"PF & ESI",       brief:"Challan in one click"},
+      {icon:"workspace_premium",title:"Gratuity",      brief:"Auto calculated"},
+      {icon:"description",     title:"Offer Letter",   brief:"PDF in seconds"},
+      {icon:"warning",         title:"Warnings",       brief:"Formal letter + PDF"},
+      {icon:"event_available", title:"Leave Balance",  brief:"Per-employee tracking"},
+      {icon:"cloud_upload",    title:"Cloud Sync",     brief:"Auto backup, any device"},
     ];
 
-    /* ── All white on dark navy ── */
-    var BG   = "#0F172A";
-    var CARD = "rgba(255,255,255,0.07)";
-    var T1   = "#FFFFFF";
-    var T2   = "rgba(255,255,255,0.55)";
-    var T3   = "rgba(255,255,255,0.35)";
-    var BD   = "rgba(255,255,255,0.10)";
-    var WHT  = "#FFFFFF";
-
-    /* Feature tile — white icon + white text */
+    /* tile — always white icon/text since rows sit on the PAGE bg */
+    /* but PAGE bg varies — so use NVY2 for text, GRY2 for brief */
     function tile(f,key){
       return h("div",{key:key,style:{
-        flexShrink:0,width:110,
-        background:CARD,
-        border:"1px solid "+BD,
-        borderRadius:12,
-        padding:"10px 10px 10px 10px",
-        display:"flex",flexDirection:"column",gap:5,
-        marginRight:10,
+        flexShrink:0,width:106,
+        background:CRD,border:"1px solid "+BDR2,
+        borderRadius:12,padding:"10px 8px 10px",
+        display:"flex",flexDirection:"column",
+        alignItems:"center",textAlign:"center",gap:5,
+        marginRight:8,
       }},
         h("div",{style:{
           width:30,height:30,borderRadius:8,
-          background:"rgba(255,255,255,0.10)",
+          background:SFT2,
           display:"flex",alignItems:"center",justifyContent:"center",
           marginBottom:2,
-        }},ic(f.icon,"rgba(255,255,255,0.9)",15)),
-        h("div",{style:{fontSize:11,fontWeight:800,color:T1,lineHeight:1.2}},f.title),
-        h("div",{style:{fontSize:9,color:T2,lineHeight:1.3}},f.brief)
+        }},ic(f.icon,NVY2,15)),
+        h("div",{style:{fontSize:11,fontWeight:800,color:NVY2,lineHeight:1.2}},f.title),
+        h("div",{style:{fontSize:9,color:GRY2,lineHeight:1.3}},f.brief)
       );
     }
 
-    /* double arrays for seamless loop */
     var d1=feats.concat(feats);
     var d2=feats.slice().reverse().concat(feats.slice().reverse());
 
     return h("div",{style:{
-      position:"fixed",inset:0,background:BG,
+      position:"fixed",inset:0,background:PG,
       display:"flex",flexDirection:"column",
-      maxWidth:430,margin:"0 auto",
-      overflow:"hidden",
+      maxWidth:430,margin:"0 auto",overflow:"hidden",
     }},
 
-      /* ═══ 1. HEADER ═══ */
+      /* ═══ HERO HEADER — always dark navy ═══ */
       h("div",{style:{
-        flexShrink:0,
+        flexShrink:0,background:HDR,
         display:"flex",flexDirection:"column",
-        alignItems:"center",
-        padding:"24px 24px 18px",
-        textAlign:"center",
+        alignItems:"center",textAlign:"center",
+        padding:"20px 24px 22px",
+        position:"relative",overflow:"hidden",
       }},
-        logoSVG(48),
-        h("div",{style:{fontSize:22,fontWeight:900,color:T1,letterSpacing:-.4,marginTop:10,marginBottom:6}},
+        /* decorative circle */
+        h("div",{style:{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.04)"}}),
+        /* logo */
+        logoSVG(46),
+        /* app name */
+        h("div",{style:{fontSize:22,fontWeight:900,color:H_T1,letterSpacing:-.4,marginTop:10,marginBottom:8}},
           "Admin HR"),
-        h("div",{style:{fontSize:12,color:T2,lineHeight:1.65,maxWidth:270,marginBottom:18}},
-          "Smart HR management for Indian businesses. Attendance, payroll & compliance — all in one app."),
+        /* tagline — centered, max 2 lines */
+        h("div",{style:{fontSize:12,color:H_T2,lineHeight:1.65,maxWidth:260,marginBottom:18}},
+          "Smart HR for Indian businesses. Attendance, payroll & PF/ESI compliance — all in one app."),
+        /* buttons */
         h("div",{style:{display:"flex",gap:8,width:"100%",maxWidth:260}},
           h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{
-            flex:1,background:WHT,border:"none",borderRadius:10,padding:"11px",
+            flex:1,background:"#FFFFFF",border:"none",borderRadius:10,padding:"11px",
             fontSize:12,fontWeight:800,color:"#0F172A",cursor:"pointer",
           }},"Start Free"),
           h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{
-            flex:1,background:"rgba(255,255,255,0.10)",
-            border:"1px solid rgba(255,255,255,0.25)",
+            flex:1,background:"rgba(255,255,255,.10)",
+            border:"1px solid rgba(255,255,255,.25)",
             borderRadius:10,padding:"11px",
-            fontSize:12,fontWeight:700,color:WHT,cursor:"pointer",
+            fontSize:12,fontWeight:700,color:"#FFFFFF",cursor:"pointer",
           }},"Sign In")
         )
       ),
 
-      /* ═══ 2. MOVING ROWS ═══ */
-      h("div",{style:{flexShrink:0,paddingBottom:8}},
-        h("div",{className:"mwrap",style:{marginBottom:8}},
-          h("div",{className:"mltr"},d1.map(function(f,i){return tile(f,"a"+i);}))),
+      /* ═══ MOVING FEATURE ROWS — on app PAGE background ═══ */
+      h("div",{style:{flexShrink:0,padding:"10px 0 4px",background:PG}},
+        h("div",{className:"mwrap",style:{marginBottom:6}},
+          h("div",{className:"mltr",style:{paddingLeft:14}},
+            d1.map(function(f,i){return tile(f,"a"+i);}))
+        ),
         h("div",{className:"mwrap"},
-          h("div",{className:"mrtl"},d2.map(function(f,i){return tile(f,"b"+i);})))
+          h("div",{className:"mrtl",style:{paddingLeft:14}},
+            d2.map(function(f,i){return tile(f,"b"+i);}))
+        )
       ),
 
-      /* ═══ 3. BUILT FOR ═══ */
-      h("div",{style:{flexShrink:0,padding:"8px 14px 6px"}},
-        h("div",{style:{background:CARD,border:"1px solid "+BD,borderRadius:14,padding:"10px 14px"}},
-          h("div",{style:{fontSize:8,fontWeight:700,color:T3,letterSpacing:1.8,marginBottom:8}},
+      /* ═══ BUILT FOR ═══ */
+      h("div",{style:{flexShrink:0,padding:"8px 14px 4px"}},
+        h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BDR2,padding:"10px 14px"}},
+          h("div",{style:{fontSize:9,fontWeight:700,color:GRY2,letterSpacing:1.6,marginBottom:8,textAlign:"center"}},
             "BUILT FOR"),
           h("div",{style:{display:"flex",gap:6}},
-            [{icon:"rocket_launch",l:"Startups",s:"5–20 employees"},
-             {icon:"store",        l:"Retail & Trade",s:"Shops to chains"},
-             {icon:"factory",      l:"Manufacturing",s:"10–50 workers"},
+            [{icon:"rocket_launch",l:"Startups",   s:"5–20 emp"},
+             {icon:"store",        l:"Retail",      s:"Any scale"},
+             {icon:"factory",      l:"Manufacturing",s:"10–50 emp"},
              {icon:"groups",       l:"Any Business",s:"That pays salaries"},
             ].map(function(t){
               return h("div",{key:t.l,style:{
                 flex:1,display:"flex",flexDirection:"column",
-                alignItems:"center",gap:3,
-                padding:"8px 2px",
-                background:"rgba(255,255,255,0.04)",
-                borderRadius:9,border:"1px solid "+BD,
+                alignItems:"center",gap:4,
+                padding:"8px 4px",
+                background:SFT2,borderRadius:9,border:"1px solid "+BDR2,
               }},
-                ic(t.icon,"rgba(255,255,255,0.6)",14),
-                h("div",{style:{fontSize:9,fontWeight:700,color:T1,textAlign:"center",lineHeight:1.15}},t.l),
-                h("div",{style:{fontSize:7,color:T2,textAlign:"center",lineHeight:1.2}},t.s)
+                ic(t.icon,GRY2,14),
+                h("div",{style:{fontSize:9,fontWeight:700,color:NVY2,textAlign:"center",lineHeight:1.15}},t.l),
+                h("div",{style:{fontSize:7,color:GRY2,textAlign:"center",lineHeight:1.2}},t.s)
               );
             })
           )
         )
       ),
 
-      /* ═══ 4. PRICING ═══ */
-      h("div",{style:{flexShrink:0,padding:"0 14px 6px"}},
-        h("div",{style:{background:CARD,border:"1px solid "+BD,borderRadius:14,padding:"10px 14px"}},
-          h("div",{style:{fontSize:8,fontWeight:700,color:T3,letterSpacing:1.8,marginBottom:8}},"PRICING"),
-          h("div",{style:{display:"flex",gap:8}},
-            [{n:"Free",    p:"₹0",         sub:"5 employees",  hi:false},
-             {n:"Pro",     p:"₹2,999/yr",  sub:"25 employees", hi:true},
-             {n:"Business",p:"₹5,999/yr",  sub:"50 employees", hi:false},
+      /* ═══ PRICING ═══ */
+      h("div",{style:{flexShrink:0,padding:"4px 14px 6px"}},
+        h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BDR2,padding:"10px 14px"}},
+          h("div",{style:{fontSize:9,fontWeight:700,color:GRY2,letterSpacing:1.6,marginBottom:8,textAlign:"center"}},
+            "PRICING"),
+          h("div",{style:{display:"flex",gap:6}},
+            [{n:"Free",     p:"₹0",        sub:"5 employees",  hi:false},
+             {n:"Pro",      p:"₹2,999/yr", sub:"25 employees", hi:true},
+             {n:"Business", p:"₹5,999/yr", sub:"50 employees", hi:false},
             ].map(function(pr){
               return h("div",{key:pr.n,style:{
-                flex:1,
-                background:pr.hi?"rgba(255,255,255,0.13)":"rgba(255,255,255,0.04)",
-                border:pr.hi?"1px solid rgba(255,255,255,0.3)":"1px solid "+BD,
-                borderRadius:10,padding:"8px 6px",textAlign:"center",
+                flex:1,textAlign:"center",
+                background:pr.hi?HDR:SFT2,
+                border:"1px solid "+(pr.hi?HDR:BDR2),
+                borderRadius:10,padding:"8px 4px",
               }},
-                h("div",{style:{fontSize:9,fontWeight:700,color:pr.hi?T1:T2,marginBottom:3}},pr.n),
-                h("div",{style:{fontSize:11,fontWeight:900,color:T1,letterSpacing:-.3}}),pr.p,
-                h("div",{style:{fontSize:8,color:T2,marginTop:2}}),pr.sub
+                h("div",{style:{fontSize:9,fontWeight:700,color:pr.hi?"rgba(255,255,255,.6)":GRY2,marginBottom:2}},pr.n),
+                h("div",{style:{fontSize:11,fontWeight:900,color:pr.hi?"#FFFFFF":NVY2,letterSpacing:-.2}}),pr.p,
+                h("div",{style:{fontSize:8,color:pr.hi?"rgba(255,255,255,.45)":GRY2,marginTop:2}}),pr.sub
               );
             })
           )
         )
       ),
 
-      /* ═══ 5. CONTACT + QUOTE ═══ */
-      h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 14px 14px"}},
-        /* contact strip */
+      /* ═══ CONTACT + QUOTE ═══ */
+      h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"4px 14px 12px"}},
         h("div",{style:{
           display:"flex",justifyContent:"space-between",alignItems:"center",
-          background:CARD,border:"1px solid "+BD,borderRadius:10,
-          padding:"8px 12px",marginBottom:10,
+          background:CRD,border:"1px solid "+BDR2,borderRadius:10,
+          padding:"8px 12px",marginBottom:8,
         }},
-          h("div",{style:{fontSize:10,color:T2}},"Need help?"),
+          h("div",{style:{fontSize:10,color:GRY2}},"Need help?"),
           h("div",{style:{display:"flex",alignItems:"center",gap:5,cursor:"pointer"},
             onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
             ic("whatsapp","#25D366",14),
-            h("span",{style:{fontSize:11,fontWeight:700,color:"#25D366"}},
-              "WhatsApp Support")
+            h("span",{style:{fontSize:11,fontWeight:700,color:"#25D366"}},"WhatsApp Support")
           )
         ),
-        /* quote */
         h("div",{style:{textAlign:"center"}},
-          h("div",{style:{fontSize:11,fontStyle:"italic",color:T2,lineHeight:1.65,marginBottom:6}},
+          h("div",{style:{fontSize:11,fontStyle:"italic",color:GRY2,lineHeight:1.6,marginBottom:4}},
             "“Your employees are your greatest asset.”"),
-          h("div",{style:{fontSize:9,letterSpacing:1.5,color:T3,fontWeight:700}},
-            "PROUDLY BUILT IN INDIA")
+          h("div",{style:{fontSize:9,letterSpacing:1.5,color:GRY2,fontWeight:700}},"PROUDLY BUILT IN INDIA")
         )
       )
     );
