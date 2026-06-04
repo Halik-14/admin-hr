@@ -119,7 +119,7 @@ var SVG_ICONS={
 "add_task":"M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h9v-2H3V4h18v7h2V4c0-1.1-.9-2-2-2zm-7.76 12.24L11 17.5l-2.24-3.26L6 18h12l-3.76-5.76-2 2zM13 10.5c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm6.5 1.5l-1.5 1.5-1.5-1.5V10l1.5 1.5L19.5 10v2z",
 "insights":"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z",
 "account_balance_wallet":"M21 7.28V5c0-1.1-.9-2-2-2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-2.28c.59-.35 1-.98 1-1.72V9c0-.74-.41-1.37-1-1.72zM20 9v6h-7V9h7zM5 19V5h14v2h-6c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h6v2H5z",
-"event_available":"M16.53 11.06L15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
+"event_note":"M21 3h-1V1h-2v2H6V1H4v2H3c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H3V8h18v13zM5 10h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zm4 0h2v2h-2zM5 13h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zM5 16h2v2H5zm4 0h2v2H9zm4 0h2v2h-2zm4 0h2v2h-2z","warning":"M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z","description":"M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z","rocket_launch":"M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89L2 10.69l4.05-4.05c.47-.47 1.15-.68 1.81-.55l1.33.26zm10.46 10.46-.26-1.33c-.13-.66.08-1.34.55-1.81L24 9.62l-1.55 3.62c-.31.13-3.6 1.53-5.89 3.57zm.29-6.04c0 1.88-.56 4.23-2.28 5.95l-5.1 5.1c-.78.78-2.05.78-2.83 0L4.18 16.27c-.78-.78-.78-2.05 0-2.83l5.1-5.1c1.72-1.72 4.07-2.28 5.95-2.28 1.51 0 2.9.4 4.01 1.07l-5.15 5.15c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l5.15-5.15c.68 1.12 1.08 2.51 1.08 4.01zm-6.19-2.93c-.55-.55-1.43-.55-1.98 0s-.55 1.43 0 1.98 1.43.55 1.98 0 .55-1.43 0-1.98z","store":"M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z","factory":"M2 20v-1.5l2-2.5V9h4v7l2 2.5V20H2zm2-3h4v-1l-2-2.5V11H6v2.5L4 16v1zm5 3v-2h14V9.5L19 6h-2v4l-2-2-2 2V6h-2L7 9.5V13H5V9.5L8 6h14l3 3.5V20H9zm5-9.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S16.33 12 15.5 12 14 11.33 14 10.5z","event_available":"M16.53 11.06L15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17l5.94-5.94zM19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z",
 "expand_more":"M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z",
 "expand_less":"M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z",
 "table_view":"M4 5v13h17V5H4zm3 11H6v-2h1v2zm0-4H6v-2h1v2zm0-4H6V6h1v2zm11 8H8v-2h10v2zm0-4H8v-2h10v2zm0-4H8V6h10v2z",
@@ -2348,174 +2348,94 @@ export default function App(){
   // ── Landing screen ──
   var landingScreen=(function(){
     var slide=sLandSlide[0],setSlide=sLandSlide[1];
-    var slides=[
-      {
-        icon:"calendar_month",
-        color:"#0F172A",
-        title:"Smart Attendance",
-        sub:"Built for how India works",
-        desc:"Mark attendance in one tap. Holiday calendar, half-day tracking, leave balance — all automatic. No paperwork.",
-        badge:"For startups & growing teams"
-      },
-      {
-        icon:"payments",
-        color:"#059669",
-        title:"Auto Payroll",
-        sub:"PF, ESI, PT — zero effort",
-        desc:"Salary calculated automatically with all Indian statutory deductions. Payslips generated in seconds, not hours.",
-        badge:"For SMBs saving CA bills"
-      },
-      {
-        icon:"picture_as_pdf",
-        color:"#DC2626",
-        title:"Statutory PDFs",
-        sub:"Stay compliant, always",
-        desc:"Salary register, PF/ESI challan, attendance summary — every document you need, download-ready anytime.",
-        badge:"For businesses that want peace of mind"
-      },
-      {
-        icon:"insights",
-        color:"#7C3AED",
-        title:"Reports & Analytics",
-        sub:"Know your team, deeply",
-        desc:"Attendance rates, absentee alerts, department breakdowns. Share reports to WhatsApp in one tap.",
-        badge:"For managers who care about data"
-      },
-    ];
-    var cur=slides[slide%slides.length];
     var isDark=themeMode==="dark";
-    var bg=isDark?"#1a1a1a":"#F8FAFF";
-    var navBg=isDark?"#111":"#0F172A";
-    var cardBg=isDark?"#222":"#FFFFFF";
+    var bg=isDark?"#242323":"#F8FAFF";
+    var navBg=isDark?"#2e2d2d":"#0F172A";
+    var cardBg=isDark?"#2e2d2d":"#FFFFFF";
     var textPrimary=isDark?"#FFFFFF":"#0F172A";
     var textSub=isDark?"#9a9a9a":"#64748B";
-    var borderCol=isDark?"#333":"#E2E8F0";
-
-    return h("div",{style:{minHeight:"100vh",background:bg,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",position:"relative"}},
-
-      // ── Top nav bar ──
-      h("div",{style:{background:navBg,padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
-        h("div",{style:{display:"flex",alignItems:"center",gap:10}},
-          logoSVG(32),
-          h("div",{style:{fontSize:18,fontWeight:900,color:"#FFFFFF",letterSpacing:-.3}},"Admin HR")
+    var borderCol=isDark?"#3a3939":"#E2E8F0";
+    var accentCol=isDark?"#FFFFFF":"#0F172A";
+    var slides=[
+      {icon:"calendar_month",title:"Smart Attendance",sub:"One tap. Done.",desc:"Mark, track and report attendance — with holiday calendar, leave balance, and WhatsApp sharing built in.",badge:"Startups & small teams"},
+      {icon:"payments",title:"Auto Payroll",sub:"PF, ESI, PT — zero effort.",desc:"All Indian statutory deductions calculated automatically. Payslips and salary registers in seconds.",badge:"Wholesale & retail shops"},
+      {icon:"fact_check",title:"Statutory Compliance",sub:"Stay audit-ready, always.",desc:"Salary register, PF/ESI challan, attendance summary — every document you need, download-ready anytime.",badge:"Manufacturing & trade"},
+      {icon:"insights",title:"Reports & Analytics",sub:"Know your team, clearly.",desc:"Attendance rates, absentee alerts, department breakdowns. Share instant reports via WhatsApp.",badge:"Any Indian business"},
+    ];
+    var cur=slides[slide%slides.length];
+    return h("div",{style:{height:"100vh",background:bg,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",overflow:"hidden"}},
+      h("div",{style:{background:navBg,padding:"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
+        h("div",{style:{display:"flex",alignItems:"center",gap:9}},
+          logoSVG(30),
+          h("div",{style:{fontSize:17,fontWeight:900,color:"#FFFFFF",letterSpacing:-.3}},"Admin HR")
         ),
         h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},
-          style:{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.2)",borderRadius:20,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#FFFFFF",cursor:"pointer",letterSpacing:.2}},
+          style:{background:"rgba(255,255,255,.13)",border:"1px solid rgba(255,255,255,.2)",borderRadius:20,padding:"5px 14px",fontSize:12,fontWeight:700,color:"#FFFFFF",cursor:"pointer"}},
           "Sign In")
       ),
-
-      // ── Hero badge ──
-      h("div",{style:{padding:"20px 20px 0",display:"flex",justifyContent:"center"}},
-        h("div",{style:{background:cur.color+"12",border:"1px solid "+cur.color+"33",borderRadius:20,padding:"4px 14px",fontSize:11,fontWeight:700,color:cur.color,letterSpacing:.3,transition:"all .4s"}},
-          cur.badge)
-      ),
-
-      // ── Big feature icon ──
-      h("div",{style:{display:"flex",justifyContent:"center",padding:"24px 20px 12px"}},
-        h("div",{style:{width:100,height:100,borderRadius:28,background:cur.color+"12",border:"2px solid "+cur.color+"22",display:"flex",alignItems:"center",justifyContent:"center",transition:"all .4s"}},
-          ic(cur.icon,cur.color,48)
-        )
-      ),
-
-      // ── Slide content ──
-      h("div",{style:{padding:"0 24px",textAlign:"center",flex:1}},
-        h("div",{style:{fontSize:11,fontWeight:700,color:textSub,letterSpacing:1.5,marginBottom:6,transition:"all .3s"}},cur.sub.toUpperCase()),
-        h("div",{style:{fontSize:28,fontWeight:900,color:textPrimary,lineHeight:1.2,marginBottom:12,letterSpacing:-.5,transition:"all .3s"}},cur.title),
-        h("div",{style:{fontSize:14,color:textSub,lineHeight:1.65,marginBottom:20,transition:"all .3s"}},cur.desc),
-
-        // Dot indicators
-        h("div",{style:{display:"flex",justifyContent:"center",gap:6,marginBottom:24}},
+      h("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"12px 22px 4px",minHeight:0}},
+        h("div",{style:{background:isDark?"rgba(255,255,255,.08)":"rgba(15,23,42,.06)",border:"1px solid "+(isDark?"rgba(255,255,255,.12)":"rgba(15,23,42,.08)"),borderRadius:20,padding:"4px 14px",fontSize:10,fontWeight:700,color:textSub,letterSpacing:.5,marginBottom:14}},
+          cur.badge.toUpperCase()
+        ),
+        h("div",{style:{width:80,height:80,borderRadius:24,background:isDark?"rgba(255,255,255,.07)":"rgba(15,23,42,.05)",border:"1.5px solid "+(isDark?"rgba(255,255,255,.1)":"rgba(15,23,42,.08)"),display:"flex",alignItems:"center",justifyContent:"center",marginBottom:16}},
+          ic(cur.icon,accentCol,36)
+        ),
+        h("div",{style:{fontSize:10,fontWeight:700,color:textSub,letterSpacing:1.8,marginBottom:6,textAlign:"center"}},cur.sub.toUpperCase()),
+        h("div",{style:{fontSize:26,fontWeight:900,color:textPrimary,lineHeight:1.15,marginBottom:10,letterSpacing:-.5,textAlign:"center"}},cur.title),
+        h("div",{style:{fontSize:13,color:textSub,lineHeight:1.6,textAlign:"center",maxWidth:290}},cur.desc),
+        h("div",{style:{display:"flex",justifyContent:"center",gap:6,marginTop:14}},
           slides.map(function(s,i){
             var active=i===slide%slides.length;
-            return h("div",{key:i,onClick:function(){setSlide(i);},style:{width:active?24:7,height:7,borderRadius:99,background:active?cur.color:borderCol,cursor:"pointer",transition:"all .3s"}});
+            return h("div",{key:i,onClick:function(){setSlide(i);},
+              style:{width:active?20:6,height:6,borderRadius:99,background:active?accentCol:(isDark?"#4a4a4a":"#CBD5E1"),cursor:"pointer",transition:"all .3s"}});
           })
         )
       ),
-
-      // ── Feature pills row ──
-      h("div",{style:{overflowX:"auto",padding:"0 20px 20px",display:"flex",gap:8,flexShrink:0}},
-        [
-          {icon:"cloud_upload",label:"Cloud Sync"},
-          {icon:"account_balance",label:"PF & ESI"},
-          {icon:"event_note",label:"Holidays"},
-          {icon:"workspace_premium",label:"Gratuity"},
-          {icon:"description",label:"Offer Letter"},
-          {icon:"warning",label:"Warnings"},
-          {icon:"whatsapp",label:"WhatsApp"},
-        ].map(function(f){
-          return h("div",{key:f.label,style:{display:"flex",alignItems:"center",gap:5,background:cardBg,border:"1px solid "+borderCol,borderRadius:20,padding:"6px 12px",flexShrink:0,boxShadow:"0 1px 4px rgba(0,0,0,.06)"}},
-            ic(f.icon,textSub,13),
-            h("div",{style:{fontSize:11,fontWeight:600,color:textSub,whiteSpace:"nowrap"}},f.label)
+      h("div",{style:{overflowX:"auto",display:"flex",gap:6,padding:"8px 18px",flexShrink:0,WebkitOverflowScrolling:"touch"}},
+        [{icon:"event_available",label:"Leave Tracking",color:"#059669"},{icon:"account_balance",label:"PF & ESI",color:"#2563EB"},{icon:"fact_check",label:"Compliance",color:"#DC2626"},{icon:"workspace_premium",label:"Gratuity",color:"#7C3AED"},{icon:"description",label:"Offer Letter",color:"#0EA5E9"},{icon:"warning",label:"Warnings",color:"#D97706"},{icon:"whatsapp",label:"WhatsApp",color:"#25D366"},{icon:"cloud_upload",label:"Cloud Sync",color:"#64748B"}].map(function(f){
+          return h("div",{key:f.label,style:{display:"flex",alignItems:"center",gap:5,background:f.color+"15",border:"1px solid "+f.color+"33",borderRadius:20,padding:"5px 11px",flexShrink:0}},
+            ic(f.icon,f.color,12),
+            h("div",{style:{fontSize:10,fontWeight:700,color:f.color,whiteSpace:"nowrap"}},f.label)
           );
         })
       ),
-
-      // ── Who is this for ──
-      h("div",{style:{margin:"0 20px 20px",background:cardBg,borderRadius:16,padding:"14px 16px",border:"1px solid "+borderCol}},
-        h("div",{style:{fontSize:10,fontWeight:700,color:textSub,letterSpacing:1.2,marginBottom:10}},"BUILT FOR"),
-        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
-          [
-            {icon:"rocket_launch",label:"Startups",desc:"5-20 employees"},
-            {icon:"store",label:"Retail & Trade",desc:"Shop to chain"},
-            {icon:"factory",label:"Manufacturing",desc:"10-50 workers"},
-            {icon:"groups",label:"Any Business",desc:"That pays salaries"},
-          ].map(function(t){
-            return h("div",{key:t.label,style:{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:bg,borderRadius:10,border:"1px solid "+borderCol}},
-              ic(t.icon,cur.color,16),
-              h("div",null,
-                h("div",{style:{fontSize:11,fontWeight:700,color:textPrimary}},t.label),
-                h("div",{style:{fontSize:9,color:textSub}},t.desc)
-              )
+      h("div",{style:{padding:"0 18px 8px",flexShrink:0}},
+        h("div",{style:{background:cardBg,borderRadius:14,border:"1px solid "+borderCol,padding:"10px 14px"}},
+          h("div",{style:{fontSize:9,fontWeight:700,color:textSub,letterSpacing:1.5,marginBottom:8}},"BUILT FOR"),
+          h("div",{style:{display:"flex",gap:6}},
+            [{icon:"rocket_launch",label:"Startups"},{icon:"store",label:"Retail & Trade"},{icon:"factory",label:"Manufacturing"},{icon:"groups",label:"Any Business"}].map(function(t){
+              return h("div",{key:t.label,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 4px",background:bg,borderRadius:9,border:"1px solid "+borderCol}},
+                ic(t.icon,accentCol,16),
+                h("div",{style:{fontSize:9,fontWeight:600,color:textSub,textAlign:"center",lineHeight:1.2}},t.label)
+              );
+            })
+          )
+        )
+      ),
+      h("div",{style:{padding:"0 18px 8px",flexShrink:0}},
+        h("div",{style:{display:"flex",gap:5,background:cardBg,borderRadius:14,border:"1px solid "+borderCol,padding:"8px 12px",alignItems:"center"}},
+          h("div",{style:{fontSize:9,fontWeight:700,color:textSub,letterSpacing:1,marginRight:4,flexShrink:0}},"PRICING"),
+          [{plan:"Free",price:"₹0",emp:"5 emp",bold:false},{plan:"Pro",price:"₹2,999/yr",emp:"25 emp",bold:true},{plan:"Business",price:"₹5,999/yr",emp:"50 emp",bold:false}].map(function(p){
+            return h("div",{key:p.plan,style:{flex:1,background:p.bold?navBg:bg,borderRadius:8,padding:"6px 4px",textAlign:"center",border:p.bold?"none":"1px solid "+borderCol}},
+              h("div",{style:{fontSize:9,fontWeight:700,color:p.bold?"rgba(255,255,255,.5)":textSub,marginBottom:1}},p.plan),
+              h("div",{style:{fontSize:10,fontWeight:900,color:p.bold?"#fff":textPrimary,letterSpacing:-.2}},p.price),
+              h("div",{style:{fontSize:8,color:p.bold?"rgba(255,255,255,.45)":textSub,marginTop:1}},p.emp)
             );
           })
         )
       ),
-
-      // ── Pricing preview ──
-      h("div",{style:{margin:"0 20px 20px",borderRadius:16,overflow:"hidden",border:"1px solid "+borderCol}},
-        h("div",{style:{background:navBg,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-          h("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.5)",letterSpacing:1}},"PRICING"),
-          h("div",{style:{fontSize:11,color:"rgba(255,255,255,.4)"}},"Simple. No per-employee charges.")
+      h("div",{style:{padding:"0 18px 12px",flexShrink:0}},
+        h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+          h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:2,background:navBg,border:"none",borderRadius:12,padding:"13px",fontSize:14,fontWeight:800,color:"#FFFFFF",cursor:"pointer",letterSpacing:-.2}},"Start Free"),
+          h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:cardBg,border:"1.5px solid "+borderCol,borderRadius:12,padding:"13px",fontSize:12,fontWeight:600,color:textSub,cursor:"pointer"}},"Sign In")
         ),
-        h("div",{style:{background:cardBg,padding:"12px 14px",display:"flex",gap:8}},
-          [
-            {plan:"Free",price:"0",emp:"5 employees",highlight:false},
-            {plan:"Pro",price:"2,999/yr",emp:"25 employees",highlight:true},
-            {plan:"Business",price:"5,999/yr",emp:"50 employees",highlight:false},
-          ].map(function(p){
-            return h("div",{key:p.plan,style:{flex:1,background:p.highlight?navBg:bg,borderRadius:10,padding:"10px 8px",textAlign:"center",border:p.highlight?"none":"1px solid "+borderCol}},
-              h("div",{style:{fontSize:10,fontWeight:700,color:p.highlight?"rgba(255,255,255,.5)":textSub,marginBottom:3}},p.plan),
-              h("div",{style:{fontSize:12,fontWeight:900,color:p.highlight?"#FFFFFF":textPrimary,letterSpacing:-.2}},"Rs."+p.price),
-              h("div",{style:{fontSize:9,color:p.highlight?"rgba(255,255,255,.4)":textSub,marginTop:2}},p.emp)
-            );
-          })
-        )
-      ),
-
-      // ── CTA buttons ──
-      h("div",{style:{padding:"0 20px 16px",display:"flex",flexDirection:"column",gap:8,flexShrink:0}},
-        h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},
-          style:{width:"100%",background:navBg,border:"none",borderRadius:14,padding:"15px",fontSize:15,fontWeight:800,color:"#FFFFFF",cursor:"pointer",letterSpacing:-.2}},
-          "Start Free — No Credit Card"
-        ),
-        h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},
-          style:{width:"100%",background:cardBg,border:"1.5px solid "+borderCol,borderRadius:14,padding:"13px",fontSize:13,fontWeight:600,color:textSub,cursor:"pointer"}},
-          "Already have an account?  Sign In"
-        )
-      ),
-
-      // ── Footer ──
-      h("div",{style:{padding:"0 20px 24px",textAlign:"center"}},
-        h("div",{style:{fontSize:11,color:textSub,marginBottom:4}},"Trusted by Indian businesses. Proudly built in India."),
-        h("div",{style:{fontSize:10,color:textSub}},
-          "Need help? ",
-          h("span",{style:{color:"#059669",fontWeight:700,cursor:"pointer"},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
-            "WhatsApp us")
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+          h("div",{style:{fontSize:9,color:textSub}},"Proudly built in India"),
+          h("span",{style:{fontSize:10,fontWeight:700,color:"#25D366",cursor:"pointer"},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},"WhatsApp Support")
         )
       )
     );
   })();
-
   // ── Sign In screen ──
   var signinScreen=authWrap(h("div",{key:"signin"},
     h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:24}},
@@ -6434,7 +6354,7 @@ null
     ];
     return h("div",{style:{marginTop:16}},
       h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:8,display:"flex",alignItems:"center",gap:6}},
-        ic("event_note",ACCENT,16),"Compliance Due Dates"),
+        ic("fact_check",ACCENT,16),"Compliance Due Dates"),
       h("div",{style:{background:CARD,borderRadius:14,border:"1px solid "+BDR,overflow:"hidden"}},
         items.map(function(item,i){
           var d=dl(item.day,item.m,item.y);
@@ -6490,7 +6410,7 @@ null
     return h("div",{className:"fd"},
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
         h("div",null,
-          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Holiday Calendar"),
+          h("div",{style:{display:"flex",alignItems:"center",gap:6}},ic("event_available",ACCENT,18),h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Holiday Calendar")),
           h("div",{style:{fontSize:10,color:GRY,marginTop:2}},sorted.length+" holidays set")
         ),
         h("button",{onClick:function(){setShowHolForm(!showHolForm);},
