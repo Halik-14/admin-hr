@@ -2373,7 +2373,7 @@ export default function App(){
           style:{background:"rgba(255,255,255,.13)",border:"1px solid rgba(255,255,255,.2)",borderRadius:20,padding:"5px 14px",fontSize:12,fontWeight:700,color:"#FFFFFF",cursor:"pointer"}},
           "Sign In")
       ),
-      h("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"12px 22px 4px",minHeight:0}},
+      h("div",{style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"8px 22px 0",minHeight:0}},
         h("div",{style:{background:isDark?"rgba(255,255,255,.08)":"rgba(15,23,42,.06)",border:"1px solid "+(isDark?"rgba(255,255,255,.12)":"rgba(15,23,42,.08)"),borderRadius:20,padding:"4px 14px",fontSize:10,fontWeight:700,color:textSub,letterSpacing:.5,marginBottom:14}},
           cur.badge.toUpperCase()
         ),
@@ -2391,7 +2391,7 @@ export default function App(){
           })
         )
       ),
-      h("div",{style:{overflowX:"auto",display:"flex",gap:6,padding:"8px 18px",flexShrink:0,WebkitOverflowScrolling:"touch"}},
+      h("div",{style:{overflowX:"auto",display:"flex",gap:6,padding:"6px 18px",flexShrink:0,WebkitOverflowScrolling:"touch"}},
         [{icon:"event_available",label:"Leave Tracking",color:"#059669"},{icon:"account_balance",label:"PF & ESI",color:"#2563EB"},{icon:"fact_check",label:"Compliance",color:"#DC2626"},{icon:"workspace_premium",label:"Gratuity",color:"#7C3AED"},{icon:"description",label:"Offer Letter",color:"#0EA5E9"},{icon:"warning",label:"Warnings",color:"#D97706"},{icon:"whatsapp",label:"WhatsApp",color:"#25D366"},{icon:"cloud_upload",label:"Cloud Sync",color:"#64748B"}].map(function(f){
           return h("div",{key:f.label,style:{display:"flex",alignItems:"center",gap:5,background:f.color+"15",border:"1px solid "+f.color+"33",borderRadius:20,padding:"5px 11px",flexShrink:0}},
             ic(f.icon,f.color,12),
@@ -2424,14 +2424,28 @@ export default function App(){
           })
         )
       ),
-      h("div",{style:{padding:"0 18px 12px",flexShrink:0}},
-        h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-          h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:2,background:navBg,border:"none",borderRadius:12,padding:"13px",fontSize:14,fontWeight:800,color:"#FFFFFF",cursor:"pointer",letterSpacing:-.2}},"Start Free"),
-          h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:cardBg,border:"1.5px solid "+borderCol,borderRadius:12,padding:"13px",fontSize:12,fontWeight:600,color:textSub,cursor:"pointer"}},"Sign In")
+      h("div",{style:{padding:"0 18px 10px",flexShrink:0}},
+        // Start free — primary CTA
+        h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},
+          style:{width:"100%",background:navBg,border:"none",borderRadius:12,padding:"14px",fontSize:14,fontWeight:800,color:"#FFFFFF",cursor:"pointer",letterSpacing:-.2,marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic("rocket_launch","#FFFFFF",15),"Start Free — No Credit Card"
         ),
-        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        // Sign in — secondary, styled differently
+        h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+          h("div",{style:{flex:1,height:1,background:borderCol}}),
+          h("div",{style:{fontSize:10,color:textSub,whiteSpace:"nowrap"}},"Already have an account?"),
+          h("div",{style:{flex:1,height:1,background:borderCol}})
+        ),
+        h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},
+          style:{width:"100%",background:"transparent",border:"1.5px solid "+borderCol,borderRadius:12,padding:"11px",fontSize:13,fontWeight:700,color:textPrimary,cursor:"pointer",marginTop:8,letterSpacing:-.1}},
+          "Sign In"
+        ),
+        // Footer
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:8}},
           h("div",{style:{fontSize:9,color:textSub}},"Proudly built in India"),
-          h("span",{style:{fontSize:10,fontWeight:700,color:"#25D366",cursor:"pointer"},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},"WhatsApp Support")
+          h("span",{style:{fontSize:10,fontWeight:700,color:"#25D366",cursor:"pointer"},
+            onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
+            "WhatsApp Support")
         )
       )
     );
