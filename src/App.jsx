@@ -1284,6 +1284,10 @@ export default function App(){
   var sAuthPos=st(lsGet("hr_auth_pos","")),authPos=sAuthPos[0],setAuthPos=sAuthPos[1];
   var sAuthSign=st(lsGet("hr_auth_sign","")),authSign=sAuthSign[0],setAuthSign=sAuthSign[1];
   var sWaOfficial=st(lsGet("hr_wa_official","")),waOfficial=sWaOfficial[0],setWaOfficial=sWaOfficial[1];
+  var sHolidays=st([]),holidays2=sHolidays[0],setHolidays2=sHolidays[1];
+  var sShowHolForm=st(false),showHolForm=sShowHolForm[0],setShowHolForm=sShowHolForm[1];
+  var sHolName=st(""),holName=sHolName[0],setHolName=sHolName[1];
+  var sHolDate=st(""),holDate=sHolDate[0],setHolDate=sHolDate[1];
   var sLoans=st([]),loans=sLoans[0],setLoans=sLoans[1];
   var sExpenses=st([]),expenses=sExpenses[0],setExpenses=sExpenses[1];
   var sWarnings=st([]),warnings=sWarnings[0],setWarnings=sWarnings[1];
@@ -1625,10 +1629,11 @@ export default function App(){
     if(!gUser||!gUser.email)return;
     var em=gUser.email;
     var safe=function(t,c,v){try{return _sb.from(t).select("*").eq(c,v).then(function(r){return r.data||[];}).catch(function(){return[];});}catch(e){return Promise.resolve([]);}};
-    Promise.all([safe("loans","employer_email",em),safe("expenses","employer_email",em),safe("warnings","employer_email",em)]).then(function(res){
+    Promise.all([safe("loans","employer_email",em),safe("expenses","employer_email",em),safe("warnings","employer_email",em),safe("holidays","employer_email",em)]).then(function(res){
       try{setLoans((res[0]||[]).map(function(l){return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,employee_id:l.employee_id,employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,monthlyDeduction:l.monthly_deduction,monthly_deduction:l.monthly_deduction,paidAmount:l.paid_amount,paid_amount:l.paid_amount,status:l.status,createdAt:l.created_at};}));}catch(e){}
       try{setExpenses((res[1]||[]).map(function(ex){return {id:ex.id,employerEmail:ex.employer_email,employeeId:ex.employee_id,employeeName:ex.employee_name,title:ex.title,amount:ex.amount,category:ex.category,description:ex.description,status:ex.status,month:ex.month,year:ex.year,createdAt:ex.created_at};}));}catch(e){}
       try{setWarnings((res[2]||[]).map(function(w){return {id:w.id,employerEmail:w.employer_email,employeeId:w.employee_id,employee_id:w.employee_id,employeeName:w.employee_name,incidentDate:w.incident_date,incident:w.incident,actionRequired:w.action_required,warningType:w.warning_type,acknowledged:w.acknowledged,createdAt:w.created_at};}));}catch(e){}
+      try{setHolidays2((res[3]||[]).map(function(h2){return {id:h2.id,name:h2.name,date:h2.date};}));}catch(e){}
     }).catch(function(){});
   },[gUser]);
 
@@ -1772,7 +1777,7 @@ export default function App(){
   function saveEdit(){
     var ctc=Number(editE.monthlyCTC)||0;if(!ctc)return showT("CTC required","err");
     var bd=brkSal(ctc);
-    var updated=Object.assign({},editE,{
+    var updated=Object.assign({},editE,{leaveEntitlement:Number(editE.leaveEntitlement)||0,
       monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,
       hi:Number(editE.hi)||0,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds,
       dept:eDept||editE.dept||""
@@ -3141,6 +3146,56 @@ null
           ):null
         ),0);
       })(),
+
+          // Leave balance card
+          (function(){
+            var entitlement=Number(selE.leaveEntitlement||0);
+            if(!entitlement)return null;
+            var usedLeave=0;
+            // Count paid leave used this year
+            for(var mo=0;mo<12;mo++){
+              var dm=new Date(curY,mo+1,0).getDate();
+              for(var dd=1;dd<=dm;dd++){
+                var ds=curY+"-"+String(mo+1).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
+                var v=att[ds+"_"+selE.id];
+                if(v==="paid")usedLeave++;
+                else if(v==="half")usedLeave+=0.5;
+              }
+            }
+            var remaining=Math.max(0,entitlement-usedLeave);
+            var usePct=entitlement>0?Math.round(usedLeave*100/entitlement):0;
+            var balColor=remaining>entitlement*0.5?"#10B981":remaining>entitlement*0.25?AMB:RED;
+            return card(h("div",null,
+              h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+                h("div",{style:{width:34,height:34,borderRadius:9,background:"#10B981"+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("event_available","#10B981",17)),
+                h("div",null,
+                  h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Leave Balance "+curY),
+                  h("div",{style:{fontSize:10,color:GRY}},"Paid leave entitlement")
+                )
+              ),
+              h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+                h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
+                  h("div",{style:{fontSize:20,fontWeight:800,color:balColor}},remaining%1===0?remaining:remaining.toFixed(1)),
+                  h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"REMAINING")
+                ),
+                h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
+                  h("div",{style:{fontSize:20,fontWeight:800,color:NVY}},usedLeave%1===0?usedLeave:usedLeave.toFixed(1)),
+                  h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"USED")
+                ),
+                h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
+                  h("div",{style:{fontSize:20,fontWeight:800,color:NVY}},entitlement),
+                  h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"ENTITLED")
+                )
+              ),
+              h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden"}},
+                h("div",{style:{width:Math.min(usePct,100)+"%",height:"100%",background:balColor,borderRadius:99,transition:"width .4s"}})
+              ),
+              h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4}},
+                h("div",{style:{fontSize:9,color:GRY}},usedLeave+" days used"),
+                h("div",{style:{fontSize:9,color:GRY}},usePct+"% of annual quota")
+              )
+            ));
+          })(),
       card(h("div",null,renderLoanSection(selE))),
       card(renderGratuityCard(selE)),
       card(h("div",null,renderWarningSection(selE)))
@@ -3265,14 +3320,17 @@ null
     return h("div",{className:"fd"},
       // Calendar / Report toggle
       h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:14,gap:3}},
-        h("button",{onClick:function(){setAttView("calendar");},style:{flex:1,background:attView!=="report"?CARD:"transparent",border:attView!=="report"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView!=="report"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
-          ic("calendar_month",attView!=="report"?ACCENT:GRY,16),"Attendance"
+        h("button",{onClick:function(){setAttView("calendar");},style:{flex:1,background:attView==="calendar"?CARD:"transparent",border:attView==="calendar"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="calendar"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
+          ic("calendar_month",attView==="calendar"?ACCENT:GRY,16),"Attendance"
         ),
         h("button",{onClick:function(){setAttView("report");},style:{flex:1,background:attView==="report"?CARD:"transparent",border:attView==="report"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="report"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
           ic("insights",attView==="report"?ACCENT:GRY,16),"Report"
+        ),
+        h("button",{onClick:function(){setAttView("holidays");},style:{flex:1,background:attView==="holidays"?CARD:"transparent",border:attView==="holidays"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="holidays"?NVY:GRY,fontSize:12,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},
+          ic("event_note",attView==="holidays"?ACCENT:GRY,16),"Holidays"
         )
       ),
-      attView==="report"?renderAttendanceReport():h("div",null,
+      attView==="report"?renderAttendanceReport():attView==="holidays"?renderHolidayCalendar():h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
           h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},MOS[attM]+" "+attY),
           h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
@@ -6126,6 +6184,105 @@ null
       h("div",{style:{fontSize:9,color:GRY,marginTop:5,textAlign:"center"}},"Verify exact dates with your CA")
     );
   }
+
+  function renderHolidayCalendar(){
+    function addHoliday(){
+      if(!holName||!holDate)return showT("Enter holiday name and date","err");
+      // Check duplicate
+      if(holidays2.some(function(h2){return h2.date===holDate;}))return showT("Holiday already exists for this date","err");
+      var hol={id:Date.now(),name:holName,date:holDate};
+      // Save to state and Supabase
+      setHolidays2(function(p){return [hol].concat(p||[]).sort(function(a,b){return a.date.localeCompare(b.date);});});
+      _sb.from("holidays").insert({id:String(hol.id),employer_email:gUser.email,name:holName,date:holDate}).then(function(){});
+      // Auto-mark all active employees as holiday on that date
+      var newAtt=Object.assign({},att);
+      actEmps.forEach(function(e){newAtt[holDate+"_"+e.id]="holiday";});
+      setAtt(newAtt);
+      setHolName("");setHolDate("");setShowHolForm(false);
+      showT("Holiday added and marked for all employees");
+    }
+    function deleteHoliday(hol){
+      if(!window.confirm("Delete "+hol.name+"? This will also clear the holiday mark from attendance."))return;
+      setHolidays2(function(p){return (p||[]).filter(function(h2){return h2.id!==hol.id;});});
+      _sb.from("holidays").delete().eq("id",String(hol.id)).then(function(){});
+      // Remove holiday mark from all employees on that date
+      var newAtt=Object.assign({},att);
+      actEmps.forEach(function(e){
+        var k=hol.date+"_"+e.id;
+        if(newAtt[k]==="holiday")delete newAtt[k];
+      });
+      setAtt(newAtt);
+      showT("Holiday removed");
+    }
+    // Sort by date
+    var sorted=(holidays2||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+    var upcoming=sorted.filter(function(h2){return h2.date>=todayStr;});
+    var past=sorted.filter(function(h2){return h2.date<todayStr;});
+    return h("div",{className:"fd"},
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+        h("div",null,
+          h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Holiday Calendar"),
+          h("div",{style:{fontSize:10,color:GRY,marginTop:2}},sorted.length+" holidays set")
+        ),
+        h("button",{onClick:function(){setShowHolForm(!showHolForm);},
+          style:{background:showHolForm?SFT:ACCENT,border:showHolForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"7px 14px",fontSize:11,fontWeight:700,color:showHolForm?NVY:"#fff",cursor:"pointer"}},
+          showHolForm?"Cancel":"+ Add Holiday")
+      ),
+      showHolForm?h("div",{style:{background:SFT,borderRadius:14,padding:14,border:"1px solid "+BDR,marginBottom:14}},
+        h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:10}},"Add Company Holiday"),
+        lbl("HOLIDAY NAME"),
+        h("input",{type:"text",value:holName,onChange:function(e){setHolName(e.target.value);},placeholder:"e.g. Pongal, Diwali, Republic Day",
+          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
+        lbl("DATE"),
+        h("input",{type:"date",value:holDate,onChange:function(e){setHolDate(e.target.value);},
+          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}),
+        h("div",{style:{background:ACCENT+"08",borderRadius:8,padding:"8px 10px",marginBottom:12,fontSize:10,color:GRY,border:"1px solid "+ACCENT+"22"}},
+          "Adding a holiday will automatically mark all employees as Holiday on this date in attendance."
+        ),
+        h("button",{onClick:addHoliday,style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"11px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Add Holiday")
+      ):null,
+      // Upcoming
+      upcoming.length>0?h("div",{style:{marginBottom:12}},
+        h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"UPCOMING"),
+        upcoming.map(function(hol){
+          var d=new Date(hol.date+"T00:00:00");
+          var daysLeft=Math.round((d-new Date(todayStr+"T00:00:00"))/86400000);
+          return h("div",{key:hol.id,style:{background:CARD,borderRadius:12,padding:"11px 14px",marginBottom:6,border:"1px solid "+BDR,display:"flex",alignItems:"center",gap:10}},
+            h("div",{style:{width:42,height:42,borderRadius:10,background:ACCENT+"12",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid "+ACCENT+"22"}},
+              h("div",{style:{fontSize:14,fontWeight:800,color:ACCENT}},d.getDate()),
+              h("div",{style:{fontSize:8,fontWeight:700,color:ACCENT}}),["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][d.getMonth()]
+            ),
+            h("div",{style:{flex:1}},
+              h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},hol.name),
+              h("div",{style:{fontSize:10,color:GRY,marginTop:2}},d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})),
+              h("div",{style:{fontSize:10,color:ACCENT,fontWeight:600,marginTop:2}},daysLeft===0?"Today":daysLeft===1?"Tomorrow":daysLeft+" days away")
+            ),
+            h("button",{onClick:function(){deleteHoliday(hol);},style:{background:RED+"10",border:"1px solid "+RED+"22",borderRadius:8,padding:"5px 8px",cursor:"pointer",display:"flex",alignItems:"center",gap:3,fontSize:10,fontWeight:600,color:RED}},
+              ic("delete",RED,13),"Remove")
+          );
+        })
+      ):h("div",{style:{background:SFT,borderRadius:12,padding:"16px 14px",marginBottom:12,textAlign:"center"}},
+        ic("event_note",GRY,28),
+        h("div",{style:{fontSize:12,fontWeight:600,color:NVY,marginTop:8}},"No upcoming holidays"),
+        h("div",{style:{fontSize:10,color:GRY,marginTop:4}},"Add your company holidays to automatically mark attendance")
+      ),
+      // Past
+      past.length>0?h("div",null,
+        h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"PAST"),
+        past.slice().reverse().map(function(hol){
+          var d=new Date(hol.date+"T00:00:00");
+          return h("div",{key:hol.id,style:{background:CARD,borderRadius:12,padding:"9px 14px",marginBottom:6,border:"1px solid "+BDR,display:"flex",alignItems:"center",gap:10,opacity:.7}},
+            h("div",{style:{flex:1}},
+              h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},hol.name),
+              h("div",{style:{fontSize:10,color:GRY}},d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}))
+            ),
+            h("button",{onClick:function(){deleteHoliday(hol);},style:{background:"none",border:"none",cursor:"pointer",color:GRY,padding:4}},ic("delete",GRY,14))
+          );
+        })
+      ):null
+    );
+  }
+
 
   function renderAdminPanel(){
     var now=new Date(); // triggers re-render each second via parent now state
