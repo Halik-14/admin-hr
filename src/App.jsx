@@ -1309,7 +1309,6 @@ export default function App(){
   var sAnnEmpId=st(""),annEmpId=sAnnEmpId[0],setAnnEmpId=sAnnEmpId[1];
   var curFY2=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
   var sAnnFY=st(curFY2),annFY=sAnnFY[0],setAnnFY=sAnnFY[1];
-  var sProTab=st("tasks"),proTab=sProTab[0],setProTab=sProTab[1];
   var sAuthPos=st(lsGet("hr_auth_pos","")),authPos=sAuthPos[0],setAuthPos=sAuthPos[1];
   var sAuthSign=st(lsGet("hr_auth_sign","")),authSign=sAuthSign[0],setAuthSign=sAuthSign[1];
   var sWaOfficial=st(lsGet("hr_wa_official","")),waOfficial=sWaOfficial[0],setWaOfficial=sWaOfficial[1];
