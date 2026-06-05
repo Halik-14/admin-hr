@@ -2366,7 +2366,7 @@ export default function App(){
             )
           ),
           h("div",{onClick:function(){setSlide(function(n){return (n+1)%3;});},style:{background:pSlide===2?"#1E293B":HDR,borderRadius:10,border:"none",padding:"10px 12px",position:"relative",overflow:"hidden",cursor:"pointer"}},
-            pSlide>0?h("div",{style:{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:pSlide===1?"rgba(99,102,241,.2)":"rgba(139,92,246,.2)",filter:"blur(20px)",pointerEvents:"none"}}):null,
+            h("div",{style:{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:pSlide===0?"rgba(255,255,255,.06)":pSlide===1?"rgba(99,102,241,.2)":"rgba(139,92,246,.2)",filter:"blur(20px)",pointerEvents:"none"}}),
             /* Plan header */
             h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,position:"relative",zIndex:1}},
               h("div",null,
@@ -2382,7 +2382,21 @@ export default function App(){
               )
             ),
             /* Tap anywhere on card to go next slide — no arrows */
-            /* No features text — save space */
+            /* Features — 2 column grid, no label */
+            h("div",{style:{marginTop:6,background:"rgba(255,255,255,.06)",borderRadius:8,padding:"7px 8px",position:"relative",zIndex:1}},
+              h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
+                cur.features.map(function(f,i){
+                  return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:"rgba(255,255,255,.85)"}},
+                    ic("check_circle","#10B981",9),h("span",{style:{lineHeight:1.3}},f));
+                })
+              ),
+              cur.locked.length>0?h("div",{style:{marginTop:4,paddingTop:4,borderTop:"1px solid rgba(255,255,255,.08)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
+                cur.locked.map(function(f,i){
+                  return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:"rgba(255,255,255,.35)"}},
+                    ic("lock","rgba(255,255,255,.3)",9),h("span",{style:{lineHeight:1.3}},f));
+                })
+              ):null
+            )
           )
         )
       ),
