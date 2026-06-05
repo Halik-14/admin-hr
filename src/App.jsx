@@ -2277,112 +2277,192 @@ export default function App(){
 
   // ── Landing screen ──
   var landingScreen=(function(){
-    /* inject marquee CSS once */
+    /* ── inject CSS once ── */
     if(!document.getElementById("ahr-css")){
       var _s=document.createElement("style");_s.id="ahr-css";
       _s.textContent=
         "@keyframes mltr{from{transform:translateX(0)}to{transform:translateX(-50%)}}" +
         ".mltr{display:flex;width:max-content;animation:mltr 26s linear infinite}" +
-        ".mwrap{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,black 40px,black calc(100% - 40px),transparent);mask:linear-gradient(90deg,transparent,black 40px,black calc(100% - 40px),transparent)}";
+        ".mwrap{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,black 40px,black calc(100% - 40px),transparent);mask:linear-gradient(90deg,transparent,black 40px,black calc(100% - 40px),transparent)}" +
+        "@keyframes glow-pulse{0%,100%{opacity:.5}50%{opacity:.9}}";
       document.head.appendChild(_s);
     }
+
     var isDark=themeMode==="dark";
-    var BG  =isDark?"#242323":"#F1F5F9";
-    var CRD =isDark?"#2e2d2d":"#FFFFFF";
-    var NV  =isDark?"#FFFFFF":"#0F172A";
-    var GR  =isDark?"#9a9a9a":"#64748B";
-    var BD  =isDark?"#3a3939":"#E2E8F0";
-    var SF  =isDark?"#2a2929":"#F8FAFF";
-    var HDR ="0F172A";
+    var BG =isDark?"#242323":"#F1F5F9";
+    var CRD=isDark?"#2e2d2d":"#FFFFFF";
+    var NV =isDark?"#FFFFFF":"#0F172A";
+    var GR =isDark?"#9a9a9a":"#64748B";
+    var BD =isDark?"#3a3939":"#E2E8F0";
+    var SF =isDark?"#2a2929":"#F8FAFF";
+    var HDR="#0F172A";
+
+    /* ── Pricing plan state (local IIFE-level, re-renders on sLandSlide changes) ── */
+    var pSlide=sLandSlide[0]%3;
+    var setSlide=sLandSlide[1];
+
+    /* ── Pricing data ── */
+    var plans=[
+      {
+        n:"Free",monthly:"₹0",yearly:"₹0",
+        sub:"Up to 5 employees",tag:"",
+        features:["Attendance marking","Basic payroll","View payslips on screen","Up to 5 employees"],
+        locked:["PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter","Annual statement"],
+      },
+      {
+        n:"Pro",monthly:"₹499/mo",yearly:"₹4,999/yr",
+        sub:"Up to 25 employees",tag:"Most Popular",
+        features:["Everything in Free","All PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter PDF","Annual salary statement","Holiday calendar","Leave balance tracker","WhatsApp sharing"],
+        locked:[],
+      },
+      {
+        n:"Business",monthly:"₹999/mo",yearly:"₹9,999/yr",
+        sub:"Up to 50 employees",tag:"Best Value",
+        features:["Everything in Pro","Up to 50 employees","Priority WhatsApp support","Multi-department reports","Advanced compliance PDFs"],
+        locked:[],
+      },
+    ];
+    var cur=plans[pSlide];
+
+    /* ── Feature row ── */
     var feats=[
-      {icon:"calendar_month",  title:"Attendance",    brief:"One-tap daily marking"},
-      {icon:"payments",        title:"Payroll",        brief:"PF, ESI, PT automated"},
-      {icon:"fact_check",      title:"Compliance",     brief:"Every statutory PDF"},
-      {icon:"account_balance", title:"PF & ESI",       brief:"Challan in one click"},
-      {icon:"workspace_premium",title:"Gratuity",      brief:"Auto calculated"},
-      {icon:"description",     title:"Offer Letter",   brief:"PDF in seconds"},
-      {icon:"cloud_upload",    title:"Cloud Sync",     brief:"Auto backup, any device"},
+      {icon:"calendar_month",  title:"Attendance",   brief:"One-tap daily marking"},
+      {icon:"payments",        title:"Payroll",       brief:"PF, ESI, PT automated"},
+      {icon:"fact_check",      title:"Compliance",    brief:"Every statutory PDF"},
+      {icon:"account_balance", title:"PF & ESI",      brief:"Challan in one click"},
+      {icon:"workspace_premium",title:"Gratuity",     brief:"Auto calculated"},
+      {icon:"description",     title:"Offer Letter",  brief:"PDF in seconds"},
+      {icon:"cloud_upload",    title:"Cloud Sync",    brief:"Auto backup, any device"},
     ];
     function tile(f,key){
-      return h("div",{key:key,style:{
-        flexShrink:0,width:108,background:"#1E293B",border:"1px solid #334155",
-        borderRadius:14,padding:"12px 10px",
-        display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",
-        gap:5,marginRight:10,
-      }},
-        h("div",{style:{width:32,height:32,borderRadius:9,background:"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:2}},
-          ic(f.icon,"rgba(255,255,255,0.85)",16)),
+      return h("div",{key:key,style:{flexShrink:0,width:108,background:"#1E293B",border:"1px solid #334155",borderRadius:14,padding:"12px 10px",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",gap:5,marginRight:10}},
+        h("div",{style:{width:32,height:32,borderRadius:9,background:"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:2}},ic(f.icon,"rgba(255,255,255,0.85)",16)),
         h("div",{style:{fontSize:11,fontWeight:800,color:"#FFFFFF",lineHeight:1.2}},f.title),
         h("div",{style:{fontSize:9,color:"rgba(255,255,255,0.50)",lineHeight:1.3}},f.brief)
       );
     }
     var d1=feats.concat(feats);
+
+    /* ── Built for segments ── */
+    var segments=[
+      {icon:"bolt",         l:"Startups",       s:"5–20 employees",  clr:"#F59E0B"},
+      {icon:"briefcase",    l:"Retail & Trade",  s:"Shops to chains",      clr:"#3B82F6"},
+      {icon:"business",     l:"Manufacturing",   s:"10–50 workers",   clr:"#8B5CF6"},
+      {icon:"people_alt",   l:"Any Business",    s:"That pays salaries",   clr:"#10B981"},
+    ];
+
+    /* ── Accordion state for features dropdown ── */
+    var showFeats=st(false);
+
     return h("div",{style:{position:"fixed",inset:0,background:BG,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",overflow:"hidden"}},
-      /* HERO HEADER */
-      h("div",{style:{flexShrink:0,background:"#"+HDR,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"22px 24px 24px",position:"relative",overflow:"hidden"}},
-        h("div",{style:{position:"absolute",top:-40,right:-40,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}),
-        h("div",{style:{position:"absolute",bottom:-20,left:-20,width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.03)"}}),
-        logoSVG(48),
-        h("div",{style:{fontSize:24,fontWeight:900,color:"#FFFFFF",letterSpacing:-.5,marginTop:10,marginBottom:8}},"Admin HR"),
-        h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.7,maxWidth:255,marginBottom:20}},
-          "Smart HR for Indian businesses. Attendance, payroll & compliance in one app."),
-        h("div",{style:{display:"flex",gap:10,width:"100%",maxWidth:250}},
-          h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:1,background:"#FFFFFF",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:800,color:"#0F172A",cursor:"pointer"}},"Start Free"),
-          h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:"rgba(255,255,255,0.10)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,color:"#FFFFFF",cursor:"pointer"}},"Sign In")
+
+      /* ════ HERO — dark navy with glow + grid ════ */
+      h("div",{style:{flexShrink:0,background:HDR,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"20px 24px 22px",position:"relative",overflow:"hidden"}},
+        /* Grid lines decoration */
+        h("div",{style:{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px)",backgroundSize:"28px 28px",pointerEvents:"none"}}),
+        /* Central radial glow */
+        h("div",{style:{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,.25) 0%,transparent 70%)",pointerEvents:"none",animation:"glow-pulse 3s ease-in-out infinite"}}),
+        /* Corner glows */
+        h("div",{style:{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",background:"radial-gradient(circle,rgba(139,92,246,.2),transparent 70%)",pointerEvents:"none"}}),
+        h("div",{style:{position:"absolute",bottom:-20,left:-20,width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,.15),transparent 70%)",pointerEvents:"none"}}),
+        /* Content */
+        h("div",{style:{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}},
+          logoSVG(48),
+          h("div",{style:{fontSize:24,fontWeight:900,color:"#FFFFFF",letterSpacing:-.5,marginTop:10,marginBottom:6}},"Admin HR"),
+          h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.7,maxWidth:255,marginBottom:18}},
+            "Smart HR for Indian businesses. Attendance, payroll & compliance in one app."),
+          h("div",{style:{display:"flex",gap:10,width:"100%",maxWidth:250}},
+            h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:1,background:"#FFFFFF",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:800,color:"#0F172A",cursor:"pointer"}},"Start Free"),
+            h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:"rgba(255,255,255,0.10)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,color:"#FFFFFF",cursor:"pointer"}},"Sign In")
+          )
         )
       ),
-      /* SINGLE SCROLLING ROW */
-      h("div",{style:{flexShrink:0,padding:"14px 0 10px",background:BG}},
+
+      /* ════ SCROLLING FEATURE ROW ════ */
+      h("div",{style:{flexShrink:0,padding:"12px 0 8px",background:BG}},
         h("div",{className:"mwrap"},
-          h("div",{className:"mltr",style:{paddingLeft:14}},
-            d1.map(function(f,i){return tile(f,"t"+i);})))
+          h("div",{className:"mltr",style:{paddingLeft:14}},d1.map(function(f,i){return tile(f,"t"+i);})))
       ),
-      /* BUILT FOR */
+
+      /* ════ BUILT FOR — icon glow cards ════ */
       h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
-        h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BD,padding:"12px 14px"}},
+        h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BD,padding:"10px 12px"}},
           h("div",{style:{fontSize:9,fontWeight:700,color:GR,letterSpacing:1.6,marginBottom:8,textAlign:"center"}},"BUILT FOR"),
           h("div",{style:{display:"flex",gap:6}},
-            [{icon:"rocket_launch",l:"Startups",s:"5–20 emp"},
-             {icon:"store",l:"Retail & Trade",s:"Any scale"},
-             {icon:"factory",l:"Manufacturing",s:"10–50 emp"},
-             {icon:"groups",l:"Any Business",s:"Pays salaries"},
-            ].map(function(t){
-              return h("div",{key:t.l,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 4px",background:SF,borderRadius:9,border:"1px solid "+BD}},
-                ic(t.icon,GR,15),
-                h("div",{style:{fontSize:9,fontWeight:700,color:NV,textAlign:"center",lineHeight:1.2}},t.l),
-                h("div",{style:{fontSize:7,color:GR,textAlign:"center"}},t.s)
+            segments.map(function(t){
+              return h("div",{key:t.l,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 4px",background:t.clr+"10",borderRadius:10,border:"1px solid "+t.clr+"30",position:"relative",overflow:"hidden"}},
+                /* glow behind icon */
+                h("div",{style:{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:40,height:20,background:t.clr,opacity:.12,borderRadius:"0 0 50px 50px",filter:"blur(6px)"}}),
+                h("div",{style:{width:28,height:28,borderRadius:8,background:t.clr+"18",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid "+t.clr+"33",position:"relative",zIndex:1}},
+                  ic(t.icon,t.clr,14)),
+                h("div",{style:{fontSize:9,fontWeight:700,color:NV,textAlign:"center",lineHeight:1.2,position:"relative",zIndex:1}},t.l),
+                h("div",{style:{fontSize:7,color:GR,textAlign:"center",position:"relative",zIndex:1}},t.s)
               );
             })
           )
         )
       ),
-      /* PRICING */
+
+      /* ════ PRICING — manual slider ════ */
       h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
-        h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BD,padding:"12px 14px"}},
+        h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BD,padding:"10px 12px"}},
+          /* Header row */
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
             h("div",{style:{fontSize:9,fontWeight:700,color:GR,letterSpacing:1.6}},"PRICING"),
-            h("div",{style:{fontSize:9,color:GR}},"Flat annual • No per-employee charges")
+            /* Plan nav dots */
+            h("div",{style:{display:"flex",gap:5,alignItems:"center"}},
+              plans.map(function(p,i){
+                return h("div",{key:i,onClick:function(){setSlide(i);},style:{width:i===pSlide?18:6,height:6,borderRadius:99,background:i===pSlide?NV:BD,cursor:"pointer",transition:"all .25s"}});
+              })
+            )
           ),
-          [{n:"Free",p:"₹0",sub:"Up to 5 employees",hi:false},
-           {n:"Pro",p:"₹2,999/yr",sub:"Up to 25 employees",hi:true,tag:"Popular"},
-           {n:"Business",p:"₹5,999/yr",sub:"Up to 50 employees",hi:false},
-          ].map(function(pr,i){
-            return h("div",{key:pr.n,style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 10px",marginBottom:i===2?0:5,background:pr.hi?"#0F172A":SF,border:"1px solid "+(pr.hi?"#0F172A":BD),borderRadius:9}},
+          /* Plan card — same box, slides content */
+          h("div",{style:{background:pSlide===1?HDR:pSlide===2?"#1E293B":SF,borderRadius:10,border:"1px solid "+(pSlide===0?BD:"transparent"),padding:"10px 12px",position:"relative",overflow:"hidden",minHeight:80}},
+            /* Glow for paid plans */
+            pSlide>0?h("div",{style:{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:pSlide===1?"rgba(99,102,241,.2)":"rgba(139,92,246,.2)",filter:"blur(20px)",pointerEvents:"none"}}):null,
+            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4,position:"relative",zIndex:1}},
               h("div",null,
-                h("div",{style:{display:"flex",alignItems:"center",gap:6}},
-                  h("div",{style:{fontSize:12,fontWeight:800,color:pr.hi?"#FFFFFF":NV}},pr.n),
-                  pr.tag?h("div",{style:{fontSize:7,fontWeight:700,background:"rgba(255,255,255,0.18)",color:"#fff",borderRadius:20,padding:"1px 6px"}},pr.tag):null
+                h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:2}},
+                  h("div",{style:{fontSize:14,fontWeight:900,color:pSlide>0?"#FFFFFF":NV}},cur.n),
+                  cur.tag?h("div",{style:{fontSize:7,fontWeight:700,background:pSlide===1?"rgba(255,255,255,.18)":"rgba(139,92,246,.25)",color:pSlide===1?"#fff":"#C4B5FD",borderRadius:20,padding:"1px 7px"}}):null,cur.tag
                 ),
-                h("div",{style:{fontSize:9,color:pr.hi?"rgba(255,255,255,0.5)":GR,marginTop:1}},pr.sub)
+                h("div",{style:{fontSize:9,color:pSlide>0?"rgba(255,255,255,0.5)":GR}},cur.sub)
               ),
-              h("div",{style:{fontSize:13,fontWeight:900,color:pr.hi?"#FFFFFF":NV,letterSpacing:-.2}},pr.p)
-            );
-          })
+              h("div",{style:{textAlign:"right"}},
+                h("div",{style:{fontSize:15,fontWeight:900,color:pSlide>0?"#FFFFFF":NV,letterSpacing:-.3}},cur.monthly),
+                h("div",{style:{fontSize:9,color:pSlide>0?"rgba(255,255,255,0.45)":GR,marginTop:1}},pSlide===0?"forever":cur.yearly+" billed yearly")
+              )
+            ),
+            /* Nav arrows */
+            h("div",{style:{display:"flex",justifyContent:"space-between",position:"relative",zIndex:1}},
+              h("button",{onClick:function(){setSlide(function(n){return (n+2)%3;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:14,color:pSlide>0?"rgba(255,255,255,.6)":GR,display:"flex",alignItems:"center",justifyContent:"center"}},"‹"),
+              /* Feature toggle */
+              h("button",{onClick:function(){showFeats[1](function(v){return !v;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,padding:"2px 8px",cursor:"pointer",fontSize:9,fontWeight:700,color:pSlide>0?"rgba(255,255,255,.7)":GR,display:"flex",alignItems:"center",gap:3}},
+                "Features",h("span",{style:{fontSize:10}},showFeats[0]?"▴":"▾")),
+              h("button",{onClick:function(){setSlide(function(n){return (n+1)%3;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:14,color:pSlide>0?"rgba(255,255,255,.6)":GR,display:"flex",alignItems:"center",justifyContent:"center"}},"›")
+            )
+          ),
+          /* Dropdown features list */
+          showFeats[0]?h("div",{style:{marginTop:6,background:SF,borderRadius:9,border:"1px solid "+BD,padding:"8px 10px"}},
+            cur.features.map(function(f,i){
+              return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:6,padding:"3px 0",fontSize:10,color:NV,borderBottom:i<cur.features.length-1?"1px solid "+BD:"none"}},
+                ic("check_circle","#10B981",11),f
+              );
+            }),
+            cur.locked.length>0?h("div",{style:{marginTop:4}},
+              cur.locked.map(function(f,i){
+                return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:6,padding:"3px 0",fontSize:10,color:GR,opacity:.5}},
+                  ic("lock",GR,11),f
+                );
+              })
+            ):null
+          ):null
         )
       ),
-      /* BOTTOM: Contact + Quote */
-      h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 14px 14px"}},
-        h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:10}},
+
+      /* ════ BOTTOM: Contact + Quote ════ */
+      h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 14px 12px"}},
+        h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8}},
           h("span",{style:{fontSize:11,color:GR}},"Need help?"),
           h("span",{style:{fontSize:11,color:GR}},"—"),
           h("span",{style:{display:"flex",alignItems:"center",gap:4,fontSize:12,fontWeight:700,color:"#25D366",cursor:"pointer"},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
@@ -2390,7 +2470,7 @@ export default function App(){
           )
         ),
         h("div",{style:{textAlign:"center"}},
-          h("div",{style:{fontSize:11,fontStyle:"italic",color:GR,lineHeight:1.6,marginBottom:4}},"“Your employees are your greatest asset.”"),
+          h("div",{style:{fontSize:11,fontStyle:"italic",color:GR,lineHeight:1.6,marginBottom:3}},"“Your employees are your greatest asset.”"),
           h("div",{style:{fontSize:9,letterSpacing:1.5,color:GR,fontWeight:700}},"PROUDLY BUILT IN INDIA")
         )
       )
