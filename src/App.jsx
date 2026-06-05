@@ -3844,7 +3844,7 @@ null
         )
       ),
       h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:11,padding:3,display:"flex",gap:3,marginBottom:8}},
-        [["emp","Employee"],["dept","Dept"],["er","Employer"],["expenses","Expenses"],["annual","Annual"]].map(function(item){return h("button",{key:item[0],onClick:function(){setRepV(item[0]);},style:{flex:1,background:repV===item[0]?ACCENT:"transparent",border:"none",borderRadius:9,padding:"7px",color:repV===item[0]?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);})
+        [["emp","Employee"],["dept","Dept"],["er","Employer"],["annual","Annual"]].map(function(item){return h("button",{key:item[0],onClick:function(){setRepV(item[0]);},style:{flex:1,background:repV===item[0]?ACCENT:"transparent",border:"none",borderRadius:9,padding:"7px",color:repV===item[0]?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);})
       ),
       repV==="dept"?h("div",null,
         h("div",{style:{display:"flex",gap:7,marginBottom:11,alignItems:"center"}},
@@ -3983,7 +3983,7 @@ null
             ):null
           );
         })
-      ),0):repV==="expenses"?renderExpenses():repV==="annual"?renderAnnualStatement():h("div",null,
+      ),0):repV==="annual"?renderAnnualStatement():h("div",null,
         card(h("div",null,
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},"Employer Cost - "+MOS[payM]+" "+payY),
           actEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD);return h("div",{key:e.id,style:{padding:"9px 0",borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none"}},
