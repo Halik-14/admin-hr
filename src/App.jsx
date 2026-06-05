@@ -2263,36 +2263,43 @@ export default function App(){
 
   // ── Landing screen ──
   var landingScreen=(function(){
+    /* ── inject CSS once ── */
     if(!document.getElementById("ahr-css")){
       var _s=document.createElement("style");_s.id="ahr-css";
       _s.textContent=
         "@keyframes mltr{from{transform:translateX(0)}to{transform:translateX(-50%)}}" +
         ".mltr{display:flex;width:max-content;animation:mltr 26s linear infinite}" +
         ".mwrap{overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,black 40px,black calc(100% - 40px),transparent);mask:linear-gradient(90deg,transparent,black 40px,black calc(100% - 40px),transparent)}" +
-        "@keyframes glow-pulse{0%,100%{opacity:.5}50%{opacity:.9}}";
+        "@keyframes glow-pulse{0%,100%{opacity:.4}50%{opacity:.75}}";
       document.head.appendChild(_s);
     }
     var isDark=themeMode==="dark";
+    /* App theme colors — entire screen uses these */
     var BG =isDark?"#242323":"#F1F5F9";
     var CRD=isDark?"#2e2d2d":"#FFFFFF";
     var NV =isDark?"#FFFFFF":"#0F172A";
     var GR =isDark?"#9a9a9a":"#64748B";
     var BD =isDark?"#3a3939":"#E2E8F0";
     var SF =isDark?"#2a2929":"#F8FAFF";
-    var HDR="#0F172A";
+    var ACC=isDark?"#FFFFFF":"#0F172A"; /* accent = app primary */
+
+    /* Pricing state */
     var pSlide=sLandSlide[0]%3,setSlide=sLandSlide[1];
+    var touchX=st(null);
     var plans=[
-      {n:"Free",monthly:"₹0",yearly:"₹0",sub:"Up to 5 employees",tag:"",
-        features:["Attendance marking","Basic payroll","View payslips on screen","Up to 5 employees"],
-        locked:["PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter","Annual statement"]},
-      {n:"Pro",monthly:"₹499/mo",yearly:"₹4,999/yr",sub:"Up to 25 employees",tag:"Most Popular",
-        features:["Everything in Free","All PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter PDF","Annual salary statement","Holiday calendar","Leave balance","WhatsApp sharing"],
-        locked:[]},
+      {n:"Free",  monthly:"₹0",      yearly:"₹0",       sub:"Up to 5 employees",  tag:"",
+       features:["Attendance marking","Basic payroll","View payslips on screen","Up to 5 employees"],
+       locked:["PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter","Annual statement"],
+       glow:"rgba(255,255,255,.08)",card:"#1E293B"},
+      {n:"Pro",   monthly:"₹499/mo", yearly:"₹4,999/yr",sub:"Up to 25 employees", tag:"Most Popular",
+       features:["Everything in Free","All PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter PDF","Annual statement","Holiday calendar","Leave balance","WhatsApp sharing"],
+       locked:[],glow:"rgba(99,102,241,.25)",card:"#0F172A"},
       {n:"Business",monthly:"₹999/mo",yearly:"₹9,999/yr",sub:"Up to 50 employees",tag:"Best Value",
-        features:["Everything in Pro","Up to 50 employees","Priority WhatsApp support","Multi-department reports","Advanced compliance PDFs"],
-        locked:[]},
+       features:["Everything in Pro","Up to 50 employees","Priority WhatsApp support","Multi-dept reports","Advanced compliance PDFs"],
+       locked:[],glow:"rgba(139,92,246,.25)",card:"#1a1040"},
     ];
     var cur=plans[pSlide];
+
     var feats=[
       {icon:"calendar_month",title:"Attendance",brief:"One-tap daily marking"},
       {icon:"payments",title:"Payroll",brief:"PF, ESI, PT automated"},
@@ -2311,43 +2318,49 @@ export default function App(){
     }
     var d1=feats.concat(feats);
     var segments=[
-      {icon:"bolt",l:"Startups",s:"5–20 employees",clr:"#F59E0B"},
-      {icon:"briefcase",l:"Retail & Trade",s:"Shops to chains",clr:"#3B82F6"},
-      {icon:"business",l:"Manufacturing",s:"10–50 workers",clr:"#8B5CF6"},
-      {icon:"people_alt",l:"Any Business",s:"That pays salaries",clr:"#10B981"},
+      {icon:"bolt",l:"Startups",s:"5–20 emp",clr:"#F59E0B"},
+      {icon:"briefcase",l:"Retail",s:"Any scale",clr:"#3B82F6"},
+      {icon:"business",l:"Manufacturing",s:"10–50 emp",clr:"#8B5CF6"},
+      {icon:"people_alt",l:"Any Business",s:"Pays salaries",clr:"#10B981"},
     ];
+
     return h("div",{style:{position:"fixed",inset:0,background:BG,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",overflow:"hidden"}},
-      /* HERO */
-      h("div",{style:{flexShrink:0,background:HDR,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"20px 24px 22px",position:"relative",overflow:"hidden"}},
-        h("div",{style:{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,.25) 0%,transparent 70%)",pointerEvents:"none",animation:"glow-pulse 3s ease-in-out infinite"}}),
-        h("div",{style:{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",background:"radial-gradient(circle,rgba(139,92,246,.2),transparent 70%)",pointerEvents:"none"}}),
-        h("div",{style:{position:"absolute",bottom:-20,left:-20,width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,.15),transparent 70%)",pointerEvents:"none"}}),
+
+      /* ════ HERO — uses app BG, no dark overlay ════ */
+      h("div",{style:{flexShrink:0,background:BG,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"22px 24px 18px",position:"relative"}},
+        /* Subtle glow — decorative, matches theme */
+        h("div",{style:{position:"absolute",top:"20%",left:"50%",transform:"translate(-50%,-50%)",width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle,"+(isDark?"rgba(99,102,241,.12)":"rgba(99,102,241,.06)")+" 0%,transparent 70%)",pointerEvents:"none",animation:"glow-pulse 3s ease-in-out infinite"}}),
         h("div",{style:{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}},
           logoSVG(48),
+          /* ADMIN HR — themed */
           h("div",{style:{marginTop:10,marginBottom:6}},
-            h("div",{style:{fontSize:20,fontWeight:900,color:"#FFFFFF",letterSpacing:2,textTransform:"uppercase"}},
-              "Admin",h("span",{style:{color:"rgba(255,255,255,0.5)"}}," HR")
+            h("div",{style:{fontSize:22,fontWeight:900,color:NV,letterSpacing:2,textTransform:"uppercase"}},
+              "ADMIN",h("span",{style:{color:GR}}," HR")
             )
           ),
-          h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.7,maxWidth:255,marginBottom:18}},"For Indian businesses. Attendance, payroll & compliance in one app."),
+          h("div",{style:{fontSize:12,color:GR,lineHeight:1.65,maxWidth:255,marginBottom:18}},
+            "Smart HR for Indian businesses. Attendance, payroll & compliance in one app."),
+          /* Buttons — use app accent */
           h("div",{style:{display:"flex",gap:10,width:"100%",maxWidth:250}},
-            h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:1,background:"#FFFFFF",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:800,color:"#0F172A",cursor:"pointer"}},"Start Free"),
-            h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:"rgba(255,255,255,0.10)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,color:"#FFFFFF",cursor:"pointer"}},"Sign In")
+            h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:1,background:ACC,border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:800,color:isDark?"#0F172A":"#FFFFFF",cursor:"pointer"}},"Start Free"),
+            h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:CRD,border:"1.5px solid "+BD,borderRadius:10,padding:"12px",fontSize:13,fontWeight:600,color:NV,cursor:"pointer"}},"Sign In")
           )
         )
       ),
-      /* SCROLLING ROW */
-      h("div",{style:{flexShrink:0,padding:"12px 0 8px",background:BG}},
+
+      /* ════ SCROLLING ROW ════ */
+      h("div",{style:{flexShrink:0,padding:"8px 0",background:BG}},
         h("div",{className:"mwrap"},h("div",{className:"mltr",style:{paddingLeft:14}},d1.map(function(f,i){return tile(f,"t"+i);})))
       ),
-      /* BUILT FOR */
+
+      /* ════ BUILT FOR ════ */
       h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
         h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BD,padding:"10px 12px"}},
           h("div",{style:{fontSize:9,fontWeight:700,color:GR,letterSpacing:1.6,marginBottom:8,textAlign:"center"}},"BUILT FOR"),
           h("div",{style:{display:"flex",gap:6}},
             segments.map(function(t){
               return h("div",{key:t.l,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 4px",background:t.clr+"10",borderRadius:10,border:"1px solid "+t.clr+"30",position:"relative",overflow:"hidden"}},
-                h("div",{style:{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:40,height:20,background:t.clr,opacity:.12,borderRadius:"0 0 50px 50px",filter:"blur(6px)"}}),
+                h("div",{style:{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:40,height:18,background:t.clr,opacity:.12,borderRadius:"0 0 40px 40px",filter:"blur(5px)"}}),
                 h("div",{style:{width:28,height:28,borderRadius:8,background:t.clr+"18",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid "+t.clr+"33",position:"relative",zIndex:1}},ic(t.icon,t.clr,14)),
                 h("div",{style:{fontSize:9,fontWeight:700,color:NV,textAlign:"center",lineHeight:1.2,position:"relative",zIndex:1}},t.l),
                 h("div",{style:{fontSize:7,color:GR,textAlign:"center",position:"relative",zIndex:1}},t.s)
@@ -2356,60 +2369,78 @@ export default function App(){
           )
         )
       ),
-      /* PRICING — manual slider */
+
+      /* ════ PRICING — swipeable, no arrows ════ */
       h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
         h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BD,padding:"10px 12px"}},
+          /* Header: label + dots */
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
             h("div",{style:{fontSize:9,fontWeight:700,color:GR,letterSpacing:1.6}},"PRICING"),
             h("div",{style:{display:"flex",gap:5,alignItems:"center"}},
-              [0,1,2].map(function(i){return h("div",{key:i,onClick:function(){setSlide(i);},style:{width:i===pSlide?18:6,height:6,borderRadius:99,background:i===pSlide?NV:BD,cursor:"pointer",transition:"all .25s"}});})
+              [0,1,2].map(function(i){return h("div",{key:i,onClick:function(){setSlide(i);},style:{width:i===pSlide?18:6,height:6,borderRadius:99,background:i===pSlide?ACC:BD,cursor:"pointer",transition:"all .25s"}});})
             )
           ),
-          h("div",{onClick:function(){setSlide(function(n){return (n+1)%3;});},style:{background:pSlide===2?"#1E293B":HDR,borderRadius:10,border:"none",padding:"10px 12px",position:"relative",overflow:"hidden",cursor:"pointer"}},
-            h("div",{style:{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:pSlide===0?"rgba(255,255,255,.06)":pSlide===1?"rgba(99,102,241,.2)":"rgba(139,92,246,.2)",filter:"blur(20px)",pointerEvents:"none"}}),
-            /* Plan header */
-            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,position:"relative",zIndex:1}},
+          /* Swipeable plan card */
+          h("div",{
+            onTouchStart:function(e){touchX[1](e.touches[0].clientX);},
+            onTouchEnd:function(e){
+              if(touchX[0]===null)return;
+              var dx=touchX[0]-e.changedTouches[0].clientX;
+              if(Math.abs(dx)>40){setSlide(function(n){return dx>0?(n+1)%3:(n+2)%3;});}
+              touchX[1](null);
+            },
+            onClick:function(){setSlide(function(n){return (n+1)%3;});},
+            style:{background:cur.card,borderRadius:10,padding:"12px",position:"relative",overflow:"hidden",cursor:"pointer",userSelect:"none",WebkitUserSelect:"none"}
+          },
+            /* Glow */
+            h("div",{style:{position:"absolute",top:-20,right:-20,width:90,height:90,borderRadius:"50%",background:cur.glow,filter:"blur(22px)",pointerEvents:"none"}}),
+            /* Plan name row */
+            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8,position:"relative",zIndex:1}},
               h("div",null,
-                h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:2}},
-                  h("div",{style:{fontSize:14,fontWeight:900,color:pSlide>0?"#FFFFFF":NV}},cur.n),
-                  cur.tag?h("div",{style:{fontSize:7,fontWeight:600,background:"rgba(255,255,255,.15)",color:"rgba(255,255,255,0.7)",borderRadius:20,padding:"2px 8px",letterSpacing:.3}},cur.tag):null
+                h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:3}},
+                  h("div",{style:{fontSize:15,fontWeight:900,color:"#FFFFFF"}},cur.n),
+                  cur.tag?h("div",{style:{fontSize:7,fontWeight:600,background:"rgba(255,255,255,.15)",color:"rgba(255,255,255,0.75)",borderRadius:20,padding:"2px 8px",letterSpacing:.3}},cur.tag):null
                 ),
-                h("div",{style:{fontSize:9,color:pSlide>0?"rgba(255,255,255,0.5)":GR}},cur.sub)
+                h("div",{style:{fontSize:9,color:"rgba(255,255,255,0.5)"}},cur.sub)
               ),
               h("div",{style:{textAlign:"right"}},
-                h("div",{style:{fontSize:15,fontWeight:900,color:pSlide>0?"#FFFFFF":NV,letterSpacing:-.3}},cur.monthly),
-                h("div",{style:{fontSize:9,color:pSlide>0?"rgba(255,255,255,0.45)":GR,marginTop:1}},pSlide===0?"forever":cur.yearly+" billed yearly")
+                h("div",{style:{fontSize:16,fontWeight:900,color:"#FFFFFF",letterSpacing:-.3}},cur.monthly),
+                h("div",{style:{fontSize:9,color:"rgba(255,255,255,0.45)",marginTop:1}},pSlide===0?"forever":cur.yearly+" billed yearly")
               )
             ),
-            /* Tap anywhere on card to go next slide — no arrows */
-            /* Features — 2 column grid, no label */
-            h("div",{style:{marginTop:6,background:"rgba(255,255,255,.06)",borderRadius:8,padding:"7px 8px",position:"relative",zIndex:1}},
+            /* Features grid — 2 columns */
+            h("div",{style:{background:"rgba(255,255,255,.06)",borderRadius:8,padding:"7px 8px",position:"relative",zIndex:1}},
               h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
                 cur.features.map(function(f,i){
                   return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:"rgba(255,255,255,.85)"}},
                     ic("check_circle","#10B981",9),h("span",{style:{lineHeight:1.3}},f));
                 })
               ),
-              cur.locked.length>0?h("div",{style:{marginTop:4,paddingTop:4,borderTop:"1px solid rgba(255,255,255,.08)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
+              cur.locked.length>0?h("div",{style:{marginTop:4,paddingTop:4,borderTop:"1px solid rgba(255,255,255,.1)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
                 cur.locked.map(function(f,i){
-                  return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:"rgba(255,255,255,.35)"}},
+                  return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:"rgba(255,255,255,.3)"}},
                     ic("lock","rgba(255,255,255,.3)",9),h("span",{style:{lineHeight:1.3}},f));
                 })
               ):null
-            )
+            ),
+            /* Tap hint */
+            h("div",{style:{textAlign:"center",marginTop:6,fontSize:8,color:"rgba(255,255,255,.25)",position:"relative",zIndex:1}},"Tap or swipe to see other plans")
           )
         )
       ),
-      /* CONTACT + QUOTE */
+
+      /* ════ CONTACT + QUOTE ════ */
       h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 14px 12px"}},
         h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8}},
           h("span",{style:{fontSize:11,color:GR}},"Need help?"),
           h("span",{style:{fontSize:11,color:GR}},"—"),
-          h("span",{style:{display:"flex",alignItems:"center",gap:4,fontSize:12,fontWeight:700,color:"#25D366",cursor:"pointer"},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},ic("whatsapp","#25D366",14),"Contact Support")
+          h("span",{style:{display:"flex",alignItems:"center",gap:4,fontSize:12,fontWeight:700,color:"#25D366",cursor:"pointer"},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
+            ic("whatsapp","#25D366",14),"Contact Support"
+          )
         ),
         h("div",{style:{textAlign:"center"}},
           h("div",{style:{fontSize:11,fontStyle:"italic",color:GR,lineHeight:1.6,marginBottom:3}},"“Your employees are your greatest asset.”"),
-          h("div",{style:{fontSize:9,letterSpacing:1.5,color:GR,fontWeight:700}},"PROUDLY BUILT IN INDIA")
+          h("div",{style:{fontSize:9,letterSpacing:1.2,color:GR,fontWeight:700}},"PROUDLY BUILT IN INDIA — BY ELEVEN.11")
         )
       )
     );
