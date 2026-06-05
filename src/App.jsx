@@ -3551,7 +3551,7 @@ null
           // Display: "18.5 / 22 days" where half day = 0.5
           var presentDisplay=empHalf>0?(empPresentDays%1===0?empPresentDays:empPresentDays.toFixed(1)):empPresentDays;
           return h("div",{key:e.id,style:{borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none",paddingBottom:8,marginBottom:8}},
-            h("div",{onClick:function(){cycleAtt(todayDate,e.id);},className:"rh",style:{display:"flex",alignItems:"center",gap:9,cursor:"pointer",borderRadius:6,padding:"2px 2px"}},
+            h("div",{className:"rh",style:{display:"flex",alignItems:"center",gap:9,borderRadius:6,padding:"2px 2px"}},
               av(e,36),
               h("div",{style:{flex:1,minWidth:0}},
                 h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
@@ -3560,7 +3560,7 @@ null
                   presentDisplay+" / "+empWorkingDays+" days"+(empHalf>0?" (incl. "+empHalf+" half)":"")
                 ):h("div",{style:{fontSize:10,color:GRY,marginTop:3}},"No days marked")
               ),
-              h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:15,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35",flexShrink:0}},ATL[s])
+              h("div",{onClick:function(){cycleAtt(todayDate,e.id);},style:{fontSize:10,fontWeight:700,padding:"5px 10px",borderRadius:15,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35",flexShrink:0,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none"}},ATL[s])
             ),
             h("div",{style:{display:"flex",gap:5,marginTop:5,marginLeft:45}},
               h("button",{onClick:function(){setSheetE(e);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},"Sheet"),
