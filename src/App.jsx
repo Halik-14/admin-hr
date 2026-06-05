@@ -346,6 +346,7 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
   return ry;
 }
 
+
 function makeOfferLetterPDF(emp,org,authPos2,authSign2){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
@@ -359,32 +360,18 @@ function makeOfferLetterPDF(emp,org,authPos2,authSign2){
     doc.line(mg,ry,W-mg,ry);ry+=10;
     doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);doc.text("Dear "+emp.name+",",mg,ry);ry+=8;
     doc.setFontSize(9.5);doc.setTextColor(60,80,100);
-    var openLines=doc.splitTextToSize("We are pleased to offer you the position of "+(emp.role||"Employee")+" at "+(org.name||"our organization")+". This letter confirms the terms and conditions of your employment as agreed upon.",W-mg*2);
+    var openLines=doc.splitTextToSize("We are pleased to offer you the position of "+(emp.role||"Employee")+" at "+(org.name||"our organization")+". This letter confirms the terms of your employment.",W-mg*2);
     doc.text(openLines,mg,ry);ry+=openLines.length*5+6;
-    var rows2=[["Position",(emp.role||"-")],["Department",(emp.dept||"-")],["Date of Joining",(emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-")],["Employee ID",(emp.eid||"To be assigned")],["Monthly CTC","\u20b9"+fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0))],["Annual CTC","\u20b9"+fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0)*12)],["Employment Type","Full-Time, Permanent"],["Probation Period","3 months from date of joining"],["Leave Entitlement",(emp.leaveEntitlement?emp.leaveEntitlement+" days paid leave per year":"As per company policy")]];
+    var rows2=[["Position",emp.role||"-"],["Department",emp.dept||"-"],["Date of Joining",emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-"],["Employee ID",emp.eid||"To be assigned"],["Monthly CTC","₹"+fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0))],["Annual CTC","₹"+fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0)*12)],["Employment Type","Full-Time, Permanent"],["Probation Period","3 months from date of joining"],["Leave Entitlement",emp.leaveEntitlement?emp.leaveEntitlement+" days paid leave per year":"As per company policy"]];
     doc.setFillColor(239,246,255);doc.rect(mg,ry,W-mg*2,7,"F");doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);doc.text("TERMS OF EMPLOYMENT",mg+3,ry+5);ry+=9;
-    rows2.forEach(function(row,i){
-      if(i%2===0){doc.setFillColor(249,251,253);doc.rect(mg,ry,W-mg*2,7,"F");}
-      doc.setFont("helvetica","normal");doc.setTextColor(80,100,130);doc.setFontSize(8.5);doc.text(row[0],mg+3,ry+5);
-      doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(String(row[1]),mg+85,ry+5);
-      doc.setDrawColor(220,230,245);doc.line(mg,ry+7,W-mg,ry+7);ry+=7;
-    });
-    ry+=8;
-    var terms=["1. This offer is contingent upon satisfactory background verification and document submission.","2. You are required to maintain strict confidentiality regarding company information.","3. Either party may terminate this employment with 30 days written notice during probation.","4. You will be governed by the company's HR policies, which may be amended from time to time.","5. This letter supersedes any prior verbal or written discussions regarding this employment."];
-    doc.setFillColor(239,246,255);doc.rect(mg,ry,W-mg*2,7,"F");doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);doc.text("TERMS AND CONDITIONS",mg+3,ry+5);ry+=9;
-    doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(60,80,100);
-    terms.forEach(function(t){var tl=doc.splitTextToSize(t,W-mg*2-4);doc.text(tl,mg+2,ry);ry+=tl.length*4.5+2;});
-    ry+=6;
-    var sigY=Math.max(ry,230);
+    rows2.forEach(function(row,i){if(i%2===0){doc.setFillColor(249,251,253);doc.rect(mg,ry,W-mg*2,7,"F");}doc.setFont("helvetica","normal");doc.setTextColor(80,100,130);doc.setFontSize(8.5);doc.text(row[0],mg+3,ry+5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(String(row[1]),mg+85,ry+5);doc.setDrawColor(220,230,245);doc.line(mg,ry+7,W-mg,ry+7);ry+=7;});
+    ry+=8;var sigY=Math.max(ry,230);
     doc.setDrawColor(150,165,185);doc.line(mg,sigY,mg+60,sigY);doc.line(W-mg-60,sigY,W-mg,sigY);
-    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-    doc.text(authSign2||org.name||"Authorised Signatory",mg,sigY+5);doc.text(emp.name,W-mg-60,sigY+5);
-    doc.setFont("helvetica","normal");doc.setTextColor(100,120,145);
-    doc.text(authPos2||"Authorised Signatory",mg,sigY+9);doc.text("Employee Signature",W-mg-60,sigY+9);
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(authSign2||org.name||"Authorised Signatory",mg,sigY+5);doc.text(emp.name,W-mg-60,sigY+5);
+    doc.setFont("helvetica","normal");doc.setTextColor(100,120,145);doc.text(authPos2||"Authorised Signatory",mg,sigY+9);doc.text("Employee Signature",W-mg-60,sigY+9);
     doc.setDrawColor(30,58,138);doc.setLineWidth(0.4);doc.line(mg,287,W-mg,287);
-    doc.setFontSize(7.5);doc.setTextColor(100,120,145);doc.text(org.name||"",mg,292);doc.text("Generated by Admin HR",W-mg,292,{align:"right"});
-    downloadPDF(doc.output("blob"),"Offer-Letter-"+(emp.name||"Employee").replace(/\s/g,"-")+".pdf");
-    showT("Offer letter downloaded");
+    doc.setFontSize(7.5);doc.setTextColor(100,120,145);doc.text("ADMIN HR"+(org.name?" | "+org.name:""),mg,292);doc.text("Generated by Admin HR",W-mg,292,{align:"right"});
+    downloadPDF(doc.output("blob"),"Offer-Letter-"+(emp.name||"Employee").replace(/s/g,"-")+".pdf");showT("Offer letter downloaded");
   },function(){showT("PDF library error","err");});
 }
 
@@ -1515,7 +1502,6 @@ export default function App(){
 
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
-  se(function(){if(screen!=="login")return;var t=setInterval(function(){sLandSlide[1](function(n){return n+1;});},3400);return function(){clearInterval(t);};},[screen]);
 
 
 
@@ -2277,7 +2263,6 @@ export default function App(){
 
   // ── Landing screen ──
   var landingScreen=(function(){
-    /* ── inject CSS once ── */
     if(!document.getElementById("ahr-css")){
       var _s=document.createElement("style");_s.id="ahr-css";
       _s.textContent=
@@ -2287,7 +2272,6 @@ export default function App(){
         "@keyframes glow-pulse{0%,100%{opacity:.5}50%{opacity:.9}}";
       document.head.appendChild(_s);
     }
-
     var isDark=themeMode==="dark";
     var BG =isDark?"#242323":"#F1F5F9";
     var CRD=isDark?"#2e2d2d":"#FFFFFF";
@@ -2296,43 +2280,27 @@ export default function App(){
     var BD =isDark?"#3a3939":"#E2E8F0";
     var SF =isDark?"#2a2929":"#F8FAFF";
     var HDR="#0F172A";
-
-    /* ── Pricing plan state (local IIFE-level, re-renders on sLandSlide changes) ── */
-    var pSlide=sLandSlide[0]%3;
-    var setSlide=sLandSlide[1];
-
-    /* ── Pricing data ── */
+    var pSlide=sLandSlide[0]%3,setSlide=sLandSlide[1];
     var plans=[
-      {
-        n:"Free",monthly:"₹0",yearly:"₹0",
-        sub:"Up to 5 employees",tag:"",
+      {n:"Free",monthly:"₹0",yearly:"₹0",sub:"Up to 5 employees",tag:"",
         features:["Attendance marking","Basic payroll","View payslips on screen","Up to 5 employees"],
-        locked:["PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter","Annual statement"],
-      },
-      {
-        n:"Pro",monthly:"₹499/mo",yearly:"₹4,999/yr",
-        sub:"Up to 25 employees",tag:"Most Popular",
-        features:["Everything in Free","All PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter PDF","Annual salary statement","Holiday calendar","Leave balance tracker","WhatsApp sharing"],
-        locked:[],
-      },
-      {
-        n:"Business",monthly:"₹999/mo",yearly:"₹9,999/yr",
-        sub:"Up to 50 employees",tag:"Best Value",
+        locked:["PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter","Annual statement"]},
+      {n:"Pro",monthly:"₹499/mo",yearly:"₹4,999/yr",sub:"Up to 25 employees",tag:"Most Popular",
+        features:["Everything in Free","All PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter PDF","Annual salary statement","Holiday calendar","Leave balance","WhatsApp sharing"],
+        locked:[]},
+      {n:"Business",monthly:"₹999/mo",yearly:"₹9,999/yr",sub:"Up to 50 employees",tag:"Best Value",
         features:["Everything in Pro","Up to 50 employees","Priority WhatsApp support","Multi-department reports","Advanced compliance PDFs"],
-        locked:[],
-      },
+        locked:[]},
     ];
     var cur=plans[pSlide];
-
-    /* ── Feature row ── */
     var feats=[
-      {icon:"calendar_month",  title:"Attendance",   brief:"One-tap daily marking"},
-      {icon:"payments",        title:"Payroll",       brief:"PF, ESI, PT automated"},
-      {icon:"fact_check",      title:"Compliance",    brief:"Every statutory PDF"},
-      {icon:"account_balance", title:"PF & ESI",      brief:"Challan in one click"},
-      {icon:"workspace_premium",title:"Gratuity",     brief:"Auto calculated"},
-      {icon:"description",     title:"Offer Letter",  brief:"PDF in seconds"},
-      {icon:"cloud_upload",    title:"Cloud Sync",    brief:"Auto backup, any device"},
+      {icon:"calendar_month",title:"Attendance",brief:"One-tap daily marking"},
+      {icon:"payments",title:"Payroll",brief:"PF, ESI, PT automated"},
+      {icon:"fact_check",title:"Compliance",brief:"Every statutory PDF"},
+      {icon:"account_balance",title:"PF & ESI",brief:"Challan in one click"},
+      {icon:"workspace_premium",title:"Gratuity",brief:"Auto calculated"},
+      {icon:"description",title:"Offer Letter",brief:"PDF in seconds"},
+      {icon:"cloud_upload",title:"Cloud Sync",brief:"Auto backup, any device"},
     ];
     function tile(f,key){
       return h("div",{key:key,style:{flexShrink:0,width:108,background:"#1E293B",border:"1px solid #334155",borderRadius:14,padding:"12px 10px",display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",gap:5,marginRight:10}},
@@ -2342,57 +2310,44 @@ export default function App(){
       );
     }
     var d1=feats.concat(feats);
-
-    /* ── Built for segments ── */
     var segments=[
-      {icon:"bolt",         l:"Startups",       s:"5–20 employees",  clr:"#F59E0B"},
-      {icon:"briefcase",    l:"Retail & Trade",  s:"Shops to chains",      clr:"#3B82F6"},
-      {icon:"business",     l:"Manufacturing",   s:"10–50 workers",   clr:"#8B5CF6"},
-      {icon:"people_alt",   l:"Any Business",    s:"That pays salaries",   clr:"#10B981"},
+      {icon:"bolt",l:"Startups",s:"5–20 employees",clr:"#F59E0B"},
+      {icon:"briefcase",l:"Retail & Trade",s:"Shops to chains",clr:"#3B82F6"},
+      {icon:"business",l:"Manufacturing",s:"10–50 workers",clr:"#8B5CF6"},
+      {icon:"people_alt",l:"Any Business",s:"That pays salaries",clr:"#10B981"},
     ];
-
-    /* ── Accordion state for features dropdown ── */
-    var showFeats=st(false);
-
     return h("div",{style:{position:"fixed",inset:0,background:BG,display:"flex",flexDirection:"column",maxWidth:430,margin:"0 auto",overflow:"hidden"}},
-
-      /* ════ HERO — dark navy with glow + grid ════ */
+      /* HERO */
       h("div",{style:{flexShrink:0,background:HDR,display:"flex",flexDirection:"column",alignItems:"center",textAlign:"center",padding:"20px 24px 22px",position:"relative",overflow:"hidden"}},
-        /* Central radial glow */
         h("div",{style:{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:220,height:220,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,.25) 0%,transparent 70%)",pointerEvents:"none",animation:"glow-pulse 3s ease-in-out infinite"}}),
-        /* Corner glows */
         h("div",{style:{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",background:"radial-gradient(circle,rgba(139,92,246,.2),transparent 70%)",pointerEvents:"none"}}),
         h("div",{style:{position:"absolute",bottom:-20,left:-20,width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,.15),transparent 70%)",pointerEvents:"none"}}),
-        /* Content */
         h("div",{style:{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}},
           logoSVG(48),
-          h("div",{style:{fontSize:24,fontWeight:900,color:"#FFFFFF",letterSpacing:-.5,marginTop:10,marginBottom:6}},"Admin HR"),
-          h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.7,maxWidth:255,marginBottom:18}},
-            "Smart HR for Indian businesses. Attendance, payroll & compliance in one app."),
+          h("div",{style:{marginTop:10,marginBottom:6,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
+            h("div",{style:{fontSize:9,fontWeight:700,color:"rgba(255,255,255,0.45)",letterSpacing:2.5,textTransform:"uppercase"}},"Admin HR"),
+            h("div",{style:{fontSize:22,fontWeight:900,color:"#FFFFFF",letterSpacing:-.4,lineHeight:1}},"Smart HR Manager")
+          ),
+          h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.7,maxWidth:255,marginBottom:18}},"For Indian businesses. Attendance, payroll & compliance in one app."),
           h("div",{style:{display:"flex",gap:10,width:"100%",maxWidth:250}},
             h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:1,background:"#FFFFFF",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:800,color:"#0F172A",cursor:"pointer"}},"Start Free"),
             h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:"rgba(255,255,255,0.10)",border:"1px solid rgba(255,255,255,0.25)",borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,color:"#FFFFFF",cursor:"pointer"}},"Sign In")
           )
         )
       ),
-
-      /* ════ SCROLLING FEATURE ROW ════ */
+      /* SCROLLING ROW */
       h("div",{style:{flexShrink:0,padding:"12px 0 8px",background:BG}},
-        h("div",{className:"mwrap"},
-          h("div",{className:"mltr",style:{paddingLeft:14}},d1.map(function(f,i){return tile(f,"t"+i);})))
+        h("div",{className:"mwrap"},h("div",{className:"mltr",style:{paddingLeft:14}},d1.map(function(f,i){return tile(f,"t"+i);})))
       ),
-
-      /* ════ BUILT FOR — icon glow cards ════ */
+      /* BUILT FOR */
       h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
         h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BD,padding:"10px 12px"}},
           h("div",{style:{fontSize:9,fontWeight:700,color:GR,letterSpacing:1.6,marginBottom:8,textAlign:"center"}},"BUILT FOR"),
           h("div",{style:{display:"flex",gap:6}},
             segments.map(function(t){
               return h("div",{key:t.l,style:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"8px 4px",background:t.clr+"10",borderRadius:10,border:"1px solid "+t.clr+"30",position:"relative",overflow:"hidden"}},
-                /* glow behind icon */
                 h("div",{style:{position:"absolute",top:0,left:"50%",transform:"translateX(-50%)",width:40,height:20,background:t.clr,opacity:.12,borderRadius:"0 0 50px 50px",filter:"blur(6px)"}}),
-                h("div",{style:{width:28,height:28,borderRadius:8,background:t.clr+"18",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid "+t.clr+"33",position:"relative",zIndex:1}},
-                  ic(t.icon,t.clr,14)),
+                h("div",{style:{width:28,height:28,borderRadius:8,background:t.clr+"18",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid "+t.clr+"33",position:"relative",zIndex:1}},ic(t.icon,t.clr,14)),
                 h("div",{style:{fontSize:9,fontWeight:700,color:NV,textAlign:"center",lineHeight:1.2,position:"relative",zIndex:1}},t.l),
                 h("div",{style:{fontSize:7,color:GR,textAlign:"center",position:"relative",zIndex:1}},t.s)
               );
@@ -2400,29 +2355,23 @@ export default function App(){
           )
         )
       ),
-
-      /* ════ PRICING — manual slider ════ */
+      /* PRICING — manual slider */
       h("div",{style:{flexShrink:0,padding:"0 14px 8px"}},
         h("div",{style:{background:CRD,borderRadius:14,border:"1px solid "+BD,padding:"10px 12px"}},
-          /* Header row */
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
             h("div",{style:{fontSize:9,fontWeight:700,color:GR,letterSpacing:1.6}},"PRICING"),
-            /* Plan nav dots */
             h("div",{style:{display:"flex",gap:5,alignItems:"center"}},
-              plans.map(function(p,i){
-                return h("div",{key:i,onClick:function(){setSlide(i);},style:{width:i===pSlide?18:6,height:6,borderRadius:99,background:i===pSlide?NV:BD,cursor:"pointer",transition:"all .25s"}});
-              })
+              [0,1,2].map(function(i){return h("div",{key:i,onClick:function(){setSlide(i);},style:{width:i===pSlide?18:6,height:6,borderRadius:99,background:i===pSlide?NV:BD,cursor:"pointer",transition:"all .25s"}});})
             )
           ),
-          /* Plan card — same box, slides content */
-          h("div",{style:{background:pSlide===1?HDR:pSlide===2?"#1E293B":SF,borderRadius:10,border:"1px solid "+(pSlide===0?BD:"transparent"),padding:"10px 12px",position:"relative",overflow:"hidden",minHeight:80}},
-            /* Glow for paid plans */
+          h("div",{style:{background:pSlide===1?HDR:pSlide===2?"#1E293B":SF,borderRadius:10,border:"1px solid "+(pSlide===0?BD:"transparent"),padding:"10px 12px",position:"relative",overflow:"hidden"}},
             pSlide>0?h("div",{style:{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:pSlide===1?"rgba(99,102,241,.2)":"rgba(139,92,246,.2)",filter:"blur(20px)",pointerEvents:"none"}}):null,
-            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:4,position:"relative",zIndex:1}},
+            /* Plan header */
+            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,position:"relative",zIndex:1}},
               h("div",null,
                 h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:2}},
                   h("div",{style:{fontSize:14,fontWeight:900,color:pSlide>0?"#FFFFFF":NV}},cur.n),
-                  cur.tag?h("div",{style:{fontSize:7,fontWeight:600,background:"rgba(255,255,255,.12)",color:"rgba(255,255,255,0.65)",borderRadius:20,padding:"1px 7px"}}):null,cur.tag
+                  cur.tag?h("div",{style:{fontSize:7,fontWeight:600,background:"rgba(255,255,255,.15)",color:"rgba(255,255,255,0.7)",borderRadius:20,padding:"2px 8px",letterSpacing:.3}},cur.tag):null
                 ),
                 h("div",{style:{fontSize:9,color:pSlide>0?"rgba(255,255,255,0.5)":GR}},cur.sub)
               ),
@@ -2432,44 +2381,35 @@ export default function App(){
               )
             ),
             /* Nav arrows */
-            h("div",{style:{display:"flex",justifyContent:"space-between",position:"relative",zIndex:1}},
-              h("button",{onClick:function(){setSlide(function(n){return (n+2)%3;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:14,color:pSlide>0?"rgba(255,255,255,.6)":GR,display:"flex",alignItems:"center",justifyContent:"center"}},"‹"),
-              /* Feature toggle */
-              h("button",{onClick:function(){showFeats[1](function(v){return !v;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,padding:"2px 8px",cursor:"pointer",fontSize:9,fontWeight:700,color:pSlide>0?"rgba(255,255,255,.7)":GR,display:"flex",alignItems:"center",gap:3}},
-                "Features",h("span",{style:{fontSize:10}},showFeats[0]?"▴":"▾")),
-              h("button",{onClick:function(){setSlide(function(n){return (n+1)%3;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,width:24,height:24,cursor:"pointer",fontSize:14,color:pSlide>0?"rgba(255,255,255,.6)":GR,display:"flex",alignItems:"center",justifyContent:"center"}},"›")
-            )
-          ),
-          /* Dropdown features list */
-          showFeats[0]?h("div",{style:{marginTop:6,background:SF,borderRadius:9,border:"1px solid "+BD,padding:"8px 10px"}},
-            h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 8px"}},
-              cur.features.map(function(f,i){
-                return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:4,padding:"3px 0",fontSize:9,color:NV}},
-                  ic("check_circle","#10B981",9),
-                  h("span",{style:{lineHeight:1.3}},f)
-                );
-              })
+            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,position:"relative",zIndex:1}},
+              h("button",{onClick:function(){setSlide(function(n){return (n+2)%3;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,width:22,height:22,cursor:"pointer",fontSize:13,color:pSlide>0?"rgba(255,255,255,.6)":GR,display:"flex",alignItems:"center",justifyContent:"center"}},"<"),
+              h("div",{style:{fontSize:9,color:pSlide>0?"rgba(255,255,255,.45)":GR}},"Included features"),
+              h("button",{onClick:function(){setSlide(function(n){return (n+1)%3;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,width:22,height:22,cursor:"pointer",fontSize:13,color:pSlide>0?"rgba(255,255,255,.6)":GR,display:"flex",alignItems:"center",justifyContent:"center"}},">")
             ),
-            cur.locked.length>0?h("div",{style:{marginTop:6,borderTop:"1px solid "+BD,paddingTop:6,display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 8px"}},
-              cur.locked.map(function(f,i){
-                return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:4,padding:"3px 0",fontSize:9,color:GR,opacity:.6}},
-                  ic("lock",GR,9),
-                  h("span",{style:{lineHeight:1.3}},f)
-                );
-              })
-            ):null
-          ):null
+            /* Features — always visible, 2 columns */
+            h("div",{style:{background:"rgba(255,255,255,.06)",borderRadius:8,padding:"7px 8px",position:"relative",zIndex:1}},
+              h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
+                cur.features.map(function(f,i){
+                  return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:pSlide>0?"rgba(255,255,255,.85)":NV}},
+                    ic("check_circle","#10B981",9),h("span",{style:{lineHeight:1.3}},f));
+                })
+              ),
+              cur.locked.length>0?h("div",{style:{marginTop:5,paddingTop:5,borderTop:"1px solid rgba(255,255,255,.08)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
+                cur.locked.map(function(f,i){
+                  return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:pSlide>0?"rgba(255,255,255,.3)":GR,opacity:.7}},
+                    ic("lock",GR,9),h("span",{style:{lineHeight:1.3}},f));
+                })
+              ):null
+            )
+          )
         )
       ),
-
-      /* ════ BOTTOM: Contact + Quote ════ */
+      /* CONTACT + QUOTE */
       h("div",{style:{flex:1,display:"flex",flexDirection:"column",justifyContent:"flex-end",padding:"0 14px 12px"}},
         h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8}},
           h("span",{style:{fontSize:11,color:GR}},"Need help?"),
           h("span",{style:{fontSize:11,color:GR}},"—"),
-          h("span",{style:{display:"flex",alignItems:"center",gap:4,fontSize:12,fontWeight:700,color:"#25D366",cursor:"pointer"},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},
-            ic("whatsapp","#25D366",14),"Contact Support"
-          )
+          h("span",{style:{display:"flex",alignItems:"center",gap:4,fontSize:12,fontWeight:700,color:"#25D366",cursor:"pointer"},onClick:function(){window.open("https://wa.me/918072293384","_blank");}},ic("whatsapp","#25D366",14),"Contact Support")
         ),
         h("div",{style:{textAlign:"center"}},
           h("div",{style:{fontSize:11,fontStyle:"italic",color:GR,lineHeight:1.6,marginBottom:3}},"“Your employees are your greatest asset.”"),
@@ -3394,29 +3334,16 @@ null
         var usePct=entitlement>0?Math.round(usedLeave*100/entitlement):0;
         return card(h("div",null,
           h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-            h("div",{style:{width:34,height:34,borderRadius:9,background:"#10B98115",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-              ic("event_available","#10B981",17)),
-            h("div",null,
-              h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Leave Balance "+curY),
-              h("div",{style:{fontSize:10,color:GRY}},"Paid leave entitlement")
-            )
+            h("div",{style:{width:34,height:34,borderRadius:9,background:"#10B98115",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("event_available","#10B981",17)),
+            h("div",null,h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Leave Balance "+curY),h("div",{style:{fontSize:10,color:GRY}},"Paid leave entitlement"))
           ),
           h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-            h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
-              h("div",{style:{fontSize:20,fontWeight:800,color:balColor}},remaining%1===0?remaining:remaining.toFixed(1)),
-              h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"REMAINING")),
-            h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
-              h("div",{style:{fontSize:20,fontWeight:800,color:NVY}},usedLeave%1===0?usedLeave:usedLeave.toFixed(1)),
-              h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"USED")),
-            h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
-              h("div",{style:{fontSize:20,fontWeight:800,color:NVY}},entitlement),
-              h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"ENTITLED"))
+            h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:20,fontWeight:800,color:balColor}},remaining%1===0?remaining:remaining.toFixed(1)),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"REMAINING")),
+            h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:20,fontWeight:800,color:NVY}},usedLeave%1===0?usedLeave:usedLeave.toFixed(1)),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"USED")),
+            h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:20,fontWeight:800,color:NVY}},entitlement),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"ENTITLED"))
           ),
-          h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden"}},
-            h("div",{style:{width:Math.min(usePct,100)+"%",height:"100%",background:balColor,borderRadius:99}})),
-          h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4}},
-            h("div",{style:{fontSize:9,color:GRY}},usedLeave+" days used"),
-            h("div",{style:{fontSize:9,color:GRY}},usePct+"% of annual quota"))
+          h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden"}},h("div",{style:{width:Math.min(usePct,100)+"%",height:"100%",background:balColor,borderRadius:99}})),
+          h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4}},h("div",{style:{fontSize:9,color:GRY}},usedLeave+" days used"),h("div",{style:{fontSize:9,color:GRY}},usePct+"% of annual quota"))
         ));
       })(),
       card(h("div",null,renderLoanSection(selE))),
@@ -6411,91 +6338,46 @@ null
     var todayStr2=new Date().toISOString().split("T")[0];
     function addHoliday(){
       if(!holName||!holDate)return showT("Enter name and date","err");
-      if((holidays2||[]).some(function(h){return h.date===holDate;}))return showT("Holiday already exists for this date","err");
+      if((holidays2||[]).some(function(h){return h.date===holDate;}))return showT("Holiday already exists","err");
       var hol={id:Date.now(),name:holName,date:holDate};
       setHolidays2(function(p){return [hol].concat(p||[]).sort(function(a,b){return a.date.localeCompare(b.date);});});
       _sb.from("holidays").insert({id:String(hol.id),employer_email:gUser.email,name:holName,date:holDate}).then(function(){});
-      var newAtt=Object.assign({},att);
-      actEmps.forEach(function(e){newAtt[holDate+"_"+e.id]="holiday";});
-      setAtt(newAtt);
-      setHolName("");setHolDate("");setShowHolForm(false);
-      showT("Holiday added and marked for all employees");
+      var newAtt=Object.assign({},att);actEmps.forEach(function(e){newAtt[holDate+"_"+e.id]="holiday";});setAtt(newAtt);
+      setHolName("");setHolDate("");setShowHolForm(false);showT("Holiday added for all employees");
     }
     function deleteHoliday(hol){
-      if(!window.confirm("Delete "+hol.name+"? This will clear the holiday mark from attendance."))return;
+      if(!window.confirm("Delete "+hol.name+"?"))return;
       setHolidays2(function(p){return (p||[]).filter(function(h){return h.id!==hol.id;});});
       _sb.from("holidays").delete().eq("id",String(hol.id)).then(function(){});
-      var newAtt=Object.assign({},att);
-      actEmps.forEach(function(e){var k=hol.date+"_"+e.id;if(newAtt[k]==="holiday")delete newAtt[k];});
-      setAtt(newAtt);
-      showT("Holiday removed");
+      var newAtt=Object.assign({},att);actEmps.forEach(function(e){var k=hol.date+"_"+e.id;if(newAtt[k]==="holiday")delete newAtt[k];});setAtt(newAtt);showT("Holiday removed");
     }
     var sorted=(holidays2||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
     var upcoming=sorted.filter(function(h){return h.date>=todayStr2;});
     var past=sorted.filter(function(h){return h.date<todayStr2;});
     return h("div",{className:"fd"},
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-        h("div",null,
-          h("div",{style:{display:"flex",alignItems:"center",gap:6}},
-            ic("event_available",ACCENT,18),
-            h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Holiday Calendar")
-          ),
-          h("div",{style:{fontSize:10,color:GRY,marginTop:2}},sorted.length+" holidays set")
-        ),
-        h("button",{onClick:function(){setShowHolForm(!showHolForm);},
-          style:{background:showHolForm?SFT:ACCENT,border:showHolForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"7px 14px",fontSize:11,fontWeight:700,color:showHolForm?NVY:"#fff",cursor:"pointer"}},
-          showHolForm?"Cancel":"+ Add Holiday")
+        h("div",null,h("div",{style:{display:"flex",alignItems:"center",gap:6}},ic("event_available",ACCENT,18),h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Holiday Calendar")),h("div",{style:{fontSize:10,color:GRY,marginTop:2}},sorted.length+" holidays set")),
+        h("button",{onClick:function(){setShowHolForm(!showHolForm);},style:{background:showHolForm?SFT:ACCENT,border:showHolForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"7px 14px",fontSize:11,fontWeight:700,color:showHolForm?NVY:"#fff",cursor:"pointer"}},showHolForm?"Cancel":"+ Add Holiday")
       ),
       showHolForm?h("div",{style:{background:SFT,borderRadius:14,padding:14,border:"1px solid "+BDR,marginBottom:14}},
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:10}},"Add Company Holiday"),
-        lbl("HOLIDAY NAME"),
-        h("input",{type:"text",value:holName,onChange:function(e){setHolName(e.target.value);},placeholder:"e.g. Pongal, Diwali, Republic Day",
-          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
-        lbl("DATE"),
-        h("input",{type:"date",value:holDate,onChange:function(e){setHolDate(e.target.value);},
-          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
-        h("div",{style:{background:ACCENT+"08",borderRadius:8,padding:"8px 10px",marginBottom:12,fontSize:10,color:GRY,border:"1px solid "+ACCENT+"22"}},
-          "All active employees will be automatically marked as Holiday on this date in attendance."),
+        lbl("HOLIDAY NAME"),h("input",{type:"text",value:holName,onChange:function(e){setHolName(e.target.value);},placeholder:"e.g. Pongal, Diwali",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
+        lbl("DATE"),h("input",{type:"date",value:holDate,onChange:function(e){setHolDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
+        h("div",{style:{background:ACCENT+"08",borderRadius:8,padding:"8px 10px",marginBottom:12,fontSize:10,color:GRY,border:"1px solid "+ACCENT+"22"}},"All active employees will be marked Holiday on this date automatically."),
         h("button",{onClick:addHoliday,style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"11px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Add Holiday")
       ):null,
       upcoming.length>0?h("div",{style:{marginBottom:12}},
         h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"UPCOMING"),
         upcoming.map(function(hol){
-          var d=new Date(hol.date+"T00:00:00");
-          var dl=Math.round((d-new Date(todayStr2+"T00:00:00"))/86400000);
+          var d=new Date(hol.date+"T00:00:00");var dl=Math.round((d-new Date(todayStr2+"T00:00:00"))/86400000);
           return h("div",{key:hol.id,style:{background:CARD,borderRadius:12,padding:"11px 14px",marginBottom:6,border:"1px solid "+BDR,display:"flex",alignItems:"center",gap:10}},
-            h("div",{style:{width:40,height:40,borderRadius:10,background:ACCENT+"12",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid "+ACCENT+"22"}},
-              h("div",{style:{fontSize:14,fontWeight:800,color:ACCENT}},d.getDate()),
-              h("div",{style:{fontSize:7,fontWeight:700,color:ACCENT}},["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][d.getMonth()])
-            ),
-            h("div",{style:{flex:1}},
-              h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},hol.name),
-              h("div",{style:{fontSize:10,color:GRY,marginTop:2}},d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})),
-              h("div",{style:{fontSize:10,color:ACCENT,fontWeight:600,marginTop:2}},dl===0?"Today":dl===1?"Tomorrow":dl+" days away")
-            ),
-            h("button",{onClick:function(){deleteHoliday(hol);},style:{background:RED+"10",border:"1px solid "+RED+"22",borderRadius:8,padding:"5px 8px",cursor:"pointer",display:"flex",alignItems:"center",gap:3,fontSize:10,fontWeight:600,color:RED}},
-              ic("delete",RED,13),"Remove")
+            h("div",{style:{width:40,height:40,borderRadius:10,background:ACCENT+"12",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0,border:"1px solid "+ACCENT+"22"}},h("div",{style:{fontSize:14,fontWeight:800,color:ACCENT}},d.getDate()),h("div",{style:{fontSize:7,fontWeight:700,color:ACCENT}},["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][d.getMonth()])),
+            h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},hol.name),h("div",{style:{fontSize:10,color:GRY,marginTop:2}},d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})),h("div",{style:{fontSize:10,color:ACCENT,fontWeight:600,marginTop:2}},dl===0?"Today":dl===1?"Tomorrow":dl+" days away")),
+            h("button",{onClick:function(){deleteHoliday(hol);},style:{background:RED+"10",border:"1px solid "+RED+"22",borderRadius:8,padding:"5px 8px",cursor:"pointer",display:"flex",alignItems:"center",gap:3,fontSize:10,fontWeight:600,color:RED}},ic("delete",RED,13),"Remove")
           );
         })
-      ):h("div",{style:{background:SFT,borderRadius:12,padding:"16px",marginBottom:12,textAlign:"center"}},
-        ic("event_available",GRY,28),
-        h("div",{style:{fontSize:12,fontWeight:600,color:NVY,marginTop:8}},"No upcoming holidays"),
-        h("div",{style:{fontSize:10,color:GRY,marginTop:4}},"Add holidays to auto-mark all employees")
-      ),
-      past.length>0?h("div",null,
-        h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"PAST"),
-        past.slice().reverse().map(function(hol){
-          var d=new Date(hol.date+"T00:00:00");
-          return h("div",{key:hol.id,style:{background:CARD,borderRadius:10,padding:"8px 14px",marginBottom:5,border:"1px solid "+BDR,display:"flex",alignItems:"center",gap:10,opacity:.65}},
-            h("div",{style:{flex:1}},
-              h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},hol.name),
-              h("div",{style:{fontSize:10,color:GRY}},d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}))
-            ),
-            h("button",{onClick:function(){deleteHoliday(hol);},style:{background:"none",border:"none",cursor:"pointer",color:GRY,padding:4}},
-              ic("delete",GRY,14))
-          );
-        })
-      ):null
+      ):h("div",{style:{background:SFT,borderRadius:12,padding:"16px",marginBottom:12,textAlign:"center"}},ic("event_available",GRY,28),h("div",{style:{fontSize:12,fontWeight:600,color:NVY,marginTop:8}},"No upcoming holidays"),h("div",{style:{fontSize:10,color:GRY,marginTop:4}},"Add holidays to auto-mark all employees")),
+      past.length>0?h("div",null,h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"PAST"),past.slice().reverse().map(function(hol){var d=new Date(hol.date+"T00:00:00");return h("div",{key:hol.id,style:{background:CARD,borderRadius:10,padding:"8px 14px",marginBottom:5,border:"1px solid "+BDR,display:"flex",alignItems:"center",gap:10,opacity:.65}},h("div",{style:{flex:1}},h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},hol.name),h("div",{style:{fontSize:10,color:GRY}},d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}))),h("button",{onClick:function(){deleteHoliday(hol);},style:{background:"none",border:"none",cursor:"pointer",color:GRY,padding:4}},ic("delete",GRY,14)));})):null
     );
   }
 
