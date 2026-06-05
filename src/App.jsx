@@ -2324,9 +2324,10 @@ export default function App(){
         h("div",{style:{position:"absolute",bottom:-20,left:-20,width:80,height:80,borderRadius:"50%",background:"radial-gradient(circle,rgba(59,130,246,.15),transparent 70%)",pointerEvents:"none"}}),
         h("div",{style:{position:"relative",zIndex:1,display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}},
           logoSVG(48),
-          h("div",{style:{marginTop:10,marginBottom:6,display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
-            h("div",{style:{fontSize:9,fontWeight:700,color:"rgba(255,255,255,0.45)",letterSpacing:2.5,textTransform:"uppercase"}},"Admin HR"),
-            h("div",{style:{fontSize:22,fontWeight:900,color:"#FFFFFF",letterSpacing:-.4,lineHeight:1}},"Smart HR Manager")
+          h("div",{style:{marginTop:10,marginBottom:6}},
+            h("div",{style:{fontSize:20,fontWeight:900,color:"#FFFFFF",letterSpacing:2,textTransform:"uppercase"}},
+              "Admin",h("span",{style:{color:"rgba(255,255,255,0.5)"}}," HR")
+            )
           ),
           h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.55)",lineHeight:1.7,maxWidth:255,marginBottom:18}},"For Indian businesses. Attendance, payroll & compliance in one app."),
           h("div",{style:{display:"flex",gap:10,width:"100%",maxWidth:250}},
@@ -2364,7 +2365,7 @@ export default function App(){
               [0,1,2].map(function(i){return h("div",{key:i,onClick:function(){setSlide(i);},style:{width:i===pSlide?18:6,height:6,borderRadius:99,background:i===pSlide?NV:BD,cursor:"pointer",transition:"all .25s"}});})
             )
           ),
-          h("div",{style:{background:pSlide===1?HDR:pSlide===2?"#1E293B":SF,borderRadius:10,border:"1px solid "+(pSlide===0?BD:"transparent"),padding:"10px 12px",position:"relative",overflow:"hidden"}},
+          h("div",{onClick:function(){setSlide(function(n){return (n+1)%3;});},style:{background:pSlide===2?"#1E293B":HDR,borderRadius:10,border:"none",padding:"10px 12px",position:"relative",overflow:"hidden",cursor:"pointer"}},
             pSlide>0?h("div",{style:{position:"absolute",top:-20,right:-20,width:80,height:80,borderRadius:"50%",background:pSlide===1?"rgba(99,102,241,.2)":"rgba(139,92,246,.2)",filter:"blur(20px)",pointerEvents:"none"}}):null,
             /* Plan header */
             h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6,position:"relative",zIndex:1}},
@@ -2380,27 +2381,8 @@ export default function App(){
                 h("div",{style:{fontSize:9,color:pSlide>0?"rgba(255,255,255,0.45)":GR,marginTop:1}},pSlide===0?"forever":cur.yearly+" billed yearly")
               )
             ),
-            /* Nav arrows */
-            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,position:"relative",zIndex:1}},
-              h("button",{onClick:function(){setSlide(function(n){return (n+2)%3;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,width:22,height:22,cursor:"pointer",fontSize:13,color:pSlide>0?"rgba(255,255,255,.6)":GR,display:"flex",alignItems:"center",justifyContent:"center"}},"<"),
-              h("div",{style:{fontSize:9,color:pSlide>0?"rgba(255,255,255,.45)":GR}},"Included features"),
-              h("button",{onClick:function(){setSlide(function(n){return (n+1)%3;});},style:{background:"rgba(255,255,255,.08)",border:"none",borderRadius:6,width:22,height:22,cursor:"pointer",fontSize:13,color:pSlide>0?"rgba(255,255,255,.6)":GR,display:"flex",alignItems:"center",justifyContent:"center"}},">")
-            ),
-            /* Features — always visible, 2 columns */
-            h("div",{style:{background:"rgba(255,255,255,.06)",borderRadius:8,padding:"7px 8px",position:"relative",zIndex:1}},
-              h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
-                cur.features.map(function(f,i){
-                  return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:pSlide>0?"rgba(255,255,255,.85)":NV}},
-                    ic("check_circle","#10B981",9),h("span",{style:{lineHeight:1.3}},f));
-                })
-              ),
-              cur.locked.length>0?h("div",{style:{marginTop:5,paddingTop:5,borderTop:"1px solid rgba(255,255,255,.08)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"3px 6px"}},
-                cur.locked.map(function(f,i){
-                  return h("div",{key:i,style:{display:"flex",alignItems:"center",gap:3,padding:"2px 0",fontSize:9,color:pSlide>0?"rgba(255,255,255,.3)":GR,opacity:.7}},
-                    ic("lock",GR,9),h("span",{style:{lineHeight:1.3}},f));
-                })
-              ):null
-            )
+            /* Tap anywhere on card to go next slide — no arrows */
+            /* No features text — save space */
           )
         )
       ),
