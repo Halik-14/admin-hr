@@ -3264,16 +3264,14 @@ null
           h("div",{style:{fontSize:10,color:CARD,opacity:.55}},"Joined: "+selE.joined)
         )
       ),
-      h("div",{style:{display:"flex",flexDirection:"column",gap:6,marginBottom:10}},
-        /* Row 1: Edit + Offer Letter */
-        h("div",{style:{display:"flex",gap:6}},
-          h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:9,padding:"10px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
-          h("button",{onClick:function(){makeOfferLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:ACCENT+"12",border:"1px solid "+ACCENT+"25",borderRadius:9,padding:"10px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("description",ACCENT,13),"Offer Letter")
+      h("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:10}},
+        h("div",{style:{display:"flex",gap:8}},
+          h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:10,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
+          h("button",{onClick:function(){makeOfferLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("description",ACCENT,13),"Offer Letter")
         ),
-        /* Row 2: Experience + Relieving letters */
-        h("div",{style:{display:"flex",gap:6}},
-          h("button",{onClick:function(){makeExperienceLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRN+"12",border:"1px solid "+GRN+"25",borderRadius:9,padding:"9px",color:GRN,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("verified",GRN,12),"Experience Letter"),
-          h("button",{onClick:function(){makeRelievingLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:AMB+"12",border:"1px solid "+AMB+"25",borderRadius:9,padding:"9px",color:AMB,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("assignment",AMB,12),"Relieving Letter")
+        h("div",{style:{display:"flex",gap:8}},
+          h("button",{onClick:function(){makeExperienceLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRN+"12",border:"1.5px solid "+GRN+"30",borderRadius:10,padding:"10px",color:GRN,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("verified",GRN,12),"Experience Letter"),
+          h("button",{onClick:function(){makeRelievingLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:AMB+"12",border:"1.5px solid "+AMB+"30",borderRadius:10,padding:"10px",color:AMB,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("assignment",AMB,12),"Relieving Letter")
         ),
         h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1px solid "+RED,borderRadius:9,padding:"9px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard Employee")
       ),
@@ -3480,9 +3478,9 @@ null
           h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4}},h("div",{style:{fontSize:9,color:GRY}},usedLeave+" days used"),h("div",{style:{fontSize:9,color:GRY}},usePct+"% of annual quota"))
         ));
       })(),
-      renderSalaryRevisionCard(selE),
       card(h("div",null,renderLoanSection(selE))),
       card(renderGratuityCard(selE)),
+      renderSalaryRevisionCard(selE),
       card(h("div",null,renderWarningSection(selE))),
       card(h("div",null,renderBonusSection(selE)))
     );
@@ -6415,7 +6413,24 @@ null
           h("div",null,h("div",{style:{fontSize:10,color:GRY}},"Outstanding"),h("div",{style:{fontSize:22,fontWeight:800,color:AMB}},fmt(balance))),
           h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:10,color:GRY}},"Total Loan"),h("div",{style:{fontSize:14,fontWeight:600,color:NVY}},fmt(activeLoan.amount||0)))
         ),
-        h("div",{style:{fontSize:11,color:GRY,marginBottom:10}},"Monthly deduction: "+fmt(activeLoan.monthlyDeduction||activeLoan.monthly_deduction||0)+(activeLoan.purpose?" - "+activeLoan.purpose:"")),
+        (function(){
+          var monthly=activeLoan.monthlyDeduction||activeLoan.monthly_deduction||0;
+          var monthsLeft=monthly>0?Math.ceil(balance/monthly):null;
+          return h("div",{style:{marginBottom:10}},
+            h("div",{style:{display:"flex",gap:8,marginBottom:6}},
+              h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"8px 10px",textAlign:"center"}},
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"MONTHLY DEDUCTION"),
+                h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},monthly>0?fmt(monthly):"Advance")
+              ),
+              h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"8px 10px",textAlign:"center"}},
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"MONTHS LEFT"),
+                h("div",{style:{fontSize:13,fontWeight:800,color:monthly>0?(monthsLeft<=3?RED:AMB):GRY}},
+                  monthly>0?(monthsLeft<=0?"Cleared":monthsLeft+" mo"):"Lump sum")
+              )
+            ),
+            activeLoan.purpose?h("div",{style:{fontSize:10,color:GRY,fontStyle:"italic"}},"Purpose: "+activeLoan.purpose):null
+          );
+        })(),
         h("div",{style:{display:"flex",gap:6}},
           h("input",{type:"number",value:payAmt,onChange:function(e){setPayAmt(e.target.value);},placeholder:"Payment amount",style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
           h("button",{onClick:recordPayment,style:{background:GRN,border:"none",borderRadius:8,padding:"8px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Record")
@@ -6800,7 +6815,7 @@ null
         empBonuses.map(function(b,i){
           return h("div",{key:b.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<empBonuses.length-1?"1px solid "+BDR:"none"}},
             h("div",null,h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},bonusTypes[b.type]||b.type),h("div",{style:{fontSize:9,color:GRY}},new Date((b.date||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(b.note?" • "+b.note:""))),
-            h("div",{style:{fontSize:13,fontWeight:800,color:AMB}},"₹"+fmtIN(b.amount||0))
+            h("div",{style:{fontSize:13,fontWeight:800,color:AMB}},fmt(b.amount||0))
           );
         })
       ):h("div",{style:{fontSize:10,color:GRY,textAlign:"center",padding:"8px 0"}},"No bonuses recorded yet")
