@@ -1742,9 +1742,10 @@ export default function App(){
     if(!gUser||!gUser.email)return;
     var em=gUser.email;
     var safe=function(t,c,v){try{return _sb.from(t).select("*").eq(c,v).then(function(r){return r.data||[];}).catch(function(){return[];});}catch(e){return Promise.resolve([]);}};
-    Promise.all([safe("loans","employer_email",em),safe("expenses","employer_email",em),safe("warnings","employer_email",em),safe("holidays","employer_email",em),safe("company_expenses","employer_email",em),safe("salary_revisions","employer_email",em)]).then(function(res){
+    Promise.all([safe("loans","employer_email",em),safe("expenses","employer_email",em),safe("warnings","employer_email",em),safe("holidays","employer_email",em),safe("company_expenses","employer_email",em),safe("salary_revisions","employer_email",em),safe("bonuses","employer_email",em)]).then(function(res){
       try{setLoans((res[0]||[]).map(function(l){return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,employee_id:l.employee_id,employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,monthlyDeduction:l.monthly_deduction,monthly_deduction:l.monthly_deduction,paidAmount:l.paid_amount,paid_amount:l.paid_amount,status:l.status,createdAt:l.created_at};}));}catch(e){}
       try{setExpenses((res[1]||[]).map(function(ex){return {id:ex.id,employerEmail:ex.employer_email,employeeId:ex.employee_id,employeeName:ex.employee_name,title:ex.title,amount:ex.amount,category:ex.category,description:ex.description,status:ex.status,month:ex.month,year:ex.year,createdAt:ex.created_at};}));}catch(e){}
+      try{setBonuses((res[6]||[]).map(function(b){return{id:b.id,employeeId:b.employee_id,employeeName:b.employee_name,amount:Number(b.amount),type:b.type,note:b.note,date:b.date};}));}catch(e){}
       try{setSalRevisions((res[5]||[]).map(function(r){return{id:r.id,employeeId:r.employee_id,employeeName:r.employee_name,effectiveDate:r.effective_date,oldCtc:Number(r.old_ctc),newCtc:Number(r.new_ctc),reason:r.reason};}));}catch(e){}
       try{setCoExp((res[4]||[]).map(function(e){return{id:e.id,date:e.date,category:e.category,customCategory:e.custom_category,amount:Number(e.amount),vendor:e.vendor,description:e.description,paymentMode:e.payment_mode,month:e.month,year:e.year};}));}catch(e){}
       try{setHolidays2((res[3]||[]).map(function(h2){return{id:h2.id,name:h2.name,date:h2.date};}));}catch(e){}
@@ -2066,9 +2067,11 @@ export default function App(){
 
   function downloadBackup(){
     var backup={
-      version:1,exported:new Date().toISOString(),email:gUser?gUser.email:"",
+      version:2,exported:new Date().toISOString(),email:gUser?gUser.email:"",
       org:org,emps:emps,att:att,incentives:incentives,
-      shifts:shifts,reminders:reminders,notices:notices,revisions:revisions
+      shifts:shifts,reminders:reminders,notices:notices,revisions:revisions,
+      loans:loans,expenses:expenses,warnings:warnings,
+      holidays2:holidays2,coExp:coExp,salRevisions:salRevisions,bonuses:bonuses
     };
     var blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
     var a=document.createElement("a");
@@ -2083,7 +2086,7 @@ export default function App(){
     reader.onload=function(e){
       try{
         var data=JSON.parse(e.target.result);
-        if(!data.version||!data.emps)return showT("Invalid backup file","err");
+        if(!data.emps)return showT("Invalid backup file","err");
         if(window.confirm("This will REPLACE all current data with the backup. Continue?")){
           if(data.emps)setEmps(data.emps);
           if(data.att)setAtt(data.att);
@@ -2092,8 +2095,14 @@ export default function App(){
           if(data.reminders)setReminders(data.reminders);
           if(data.notices)setNotices(data.notices);
           if(data.revisions)setRevisions(data.revisions);
+          if(data.loans)setLoans(data.loans);
+          if(data.expenses)setExpenses(data.expenses);
+          if(data.warnings)setWarnings(data.warnings);
+          if(data.holidays2)setHolidays2(data.holidays2);
+          if(data.coExp)setCoExp(data.coExp);
+          if(data.salRevisions)setSalRevisions(data.salRevisions);
+          if(data.bonuses)setBonuses(data.bonuses);
           showT("Backup restored successfully!");
-          // Also sync to Supabase
           syncToSupabase(data.emps,data.att,data.incentives,data.shifts,data.reminders,data.notices,data.revisions);
         }
       }catch(ex){showT("Could not read backup file","err");}
@@ -3250,19 +3259,21 @@ null
         h("div",{style:{fontSize:11,color:CARD,opacity:.7}},[selE.role,selE.dept].filter(Boolean).join(" - ")||"No designation"),
         h("div",{style:{display:"flex",gap:6,alignItems:"center",marginTop:4}},
           h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 8px",borderRadius:20,background:"rgba(255,255,255,0.15)",color:"rgba(255,255,255,0.9)"}},
-            selE.salaryType==="fixed"?"\uD83D\uDCB0 Fixed Salary":"\uD83C\uDFE6 Split Salary"
+            selE.salaryType==="fixed"?"Fixed Salary":"Split Salary"
           ),
           h("div",{style:{fontSize:10,color:CARD,opacity:.55}},"Joined: "+selE.joined)
         )
       ),
-      h("div",{style:{display:"flex",flexDirection:"column",gap:7,marginBottom:10}},
-        h("div",{style:{display:"flex",gap:7}},
-          h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:9,padding:"9px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
-          h("button",{onClick:function(){makeOfferLetterPDF(selE,org,authPos,authSign);},style:{display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"15",border:"1px solid "+ACCENT+"33",borderRadius:9,padding:"9px 12px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("description",ACCENT,13),"Offer Letter")
+      h("div",{style:{display:"flex",flexDirection:"column",gap:6,marginBottom:10}},
+        /* Row 1: Edit + Offer Letter */
+        h("div",{style:{display:"flex",gap:6}},
+          h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:9,padding:"10px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
+          h("button",{onClick:function(){makeOfferLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:ACCENT+"12",border:"1px solid "+ACCENT+"25",borderRadius:9,padding:"10px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("description",ACCENT,13),"Offer Letter")
         ),
-        h("div",{style:{display:"flex",gap:7}},
-          h("button",{onClick:function(){makeExperienceLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRN+"15",border:"1px solid "+GRN+"33",borderRadius:9,padding:"8px",color:GRN,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("verified",GRN,12),"Experience Letter"),
-          h("button",{onClick:function(){makeRelievingLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:9,padding:"8px",color:AMB,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("assignment",AMB,12),"Relieving Letter")
+        /* Row 2: Experience + Relieving letters */
+        h("div",{style:{display:"flex",gap:6}},
+          h("button",{onClick:function(){makeExperienceLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRN+"12",border:"1px solid "+GRN+"25",borderRadius:9,padding:"9px",color:GRN,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("verified",GRN,12),"Experience Letter"),
+          h("button",{onClick:function(){makeRelievingLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:AMB+"12",border:"1px solid "+AMB+"25",borderRadius:9,padding:"9px",color:AMB,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("assignment",AMB,12),"Relieving Letter")
         ),
         h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1px solid "+RED,borderRadius:9,padding:"9px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard Employee")
       ),
@@ -4327,6 +4338,22 @@ null
             )
           )
         )
+      )),
+
+      // ── JSON Backup ──
+      card(h("div",null,
+        sectionTitle("DATA BACKUP"),
+        h("div",{style:{fontSize:10,color:GRY,marginBottom:12}},"Download a full JSON backup of all your data — employees, attendance, payroll, loans, holidays, expenses and more. Use it to restore later."),
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("button",{onClick:downloadBackup,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"11px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},
+            ic("download",CARD,15),"Download Backup (.json)"),
+          h("label",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"11px",fontSize:12,fontWeight:700,color:NVY,cursor:"pointer"}},
+            ic("cloud_upload",NVY,15),"Upload & Restore",
+            h("input",{type:"file",accept:".json",style:{display:"none"},onChange:function(e){if(e.target.files&&e.target.files[0])uploadBackup(e.target.files[0]);}})
+          )
+        ),
+        h("div",{style:{background:AMB+"10",borderRadius:8,padding:"8px 10px",border:"1px solid "+AMB+"22",fontSize:10,color:AMB,fontWeight:600}},
+          "Uploading a backup will replace ALL current data. Make sure you have a recent backup before restoring.")
       )),
 
       // ── Tax info ──
@@ -6421,7 +6448,7 @@ null
     var gratuity=eligible?Math.round(basic*15*years/26):0;
     return h("div",null,
       h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#8B5CF615",display:"flex",alignItems:"center",justifyContent:"center"}},ic("workspace_premium","#8B5CF6",17)),
+        h("div",{style:{width:34,height:34,borderRadius:9,background:"#8B5CF615",display:"flex",alignItems:"center",justifyContent:"center"}},ic("savings","#8B5CF6",17)),
         h("div",null,h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Gratuity Calculator"),h("div",{style:{fontSize:10,color:GRY}},"Payment of Gratuity Act"))
       ),
       h("div",{style:{display:"flex",gap:8,marginBottom:10}},
@@ -6477,7 +6504,7 @@ null
     }
     return h("div",null,
       h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:RED+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("warning",RED,17)),
+        h("div",{style:{width:34,height:34,borderRadius:9,background:RED+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("pending_actions",RED,17)),
         h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Warning Letters"),h("div",{style:{fontSize:10,color:GRY}},empWarnings.length+" issued")),
         h("button",{onClick:function(){setShowWarnForm(!showWarnForm);},style:{background:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},showWarnForm?"Cancel":"+ Issue")
       ),
@@ -6747,12 +6774,13 @@ null
       if(!bonusAmt||!bonusDate)return showT("Enter amount and date","err");
       var b={id:Date.now(),employeeId:String(emp.id),employeeName:emp.name,amount:Number(bonusAmt),type:bonusType,note:bonusNote,date:bonusDate};
       setBonuses(function(p){return [b].concat(p||[]);});
+      _sb.from("bonuses").insert({id:String(b.id),employer_email:gUser.email,employee_id:String(emp.id),employee_name:emp.name,amount:b.amount,type:b.type,note:b.note,date:b.date}).then(function(){});
       setBonusAmt("");setBonusNote("");setBonusDate("");setShowBonusForm(false);
       showT("Bonus recorded");
     }
     return h("div",null,
       h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#D9770612",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("monetization_on","#D97706",17)),
+        h("div",{style:{width:34,height:34,borderRadius:9,background:"#D9770612",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("local_atm","#D97706",17)),
         h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Bonus & One-Time Pay"),h("div",{style:{fontSize:10,color:GRY}},"Festival, performance, advance")),
         h("button",{onClick:function(){setShowBonusForm(!showBonusForm);},style:{background:showBonusForm?SFT:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:showBonusForm?GRY:AMB,cursor:"pointer"}},showBonusForm?"Cancel":"+ Add")
       ),
