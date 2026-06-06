@@ -1389,6 +1389,10 @@ export default function App(){
   var sLoanMon=st(""),loanMon=sLoanMon[0],setLoanMon=sLoanMon[1];
   var sPayAmt=st(""),payAmt=sPayAmt[0],setPayAmt=sPayAmt[1];
   var sShowLoanForm=st(false),showLoanForm=sShowLoanForm[0],setShowLoanForm=sShowLoanForm[1];
+  var sLoanKind=st("loan"),loanKind=sLoanKind[0],setLoanKind=sLoanKind[1];
+  var sLoanType=st("personal"),loanType=sLoanType[0],setLoanType=sLoanType[1];
+  var sLoanInterest=st(""),loanInterest=sLoanInterest[0],setLoanInterest=sLoanInterest[1];
+  var sLoanDate=st(""),loanDate=sLoanDate[0],setLoanDate=sLoanDate[1];
   var sShowWarnForm=st(false),showWarnForm=sShowWarnForm[0],setShowWarnForm=sShowWarnForm[1];
   var sWarnIncident=st(""),warnIncident=sWarnIncident[0],setWarnIncident=sWarnIncident[1];
   var sWarnDate=st(""),warnDate=sWarnDate[0],setWarnDate=sWarnDate[1];
@@ -3273,7 +3277,7 @@ null
           h("button",{onClick:function(){makeExperienceLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRN+"12",border:"1.5px solid "+GRN+"30",borderRadius:10,padding:"10px",color:GRN,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("verified",GRN,12),"Experience Letter"),
           h("button",{onClick:function(){makeRelievingLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:AMB+"12",border:"1.5px solid "+AMB+"30",borderRadius:10,padding:"10px",color:AMB,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("assignment",AMB,12),"Relieving Letter")
         ),
-        h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1px solid "+RED,borderRadius:9,padding:"9px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard Employee")
+        h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1.5px solid "+RED,borderRadius:10,padding:"10px",color:RED,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard Employee")
       ),
       card(h("div",null,h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:7}},"Personal Info"),[["Mobile",selE.mob],["Email",selE.email],["PAN",selE.pan],["UAN",selE.uan]].filter(function(i){return i[1];}).map(function(i){return row(i[0],i[1]);}))),
       card(h("div",null,h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:7}},selE.salaryType==="fixed"?"Fixed Salary":"Salary (50/20/30)"),
@@ -6379,75 +6383,167 @@ null
 
   function renderLoanSection(emp){
     if(!emp)return null;
-    var empLoans=(loans||[]).filter(function(l){return l.employeeId===emp.id||l.employee_id===emp.id;});
-    var activeLoan=empLoans.find(function(l){return l.status==="active";});
-    var balance=activeLoan?Math.max(0,(activeLoan.amount||0)-(activeLoan.paidAmount||activeLoan.paid_amount||0)):0;
-    function saveLoan(){
-      if(!loanAmt||!loanMon)return showT("Enter amount and monthly deduction","err");
-      var loan={id:Date.now(),employerEmail:gUser.email,employeeId:emp.id,employee_id:emp.id,
-        employeeName:emp.name,amount:Number(loanAmt),purpose:loanPurpose,
-        monthlyDeduction:Number(loanMon),monthly_deduction:Number(loanMon),
-        paidAmount:0,paid_amount:0,status:"active",date:new Date().toISOString().split("T")[0]};
-      setLoans(function(p){return [loan].concat(p||[]);});
-      _sb.from("loans").insert({id:String(loan.id),employer_email:gUser.email,employee_id:emp.id,
-        employee_name:emp.name,amount:loan.amount,purpose:loan.purpose,date:loan.date,
-        monthly_deduction:loan.monthlyDeduction,paid_amount:0,status:"active"}).then(function(){});
-      setLoanAmt("");setLoanPurpose("");setLoanMon("");setShowLoanForm(false);showT("Loan recorded");
+    var LOAN_TYPES={personal:"Personal Loan",emergency:"Emergency Loan",medical:"Medical Loan",vehicle:"Vehicle Loan",education:"Education Loan"};
+    var ADV_TYPES={salary:"Salary Advance",festival:"Festival Advance",travel:"Travel Advance",other:"Other Advance"};
+
+    var empLoans=(loans||[]).filter(function(l){return (l.employeeId===emp.id||l.employee_id===emp.id)&&l.kind==="loan"&&l.status==="active";});
+    var empAdvances=(loans||[]).filter(function(l){return (l.employeeId===emp.id||l.employee_id===emp.id)&&(l.kind==="advance"||!l.kind)&&l.status==="active";});
+    var pastAll=(loans||[]).filter(function(l){return (l.employeeId===emp.id||l.employee_id===emp.id)&&l.status==="cleared";});
+    var activeLoan=empLoans[0]||null;
+    var activeAdv=empAdvances[0]||null;
+
+    function calcInterest(loan){
+      if(!loan||!loan.interestRate||!loan.date)return 0;
+      var months=Math.max(0,Math.round((new Date()-new Date(loan.date+"T00:00:00"))/(1000*60*60*24*30.44)));
+      return Math.round((loan.amount||0)*(loan.interestRate/100/12)*months);
     }
-    function recordPayment(){
-      if(!activeLoan||!payAmt)return showT("Enter payment amount","err");
-      var newPaid=(activeLoan.paidAmount||activeLoan.paid_amount||0)+Number(payAmt);
-      var ns=newPaid>=(activeLoan.amount||0)?"cleared":"active";
-      setLoans(function(p){return (p||[]).map(function(l){return l.id===activeLoan.id?Object.assign({},l,{paidAmount:newPaid,paid_amount:newPaid,status:ns}):l;});});
-      _sb.from("loans").update({paid_amount:newPaid,status:ns}).eq("id",String(activeLoan.id)).then(function(){});
-      setPayAmt("");showT(ns==="cleared"?"Loan cleared!":"Payment recorded");
+
+    function saveLoanEntry(){
+      if(!loanAmt||!loanDate)return showT("Enter amount and date","err");
+      var isLoan=loanKind==="loan";
+      if(isLoan&&!loanMon)return showT("Enter monthly EMI for loan","err");
+      var entry={
+        id:Date.now(),employerEmail:gUser.email,employeeId:String(emp.id),employee_id:String(emp.id),
+        employeeName:emp.name,amount:Number(loanAmt),
+        kind:loanKind,
+        loanType:isLoan?loanType:loanType,
+        purpose:loanPurpose,
+        interestRate:isLoan?Number(loanInterest||0):0,
+        monthlyDeduction:isLoan?Number(loanMon):Number(loanMon||0),
+        monthly_deduction:isLoan?Number(loanMon):Number(loanMon||0),
+        paidAmount:0,paid_amount:0,
+        status:"active",date:loanDate
+      };
+      setLoans(function(p){return [entry].concat(p||[]);});
+      _sb.from("loans").insert({
+        id:String(entry.id),employer_email:gUser.email,employee_id:String(emp.id),
+        employee_name:emp.name,amount:entry.amount,purpose:(loanKind+":"+(loanType||"")+(loanPurpose?" - "+loanPurpose:"")),
+        date:loanDate,monthly_deduction:entry.monthlyDeduction,paid_amount:0,status:"active"
+      }).then(function(){});
+      setLoanAmt("");setLoanPurpose("");setLoanMon("");setLoanInterest("");setLoanDate("");setShowLoanForm(false);
+      showT(loanKind==="loan"?"Loan recorded":"Advance recorded");
     }
-    return h("div",null,
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:AMB+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("account_balance",AMB,17)),
-        h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Loans & Advance"),h("div",{style:{fontSize:10,color:GRY}},"Salary advance tracking")),
-        !activeLoan?h("button",{onClick:function(){setShowLoanForm(!showLoanForm);},style:{background:ACCENT,border:"none",borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},showLoanForm?"Cancel":"+ New Loan"):null
-      ),
-      activeLoan?h("div",{style:{background:AMB+"12",borderRadius:12,padding:"12px 14px",marginBottom:10,border:"1px solid "+AMB+"33"}},
-        h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
-          h("div",null,h("div",{style:{fontSize:10,color:GRY}},"Outstanding"),h("div",{style:{fontSize:22,fontWeight:800,color:AMB}},fmt(balance))),
-          h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:10,color:GRY}},"Total Loan"),h("div",{style:{fontSize:14,fontWeight:600,color:NVY}},fmt(activeLoan.amount||0)))
-        ),
-        (function(){
-          var monthly=activeLoan.monthlyDeduction||activeLoan.monthly_deduction||0;
-          var monthsLeft=monthly>0?Math.ceil(balance/monthly):null;
-          return h("div",{style:{marginBottom:10}},
-            h("div",{style:{display:"flex",gap:8,marginBottom:6}},
-              h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"8px 10px",textAlign:"center"}},
-                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"MONTHLY DEDUCTION"),
-                h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},monthly>0?fmt(monthly):"Advance")
-              ),
-              h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"8px 10px",textAlign:"center"}},
-                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"MONTHS LEFT"),
-                h("div",{style:{fontSize:13,fontWeight:800,color:monthly>0?(monthsLeft<=3?RED:AMB):GRY}},
-                  monthly>0?(monthsLeft<=0?"Cleared":monthsLeft+" mo"):"Lump sum")
-              )
+
+    function recordPayment(rec){
+      if(!payAmt)return showT("Enter payment amount","err");
+      var newPaid=(rec.paidAmount||rec.paid_amount||0)+Number(payAmt);
+      var ns=newPaid>=(rec.amount||0)?"cleared":"active";
+      setLoans(function(p){return (p||[]).map(function(l){return l.id===rec.id?Object.assign({},l,{paidAmount:newPaid,paid_amount:newPaid,status:ns}):l;});});
+      _sb.from("loans").update({paid_amount:newPaid,status:ns}).eq("id",String(rec.id)).then(function(){});
+      setPayAmt("");showT(ns==="cleared"?"Cleared!":"Payment recorded");
+    }
+
+    function loanCard(rec,isLoanType){
+      var balance=Math.max(0,(rec.amount||0)-(rec.paidAmount||rec.paid_amount||0));
+      var monthly=rec.monthlyDeduction||rec.monthly_deduction||0;
+      var monthsLeft=monthly>0?Math.ceil(balance/monthly):null;
+      var interest=isLoanType?calcInterest(rec):0;
+      var paidPct=rec.amount>0?Math.round(((rec.paidAmount||rec.paid_amount||0)/rec.amount)*100):0;
+      var clr=isLoanType?"#2563EB":AMB;
+      var typeLabel=isLoanType?(LOAN_TYPES[rec.loanType]||"Loan"):(ADV_TYPES[rec.loanType]||"Advance");
+      return h("div",{style:{background:clr+"10",borderRadius:12,padding:"12px 14px",marginBottom:8,border:"1px solid "+clr+"25"}},
+        /* Header row */
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}},
+          h("div",null,
+            h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+              h("div",{style:{fontSize:11,fontWeight:800,color:clr}},typeLabel),
+              h("div",{style:{fontSize:9,background:clr+"18",color:clr,borderRadius:20,padding:"1px 7px",fontWeight:700}},isLoanType?"LOAN":"ADVANCE")
             ),
-            activeLoan.purpose?h("div",{style:{fontSize:10,color:GRY,fontStyle:"italic"}},"Purpose: "+activeLoan.purpose):null
-          );
-        })(),
+            rec.date?h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"Issued: "+new Date(rec.date+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})):null,
+            rec.purpose?h("div",{style:{fontSize:9,color:GRY,fontStyle:"italic"}},rec.purpose):null
+          ),
+          h("div",{style:{textAlign:"right"}},
+            h("div",{style:{fontSize:9,color:GRY}},"Principal"),
+            h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},fmt(rec.amount||0))
+          )
+        ),
+        /* Progress bar */
+        h("div",{style:{background:BDR,borderRadius:99,height:5,marginBottom:8,overflow:"hidden"}},
+          h("div",{style:{width:paidPct+"%",height:"100%",background:clr,borderRadius:99}})),
+        /* Stats grid */
+        h("div",{style:{display:"grid",gridTemplateColumns:isLoanType?"1fr 1fr 1fr":"1fr 1fr",gap:6,marginBottom:8}},
+          h("div",{style:{background:CARD,borderRadius:8,padding:"7px 8px",textAlign:"center"}},
+            h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"OUTSTANDING"),
+            h("div",{style:{fontSize:13,fontWeight:900,color:balance>0?RED:GRN}},fmt(balance))
+          ),
+          h("div",{style:{background:CARD,borderRadius:8,padding:"7px 8px",textAlign:"center"}},
+            h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},monthly>0?"EMI / MO":"DEDUCTION"),
+            h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},monthly>0?fmt(monthly):"—")
+          ),
+          isLoanType?h("div",{style:{background:CARD,borderRadius:8,padding:"7px 8px",textAlign:"center"}},
+            h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"MONTHS LEFT"),
+            h("div",{style:{fontSize:13,fontWeight:800,color:monthsLeft<=3?RED:AMB}},
+              monthsLeft!=null?(monthsLeft<=0?"Done":monthsLeft+" mo"):"—")
+          ):null
+        ),
+        /* Interest row for loans */
+        isLoanType&&rec.interestRate>0?h("div",{style:{display:"flex",justifyContent:"space-between",background:RED+"08",borderRadius:7,padding:"5px 10px",marginBottom:8,border:"1px solid "+RED+"15"}},
+          h("div",{style:{fontSize:10,color:GRY}},"Interest @ "+rec.interestRate+"% p.a. (accrued)"),
+          h("div",{style:{fontSize:11,fontWeight:700,color:RED}},fmt(interest))
+        ):null,
+        /* Payment row */
         h("div",{style:{display:"flex",gap:6}},
-          h("input",{type:"number",value:payAmt,onChange:function(e){setPayAmt(e.target.value);},placeholder:"Payment amount",style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-          h("button",{onClick:recordPayment,style:{background:GRN,border:"none",borderRadius:8,padding:"8px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Record")
+          h("input",{type:"number",value:payAmt,onChange:function(e){setPayAmt(e.target.value);},placeholder:"Record payment...",style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+          h("button",{onClick:function(){recordPayment(rec);},style:{background:GRN,border:"none",borderRadius:7,padding:"7px 12px",fontSize:11,fontWeight:700,color:"#fff",cursor:"pointer"}},"Record")
         )
-      ):null,
+      );
+    }
+
+    return h("div",null,
+      /* Header */
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:"#2563EB15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("account_balance","#2563EB",17)),
+        h("div",{style:{flex:1}},
+          h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Loans & Advance"),
+          h("div",{style:{fontSize:10,color:GRY}},(empLoans.length?""+empLoans.length+" loan":"No loans")+" • "+(empAdvances.length?""+empAdvances.length+" advance":"no advance"))
+        ),
+        !activeLoan&&!activeAdv?h("button",{onClick:function(){setShowLoanForm(!showLoanForm);},
+          style:{background:showLoanForm?SFT:"#2563EB",border:showLoanForm?"1px solid "+BDR:"none",borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:700,color:showLoanForm?NVY:"#fff",cursor:"pointer"}},
+          showLoanForm?"Cancel":"+ Add"):
+        h("button",{onClick:function(){setShowLoanForm(!showLoanForm);},
+          style:{background:showLoanForm?SFT:ACCENT+"15",border:"1px solid "+(showLoanForm?BDR:ACCENT+"33"),borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:700,color:showLoanForm?NVY:ACCENT,cursor:"pointer"}},
+          showLoanForm?"Cancel":"+ More")
+      ),
+      /* Active loan card */
+      activeLoan?loanCard(activeLoan,true):null,
+      /* Active advance card */
+      activeAdv?loanCard(activeAdv,false):null,
+      /* Add form */
       showLoanForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
-        lbl("LOAN AMOUNT"),h("input",{type:"number",value:loanAmt,onChange:function(e){setLoanAmt(e.target.value);},placeholder:"e.g. 10000",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:8}}),
-        lbl("PURPOSE"),h("input",{type:"text",value:loanPurpose,onChange:function(e){setLoanPurpose(e.target.value);},placeholder:"Optional",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:8}}),
-        lbl("MONTHLY DEDUCTION"),h("input",{type:"number",value:loanMon,onChange:function(e){setLoanMon(e.target.value);},placeholder:"e.g. 2000",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:10}}),
-        h("button",{onClick:saveLoan,style:{width:"100%",background:NVY,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Loan")
+        /* Kind selector */
+        h("div",{style:{display:"flex",background:CARD,borderRadius:9,padding:3,marginBottom:10,gap:3}},
+          h("button",{onClick:function(){setLoanKind("loan");},style:{flex:1,background:loanKind==="loan"?NVY:"transparent",border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:loanKind==="loan"?"#fff":GRY,cursor:"pointer"}},"Loan"),
+          h("button",{onClick:function(){setLoanKind("advance");},style:{flex:1,background:loanKind==="advance"?NVY:"transparent",border:"none",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:loanKind==="advance"?"#fff":GRY,cursor:"pointer"}},"Advance")
+        ),
+        /* Type */
+        lbl("TYPE"),
+        h("select",{value:loanType,onChange:function(e){setLoanType(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}},
+          Object.entries(loanKind==="loan"?LOAN_TYPES:ADV_TYPES).map(function(t){return h("option",{key:t[0],value:t[0]},t[1]);})
+        ),
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},lbl("AMOUNT"),h("input",{type:"number",value:loanAmt,onChange:function(e){setLoanAmt(e.target.value);},placeholder:"e.g. 10000",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          h("div",{style:{flex:1}},lbl("DATE"),h("input",{type:"date",value:loanDate,onChange:function(e){setLoanDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+        ),
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},lbl("MONTHLY DEDUCTION"),h("input",{type:"number",value:loanMon,onChange:function(e){setLoanMon(e.target.value);},placeholder:loanKind==="loan"?"EMI amount":"Optional",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          loanKind==="loan"?h("div",{style:{flex:1}},lbl("INTEREST % P.A."),h("input",{type:"number",value:loanInterest,onChange:function(e){setLoanInterest(e.target.value);},placeholder:"e.g. 12",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})):null
+        ),
+        lbl("PURPOSE / NOTE (OPTIONAL)"),
+        h("input",{type:"text",value:loanPurpose,onChange:function(e){setLoanPurpose(e.target.value);},placeholder:loanKind==="loan"?"e.g. Medical emergency":"e.g. Diwali advance",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
+        h("button",{onClick:saveLoanEntry,style:{width:"100%",background:NVY,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},
+          "Save "+(loanKind==="loan"?"Loan":"Advance"))
       ):null,
-      empLoans.filter(function(l){return l.status==="cleared";}).length>0?h("div",null,
-        h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:1,marginTop:8,marginBottom:4}},"PAST LOANS"),
-        empLoans.filter(function(l){return l.status==="cleared";}).map(function(l){
-          return h("div",{key:l.id,style:{display:"flex",justifyContent:"space-between",padding:"5px 0",borderTop:"1px solid "+BDR,fontSize:11}},
-            h("span",{style:{color:GRY}},(l.purpose||"Loan")+" - "+fmt(l.amount||0)),
-            h("span",{style:{color:GRN,fontWeight:600}},"Cleared"));
+      /* Past records */
+      pastAll.length>0?h("div",{style:{marginTop:8}},
+        h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:1,marginBottom:6}},"CLEARED RECORDS"),
+        pastAll.map(function(l){
+          return h("div",{key:l.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+BDR}},
+            h("div",null,
+              h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},(l.kind==="loan"?"Loan":"Advance")+" — "+fmt(l.amount||0)),
+              l.date?h("div",{style:{fontSize:9,color:GRY}},new Date(l.date+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})):null
+            ),
+            h("div",{style:{fontSize:10,fontWeight:700,color:GRN,background:GRN+"12",borderRadius:6,padding:"2px 8px"}},"Cleared")
+          );
         })
       ):null
     );
