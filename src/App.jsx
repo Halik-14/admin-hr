@@ -1613,6 +1613,32 @@ export default function App(){
 
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
+  /* ── Auto-count EMIs monthly ── */
+  se(function(){
+    if(!gUser||!loans||!loans.length)return;
+    var now=new Date();
+    var curMo=now.getMonth(),curYr=now.getFullYear();
+    var changed=false;
+    var newLoans=loans.map(function(l){
+      if(l.status==="closed"||l.status==="cleared")return l;
+      if(!l.startDate||!l.tenure||!l.emi)return l;
+      var start=new Date(l.startDate+"T00:00:00");
+      var monthsElapsed=(curYr-start.getFullYear())*12+(curMo-start.getMonth())+1;
+      var expected=Math.min(Math.max(0,monthsElapsed),l.tenure);
+      if(expected>l.paidInstallments){
+        changed=true;
+        var newPaid=expected;
+        var totalPaid=Math.round(newPaid*l.emi);
+        var ns=newPaid>=l.tenure?"closed":"active";
+        var closedDate=ns==="closed"?new Date().toISOString().split("T")[0]:null;
+        _sb.from("loans").update({paid_installments:newPaid,total_paid:totalPaid,status:ns,closed_date:closedDate}).eq("id",String(l.id)).then(function(){});
+        return Object.assign({},l,{paidInstallments:newPaid,totalPaid:totalPaid,status:ns,closedDate:closedDate});
+      }
+      return l;
+    });
+    if(changed)setLoans(newLoans);
+  },[loans&&loans.length,gUser&&gUser.email]);
+
 
 
 
@@ -6430,28 +6456,7 @@ null
     var activeRec=allRec.filter(function(l){return l.status==="active";});
     var closedRec=allRec.filter(function(l){return l.status==="closed"||l.status==="cleared";}).sort(function(a,b){return (b.closedDate||b.date||"").localeCompare(a.closedDate||a.date||"");});
 
-    /* ── Auto-mark EMIs for current month when viewing ── */
-    se(function(){
-      var now=new Date();
-      var curMo=now.getMonth(),curYr=now.getFullYear();
-      activeRec.forEach(function(l){
-        if(!l.startDate||!l.tenure||!l.emi)return;
-        var start=new Date(l.startDate+"T00:00:00");
-        var monthsElapsed=(curYr-start.getFullYear())*12+(curMo-start.getMonth())+1;
-        var expected=Math.min(monthsElapsed,l.tenure);
-        if(expected>l.paidInstallments){
-          var newPaid=expected;
-          var totalPaid=Math.round(newPaid*l.emi);
-          var ns=newPaid>=l.tenure?"closed":"active";
-          var closedDate=ns==="closed"?new Date().toISOString().split("T")[0]:null;
-          setLoans(function(p){return (p||[]).map(function(r){
-            return r.id===l.id?Object.assign({},r,{paidInstallments:newPaid,totalPaid:totalPaid,status:ns,closedDate:closedDate}):r;
-          });});
-          _sb.from("loans").update({paid_installments:newPaid,total_paid:totalPaid,status:ns,closed_date:closedDate}).eq("id",String(l.id)).then(function(){});
-        }
-      });
-    },[loans&&loans.length]);
-
+    /* EMI auto-counted via main component effect */
     function getEndDate(startDate,tenure){
       if(!startDate||!tenure)return "—";
       var d=new Date(startDate+"T00:00:00");
