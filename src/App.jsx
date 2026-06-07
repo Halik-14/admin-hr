@@ -3358,25 +3358,46 @@ null
           }
           var curType=empShiftData.type||"General";
           var curAllow=String(empShiftData.allowance||0);
+          var sShiftSel=st(curType),shiftSel=sShiftSel[0],setShiftSel=sShiftSel[1];
+          var sShiftAllow=st(curAllow),shiftAllow=sShiftAllow[0],setShiftAllow=sShiftAllow[1];
           return h("div",null,
-            h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-              h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"CURRENT SHIFT"),h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},curType)),
-              h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"ALLOWANCE"),h("div",{style:{fontSize:16,fontWeight:800,color:empShiftData.allowance>0?AMB:NVY}},fmt(empShiftData.allowance)+"/mo"))
+            /* Current display */
+            h("div",{style:{display:"flex",gap:8,marginBottom:14}},
+              h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"CURRENT SHIFT"),
+                h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},curType)
+              ),
+              h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"ALLOWANCE"),
+                h("div",{style:{fontSize:16,fontWeight:800,color:empShiftData.allowance>0?AMB:NVY}},fmt(empShiftData.allowance)+"/mo")
+              )
             ),
-            lbl("CHANGE SHIFT TYPE"),
-            h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:10}},
-              SHIFT_TYPES.map(function(s){
-                var sel=curType===s;
-                return h("button",{key:s,onClick:function(){saveShift(s,curAllow);},
-                  style:{background:sel?NVY:SFT,border:"1px solid "+(sel?NVY:BDR),borderRadius:8,padding:"7px 12px",fontSize:11,fontWeight:sel?700:500,color:sel?CARD:NVY,cursor:"pointer"}},s);
-              })
+            /* Shift type selector */
+            h("div",{style:{background:CARD,borderRadius:12,border:"1.5px solid "+BDR,overflow:"hidden",marginBottom:12}},
+              h("div",{style:{background:SFT,padding:"8px 12px",borderBottom:"1px solid "+BDR}},
+                h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},"Select Shift Type")
+              ),
+              h("div",{style:{padding:"10px 12px",display:"flex",flexWrap:"wrap",gap:6}},
+                SHIFT_TYPES.map(function(s){
+                  var sel=shiftSel===s;
+                  return h("button",{key:s,onClick:function(){setShiftSel(s);},
+                    style:{background:sel?NVY:SFT,border:"1.5px solid "+(sel?NVY:BDR),borderRadius:8,padding:"8px 14px",fontSize:12,fontWeight:sel?700:500,color:sel?CARD:GRY,cursor:"pointer",transition:"all .15s"}},s);
+                })
+              )
             ),
-            lbl("SHIFT ALLOWANCE (₹/MO)"),
-            h("div",{style:{display:"flex",gap:8}},
-              h("input",{type:"number",defaultValue:curAllow,id:"shiftAllowInput",placeholder:"0",style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-              h("button",{onClick:function(){var v=document.getElementById("shiftAllowInput").value;saveShift(curType,v);},
-                style:{background:NVY,border:"none",borderRadius:8,padding:"9px 14px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save")
-            )
+            /* Allowance */
+            h("div",{style:{background:CARD,borderRadius:12,border:"1.5px solid "+BDR,overflow:"hidden",marginBottom:12}},
+              h("div",{style:{background:SFT,padding:"8px 12px",borderBottom:"1px solid "+BDR}},
+                h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},"Shift Allowance")
+              ),
+              h("div",{style:{padding:"10px 12px",display:"flex",gap:8,alignItems:"center"}},
+                h("div",{style:{fontSize:20,color:GRY}},"₹"),
+                h("input",{type:"number",value:shiftAllow,onChange:function(e){setShiftAllow(e.target.value);},placeholder:"0",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"10px 12px",fontSize:16,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
+                h("div",{style:{fontSize:13,color:GRY,fontWeight:500}},"/mo")
+              )
+            ),
+            h("button",{onClick:function(){saveShift(shiftSel,shiftAllow);},
+              style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Shift")
           );
         }
       ),
@@ -3401,11 +3422,25 @@ null
               h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:20,fontWeight:800,color:NVY}},leaveEnt||0),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"ENTITLED"))
             ),
             h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden",marginBottom:12}},h("div",{style:{width:usePct+"%",height:"100%",background:balColor,borderRadius:99}})),
-            lbl("UPDATE ANNUAL ENTITLEMENT (DAYS)"),
-            h("div",{style:{display:"flex",gap:8}},
-              h("input",{type:"number",defaultValue:String(leaveEnt||0),id:"leaveEntInput",placeholder:"e.g. 18",style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-              h("button",{onClick:function(){saveLeaveEnt(document.getElementById("leaveEntInput").value);},
-                style:{background:NVY,border:"none",borderRadius:8,padding:"9px 14px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save")
+            /* Leave entitlement editor */
+            h("div",{style:{background:CARD,borderRadius:12,border:"1.5px solid "+BDR,overflow:"hidden"}},
+              h("div",{style:{background:SFT,padding:"8px 12px",borderBottom:"1px solid "+BDR,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+                h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},"Annual Leave Entitlement"),
+                h("div",{style:{fontSize:10,color:GRY}},"Total paid leave days per year")
+              ),
+              h("div",{style:{padding:"12px"}},
+                h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:10}},
+                  h("button",{onClick:function(){var n=Math.max(0,(leaveEnt||0)-1);saveLeaveEnt(String(n));},
+                    style:{width:36,height:36,background:SFT,border:"1px solid "+BDR,borderRadius:8,fontSize:20,fontWeight:700,color:NVY,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},"-"),
+                  h("input",{type:"number",id:"leaveEntInput",defaultValue:String(leaveEnt||0),
+                    style:{flex:1,background:SFT,border:"1.5px solid #10B98155",borderRadius:8,padding:"10px",fontSize:22,fontWeight:900,color:"#10B981",outline:"none",fontFamily:"inherit",textAlign:"center"}}),
+                  h("button",{onClick:function(){var n=(leaveEnt||0)+1;saveLeaveEnt(String(n));},
+                    style:{width:36,height:36,background:SFT,border:"1px solid "+BDR,borderRadius:8,fontSize:20,fontWeight:700,color:NVY,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},"+")
+                ),
+                h("div",{style:{fontSize:10,color:GRY,textAlign:"center",marginBottom:10}},"days / year"),
+                h("button",{onClick:function(){saveLeaveEnt(document.getElementById("leaveEntInput").value);},
+                  style:{width:"100%",background:"#10B981",border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save Leave Entitlement")
+              )
             )
           );
         }
@@ -3467,38 +3502,49 @@ null
             h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
               h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},empRevs2.length+" revision"+(empRevs2.length!==1?"s":"")),
               h("button",{
-                onClick:function(e){e.stopPropagation();setShowRevForm(!showRevForm);setRevNewOldCtc(String(selE.monthlyCTC||selE.fixedSalary||""));},
+                onClick:function(e){e.stopPropagation();var lastRev=empRevs2[0];setShowRevForm(!showRevForm);setRevNewOldCtc(String(lastRev?lastRev.newCtc:(selE.monthlyCTC||selE.fixedSalary||"")));},
                 style:{background:showRevForm?SFT:"#2563EB",border:showRevForm?"1px solid "+BDR:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:showRevForm?NVY:"#fff",cursor:"pointer"}
               },showRevForm?"✕ Cancel":"+ Add")
             ),
             /* Add form */
-            showRevForm?h("div",{style:{background:SFT,borderRadius:11,padding:12,border:"1px solid "+BDR,marginBottom:10}},
-              h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-                h("div",{style:{flex:1}},
-                  lbl("OLD SALARY / MO"),
-                  h("input",{type:"number",value:revNewOldCtc,onChange:function(e){setRevNewOldCtc(e.target.value);},placeholder:"e.g. 20000",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                ),
-                h("div",{style:{flex:1}},
-                  lbl("NEW SALARY / MO"),
-                  h("input",{type:"number",value:revNewCtc,onChange:function(e){setRevNewCtc(e.target.value);},placeholder:"e.g. 25000",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                )
+            showRevForm?h("div",{style:{background:CARD,borderRadius:12,border:"1.5px solid #2563EB33",marginBottom:12,overflow:"hidden"}},
+              /* Form header */
+              h("div",{style:{background:"#2563EB",padding:"10px 14px"}},
+                h("div",{style:{fontSize:12,fontWeight:700,color:"#fff"}},"New Salary Revision"),
+                h("div",{style:{fontSize:10,color:"rgba(255,255,255,.7)",marginTop:2}},"Enter old and new monthly CTC")
               ),
-              h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-                h("div",{style:{flex:1}},
-                  lbl("EFFECTIVE DATE"),
-                  h("input",{type:"date",value:revNewDate,onChange:function(e){setRevNewDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+              h("div",{style:{padding:"14px"}},
+                /* Old → New salary row */
+                h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+                  h("div",{style:{flex:1}},
+                    lbl("OLD SALARY / MO"),
+                    h("input",{type:"number",value:revNewOldCtc,onChange:function(e){setRevNewOldCtc(e.target.value);},placeholder:"e.g. 20000",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"10px",fontSize:13,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                  ),
+                  h("div",{style:{color:GRY,fontSize:18,marginTop:14}},"→"),
+                  h("div",{style:{flex:1}},
+                    lbl("NEW SALARY / MO"),
+                    h("input",{type:"number",value:revNewCtc,onChange:function(e){setRevNewCtc(e.target.value);},placeholder:"e.g. 25000",style:{width:"100%",background:SFT,border:"1.5px solid #2563EB55",borderRadius:8,padding:"10px",fontSize:13,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                  )
                 ),
-                h("div",{style:{flex:1}},
-                  lbl("REASON"),
-                  h("input",{type:"text",value:revNewReason,onChange:function(e){setRevNewReason(e.target.value);},placeholder:"e.g. Annual hike",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                )
-              ),
-              revNewOldCtc&&revNewCtc?h("div",{style:{background:"#2563EB10",border:"1px solid #2563EB25",borderRadius:8,padding:"7px 10px",marginBottom:8,display:"flex",justifyContent:"space-between"}},
-                h("span",{style:{fontSize:10,color:GRY}},"Change"),
-                h("span",{style:{fontSize:12,fontWeight:800,color:Number(revNewCtc)>Number(revNewOldCtc)?"#10B981":RED}},
-                  fmt(Number(revNewOldCtc))+" → "+fmt(Number(revNewCtc))+" ("+(Number(revNewOldCtc)>0?(Number(revNewCtc)>Number(revNewOldCtc)?"+":"")+Math.round((Number(revNewCtc)-Number(revNewOldCtc))*100/Number(revNewOldCtc))+"%":"")+")")
-              ):null,
-              h("button",{onClick:doAddRev,style:{width:"100%",background:NVY,border:"none",borderRadius:9,padding:"11px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Revision")
+                /* Live preview */
+                revNewOldCtc&&revNewCtc?h("div",{style:{background:Number(revNewCtc)>Number(revNewOldCtc)?"#10B98110":RED+"10",border:"1px solid "+(Number(revNewCtc)>Number(revNewOldCtc)?"#10B98133":RED+"33"),borderRadius:8,padding:"8px 12px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+                  h("span",{style:{fontSize:11,color:GRY}},"Change"),
+                  h("span",{style:{fontSize:14,fontWeight:900,color:Number(revNewCtc)>Number(revNewOldCtc)?"#10B981":RED}},
+                    (Number(revNewOldCtc)>0?(Number(revNewCtc)>Number(revNewOldCtc)?"+":"")+Math.round((Number(revNewCtc)-Number(revNewOldCtc))*100/Number(revNewOldCtc))+"%":"")+" · "+fmt(Number(revNewOldCtc))+" → "+fmt(Number(revNewCtc)))
+                ):null,
+                /* Date + Reason */
+                h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+                  h("div",{style:{flex:1}},
+                    lbl("EFFECTIVE DATE"),
+                    h("input",{type:"date",value:revNewDate,onChange:function(e){setRevNewDate(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                  ),
+                  h("div",{style:{flex:1}},
+                    lbl("REASON"),
+                    h("input",{type:"text",value:revNewReason,onChange:function(e){setRevNewReason(e.target.value);},placeholder:"e.g. Annual increment",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                  )
+                ),
+                h("button",{onClick:doAddRev,style:{width:"100%",background:"#2563EB",border:"none",borderRadius:9,padding:"12px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer",letterSpacing:.3}},"Save Revision")
+              )
             ):null,
             /* No revisions state */
             empRevs2.length===0&&!showRevForm?h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:"8px 0"}},"No revisions yet"):null,
