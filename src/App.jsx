@@ -3344,138 +3344,88 @@ null
 
       /* 2. Shift */
       accSection("shift","edit_calendar",GRY,"Shift",
-        (empShiftData.type||"General")+(empShiftData.allowance>0?" · Allowance: "+fmt(empShiftData.allowance)+"/mo":"· No allowance"),
+        (empShiftData.type||"General")+(empShiftData.allowance>0?" · "+fmt(empShiftData.allowance)+"/mo":""),
         function(){
           var curKey=curY+"-"+(curM+1<10?"0":"")+(curM+1);
           var es=shifts[selE.id]||{};
           var curEntry=(es.log||[]).find(function(l){return l.month===curKey;})||{};
+          var curType=empShiftData.type||"General";
           function saveShift(type,allow){
             var newEntry=Object.assign({},curEntry,{shift:type,allowance:Number(allow||0),month:curKey});
             var newLog=(es.log||[]).filter(function(l){return l.month!==curKey;}).concat([newEntry]);
             var ns=Object.assign({},es,{type:type,allowance:Number(allow||0),log:newLog,empId:selE.id});
             setShifts(function(p){var o=Object.assign({},p);o[selE.id]=ns;return o;});
-            syncToSupabase(emps,att,incentives,ns,reminders,notices,revisions,gUser?gUser.email:"");
-            showT("Shift updated");
+            showT("Shift saved");
           }
-          var curType=empShiftData.type||"General";
           return h("div",null,
-            /* Current display */
-            h("div",{style:{display:"flex",gap:8,marginBottom:16}},
-              h("div",{style:{flex:1,background:"#0F172A10",borderRadius:12,padding:"14px",textAlign:"center",border:"1px solid #0F172A15"}},
-                h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.8,marginBottom:6}},"CURRENT SHIFT"),
-                h("div",{style:{fontSize:20,fontWeight:900,color:NVY}},curType)
+            /* Current tiles — payroll style */
+            h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+              h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:8,padding:"8px 10px"}},
+                h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Current Shift"),
+                h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},curType)
               ),
-              h("div",{style:{flex:1,background:AMB+"10",borderRadius:12,padding:"14px",textAlign:"center",border:"1px solid "+AMB+"25"}},
-                h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.8,marginBottom:6}},"ALLOWANCE"),
-                h("div",{style:{fontSize:20,fontWeight:900,color:empShiftData.allowance>0?AMB:GRY}},empShiftData.allowance>0?fmt(empShiftData.allowance)+"▸/mo":"None")
+              h("div",{style:{flex:1,background:AMB+"12",borderRadius:8,padding:"8px 10px"}},
+                h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Allowance"),
+                h("div",{style:{fontSize:13,fontWeight:700,color:empShiftData.allowance>0?AMB:GRY}},
+                  empShiftData.allowance>0?fmt(empShiftData.allowance)+"/mo":"None")
               )
             ),
-            /* Shift type selector */
-            h("div",{style:{background:CARD,borderRadius:12,border:"1px solid "+BDR,overflow:"hidden",marginBottom:10}},
-              h("div",{style:{background:NVY,padding:"8px 14px"}},
-                h("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.9)",letterSpacing:.3}},"SELECT SHIFT TYPE")
-              ),
-              h("div",{style:{padding:"12px",display:"flex",flexWrap:"wrap",gap:8}},
-                SHIFT_TYPES.map(function(s){
-                  var active=curType===s;
-                  return h("button",{key:s,onClick:function(){saveShift(s,empShiftData.allowance);},
-                    style:{background:active?NVY:SFT,border:"1.5px solid "+(active?NVY:BDR),
-                    borderRadius:9,padding:"9px 16px",fontSize:12,fontWeight:active?700:500,
-                    color:active?CARD:GRY,cursor:"pointer"}},s);
-                })
-              )
+            /* Shift type — compact pills */
+            lbl("SHIFT TYPE"),
+            h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}},
+              SHIFT_TYPES.map(function(s){
+                var active=curType===s;
+                return h("button",{key:s,onClick:function(){saveShift(s,empShiftData.allowance);},
+                  style:{background:active?NVY:SFT,border:"1px solid "+(active?NVY:BDR),
+                  borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:active?700:500,
+                  color:active?CARD:GRY,cursor:"pointer"}},s);
+              })
             ),
             /* Allowance input */
-            h("div",{style:{background:CARD,borderRadius:12,border:"1px solid "+BDR,overflow:"hidden"}},
-              h("div",{style:{background:NVY,padding:"8px 14px"}},
-                h("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.9)",letterSpacing:.3}},"SHIFT ALLOWANCE")
-              ),
-              h("div",{style:{padding:"12px",display:"flex",gap:8,alignItems:"center"}},
-                h("div",{style:{fontSize:22,fontWeight:700,color:GRY}},"₹"),
-                h("input",{type:"number",id:"shiftAllowInp",defaultValue:String(empShiftData.allowance||0),
-                  placeholder:"0",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,
-                  padding:"10px 14px",fontSize:18,fontWeight:700,color:NVY,outline:"none",fontFamily:"inherit"}}),
-                h("div",{style:{fontSize:13,color:GRY,fontWeight:500}},"/mo")
-              )
-            ),
-            h("button",{onClick:function(){
-              var v=document.getElementById("shiftAllowInp");
-              saveShift(curType,v?v.value:0);
-            },style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"12px",
-              fontSize:13,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},"Save Shift")
+            lbl("ALLOWANCE (₹/MO)"),
+            h("div",{style:{display:"flex",gap:8}},
+              h("input",{type:"number",id:"shiftAllowInp",defaultValue:String(empShiftData.allowance||0),
+                placeholder:"0",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,
+                padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
+              h("button",{onClick:function(){
+                var v=document.getElementById("shiftAllowInp");
+                saveShift(curType,v?v.value:0);
+              },style:{background:NVY,border:"none",borderRadius:8,padding:"8px 16px",
+                fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save")
+            )
           );
         }
       ),
 
       /* 3. Leave Balance */
       accSection("leave","event_available","#10B981","Leave Balance",
-        leaveEnt>0?leaveBal+" days remaining of "+leaveEnt+" entitled":"No entitlement set",
+        leaveEnt>0?leaveBal+" remaining · "+leaveEnt+" entitled":"Set in Edit Employee",
         function(){
           var usePct=leaveEnt>0?Math.min(Math.round(leaveUsed*100/leaveEnt),100):0;
           var balColor=leaveBal>leaveEnt*0.5?"#10B981":leaveBal>leaveEnt*0.25?AMB:RED;
-          function saveLeaveEnt(val){
-            var n=Number(val);
-            if(isNaN(n)||n<0)return showT("Enter valid days","err");
-            var upd=Object.assign({},selE,{leaveEntitlement:n});
-            setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd:e;});});
-            _sb.from("user_data").upsert({employer_email:gUser.email,employees:JSON.stringify(emps.map(function(e){return e.id===selE.id?upd:e;}))}).then(function(){});
-            showT("Leave entitlement saved");
-          }
           return h("div",null,
-            /* Stat tiles */
-            h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-              h("div",{style:{flex:1,background:balColor+"12",borderRadius:12,padding:"14px",textAlign:"center",border:"1px solid "+balColor+"30"}},
-                h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.8,marginBottom:6}},"REMAINING"),
-                h("div",{style:{fontSize:24,fontWeight:900,color:balColor}},leaveBal%1===0?leaveBal:leaveBal.toFixed(1)),
-                h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"days")
+            /* Stat tiles — payroll style */
+            h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+              h("div",{style:{flex:1,background:balColor+"12",borderRadius:8,padding:"8px 10px",border:"1px solid "+balColor+"25"}},
+                h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Remaining"),
+                h("div",{style:{fontSize:13,fontWeight:700,color:balColor}},leaveBal%1===0?leaveBal:leaveBal.toFixed(1)+" days")
               ),
-              h("div",{style:{flex:1,background:SFT,borderRadius:12,padding:"14px",textAlign:"center",border:"1px solid "+BDR}},
-                h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.8,marginBottom:6}},"USED"),
-                h("div",{style:{fontSize:24,fontWeight:900,color:NVY}},leaveUsed%1===0?leaveUsed:leaveUsed.toFixed(1)),
-                h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"days")
+              h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:8,padding:"8px 10px"}},
+                h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Used"),
+                h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},leaveUsed%1===0?leaveUsed:leaveUsed.toFixed(1)+" days")
               ),
-              h("div",{style:{flex:1,background:SFT,borderRadius:12,padding:"14px",textAlign:"center",border:"1px solid "+BDR}},
-                h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.8,marginBottom:6}},"ENTITLED"),
-                h("div",{style:{fontSize:24,fontWeight:900,color:NVY}},leaveEnt||0),
-                h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"days/year")
+              h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"8px 10px",border:"1px solid "+BDR}},
+                h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Entitled"),
+                h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},(leaveEnt||0)+" days/yr")
               )
             ),
             /* Progress bar */
-            h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden",marginBottom:16}},
+            h("div",{style:{background:BDR,borderRadius:99,height:5,overflow:"hidden",marginBottom:6}},
               h("div",{style:{width:usePct+"%",height:"100%",background:balColor,borderRadius:99}})
             ),
-            /* Set entitlement */
-            h("div",{style:{background:CARD,borderRadius:12,border:"1px solid "+BDR,overflow:"hidden"}},
-              h("div",{style:{background:"#10B981",padding:"8px 14px"}},
-                h("div",{style:{fontSize:11,fontWeight:700,color:"#fff",letterSpacing:.3}},"SET ANNUAL ENTITLEMENT"),
-                h("div",{style:{fontSize:10,color:"rgba(255,255,255,.7)",marginTop:1}},"Total paid leave days per year")
-              ),
-              h("div",{style:{padding:"12px"}},
-                h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
-                  h("button",{onClick:function(){
-                    var inp=document.getElementById("leaveEntInp");
-                    if(inp){inp.value=String(Math.max(0,Number(inp.value||0)-1));}
-                  },style:{width:40,height:40,background:SFT,border:"1px solid "+BDR,borderRadius:9,
-                    fontSize:22,fontWeight:700,color:NVY,cursor:"pointer",flexShrink:0}},"-"),
-                  h("input",{type:"number",id:"leaveEntInp",defaultValue:String(leaveEnt||0),
-                    style:{flex:1,background:SFT,border:"1.5px solid #10B98155",borderRadius:9,
-                    padding:"10px",fontSize:22,fontWeight:900,color:"#10B981",outline:"none",
-                    fontFamily:"inherit",textAlign:"center"}}),
-                  h("button",{onClick:function(){
-                    var inp=document.getElementById("leaveEntInp");
-                    if(inp){inp.value=String(Number(inp.value||0)+1);}
-                  },style:{width:40,height:40,background:SFT,border:"1px solid "+BDR,borderRadius:9,
-                    fontSize:22,fontWeight:700,color:NVY,cursor:"pointer",flexShrink:0}},"+")
-                ),
-                h("div",{style:{fontSize:10,color:GRY,textAlign:"center",marginBottom:10}},"days per year"),
-                h("button",{onClick:function(){
-                  var inp=document.getElementById("leaveEntInp");
-                  saveLeaveEnt(inp?inp.value:leaveEnt);
-                },style:{width:"100%",background:"#10B981",border:"none",borderRadius:10,
-                  padding:"12px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"}},
-                  "Save Entitlement")
-              )
-            )
+            h("div",{style:{fontSize:10,color:GRY}},usePct+"% of annual quota used"),
+            leaveEnt===0?h("div",{style:{marginTop:8,fontSize:10,color:AMB,fontWeight:600}},
+              "Set leave entitlement in Edit Employee →"):null
           );
         }
       ),
@@ -3498,42 +3448,44 @@ null
         var empRevs2=(salRevisions||[])
           .filter(function(r){return r.employeeId===String(selE.id);})
           .sort(function(a,b){return (b.effectiveDate||"").localeCompare(a.effectiveDate||"");});
+        var lastCtc=empRevs2.length>0?(empRevs2[0].newCtc||0):(selE.monthlyCTC||selE.fixedSalary||0);
         var summary=empRevs2.length>0
-          ?empRevs2.length+" revision"+(empRevs2.length>1?"s":"")+" · Current: "+fmt((empRevs2[0]||{}).newCtc||0)+"/mo"
-          :"No revisions yet";
+          ?empRevs2.length+" revision"+(empRevs2.length>1?"s":"")+" · Current: "+fmt(lastCtc)+"/mo"
+          :"No revisions · Tap to add";
 
-        function toggleHist(){
-          setEmpSections(function(p){var n=Object.assign({},p);n.history=!n.history;return n;});
-        }
+        function toggleHist(){setEmpSections(function(p){var n=Object.assign({},p);n.history=!n.history;return n;});}
+
         function doAddRev(){
           var oldInp=document.getElementById("revOldCtc");
           var newInp=document.getElementById("revNewCtc");
-          var dateInp=document.getElementById("revDate");
-          var reasonInp=document.getElementById("revReason");
-          if(!oldInp||!newInp||!dateInp)return;
-          var oldC=Number(oldInp.value)||0;
+          var moInp=document.getElementById("revMonth");
+          var rsInp=document.getElementById("revReason");
+          if(!newInp||!moInp)return;
+          var oldC=Number(oldInp?oldInp.value:0)||lastCtc;
           var newC=Number(newInp.value)||0;
-          var dt=dateInp.value;
-          var rs=reasonInp?reasonInp.value:"";
-          if(!newC||!dt)return showT("Enter new salary and date","err");
-          if(!oldC)oldC=Number(selE.monthlyCTC||selE.fixedSalary||0);
+          var mo=moInp.value;
+          var rs=rsInp?rsInp.value:"";
+          if(!newC)return showT("Enter new salary","err");
+          if(!mo)return showT("Select month","err");
           var newId=String(Date.now());
-          var rev={id:newId,employeeId:String(selE.id),employeeName:selE.name,effectiveDate:dt,oldCtc:oldC,newCtc:newC,reason:rs};
+          var rev={id:newId,employeeId:String(selE.id),employeeName:selE.name,effectiveDate:mo,oldCtc:oldC,newCtc:newC,reason:rs};
           setSalRevisions(function(p){return [rev].concat(p||[]);});
-          _sb.from("salary_revisions").insert({id:newId,employer_email:gUser.email,employee_id:String(selE.id),employee_name:selE.name,effective_date:dt,old_ctc:oldC,new_ctc:newC,reason:rs})
-            .then(function(res){if(res&&res.error)showT("DB error: "+res.error.message,"err");else showT("Revision saved!");});
+          _sb.from("salary_revisions").insert({id:newId,employer_email:gUser.email,employee_id:String(selE.id),employee_name:selE.name,effective_date:mo,old_ctc:oldC,new_ctc:newC,reason:rs})
+            .then(function(r){if(r&&r.error)showT("Error: "+r.error.message,"err");else showT("Revision saved");});
           setShowRevForm(false);
         }
+
         function doEditRev(r){
-          var dateInp=document.getElementById("editRevDate_"+r.id);
-          var reasonInp=document.getElementById("editRevReason_"+r.id);
-          var dt=dateInp?dateInp.value:r.effectiveDate;
-          var rs=reasonInp?reasonInp.value:r.reason;
-          if(!dt)return showT("Enter date","err");
-          setSalRevisions(function(p){return (p||[]).map(function(x){return x.id===r.id?Object.assign({},x,{effectiveDate:dt,reason:rs}):x;});});
-          _sb.from("salary_revisions").update({effective_date:dt,reason:rs}).eq("id",String(r.id)).then(function(){});
+          var di=document.getElementById("eRevMo_"+r.id);
+          var ri=document.getElementById("eRevRs_"+r.id);
+          var mo=di?di.value:r.effectiveDate;
+          var rs=ri?ri.value:r.reason;
+          if(!mo)return showT("Select month","err");
+          setSalRevisions(function(p){return (p||[]).map(function(x){return x.id===r.id?Object.assign({},x,{effectiveDate:mo,reason:rs}):x;});});
+          _sb.from("salary_revisions").update({effective_date:mo,reason:rs}).eq("id",String(r.id)).then(function(){});
           setEditRevId(null);showT("Updated");
         }
+
         function doDelRev(r){
           if(!window.confirm("Delete this revision?"))return;
           setSalRevisions(function(p){return (p||[]).filter(function(x){return x.id!==r.id;});});
@@ -3541,8 +3493,15 @@ null
           showT("Deleted");
         }
 
+        function fmtMonth(m){
+          if(!m)return "";
+          var parts=m.split("-");
+          if(parts.length<2)return m;
+          var months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+          return months[Number(parts[1])-1]+" "+parts[0];
+        }
+
         return h("div",{style:{background:CARD,borderRadius:13,border:"1px solid "+BDR,marginBottom:8,overflow:"hidden"}},
-          /* Accordion header */
           h("div",{onClick:toggleHist,style:{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",cursor:"pointer",background:open?SFT:CARD,borderBottom:open?"1px solid "+BDR:"none"}},
             h("div",{style:{width:32,height:32,borderRadius:9,background:"#2563EB15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("trending_up","#2563EB",16)),
             h("div",{style:{flex:1,minWidth:0}},
@@ -3551,105 +3510,85 @@ null
             ),
             h("div",{style:{transform:open?"rotate(180deg)":"rotate(0deg)",transition:"transform .25s"}},ic("expand_more",GRY,18))
           ),
-          /* Content */
-          open?h("div",{style:{padding:"14px"}},
-            /* Add button */
-            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-              h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},empRevs2.length+" Revision"+(empRevs2.length!==1?"s":"")),
+          open?h("div",{style:{padding:"12px 14px"}},
+            /* Header row */
+            h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+              h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},empRevs2.length+" Revision"+(empRevs2.length!==1?"s":"")),
               h("button",{onClick:function(e){e.stopPropagation();setShowRevForm(!showRevForm);},
-                style:{background:showRevForm?SFT:"#2563EB",border:showRevForm?"1px solid "+BDR:"none",
-                  borderRadius:8,padding:"7px 14px",fontSize:11,fontWeight:700,
-                  color:showRevForm?NVY:"#fff",cursor:"pointer"}},
+                style:{background:showRevForm?SFT:NVY,border:showRevForm?"1px solid "+BDR:"none",
+                borderRadius:8,padding:"5px 12px",fontSize:11,fontWeight:700,
+                color:showRevForm?GRY:CARD,cursor:"pointer"}},
                 showRevForm?"✕ Cancel":"+ Add")
             ),
             /* Add form */
-            showRevForm?h("div",{style:{background:CARD,borderRadius:12,border:"1.5px solid #2563EB44",marginBottom:14,overflow:"hidden"}},
-              h("div",{style:{background:"#2563EB",padding:"10px 14px"}},
-                h("div",{style:{fontSize:12,fontWeight:700,color:"#fff"}},"New Salary Revision"),
-                h("div",{style:{fontSize:10,color:"rgba(255,255,255,.7)",marginTop:1}},"Record a salary change")
+            showRevForm?h("div",{style:{background:SFT,borderRadius:10,border:"1px solid "+BDR,padding:"10px",marginBottom:10}},
+              /* Old → New salary row */
+              h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+                h("div",{style:{flex:1}},
+                  lbl("OLD SALARY /MO"),
+                  h("input",{type:"number",id:"revOldCtc",defaultValue:String(lastCtc),
+                    style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                ),
+                h("div",{style:{alignSelf:"flex-end",paddingBottom:8,color:GRY,fontSize:14}},"→"),
+                h("div",{style:{flex:1}},
+                  lbl("NEW SALARY /MO"),
+                  h("input",{type:"number",id:"revNewCtc",placeholder:"e.g. 25000",
+                    style:{width:"100%",background:CARD,border:"1px solid #2563EB55",borderRadius:8,padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                )
               ),
-              h("div",{style:{padding:"14px"}},
-                /* Old → New */
-                h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-                  h("div",{style:{flex:1}},
-                    h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:5}},"OLD SALARY"),
-                    h("input",{type:"number",id:"revOldCtc",
-                      defaultValue:String(empRevs2.length>0?(empRevs2[0].newCtc||0):(selE.monthlyCTC||selE.fixedSalary||0)),
-                      placeholder:"e.g. 20000",
-                      style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:14,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                  ),
-                  h("div",{style:{color:GRY,fontSize:20,marginTop:14,flexShrink:0}},"→"),
-                  h("div",{style:{flex:1}},
-                    h("div",{style:{fontSize:9,fontWeight:700,color:"#2563EB",letterSpacing:.5,marginBottom:5}},"NEW SALARY"),
-                    h("input",{type:"number",id:"revNewCtc",placeholder:"e.g. 25000",
-                      style:{width:"100%",background:SFT,border:"1.5px solid #2563EB55",borderRadius:9,padding:"10px 12px",fontSize:14,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                  )
+              /* Month + Reason */
+              h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+                h("div",{style:{flex:1}},
+                  lbl("EFFECTIVE MONTH"),
+                  h("input",{type:"month",id:"revMonth",
+                    style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
                 ),
-                h("div",{style:{display:"flex",gap:8,marginBottom:12}},
-                  h("div",{style:{flex:1}},
-                    h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:5}},"EFFECTIVE DATE"),
-                    h("input",{type:"date",id:"revDate",
-                      style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                  ),
-                  h("div",{style:{flex:1}},
-                    h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:5}},"REASON"),
-                    h("input",{type:"text",id:"revReason",placeholder:"e.g. Annual hike",
-                      style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                  )
-                ),
-                h("button",{onClick:doAddRev,
-                  style:{width:"100%",background:"#2563EB",border:"none",borderRadius:10,padding:"13px",fontSize:13,fontWeight:700,color:"#fff",cursor:"pointer"}},
-                  "Save Revision")
-              )
+                h("div",{style:{flex:1}},
+                  lbl("REASON"),
+                  h("input",{type:"text",id:"revReason",placeholder:"e.g. Annual hike",
+                    style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                )
+              ),
+              h("button",{onClick:doAddRev,
+                style:{width:"100%",background:NVY,border:"none",borderRadius:8,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},
+                "Save Revision")
             ):null,
-            /* No revisions */
-            empRevs2.length===0&&!showRevForm?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY}},
-              ic("trending_up",GRY,28),
-              h("div",{style:{fontSize:12,fontWeight:600,color:NVY,marginTop:8}},"No revisions recorded"),
-              h("div",{style:{fontSize:10,color:GRY,marginTop:3}},"Tap + Add to record a salary change")
-            ):null,
-            /* Revision list */
+            /* Empty state */
+            empRevs2.length===0&&!showRevForm?h("div",{style:{textAlign:"center",padding:"12px 0",color:GRY,fontSize:11}},"No revisions yet"):null,
+            /* List */
             empRevs2.map(function(r,i){
               var diff=r.newCtc-r.oldCtc;
               var pct=r.oldCtc>0?Math.round(Math.abs(diff)*100/r.oldCtc):0;
-              var isHike=diff>=0;
+              var up=diff>=0;
               var isEditing=editRevId===r.id;
-              return h("div",{key:r.id,style:{background:SFT,borderRadius:11,padding:"12px",marginBottom:6,border:"1px solid "+BDR}},
-                /* Revision row */
-                h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:isEditing?10:0}},
-                  h("div",{style:{flex:1}},
-                    h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:3}},
-                      h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},fmt(r.oldCtc)+" → "+fmt(r.newCtc)),
-                      h("div",{style:{fontSize:9,fontWeight:700,background:isHike?"#10B98115":RED+"15",color:isHike?"#10B981":RED,borderRadius:20,padding:"2px 8px"}},(isHike?"+":"-")+pct+"%")
+              return h("div",{key:r.id,style:{borderTop:i===0?"none":"1px solid "+BDR,paddingTop:i===0?0:8,marginTop:i===0?0:8}},
+                h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                  /* Stat tile */
+                  h("div",{style:{flex:1,background:up?"#10B98110":RED+"10",borderRadius:8,padding:"7px 10px",border:"1px solid "+(up?"#10B98125":RED+"25")}},
+                    h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:2}},
+                      h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},fmt(r.oldCtc)+" → "+fmt(r.newCtc)),
+                      h("div",{style:{fontSize:9,fontWeight:700,background:up?"#10B98115":RED+"15",color:up?"#10B981":RED,borderRadius:12,padding:"1px 6px"}},(up?"+":"-")+pct+"%")
                     ),
-                    h("div",{style:{fontSize:10,color:GRY}},
-                      new Date((r.effectiveDate||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(r.reason?" · "+r.reason:""))
+                    h("div",{style:{fontSize:10,color:GRY}},fmtMonth(r.effectiveDate)+(r.reason?" · "+r.reason:""))
                   ),
-                  !isEditing?h("div",{style:{display:"flex",gap:5}},
+                  /* Edit/Del buttons */
+                  !isEditing?h("div",{style:{display:"flex",flexDirection:"column",gap:4,flexShrink:0}},
                     h("button",{onClick:function(){setEditRevId(r.id);},
-                      style:{background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"5px 10px",fontSize:10,fontWeight:600,color:NVY,cursor:"pointer"}},"Edit"),
+                      style:{background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:NVY,cursor:"pointer"}},"Edit"),
                     h("button",{onClick:function(){doDelRev(r);},
-                      style:{background:RED+"10",border:"1px solid "+RED+"22",borderRadius:7,padding:"5px 10px",fontSize:10,fontWeight:600,color:RED,cursor:"pointer"}},"Del")
+                      style:{background:RED+"10",border:"1px solid "+RED+"22",borderRadius:6,padding:"4px 8px",fontSize:9,fontWeight:700,color:RED,cursor:"pointer"}},"Del")
                   ):null
                 ),
-                /* Edit form */
-                isEditing?h("div",{style:{display:"flex",gap:8}},
-                  h("div",{style:{flex:1}},
-                    h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:4}},"DATE"),
-                    h("input",{type:"date",id:"editRevDate_"+r.id,defaultValue:r.effectiveDate||"",
-                      style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                  ),
-                  h("div",{style:{flex:1}},
-                    h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:4}},"REASON"),
-                    h("input",{type:"text",id:"editRevReason_"+r.id,defaultValue:r.reason||"",
-                      style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-                  ),
-                  h("div",{style:{display:"flex",gap:4,alignItems:"flex-end",paddingBottom:0}},
-                    h("button",{onClick:function(){doEditRev(r);},
-                      style:{background:NVY,border:"none",borderRadius:8,padding:"8px 12px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer",whiteSpace:"nowrap"}},"Save"),
-                    h("button",{onClick:function(){setEditRevId(null);},
-                      style:{background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:11,color:GRY,cursor:"pointer"}},"✕")
-                  )
+                /* Inline edit */
+                isEditing?h("div",{style:{display:"flex",gap:6,marginTop:6}},
+                  h("input",{type:"month",id:"eRevMo_"+r.id,defaultValue:r.effectiveDate||"",
+                    style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"6px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit"}}),
+                  h("input",{type:"text",id:"eRevRs_"+r.id,defaultValue:r.reason||"",placeholder:"Reason",
+                    style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"6px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit"}}),
+                  h("button",{onClick:function(){doEditRev(r);},
+                    style:{background:NVY,border:"none",borderRadius:7,padding:"6px 10px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Save"),
+                  h("button",{onClick:function(){setEditRevId(null);},
+                    style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 8px",fontSize:11,color:GRY,cursor:"pointer"}},"✕")
                 ):null
               );
             })
@@ -6620,7 +6559,7 @@ null
       var pct=tenure>0?Math.round((paid/tenure)*100):0;
       var monthsLeft=tenure>0?Math.max(0,tenure-paid):null;
       var totalInterest=(!isAdv&&l.interestRate>0&&tenure&&emi)?Math.round(emi*tenure-l.amount):0;
-      var startFmt=l.startDate?new Date(l.startDate+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"—";
+      var startFmt=(function(){if(!l.startDate)return"—";var p=l.startDate.split("-");if(p.length<2)return l.startDate;var ms=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return ms[Number(p[1])-1]+" "+p[0];})();
       var endFmt=(function(){
         if(!l.startDate||!tenure)return "—";
         var d=new Date(l.startDate+"T00:00:00");d.setMonth(d.getMonth()+tenure-1);
@@ -6795,7 +6734,7 @@ null
           var p=Number(loanAmt),n=Number(loanMon);
           var r=loanKind==="loan"?Number(loanInterest||0):0;
           var emi=calcEMI(p,r,n);
-          var endDate=(function(){var d=new Date(loanDate+"T00:00:00");d.setMonth(d.getMonth()+n-1);return d.toISOString().split("T")[0];}());
+          var endDate=(function(){if(!loanDate)return "";var parts=loanDate.split("-");var d=new Date(Number(parts[0]),Number(parts[1])-1+n-1,1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}());
           var rec={
             id:Date.now(),employerEmail:gUser.email,
             employeeId:empId,employee_id:empId,employeeName:emp.name,
