@@ -3321,17 +3321,15 @@ null
       setEmpSections(function(prev){return Object.assign({},prev,{[key]:!prev[key]});});
     }
 
-    // ── Accordion section wrapper ──
-    function section(key,icon,iconColor,title,summary,content){
+    // ── Accordion section wrapper ── (content is a function — lazy, only called when open)
+    function section(key,icon,iconColor,title,summary,contentFn){
       var open=empSections[key];
       return h("div",{style:{background:CARD,borderRadius:13,border:"1px solid "+BDR,marginBottom:8,overflow:"hidden"}},
-        /* Header — always visible, tappable */
         h("div",{onClick:function(){toggle(key);},style:{
           display:"flex",alignItems:"center",gap:10,
           padding:"11px 14px",cursor:"pointer",
           background:open?SFT:CARD,
           borderBottom:open?"1px solid "+BDR:"none",
-          transition:"background .2s",
         }},
           h("div",{style:{width:32,height:32,borderRadius:9,background:iconColor+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
             ic(icon,iconColor,16)),
@@ -3339,11 +3337,10 @@ null
             h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},title),
             h("div",{style:{fontSize:10,color:GRY,marginTop:1}},summary)
           ),
-          h("div",{style:{color:GRY,fontSize:14,transform:open?"rotate(180deg)":"rotate(0deg)",transition:"transform .25s"}},
+          h("div",{style:{transform:open?"rotate(180deg)":"rotate(0deg)",transition:"transform .25s"}},
             ic("expand_more",GRY,18))
         ),
-        /* Content — collapsible */
-        open?h("div",{style:{padding:"12px 14px"}},content):null
+        open?h("div",{style:{padding:"12px 14px"}},typeof contentFn==="function"?contentFn():contentFn):null
       );
     }
 
@@ -3386,7 +3383,7 @@ null
       /* 1. Salary & Pay */
       section("salary","payments","#059669","Salary & Pay",
         "Net: "+fmt(Math.max(0,d.net-loanDedTotal))+(hasDeduct?" · Deductions applied":"")+(loanDedTotal>0?" · EMI: "+fmt(loanDedTotal):""),
-        h("div",null,
+function(){return         h("div",null,
           /* Earnings */
           h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:6}},"EARNINGS"),
           selE.salaryType==="fixed"?
@@ -3435,13 +3432,13 @@ null
           h("button",{onClick:function(){makePayslipPDF(selE,d,curM,curY,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign);},
             style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},
             ic("download",CARD,14),"Download Payslip")
-        )
+        )}
       ),
 
       /* 2. Shift */
       section("shift","edit_calendar",GRY,"Shift",
         empShift.type||"General"+(empShift.allowance>0?" · Allowance: "+fmt(empShift.allowance):""),
-        h("div",null,
+h("div",null,
           h("div",{style:{display:"flex",gap:8}},
             h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"10px",textAlign:"center"}},
               h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"CURRENT SHIFT"),
@@ -3458,7 +3455,8 @@ null
       /* 3. Leave Balance */
       section("leave","event_available","#10B981","Leave Balance",
         leaveEnt>0?(leaveBal+" remaining of "+leaveEnt+" days ("+Math.round(leaveUsed*10/Math.max(leaveEnt,1))*10+"% used)"):"No leave entitlement set",
-        leaveEnt>0?h("div",null,
+        (function(){
+        return leaveEnt>0?h("div",null,
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
             h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},
               h("div",{style:{fontSize:20,fontWeight:800,color:leaveBal>leaveEnt*0.5?"#10B981":leaveBal>leaveEnt*0.25?AMB:RED}},leaveBal%1===0?leaveBal:leaveBal.toFixed(1)),
@@ -3472,13 +3470,14 @@ null
           ),
           h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden"}},
             h("div",{style:{width:Math.min(leaveEnt>0?Math.round(leaveUsed*100/leaveEnt):0,100)+"%",height:"100%",background:"#10B981",borderRadius:99}}))
-        ):h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:"8px 0"}},"Set leave entitlement in Edit Employee")
+        ):h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:"8px 0"}},"Set leave entitlement in Edit Employee");
+        })
       ),
 
       /* 4. Loans & Advances */
       section("loans","account_balance","#2563EB","Loans & Advances",
         activeLoans.length>0?(activeLoans.length+" active · Outstanding: "+fmt(loanOutstanding)):"No active loans or advances",
-        card(h("div",null,renderLoanSection(selE)))
+function(){return card(h("div",null,renderLoanSection(selE)))}
       ),
 
       /* 5. Gratuity */
@@ -3489,14 +3488,14 @@ null
           var yrs=Math.floor(ms/(1000*60*60*24*365.25));
           var mos=Math.floor((ms%(1000*60*60*24*365.25))/(1000*60*60*24*30.44));
           return yrs+"y "+mos+"m service · "+(yrs>=5?"Eligible":"Not eligible yet");
-        })(),
-        renderGratuityCard(selE)
+        })()
+      ,renderGratuityCard(selE)
       ),
 
       /* 6. Salary History */
       section("history","trending_up","#2563EB","Salary History",
         empRevs.length>0?(empRevs.length+" revision"+(empRevs.length>1?"s":"")+" · Last: "+fmt(empRevs[0]&&empRevs[0].newCtc||0)+"/mo"):"No revisions recorded",
-        empRevs.length>0?h("div",null,
+        function(){return empRevs.length>0?h("div",null,
           empRevs.map(function(r,i){
             var diff=r.newCtc-r.oldCtc;
             var pct=r.oldCtc>0?Math.round(Math.abs(diff)*100/r.oldCtc):0;
@@ -3510,31 +3509,31 @@ null
               )
             );
           })
-        ):h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:"8px 0"}},"No salary revisions yet")
+        ):h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:"8px 0"}},"No salary revisions yet");}
       ),
 
       /* 7. Warning Letters */
       section("warnings","pending_actions",RED,"Warning Letters",
         empWarns.length>0?(empWarns.length+" warning"+(empWarns.length>1?"s":"")+" issued"):"No warnings issued",
-        h("div",null,renderWarningSection(selE))
+function(){return h("div",null,renderWarningSection(selE))}
       ),
 
       /* 8. Bonus & One-Time Pay */
       section("bonus","local_atm",AMB,"Bonus & One-Time Pay",
         empBonuses2.length>0?("Total paid: "+fmt(bonusTotal)+" · "+empBonuses2.length+" record"+(empBonuses2.length>1?"s":"")):"No bonuses recorded",
-        h("div",null,renderBonusSection(selE))
+function(){return h("div",null,renderBonusSection(selE))}
       ),
 
       /* 9. Letters & Documents */
       section("letters","description",ACCENT,"Letters & Documents",
         "Offer · Experience · Relieving letter PDFs",
-        h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        (function(){return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
           h("div",{style:{display:"flex",gap:8}},
             h("button",{onClick:function(){makeOfferLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("description",ACCENT,13),"Offer Letter"),
             h("button",{onClick:function(){makeExperienceLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:GRN+"12",border:"1.5px solid "+GRN+"30",borderRadius:10,padding:"11px",color:GRN,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("verified",GRN,13),"Experience")
           ),
           h("button",{onClick:function(){makeRelievingLetterPDF(selE,org,authPos,authSign);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:AMB+"12",border:"1.5px solid "+AMB+"30",borderRadius:10,padding:"11px",color:AMB,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("assignment",AMB,13),"Relieving Letter")
-        )
+        );})()
       )
     );
   }
