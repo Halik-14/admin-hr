@@ -6909,7 +6909,7 @@ null
       setRevNewDate("");setRevNewOldCtc("");setRevNewCtc("");setRevNewReason("");setShowRevForm(false);
       showT("Revision added");
     }
-    return card(h("div",null,
+    return h("div",null,
       h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
         h("div",{style:{width:34,height:34,borderRadius:9,background:"#2563EB15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("trending_up","#2563EB",17)),
         h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Salary History"),h("div",{style:{fontSize:10,color:GRY}},empRevs.length+" revision"+(empRevs.length>1?"s":""))),
@@ -6965,7 +6965,7 @@ null
           ):null
         );
       })
-    ));
+    );
   }
 
 
