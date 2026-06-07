@@ -3310,7 +3310,12 @@ null
     var loanDedTotal=activeLoans.reduce(function(s,l){return s+(l.emi||l.monthlyDeduction||0);},0);
     var loanOutstanding=activeLoans.reduce(function(s,l){var paid=l.paidInstallments||0,tenure=l.tenure||0,emi=l.emi||0;return s+Math.max(0,Math.round((tenure-paid)*emi));},0);
     var bonusTotal=empBonuses2.reduce(function(s,b){return s+(b.amount||0);},0);
-    var empShift=getShift(selE.id,curY,curM);
+    var empShiftData=(function(){
+      var es=shifts[selE.id];if(!es)return {type:"General",allowance:0};
+      var key=curY+"-"+(curM+1<10?"0":"")+(curM+1);
+      var entry=(es.log||[]).find(function(l){return l.month===key;});
+      return {type:(entry?entry.shift:es.type)||"General",allowance:Number((entry?entry.allowance:es.allowance)||0)};
+    })();
 
     function toggle(key){setEmpSections(function(prev){var n=Object.assign({},prev);n[key]=!n[key];return n;});}
 
@@ -3379,11 +3384,11 @@ null
 
       /* 2. Shift */
       accSection("shift","edit_calendar",GRY,"Shift",
-        (empShift.type||"General")+(empShift.allowance>0?" · "+fmt(empShift.allowance)+"/mo":""),
+        (empShiftData.type||"General")+(empShiftData.allowance>0?" · "+fmt(empShiftData.allowance)+"/mo":""),
         function(){
           return h("div",{style:{display:"flex",gap:8}},
-            h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"CURRENT SHIFT"),h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},empShift.type||"General")),
-            h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"ALLOWANCE"),h("div",{style:{fontSize:16,fontWeight:800,color:empShift.allowance>0?AMB:NVY}},fmt(empShift.allowance)+"/mo"))
+            h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"CURRENT SHIFT"),h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},empShiftData.type||"General")),
+            h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:9,color:GRY,marginBottom:4}},"ALLOWANCE"),h("div",{style:{fontSize:16,fontWeight:800,color:empShiftData.allowance>0?AMB:NVY}},fmt(empShiftData.allowance)+"/mo"))
           );
         }
       ),
