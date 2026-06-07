@@ -2196,57 +2196,9 @@ export default function App(){
   function removeEmp(id){setEmps(function(p){return p.filter(function(e){return e.id!==id;});});showT("Deleted.");}
 
   function sharePayslip(emp,d,m2,y){
-    // Generate PDF and share via native share sheet (WhatsApp supports file sharing)
-    var text=(org.name||"")+( org.name?" - Payslip\n":"")+emp.name+" | "+MOS[m2]+" "+y+"\nNet Pay: "+fmtIN(d.net);
     try{
-      // Generate payslip PDF using jsPDF
-      var doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
-      var cName=org.name||"Company";
-      var mName=MOS[m2]+" "+y;
-      doc.setFontSize(16);doc.setFont("helvetica","bold");
-      doc.text(cName,105,20,{align:"center"});
-      doc.setFontSize(10);doc.setFont("helvetica","normal");
-      doc.text(org.address||"",105,26,{align:"center"});
-      doc.setFontSize(12);doc.setFont("helvetica","bold");
-      doc.text("PAYSLIP - "+mName,105,36,{align:"center"});
-      doc.setDrawColor(200);doc.line(15,40,195,40);
-      doc.setFontSize(10);doc.setFont("helvetica","normal");
-      var ly=48;
-      doc.text("Employee: "+emp.name,20,ly);doc.text("EID: "+(emp.eid||"-"),120,ly);ly+=6;
-      doc.text("Designation: "+(emp.role||"-"),20,ly);doc.text("Department: "+(emp.dept||"-"),120,ly);ly+=6;
-      doc.text("PAN: "+(emp.pan||"-"),20,ly);doc.text("UAN: "+(emp.uan||"-"),120,ly);ly+=10;
-      doc.line(15,ly,195,ly);ly+=8;
-      doc.setFont("helvetica","bold");doc.text("EARNINGS",20,ly);doc.text("DEDUCTIONS",120,ly);ly+=7;
-      doc.setFont("helvetica","normal");
-      var isFixed=emp.salaryType==="fixed";
-      if(isFixed){doc.text("Fixed Salary",20,ly);doc.text(fmtIN(emp.fixedSalary||emp.monthlyCTC||0),90,ly,{align:"right"});}
-      else{doc.text("Basic",20,ly);doc.text(fmtIN(emp.basic||0),90,ly,{align:"right"});}
-      var deds=[];
-      if(d.ad>0)deds.push(["Absent Deduction",fmtIN(d.ad)]);
-      if(d.pfE>0)deds.push(["PF (12%)",fmtIN(d.pfE)]);
-      if(d.esiE>0)deds.push(["ESI (0.75%)",fmtIN(d.esiE)]);
-      if(d.pt>0)deds.push(["Prof. Tax",fmtIN(d.pt)]);
-      if(d.tds>0)deds.push(["TDS",fmtIN(d.tds)]);
-      if(deds[0]){doc.text(deds[0][0],120,ly);doc.text(deds[0][1],185,ly,{align:"right"});}
-      ly+=6;
-      if(!isFixed){doc.text("HRA",20,ly);doc.text(fmtIN(emp.hra||0),90,ly,{align:"right"});}
-      if(deds[1]){doc.text(deds[1][0],120,ly);doc.text(deds[1][1],185,ly,{align:"right"});}
-      ly+=6;
-      if(!isFixed){doc.text("Allowances",20,ly);doc.text(fmtIN(emp.allow||0),90,ly,{align:"right"});}
-      if(deds[2]){doc.text(deds[2][0],120,ly);doc.text(deds[2][1],185,ly,{align:"right"});}
-      ly+=6;
-      for(var di=3;di<deds.length;di++){doc.text(deds[di][0],120,ly);doc.text(deds[di][1],185,ly,{align:"right"});ly+=6;}
-      if(d.inc>0){doc.text("Incentive",20,ly);doc.text(fmtIN(d.inc),90,ly,{align:"right"});ly+=6;}
-      ly+=4;doc.line(15,ly,195,ly);ly+=8;
-      doc.setFont("helvetica","bold");
-      doc.text("Gross: "+fmtIN(d.gr),20,ly);
-      doc.text("Total Deductions: "+fmtIN(d.ad+d.pfE+d.esiE+d.pt+d.tds+(d.hi||0)+(d.cd||0)),120,ly);
-      ly+=10;
-      doc.setFillColor(15,23,42);doc.roundedRect(15,ly-4,180,14,3,3,"F");
-      doc.setTextColor(255);doc.setFontSize(12);
-      doc.text("NET TAKE HOME: "+fmtIN(d.net),105,ly+5,{align:"center"});
-      doc.setTextColor(0);doc.setFontSize(8);
-      doc.text("Admin HR"+(org.name?" | "+org.name:"")+" | "+new Date().toLocaleDateString("en-IN"),105,ly+20,{align:"center"});
+      // Use same makePayslipPDF for consistent output
+      makePayslipPDF(emp,d,m2,y,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign);
 
       var pdfBlob=doc.output("blob");
       var fileName="Payslip_"+emp.name.replace(/\s+/g,"_")+"_"+MOS[m2]+"_"+y+".pdf";
@@ -6369,7 +6321,7 @@ null
     var activeRec=allRec.filter(function(l){return l.status==="active";});
     var closedRec=allRec.filter(function(l){return l.status!=="active";}).sort(function(a,b){return (b.date||"").localeCompare(a.date||"");});
 
-    var LTYPES={personal:"Personal Loan",emergency:"Emergency Loan",medical:"Medical Loan",vehicle:"Vehicle Loan",education:"Education Loan"};
+    var LTYPES={personal:"Personal Loan",emergency:"Emergency Loan",medical:"Medical Loan",vehicle:"Vehicle Loan",education:"Education Loan",office:"Office Loan"};
     var ATYPES={salary:"Salary Advance",festival:"Festival Advance",travel:"Travel Advance",other:"Other Advance"};
 
     function getLabel(l){
@@ -6460,6 +6412,11 @@ null
             tenure>0?h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},
               h("span",{style:{fontSize:9,color:GRY}},"Period"),
               h("span",{style:{fontSize:9,fontWeight:700,color:NVY}},startFmt+" → "+endFmt)
+            ):null,
+            l.endDate?h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},
+              h("span",{style:{fontSize:9,color:GRY}},"Last Deduction"),
+              h("span",{style:{fontSize:9,fontWeight:700,color:RED},
+              },new Date(l.endDate+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}))
             ):null,
             !isAdv&&l.interestRate>0?h("div",{style:{display:"flex",justifyContent:"space-between"}},
               h("span",{style:{fontSize:9,color:GRY}},"Interest rate"),
@@ -6933,27 +6890,57 @@ null
     );
   }
 
+  var sEditRevId=st(null),editRevId=sEditRevId[0],setEditRevId=sEditRevId[1];
+  var sEditRevDate=st(""),editRevDate=sEditRevDate[0],setEditRevDate=sEditRevDate[1];
+  var sEditRevReason=st(""),editRevReason=sEditRevReason[0],setEditRevReason=sEditRevReason[1];
   function renderSalaryRevisionCard(emp){
     if(!emp)return null;
     var empRevs=(salRevisions||[]).filter(function(r){return r.employeeId===String(emp.id);}).sort(function(a,b){return (b.effectiveDate||"").localeCompare(a.effectiveDate||"");});
     if(empRevs.length===0)return null;
+    function saveRevEdit(r){
+      if(!editRevDate)return showT("Enter date","err");
+      setSalRevisions(function(p){return (p||[]).map(function(x){return x.id===r.id?Object.assign({},x,{effectiveDate:editRevDate,reason:editRevReason}):x;});});
+      _sb.from("salary_revisions").update({effective_date:editRevDate,reason:editRevReason}).eq("id",String(r.id)).then(function(){});
+      setEditRevId(null);showT("Revision updated");
+    }
+    function deleteRev(r){
+      if(!window.confirm("Delete this revision record?"))return;
+      setSalRevisions(function(p){return (p||[]).filter(function(x){return x.id!==r.id;});});
+      _sb.from("salary_revisions").delete().eq("id",String(r.id)).then(function(){});
+      showT("Deleted");
+    }
     return card(h("div",null,
       h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
         h("div",{style:{width:34,height:34,borderRadius:9,background:"#2563EB15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("trending_up","#2563EB",17)),
         h("div",null,h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Salary History"),h("div",{style:{fontSize:10,color:GRY}},empRevs.length+" revision"+(empRevs.length>1?"s":"")))
       ),
       empRevs.map(function(r,i){
-        var diff=r.newCtc-r.oldCtc;
-        var pct=r.oldCtc>0?Math.round(Math.abs(diff)*100/r.oldCtc):0;
-        var isHike=diff>0;
-        return h("div",{key:r.id,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<empRevs.length-1?"1px solid "+BDR:"none"}},
-          h("div",{style:{flex:1,minWidth:0}},
-            h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:2}},
-              h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},"₹"+fmtIN(r.oldCtc)+" → ₹"+fmtIN(r.newCtc)),
-              h("div",{style:{fontSize:9,fontWeight:700,background:isHike?"#10B98115":RED+"15",color:isHike?"#10B981":RED,borderRadius:20,padding:"1px 6px"}},(isHike?"+":"-")+pct+"%")
+        var diff=r.newCtc-r.oldCtc,pct=r.oldCtc>0?Math.round(Math.abs(diff)*100/r.oldCtc):0,isHike=diff>0;
+        var isEditing=editRevId===r.id;
+        return h("div",{key:r.id,style:{padding:"8px 0",borderBottom:i<empRevs.length-1?"1px solid "+BDR:"none"}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+            h("div",{style:{flex:1}},
+              h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:2}},
+                h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},fmt(r.oldCtc)+" → "+fmt(r.newCtc)),
+                h("div",{style:{fontSize:9,fontWeight:700,background:isHike?"#10B98115":RED+"15",color:isHike?"#10B981":RED,borderRadius:20,padding:"1px 6px"}},(isHike?"+":"-")+pct+"%")
+              ),
+              !isEditing?h("div",{style:{fontSize:9,color:GRY}},new Date((r.effectiveDate||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(r.reason?" • "+r.reason:"")):null
             ),
-            h("div",{style:{fontSize:9,color:GRY}},new Date((r.effectiveDate||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(r.reason?" • "+r.reason:""))
-          )
+            !isEditing?h("div",{style:{display:"flex",gap:4}},
+              h("button",{onClick:function(){setEditRevId(r.id);setEditRevDate(r.effectiveDate||"");setEditRevReason(r.reason||"");},style:{background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:NVY,cursor:"pointer"}},"Edit"),
+              h("button",{onClick:function(){deleteRev(r);},style:{background:RED+"10",border:"1px solid "+RED+"22",borderRadius:6,padding:"3px 8px",fontSize:9,fontWeight:700,color:RED,cursor:"pointer"}},"Del")
+            ):null
+          ),
+          isEditing?h("div",{style:{background:SFT,borderRadius:9,padding:10,marginTop:6,border:"1px solid "+BDR}},
+            lbl("EFFECTIVE DATE"),
+            h("input",{type:"date",value:editRevDate,onChange:function(e){setEditRevDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
+            lbl("REASON"),
+            h("input",{type:"text",value:editRevReason,onChange:function(e){setEditRevReason(e.target.value);},placeholder:"e.g. Annual increment",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
+            h("div",{style:{display:"flex",gap:6}},
+              h("button",{onClick:function(){saveRevEdit(r);},style:{flex:1,background:NVY,border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Save"),
+              h("button",{onClick:function(){setEditRevId(null);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"8px",fontSize:11,fontWeight:600,color:NVY,cursor:"pointer"}},"Cancel")
+            )
+          ):null
         );
       })
     ));
@@ -6974,7 +6961,7 @@ null
     }
     return h("div",null,
       h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#D9770612",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("local_atm","#D97706",17)),
+        h("div",{style:{width:34,height:34,borderRadius:9,background:"#D9770612",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("monetization_on","#D97706",17)),
         h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Bonus & One-Time Pay"),h("div",{style:{fontSize:10,color:GRY}},"Festival, performance, advance")),
         h("button",{onClick:function(){setShowBonusForm(!showBonusForm);},style:{background:showBonusForm?SFT:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:showBonusForm?GRY:AMB,cursor:"pointer"}},showBonusForm?"Cancel":"+ Add")
       ),
