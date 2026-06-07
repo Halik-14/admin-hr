@@ -1452,7 +1452,7 @@ export default function App(){
   var sCoExpM=st(new Date().getMonth()),coExpM=sCoExpM[0],setCoExpM=sCoExpM[1];
   var sCoExpY=st(new Date().getFullYear()),coExpY=sCoExpY[0],setCoExpY=sCoExpY[1];
   var sLandSlide=st(0);
-  var sEmpSections=st({salary:true,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});
+  var sEmpSections=st({salary:false,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});
   var empSections=sEmpSections[0],setEmpSections=sEmpSections[1];
   var sAnnEmpId=st(""),annEmpId=sAnnEmpId[0],setAnnEmpId=sAnnEmpId[1];
   var curFY2=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
@@ -1616,7 +1616,7 @@ export default function App(){
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
   se(function(){
-    if(selE){setEmpSections({salary:true,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});}
+    if(selE){setEmpSections({salary:false,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});}
   },[selE&&selE.id]);
   /* ── Auto-count EMIs monthly ── */
   se(function(){
@@ -3377,7 +3377,7 @@ null
 
       /* 6. Salary History */
       accSection("history","trending_up","#2563EB","Salary History",
-        empRevs.length>0?empRevs.length+" revision"+(empRevs.length>1?"s":"")+" · Last: "+fmt((empRevs[0]||{}).newCtc||0)+"/mo":"No revisions",
+        empRevs.length>0?empRevs.length+" revision"+(empRevs.length>1?"s":"")+" · Last: "+fmt((empRevs[0]||{}).newCtc||0)+"/mo":"Tap to add revision",
         function(){
           if(!empRevs.length)return h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:"8px 0"}},"No salary revisions yet");
           return h("div",null,empRevs.map(function(r,i){
@@ -3402,7 +3402,7 @@ null
       ),
 
       /* 8. Bonus & One-Time Pay */
-      accSection("bonus","local_atm",AMB,"Bonus & One-Time Pay",
+      accSection("bonus","monetization_on",AMB,"Bonus & One-Time Pay",
         empBonuses2.length>0?"Total: "+fmt(bonusTotal)+" · "+empBonuses2.length+" record"+(empBonuses2.length>1?"s":""):"No bonuses recorded",
         function(){return renderBonusSection(selE);}
       ),
@@ -6893,10 +6893,14 @@ null
   var sEditRevId=st(null),editRevId=sEditRevId[0],setEditRevId=sEditRevId[1];
   var sEditRevDate=st(""),editRevDate=sEditRevDate[0],setEditRevDate=sEditRevDate[1];
   var sEditRevReason=st(""),editRevReason=sEditRevReason[0],setEditRevReason=sEditRevReason[1];
+  var sShowRevForm=st(false),showRevForm=sShowRevForm[0],setShowRevForm=sShowRevForm[1];
+  var sRevNewDate=st(""),revNewDate=sRevNewDate[0],setRevNewDate=sRevNewDate[1];
+  var sRevNewOldCtc=st(""),revNewOldCtc=sRevNewOldCtc[0],setRevNewOldCtc=sRevNewOldCtc[1];
+  var sRevNewCtc=st(""),revNewCtc=sRevNewCtc[0],setRevNewCtc=sRevNewCtc[1];
+  var sRevNewReason=st(""),revNewReason=sRevNewReason[0],setRevNewReason=sRevNewReason[1];
   function renderSalaryRevisionCard(emp){
     if(!emp)return null;
     var empRevs=(salRevisions||[]).filter(function(r){return r.employeeId===String(emp.id);}).sort(function(a,b){return (b.effectiveDate||"").localeCompare(a.effectiveDate||"");});
-    if(empRevs.length===0)return null;
     function saveRevEdit(r){
       if(!editRevDate)return showT("Enter date","err");
       setSalRevisions(function(p){return (p||[]).map(function(x){return x.id===r.id?Object.assign({},x,{effectiveDate:editRevDate,reason:editRevReason}):x;});});
@@ -6909,11 +6913,43 @@ null
       _sb.from("salary_revisions").delete().eq("id",String(r.id)).then(function(){});
       showT("Deleted");
     }
+    function addRevision(){
+      if(!revNewDate||!revNewCtc)return showT("Enter date and new salary","err");
+      var oldC=Number(revNewOldCtc)||Number(emp.monthlyCTC||emp.fixedSalary||0);
+      var newC=Number(revNewCtc);
+      var rev={id:Date.now(),employeeId:String(emp.id),employeeName:emp.name,effectiveDate:revNewDate,oldCtc:oldC,newCtc:newC,reason:revNewReason};
+      setSalRevisions(function(p){return [rev].concat(p||[]);});
+      _sb.from("salary_revisions").insert({id:String(rev.id),employer_email:gUser.email,employee_id:String(emp.id),employee_name:emp.name,effective_date:revNewDate,old_ctc:oldC,new_ctc:newC,reason:revNewReason}).then(function(){});
+      setRevNewDate("");setRevNewOldCtc("");setRevNewCtc("");setRevNewReason("");setShowRevForm(false);
+      showT("Revision added");
+    }
     return card(h("div",null,
       h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
         h("div",{style:{width:34,height:34,borderRadius:9,background:"#2563EB15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("trending_up","#2563EB",17)),
-        h("div",null,h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Salary History"),h("div",{style:{fontSize:10,color:GRY}},empRevs.length+" revision"+(empRevs.length>1?"s":"")))
+        h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Salary History"),h("div",{style:{fontSize:10,color:GRY}},empRevs.length+" revision"+(empRevs.length>1?"s":""))),
+        h("button",{onClick:function(){setShowRevForm(!showRevForm);setRevNewOldCtc(String(emp.monthlyCTC||emp.fixedSalary||""));},
+          style:{background:showRevForm?SFT:"#2563EB",border:showRevForm?"1px solid "+BDR:"none",borderRadius:8,padding:"5px 11px",fontSize:11,fontWeight:700,color:showRevForm?NVY:"#fff",cursor:"pointer"}},
+          showRevForm?"Cancel":"+ Add")
       ),
+      showRevForm?h("div",{style:{background:SFT,borderRadius:11,padding:10,border:"1px solid "+BDR,marginBottom:10}},
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},lbl("OLD CTC / MO"),h("input",{type:"number",value:revNewOldCtc,onChange:function(e){setRevNewOldCtc(e.target.value);},placeholder:"Previous salary",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          h("div",{style:{flex:1}},lbl("NEW CTC / MO"),h("input",{type:"number",value:revNewCtc,onChange:function(e){setRevNewCtc(e.target.value);},placeholder:"Revised salary",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+        ),
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},lbl("EFFECTIVE DATE"),h("input",{type:"date",value:revNewDate,onChange:function(e){setRevNewDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          h("div",{style:{flex:1}},lbl("REASON"),h("input",{type:"text",value:revNewReason,onChange:function(e){setRevNewReason(e.target.value);},placeholder:"e.g. Annual increment",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+        ),
+        revNewOldCtc&&revNewCtc?h("div",{style:{background:"#2563EB10",borderRadius:8,padding:"6px 10px",marginBottom:8,border:"1px solid #2563EB25",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+          h("span",{style:{fontSize:10,color:GRY}},"Change"),
+          h("span",{style:{fontSize:12,fontWeight:800,color:Number(revNewCtc)>Number(revNewOldCtc)?"#10B981":RED}},
+            fmt(Number(revNewOldCtc))+" \u2192 "+fmt(Number(revNewCtc))+
+            " ("+(Number(revNewOldCtc)>0?(Number(revNewCtc)>Number(revNewOldCtc)?"+":"")+Math.round((Number(revNewCtc)-Number(revNewOldCtc))*100/Number(revNewOldCtc))+"%":"")+")"
+          )
+        ):null,
+        h("button",{onClick:addRevision,style:{width:"100%",background:NVY,border:"none",borderRadius:8,padding:"9px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Revision")
+      ):null,
+      empRevs.length===0?h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:"8px 0"}},"No revisions yet. Tap + Add to record one."):null,
       empRevs.map(function(r,i){
         var diff=r.newCtc-r.oldCtc,pct=r.oldCtc>0?Math.round(Math.abs(diff)*100/r.oldCtc):0,isHike=diff>0;
         var isEditing=editRevId===r.id;
