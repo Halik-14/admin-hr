@@ -3378,21 +3378,7 @@ null
       /* 6. Salary History */
       accSection("history","trending_up","#2563EB","Salary History",
         empRevs.length>0?empRevs.length+" revision"+(empRevs.length>1?"s":"")+" · Last: "+fmt((empRevs[0]||{}).newCtc||0)+"/mo":"Tap to add revision",
-        function(){
-          if(!empRevs.length)return h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:"8px 0"}},"No salary revisions yet");
-          return h("div",null,empRevs.map(function(r,i){
-            var diff=r.newCtc-r.oldCtc,pct=r.oldCtc>0?Math.round(Math.abs(diff)*100/r.oldCtc):0;
-            return h("div",{key:r.id,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<empRevs.length-1?"1px solid "+BDR:"none"}},
-              h("div",{style:{flex:1}},
-                h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:2}},
-                  h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},fmt(r.oldCtc)+" → "+fmt(r.newCtc)),
-                  h("div",{style:{fontSize:9,fontWeight:700,background:diff>0?"#10B98115":RED+"15",color:diff>0?"#10B981":RED,borderRadius:20,padding:"1px 6px"}},(diff>0?"+":"-")+pct+"%")
-                ),
-                h("div",{style:{fontSize:9,color:GRY}},new Date((r.effectiveDate||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(r.reason?" · "+r.reason:""))
-              )
-            );
-          }));
-        }
+        function(){return renderSalaryRevisionCard(selE);}
       ),
 
       /* 7. Warning Letters */
