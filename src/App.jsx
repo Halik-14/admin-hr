@@ -1921,6 +1921,9 @@ export default function App(){
 
   var OWNER_EMAIL="authorhalik@gmail.com";
   var isPaid=org.plan==="paid";
+  var isUAE=(org.country==="uae");
+  var CUR=isUAE?"AED":"\u20b9";
+  var COUNTRY_FLAG=isUAE?"\uD83C\uDDE6\uD83C\uDDEA":"\uD83C\uDDEE\uD83C\uDDF3";
   var isFree=!isPaid;
   var EMP_LIMIT=org.emp_limit||(isPaid?org.emp_limit||999:5); // free=5, paid=set by admin
   function needPaid(){showT("This feature requires Paid Plan. Upgrade to access.","err");}
@@ -3756,6 +3759,27 @@ null
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Personal"),
         lbl("FULL NAME"),edInp("name","text","Full name"),
         lbl("MOBILE"),edInp("mob","tel","Mobile number"),
+        lbl("NATIONALITY"),
+        isUAE?h("select",{value:editE.nationality||"",onChange:function(e){setField("nationality",e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}},
+          h("option",{value:""},"Select nationality"),
+          UAE_NATIONALITIES.map(function(n){return h("option",{key:n,value:n},n);})
+        ):h("input",{type:"text",value:editE.nationality||"",onChange:function(e){setField("nationality",e.target.value);},placeholder:"e.g. Indian",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}),
+        isUAE?h("div",null,
+          lbl("EMIRATES ID"),
+          h("input",{type:"text",value:editE.emiratesId||"",onChange:function(e){setField("emiratesId",e.target.value);},placeholder:"784-XXXX-XXXXXXX-X",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}),
+          lbl("VISA NUMBER"),
+          h("input",{type:"text",value:editE.visaNo||"",onChange:function(e){setField("visaNo",e.target.value);},placeholder:"Visa/permit number",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}),
+          h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+            h("div",{style:{flex:1}},lbl("VISA EXPIRY"),h("input",{type:"date",value:editE.visaExpiry||"",onChange:function(e){setField("visaExpiry",e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+            h("div",{style:{flex:1}},lbl("PASSPORT EXPIRY"),h("input",{type:"date",value:editE.passportExpiry||"",onChange:function(e){setField("passportExpiry",e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+          ),
+          lbl("HOUSING ALLOWANCE (AED)"),
+          h("input",{type:"number",value:editE.housing||"",onChange:function(e){setField("housing",Number(e.target.value)||0);},placeholder:"e.g. 1000",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}),
+          lbl("TRANSPORT ALLOWANCE (AED)"),
+          h("input",{type:"number",value:editE.transport||"",onChange:function(e){setField("transport",Number(e.target.value)||0);},placeholder:"e.g. 500",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}),
+          lbl("OTHER ALLOWANCE (AED)"),
+          h("input",{type:"number",value:editE.otherAllow||"",onChange:function(e){setField("otherAllow",Number(e.target.value)||0);},placeholder:"e.g. 500",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}})
+        ):null,
         lbl("EMAIL"),edInp("email","email","Email address"),
         lbl("EMPLOYEE ID"),edInp("eid","text","e.g. EMP006"),
         lbl("DATE OF BIRTH"),edInp("dob","date",""),
