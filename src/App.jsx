@@ -1767,10 +1767,7 @@ export default function App(){
           _dataLoaded.current=false;
           setScreen("app");
         } else {
-          // Check localStorage cache before showing setup
-          var cached2=lsGet("hr_org_"+em,null);
-          if(cached2&&cached2.name){setOrg(cached2);setScreen("app");}
-          else setScreen("setup");
+          setScreen("setup");
         }
       }).catch(function(){
         var cached=lsGet("hr_org_"+em,null);
@@ -2676,13 +2673,6 @@ export default function App(){
 
   // ── Setup screen (for existing OTP users who have no org yet) ──
   var setupScreen=authWrap(h("div",{key:"setup"},
-    h("div",{style:{display:"flex",justifyContent:"flex-end",marginBottom:8}},
-      h("button",{onClick:function(){
-        _sb.auth.signOut();
-        setGUser(null);setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
-        setScreen("login");setAuthMode("landing");
-      },style:{background:"none",border:"none",fontSize:12,color:T.AUTH_LABEL,cursor:"pointer",padding:"4px 8px",textDecoration:"underline"}},"Sign out")
-    ),
     h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:24}},
       logoSVG(52),
       h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT,marginTop:14}},"Set Up Your Workspace"),
@@ -6660,7 +6650,14 @@ null
 
     return h("div",null,
       /* Header */
-      
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:"#2563EB15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+          ic("account_balance","#2563EB",17)),
+        h("button",{onClick:function(){setShowLoanForm(!showLoanForm);},
+          style:{background:showLoanForm?SFT:"#2563EB",border:showLoanForm?"1px solid "+BDR:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:showLoanForm?NVY:"#fff",cursor:"pointer"}},
+          showLoanForm?"Cancel":"+ Add")
+      ),
+
       /* Add form */
       showLoanForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
         /* Loan / Advance toggle */
@@ -6797,7 +6794,10 @@ null
     var basic=emp.salaryType==="fixed"?Number(emp.fixedSalary||emp.monthlyCTC||0):Number(emp.basic||0);
     var gratuity=eligible?Math.round(basic*15*years/26):0;
     return h("div",null,
-            h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:"#8B5CF615",display:"flex",alignItems:"center",justifyContent:"center"}},ic("savings","#8B5CF6",17))
+      ),
+      h("div",{style:{display:"flex",gap:8,marginBottom:10}},
         h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},years+"y "+months+"m"),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"SERVICE")),
         h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},fmt(basic)),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"BASIC")),
         h("div",{style:{flex:1,background:eligible?"#8B5CF612":SFT,borderRadius:10,padding:"10px",textAlign:"center",border:eligible?"1px solid #8B5CF633":"none"}},h("div",{style:{fontSize:16,fontWeight:800,color:eligible?"#8B5CF6":GRY}},eligible?fmt(gratuity):"—"),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"GRATUITY"))
@@ -6849,7 +6849,11 @@ null
       showT("Warning issued");
     }
     return h("div",null,
-            showWarnForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:RED+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("pending_actions",RED,17)),
+        h("button",{onClick:function(){setShowWarnForm(!showWarnForm);},style:{background:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},showWarnForm?"Cancel":"+ Issue")
+      ),
+      showWarnForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
           h("div",{style:{flex:1}},lbl("INCIDENT DATE"),h("input",{type:"date",value:warnDate,onChange:function(e){setWarnDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
           h("div",{style:{flex:1}},lbl("TYPE"),h("select",{value:warnType,onChange:function(e){setWarnType(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},
@@ -7178,7 +7182,11 @@ null
       showT("Bonus recorded");
     }
     return h("div",null,
-            showBonusForm?h("div",{style:{background:SFT,borderRadius:11,padding:10,border:"1px solid "+BDR,marginBottom:8}},
+      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
+        h("div",{style:{width:34,height:34,borderRadius:9,background:"#D9770612",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("monetization_on","#D97706",17)),
+        h("button",{onClick:function(){setShowBonusForm(!showBonusForm);},style:{background:showBonusForm?SFT:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:showBonusForm?GRY:AMB,cursor:"pointer"}},showBonusForm?"Cancel":"+ Add")
+      ),
+      showBonusForm?h("div",{style:{background:SFT,borderRadius:11,padding:10,border:"1px solid "+BDR,marginBottom:8}},
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
           h("div",{style:{flex:1}},lbl("DATE"),h("input",{type:"date",value:bonusDate,onChange:function(e){setBonusDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
           h("div",{style:{flex:1}},lbl("AMOUNT"),h("input",{type:"number",value:bonusAmt,onChange:function(e){setBonusAmt(e.target.value);},placeholder:"0",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
