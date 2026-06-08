@@ -3437,7 +3437,7 @@ null
       ),
 
       /* 5. Gratuity */
-      accSection("gratuity","savings","#8B5CF6","Gratuity Calculator",
+      accSection("gratuity","workspace_premium","#8B5CF6","Gratuity Calculator",
         (function(){if(!selE.joined)return "Join date not set";var ms=new Date()-new Date(selE.joined+"T00:00:00");var y=Math.floor(ms/(1000*60*60*24*365.25));var m=Math.floor((ms%(1000*60*60*24*365.25))/(1000*60*60*24*30.44));return y+"y "+m+"m · "+(y>=5?"Eligible":"Not eligible yet");}()),
         function(){return renderGratuityCard(selE);}
       ),
@@ -3597,19 +3597,19 @@ null
       })(),
 
       /* 7. Warning Letters */
-      accSection("warnings","pending_actions",RED,"Warning Letters",
+      accSection("warnings","assignment",RED,"Warning Letters",
         empWarns.length>0?empWarns.length+" warning"+(empWarns.length>1?"s":"")+" issued":"No warnings issued",
         function(){return renderWarningSection(selE);}
       ),
 
       /* 8. Bonus & One-Time Pay */
-      accSection("bonus","monetization_on",AMB,"Bonus & One-Time Pay",
+      accSection("bonus","paid",AMB,"Bonus & One-Time Pay",
         empBonuses2.length>0?"Total: "+fmt(bonusTotal)+" · "+empBonuses2.length+" record"+(empBonuses2.length>1?"s":""):"No bonuses recorded",
         function(){return renderBonusSection(selE);}
       ),
 
       /* 9. Letters & Documents */
-      accSection("letters","description",ACCENT,"Letters & Documents",
+      accSection("letters","verified",ACCENT,"Letters & Documents",
         "Offer · Experience · Relieving letter PDFs",
         function(){
           return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
@@ -6649,13 +6649,10 @@ null
     }
 
     return h("div",null,
-      /* Header */
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#2563EB15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-          ic("account_balance","#2563EB",17)),
+      h("div",{style:{textAlign:"center",marginBottom:10}},
         h("button",{onClick:function(){setShowLoanForm(!showLoanForm);},
-          style:{background:showLoanForm?SFT:"#2563EB",border:showLoanForm?"1px solid "+BDR:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:showLoanForm?NVY:"#fff",cursor:"pointer"}},
-          showLoanForm?"Cancel":"+ Add")
+          style:{background:showLoanForm?SFT:"#2563EB",border:showLoanForm?"1px solid "+BDR:"none",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:700,color:showLoanForm?NVY:"#fff",cursor:"pointer"}},
+          showLoanForm?"✕ Cancel":"+ Add Loan / Advance")
       ),
 
       /* Add form */
@@ -6794,18 +6791,24 @@ null
     var basic=emp.salaryType==="fixed"?Number(emp.fixedSalary||emp.monthlyCTC||0):Number(emp.basic||0);
     var gratuity=eligible?Math.round(basic*15*years/26):0;
     return h("div",null,
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#8B5CF615",display:"flex",alignItems:"center",justifyContent:"center"}},ic("savings","#8B5CF6",17))
+
+      h("div",{style:{display:"flex",gap:6,marginBottom:8}},
+        h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"7px 8px",textAlign:"center"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},years+"y "+months+"m"),
+          h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"SERVICE")
+        ),
+        h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"7px 8px",textAlign:"center"}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},fmt(basic)),
+          h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"BASIC")
+        ),
+        h("div",{style:{flex:1,background:eligible?"#8B5CF610":SFT,borderRadius:8,padding:"7px 8px",textAlign:"center",border:eligible?"1px solid #8B5CF625":"1px solid "+BDR}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:eligible?"#8B5CF6":GRY}},eligible?fmt(gratuity):"—"),
+          h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"GRATUITY")
+        )
       ),
-      h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-        h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},years+"y "+months+"m"),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"SERVICE")),
-        h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},fmt(basic)),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"BASIC")),
-        h("div",{style:{flex:1,background:eligible?"#8B5CF612":SFT,borderRadius:10,padding:"10px",textAlign:"center",border:eligible?"1px solid #8B5CF633":"none"}},h("div",{style:{fontSize:16,fontWeight:800,color:eligible?"#8B5CF6":GRY}},eligible?fmt(gratuity):"—"),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"GRATUITY"))
-      ),
-      !eligible?h("div",{style:{background:AMB+"10",borderRadius:10,padding:"8px 12px",border:"1px solid "+AMB+"33",fontSize:11,color:AMB}},
-        "Eligible after 5 years. "+(5-years)+" year(s) remaining."
-      ):h("div",{style:{background:"#8B5CF610",borderRadius:10,padding:"8px 12px",border:"1px solid #8B5CF633",fontSize:11,color:"#8B5CF6"}},
-        "Eligible - Basic x15x"+years+" yrs/26 = "+fmt(gratuity))
+      h("div",{style:{background:eligible?"#8B5CF608":AMB+"08",borderRadius:8,padding:"6px 10px",border:"1px solid "+(eligible?"#8B5CF620":AMB+"20"),fontSize:10,color:eligible?"#8B5CF6":AMB}},
+        eligible?"Formula: Basic × 15 × "+years+" yrs ÷ 26 = "+fmt(gratuity):"Eligible after 5 years · "+(5-years)+" year"+(5-years>1?"s":"")+" remaining"
+      )
     );
   }
 
@@ -6849,9 +6852,8 @@ null
       showT("Warning issued");
     }
     return h("div",null,
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:RED+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("pending_actions",RED,17)),
-        h("button",{onClick:function(){setShowWarnForm(!showWarnForm);},style:{background:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},showWarnForm?"Cancel":"+ Issue")
+      h("div",{style:{textAlign:"center",marginBottom:10}},
+        h("button",{onClick:function(){setShowWarnForm(!showWarnForm);},style:{background:showWarnForm?SFT:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:700,color:showWarnForm?GRY:RED,cursor:"pointer"}},showWarnForm?"✕ Cancel":"+ Issue Warning")
       ),
       showWarnForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
@@ -7182,9 +7184,8 @@ null
       showT("Bonus recorded");
     }
     return h("div",null,
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#D9770612",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("monetization_on","#D97706",17)),
-        h("button",{onClick:function(){setShowBonusForm(!showBonusForm);},style:{background:showBonusForm?SFT:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:showBonusForm?GRY:AMB,cursor:"pointer"}},showBonusForm?"Cancel":"+ Add")
+      h("div",{style:{textAlign:"center",marginBottom:10}},
+        h("button",{onClick:function(){setShowBonusForm(!showBonusForm);},style:{background:showBonusForm?SFT:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:700,color:showBonusForm?GRY:AMB,cursor:"pointer"}},showBonusForm?"✕ Cancel":"+ Add Bonus")
       ),
       showBonusForm?h("div",{style:{background:SFT,borderRadius:11,padding:10,border:"1px solid "+BDR,marginBottom:8}},
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
@@ -7200,9 +7201,17 @@ null
       ):null,
       empBonuses.length>0?h("div",null,
         empBonuses.map(function(b,i){
-          return h("div",{key:b.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<empBonuses.length-1?"1px solid "+BDR:"none"}},
-            h("div",null,h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},bonusTypes[b.type]||b.type),h("div",{style:{fontSize:9,color:GRY}},new Date((b.date||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(b.note?" • "+b.note:""))),
-            h("div",{style:{fontSize:13,fontWeight:800,color:AMB}},fmt(b.amount||0))
+          var typeColors={festival:"#F59E0B",performance:"#2563EB",annual:"#10B981",advance:"#7C3AED",other:"#64748B"};
+          var clr=typeColors[b.type]||AMB;
+          return h("div",{key:b.id,style:{background:CARD,borderRadius:10,border:"1px solid "+BDR,marginBottom:6,overflow:"hidden"}},
+            h("div",{style:{background:clr,padding:"6px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+              h("div",{style:{fontSize:11,fontWeight:700,color:"#fff"}},bonusTypes[b.type]||b.type),
+              h("div",{style:{fontSize:14,fontWeight:900,color:"#fff"}},fmt(b.amount||0))
+            ),
+            h("div",{style:{padding:"8px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+              h("div",{style:{fontSize:10,color:GRY}},new Date((b.date||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})),
+              b.note?h("div",{style:{fontSize:10,color:GRY,fontStyle:"italic"}},b.note):null
+            )
           );
         })
       ):h("div",{style:{fontSize:10,color:GRY,textAlign:"center",padding:"8px 0"}},"No bonuses recorded yet")
