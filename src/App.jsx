@@ -186,6 +186,31 @@ function calcLoanDeduction(empId,empLoans,year,month){
   });
   return Math.round(total);
 }
+function calcPayUAE(e,absent,half,unpaid,inc,shiftAllow,workingDays){
+  absent=absent||0;half=half||0;unpaid=unpaid||0;inc=inc||0;shiftAllow=shiftAllow||0;
+  var wDays=workingDays||26;
+  var basic=Number(e.basic||e.monthlyCTC||0);
+  var housing=Number(e.housing||0);
+  var transport=Number(e.transport||0);
+  var otherAllow=Number(e.otherAllow||0);
+  var gr=basic+housing+transport+otherAllow+inc+shiftAllow;
+  var perDay=wDays>0?gr/wDays:0;
+  var ad=Math.round(perDay*absent);
+  var hd=Math.round(perDay*half*0.5);
+  var ud=Math.round(perDay*unpaid);
+  var net=Math.round(gr-ad-hd-ud);
+  return {gr:Math.round(gr),net:net,ad:ad,hd:hd,ud:ud,basic:basic,housing:housing,transport:transport,otherAllow:otherAllow,inc:inc,shiftAllow:shiftAllow,pfE:0,pfR:0,esiE:0,esiR:0,pt:0,tds:0,hi:0,cd:0,loanDed:0,wDays:wDays,isFixed:false,pd:perDay};
+}
+function calcGratuityUAE(emp){
+  if(!emp||!emp.joined)return 0;
+  var ms=new Date()-new Date(emp.joined+"T00:00:00");
+  var years=ms/(1000*60*60*24*365.25);
+  if(years<1)return 0;
+  var basic=Number(emp.basic||emp.monthlyCTC||0);
+  var dailyBasic=basic*12/365;
+  if(years<=5)return Math.round(dailyBasic*21*years);
+  return Math.round(dailyBasic*(21*5+30*(years-5)));
+}
 function calcPay(e,absent,half,unpaid,inc,shiftAllow,workingDays){
   absent=absent||0;half=half||0;unpaid=unpaid||0;inc=inc||0;shiftAllow=shiftAllow||0;
   var wDays=workingDays||26; // working days passed from attendance calculation
@@ -1206,6 +1231,8 @@ function calcGratuity(emp,asOfDate){
   return{eligible:years>=5,years:years,months:remMonths,totalMonths:totalMonths,roundedYears:roundedYears,amount:amount};
 }
 var SHIFT_TYPES=["General","Morning","Afternoon","Evening","Night","Rotational"];
+var UAE_NATIONALITIES=["Indian","Pakistani","Filipino","Egyptian","Bangladeshi","Sri Lankan","Nepali","British","American","Emirati","Jordanian","Lebanese","Syrian","Yemeni","Ethiopian","Other"];
+var UAE_SHIFT_TYPES=["General","Morning","Afternoon","Evening","Night","Split"];
 
 function lsGet(key,def){try{var v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
 function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
@@ -1541,7 +1568,7 @@ export default function App(){
   var sEmStp=st(1),emailChangeStep=sEmStp[0],setEmailChangeStep=sEmStp[1];
   var sEmErr=st(""),emailChangeErr=sEmErr[0],setEmailChangeErr=sEmErr[1];
   var sEmLd=st(false),emailChangeLoading=sEmLd[0],setEmailChangeLoading=sEmLd[1];
-  var sOR=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?lsGet("hr_org_"+gu.email,{name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""}):{};}),org=sOR[0],setOrg=sOR[1];
+  var sOR=st(function(){var gu=lsGet("hr_guser",null);return gu&&gu.email?lsGet("hr_org_"+gu.email,{name:"",type:"",email:"",position:"",plan:"free",address:"",logo:"",country:"india"}):{};}),org=sOR[0],setOrg=sOR[1];
   var sOL=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.logo||"";}),orgLogo=sOL[0],setOrgLogo=sOL[1];
   var sOA=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.address||"";}),orgAddr=sOA[0],setOrgAddr=sOA[1];
   var sOPh=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.phone||"";}),orgPhone=sOPh[0],setOrgPhone=sOPh[1];
@@ -1567,6 +1594,7 @@ export default function App(){
   var sAPW=st(""),authPwd=sAPW[0],setAuthPwd=sAPW[1];
   var sAPW2=st(""),authPwd2=sAPW2[0],setAuthPwd2=sAPW2[1];
   var sAMD=st("landing"),authMode=sAMD[0],setAuthMode=sAMD[1];
+  var sSelCountry=st(""),selCountry=sSelCountry[0],setSelCountry=sSelCountry[1];
   var sOTP=st(""),authOtp=sOTP[0],setAuthOtp=sOTP[1];
   var sOTPSent=st(false),otpSent=sOTPSent[0],setOtpSent=sOTPSent[1];
   // Signup form fields
@@ -2328,12 +2356,13 @@ export default function App(){
         // Save org details first, THEN load — avoids race with onAuthStateChange
         _sb.from("user_orgs").upsert({
           email:user.email,org_name:suOrg.trim(),org_type:suType,
-          position:suPos.trim(),full_name:suName.trim(),emp_count_range:suEmpRange
+          position:suPos.trim(),full_name:suName.trim(),emp_count_range:suEmpRange,country:selCountry||"india"
         },{onConflict:"email"}).then(function(){
           setAuthLoading(false);
           // Don't rely on onAuthStateChange here — call loadUserData directly
           setGUser({name:user.email.split("@")[0],email:user.email,photo:""});
           lsSet("hr_guser",{name:user.email.split("@")[0],email:user.email,photo:""});
+          setOrg(function(o){return Object.assign({},o,{country:selCountry||"india"});});
           setOrg({name:suOrg.trim(),type:suType,position:suPos.trim(),email:user.email,plan:"free",address:"",logo:""});
           lsSet("hr_org_"+user.email,{name:suOrg.trim(),type:suType,position:suPos.trim(),email:user.email,plan:"free",address:"",logo:""});
           setScreen("app");
@@ -2466,7 +2495,7 @@ export default function App(){
             "Smart HR for Indian businesses. Attendance, payroll & compliance in one app."),
           /* Buttons — use app accent */
           h("div",{style:{display:"flex",gap:10,width:"100%",maxWidth:250}},
-            h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:1,background:ACC,border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:800,color:isDark?"#0F172A":"#FFFFFF",cursor:"pointer"}},"Start Free"),
+            h("button",{onClick:function(){setAuthErr("");setSelCountry("");setAuthMode("country-pick");},style:{flex:1,background:ACC,border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:800,color:isDark?"#0F172A":"#FFFFFF",cursor:"pointer"}},"Start Free"),
             h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:CRD,border:"1.5px solid "+BD,borderRadius:10,padding:"12px",fontSize:13,fontWeight:600,color:NV,cursor:"pointer"}},"Sign In")
           )
         )
@@ -2570,6 +2599,43 @@ export default function App(){
     );
   })();
   // ── Sign In screen ──
+  var countryPickerScreen=authWrap(h("div",{key:"country-pick"},
+    h("div",{style:{textAlign:"center",marginBottom:28}},
+      logoSVG(48),
+      h("div",{style:{fontSize:22,fontWeight:900,color:T.AUTH_TEXT,marginTop:12,letterSpacing:-.3}},"Select Your Country"),
+      h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:6,lineHeight:1.6}},"This determines payroll rules, compliance and currency for your account. Cannot be changed later.")
+    ),
+    h("div",{style:{display:"flex",flexDirection:"column",gap:12,marginBottom:24}},
+      [{code:"india",flag:"🇮🇳",name:"India",sub:"PF, ESI, PT, TDS · ₹ INR · Indian Labour Law"},{code:"uae",flag:"🇦🇪",name:"UAE",sub:"WPS, EOS, Gratuity · AED · UAE Labour Law"}].map(function(c){
+        var sel=selCountry===c.code;
+        return h("div",{key:c.code,onClick:function(){setSelCountry(c.code);},
+          style:{display:"flex",alignItems:"center",gap:14,padding:"16px 18px",borderRadius:14,
+            border:"2px solid "+(sel?NVY:T.AUTH_INPUT_BDR),
+            background:sel?NVY+"08":T.AUTH_INPUT_BG,cursor:"pointer",transition:"all .2s"}},
+          h("div",{style:{fontSize:36,lineHeight:1}},c.flag),
+          h("div",{style:{flex:1}},
+            h("div",{style:{fontSize:16,fontWeight:800,color:sel?NVY:T.AUTH_TEXT}},(sel?"✓ ":"")+c.name),
+            h("div",{style:{fontSize:11,color:T.AUTH_LABEL,marginTop:2}},c.sub)
+          )
+        );
+      })
+    ),
+    authErr2(),
+    h("button",{
+      onClick:function(){
+        if(!selCountry)return setAuthErr("Please select your country");
+        setAuthErr("");setAuthMode("signup");
+      },
+      style:{width:"100%",background:selCountry?NVY:T.AUTH_INPUT_BDR,border:"none",borderRadius:12,
+        padding:"14px",fontSize:14,fontWeight:700,color:selCountry?"#fff":T.AUTH_LABEL,
+        cursor:selCountry?"pointer":"not-allowed",marginBottom:12}
+    },"Continue →"),
+    h("div",{style:{textAlign:"center",fontSize:12,color:T.AUTH_LABEL}},
+      "Already have an account? ",
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:700},onClick:function(){setAuthErr("");setAuthMode("signin");}},"Sign In")
+    )
+  ));
+
   var signinScreen=authWrap(h("div",{key:"signin"},
     h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:24}},
       h("button",{onClick:function(){setAuthMode("landing");setAuthErr("");},style:{background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:20,padding:0,lineHeight:1}},"\u2190"),
@@ -2994,6 +3060,33 @@ export default function App(){
     var showRemSection=true; // Always show reminder card so user can add reminders
     return h("div",{className:"fd"},
       !onboardDone?renderOnboarding():null,
+      /* UAE visa expiry alerts */
+      isUAE?(function(){
+        var today=new Date();
+        var alerts=actEmps.filter(function(e){
+          if(!e.visaExpiry)return false;
+          var exp=new Date(e.visaExpiry+"T00:00:00");
+          var days=Math.round((exp-today)/(1000*60*60*24));
+          return days<=60;
+        }).map(function(e){
+          var days=Math.round((new Date(e.visaExpiry+"T00:00:00")-today)/(1000*60*60*24));
+          return {emp:e,days:days};
+        }).sort(function(a,b){return a.days-b.days;});
+        if(!alerts.length)return null;
+        return h("div",{style:{background:RED+"10",borderRadius:12,padding:"10px 14px",marginBottom:12,border:"1px solid "+RED+"25"}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}},
+            ic("warning",RED,16),
+            h("div",{style:{fontSize:12,fontWeight:700,color:RED}},"Visa Expiry Alerts ("+alerts.length+")")
+          ),
+          alerts.slice(0,3).map(function(a,i){
+            return h("div",{key:i,style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderTop:i>0?"1px solid "+RED+"20":"none"}},
+              h("div",{style:{fontSize:11,color:NVY,fontWeight:600}},a.emp.name),
+              h("div",{style:{fontSize:11,fontWeight:700,color:a.days<0?RED:a.days<=30?RED:AMB}},
+                a.days<0?"Expired!":a.days===0?"Today!":a.days+" days left")
+            );
+          })
+        );
+      })():null,
       h("div",{style:{background:NVY,borderRadius:18,padding:"18px 18px 20px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:T.SHADOW_LG}},
         h("div",{style:{position:"absolute",right:-30,top:-30,width:120,height:120,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.05)":"rgba(0,0,0,.10)"}}),
         h("div",{style:{position:"absolute",right:30,bottom:-40,width:80,height:80,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.04)":"rgba(0,0,0,.08)"}}),
@@ -3439,7 +3532,32 @@ null
       /* 5. Gratuity */
       accSection("gratuity","savings","#8B5CF6","Gratuity Calculator",
         (function(){if(!selE.joined)return "Join date not set";var ms=new Date()-new Date(selE.joined+"T00:00:00");var y=Math.floor(ms/(1000*60*60*24*365.25));var m=Math.floor((ms%(1000*60*60*24*365.25))/(1000*60*60*24*30.44));return y+"y "+m+"m · "+(y>=5?"Eligible":"Not eligible yet");}()),
-        function(){return renderGratuityCard(selE);}
+        function(){
+          if(isUAE){
+            var grat=calcGratuityUAE(selE);
+            var ms2=selE.joined?new Date()-new Date(selE.joined+"T00:00:00"):0;
+            var yrs2=Math.floor(ms2/(1000*60*60*24*365.25));
+            var mos2=Math.floor((ms2%(1000*60*60*24*365.25))/(1000*60*60*24*30.44));
+            return h("div",null,
+              h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+                h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:8,padding:"8px 10px"}},
+                  h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Service"),
+                  h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},yrs2+"y "+mos2+"m")
+                ),
+                h("div",{style:{flex:1,background:yrs2>=1?"#8B5CF615":SFT,borderRadius:8,padding:"8px 10px",border:"1px solid "+(yrs2>=1?"#8B5CF630":BDR)}},
+                  h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Gratuity"),
+                  h("div",{style:{fontSize:13,fontWeight:700,color:yrs2>=1?"#8B5CF6":GRY}},"AED "+Math.round(grat).toLocaleString())
+                )
+              ),
+              h("div",{style:{background:SFT,borderRadius:8,padding:"8px 10px",fontSize:10,color:GRY}},
+                yrs2<1?"Eligible after 1 year of service":
+                yrs2<=5?"21 days basic/year · "+yrs2+" year"+(yrs2>1?"s":"")+" of service":
+                "30 days basic/year (after 5 yrs) · Capped at 2 years salary"
+              )
+            );
+          }
+          return renderGratuityCard(selE);
+        }
       ),
 
       /* 6. Salary History */
@@ -6024,7 +6142,7 @@ null
       )
     ):
     authMode==="emp-signup"?empSignupScreen:
-    authMode==="signup"?signupScreen:
+    authMode==="country-pick"?countryPickerScreen:authMode==="signup"?signupScreen:
     authMode==="signin"?signinScreen:
     landingScreen;
   else if(screen==="setup")appContent=setupScreen;
