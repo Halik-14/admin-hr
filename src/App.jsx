@@ -1440,6 +1440,7 @@ export default function App(){
   var sBonusNote=st(""),bonusNote=sBonusNote[0],setBonusNote=sBonusNote[1];
   var sBonusDate=st(""),bonusDate=sBonusDate[0],setBonusDate=sBonusDate[1];
   var sCoExp=st([]),coExp=sCoExp[0],setCoExp=sCoExp[1];
+  var sDashView=st("overview"),dashView=sDashView[0],setDashView=sDashView[1];
   var sClaims=st([]),claims=sClaims[0],setClaims=sClaims[1];
   var sClaimEmp=st(""),claimEmp=sClaimEmp[0],setClaimEmp=sClaimEmp[1];
   var sClaimCat=st("travel"),claimCat=sClaimCat[0],setClaimCat=sClaimCat[1];
@@ -1601,6 +1602,7 @@ export default function App(){
   var sRemTxt=st(""),remTxt=sRemTxt[0],setRemTxt=sRemTxt[1];
   var sRemDate=st(""),remDate=sRemDate[0],setRemDate=sRemDate[1];
   var sRemOpen=st(false),remOpen=sRemOpen[0],setRemOpen=sRemOpen[1];
+  var sShowAna=st(false),showAna=sShowAna[0],setShowAna=sShowAna[1];
   var sPayFilt=st("all"),payFilt=sPayFilt[0],setPayFilt=sPayFilt[1];
   var sPayDept=st(""),payDept=sPayDept[0],setPayDept=sPayDept[1];
   var sSHIFTS=st(function(){return lsGet("hr_shifts",{});}),shifts=sSHIFTS[0],setShifts=sSHIFTS[1];
@@ -3002,6 +3004,80 @@ export default function App(){
     var showRemSection=true; // Always show reminder card so user can add reminders
     return h("div",{className:"fd"},
       !onboardDone?renderOnboarding():null,
+      /* ── Dashboard Tab: Overview | Analytics ── */
+      h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:12,border:"1px solid "+BDR}},
+        ["overview","analytics"].map(function(v){
+          var active=dashView===v;
+          return h("button",{key:v,onClick:function(){setDashView(v);},
+            style:{flex:1,background:active?CARD:"transparent",border:"none",borderRadius:10,
+              padding:"8px",fontSize:12,fontWeight:active?700:500,
+              color:active?NVY:GRY,cursor:"pointer",
+              boxShadow:active?"0 1px 4px rgba(0,0,0,.08)":"none",
+              display:"flex",alignItems:"center",justifyContent:"center",gap:5,transition:"all .2s"}},
+            ic(v==="overview"?"dashboard":"monitoring",active?NVY:GRY,13),
+            v==="overview"?"Overview":"Analytics"
+          );
+        })
+      ),
+      /* ── Analytics View ── */
+      dashView==="analytics"?h("div",null,
+        h("div",{style:{background:CARD,borderRadius:14,border:"1px solid "+BDR,padding:"14px",marginBottom:12}},
+          h("div",{style:{fontSize:12,fontWeight:800,color:NVY,marginBottom:12}},"Team Analytics"),
+          (function(){
+            var deptMap={};actEmps.forEach(function(e){var d=e.dept||"Others";deptMap[d]=(deptMap[d]||0)+1;});
+            var depts=Object.entries(deptMap).sort(function(a,b){return b[1]-a[1];});
+            var colors=["#2563EB","#10B981","#D97706","#7C3AED","#DC2626","#64748B"];
+            return h("div",{style:{marginBottom:14}},
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"BY DEPARTMENT"),
+              depts.length>0?depts.map(function(d,i){
+                var pct=actEmps.length>0?Math.round(d[1]*100/actEmps.length):0;
+                return h("div",{key:d[0],style:{marginBottom:7}},
+                  h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},
+                    h("span",{style:{fontSize:11,color:NVY,fontWeight:600}},d[0]),
+                    h("span",{style:{fontSize:10,color:GRY}},d[1]+" emp · "+pct+"%")
+                  ),
+                  h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden"}},
+                    h("div",{style:{width:pct+"%",height:"100%",background:colors[i%colors.length],borderRadius:99}}))
+                );
+              }):h("div",{style:{fontSize:10,color:GRY,padding:"8px 0"}},"Add departments to employees to see breakdown")
+            );
+          })(),
+          (function(){
+            var ranges=[{l:"Below ₹15K",min:0,max:15000},{l:"₹15K – 30K",min:15000,max:30000},{l:"₹30K – 50K",min:30000,max:50000},{l:"Above ₹50K",min:50000,max:Infinity}];
+            var counts=ranges.map(function(r){return actEmps.filter(function(e){var c=Number(e.monthlyCTC||e.fixedSalary||0);return c>=r.min&&c<r.max;}).length;});
+            var mx=Math.max.apply(null,counts)||1;
+            return h("div",{style:{marginBottom:14}},
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"SALARY DISTRIBUTION"),
+              ranges.map(function(r,i){
+                return h("div",{key:r.l,style:{display:"flex",alignItems:"center",gap:8,marginBottom:6}},
+                  h("span",{style:{fontSize:10,color:GRY,width:80,flexShrink:0}},r.l),
+                  h("div",{style:{flex:1,background:BDR,borderRadius:99,height:7,overflow:"hidden"}},
+                    h("div",{style:{width:(counts[i]/mx*100)+"%",height:"100%",background:"#2563EB",borderRadius:99}})),
+                  h("span",{style:{fontSize:11,fontWeight:700,color:NVY,width:20,textAlign:"right",flexShrink:0}},counts[i])
+                );
+              })
+            );
+          })(),
+          (function(){
+            var al=(loans||[]).filter(function(l){return l.status==="active";});
+            if(!al.length)return h("div",{style:{fontSize:10,color:GRY,textAlign:"center",padding:"4px 0"}},"No active loans");
+            var out=al.reduce(function(s,l){return s+Math.max(0,Math.round(((l.tenure||0)-(l.paidInstallments||0))*(l.emi||0)));},0);
+            return h("div",{style:{background:RED+"08",borderRadius:9,padding:"10px 12px",border:"1px solid "+RED+"15",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+              h("div",null,
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"TOTAL LOAN OUTSTANDING"),
+                h("div",{style:{fontSize:16,fontWeight:900,color:RED}},fmt(out)),
+                h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"EMI drain: "+fmt(al.reduce(function(s,l){return s+(l.emi||0);},0))+"/mo")
+              ),
+              h("div",{style:{textAlign:"right"}},
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"ACTIVE LOANS"),
+                h("div",{style:{fontSize:22,fontWeight:900,color:RED}},al.length)
+              )
+            );
+          })()
+        )
+      ):null,
+      /* ── Overview content (shown only in overview tab) ── */
+      dashView==="overview"?h("div",null,
       h("div",{style:{background:NVY,borderRadius:18,padding:"18px 18px 20px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:T.SHADOW_LG}},
         h("div",{style:{position:"absolute",right:-30,top:-30,width:120,height:120,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.05)":"rgba(0,0,0,.10)"}}),
         h("div",{style:{position:"absolute",right:30,bottom:-40,width:80,height:80,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.04)":"rgba(0,0,0,.08)"}}),
@@ -3031,48 +3107,7 @@ export default function App(){
           );
         })
       ),
-      h("div",{style:{background:CARD,borderRadius:14,border:"1px solid "+BDR,padding:"12px 14px",marginBottom:12}},
-        h("div",{style:{fontSize:12,fontWeight:800,color:NVY,marginBottom:10}},"Team Analytics"),
-        (function(){
-          var deptMap={};actEmps.forEach(function(e){var d=e.dept||"Others";deptMap[d]=(deptMap[d]||0)+1;});
-          var depts=Object.entries(deptMap).sort(function(a,b){return b[1]-a[1];});
-          var colors=["#2563EB","#10B981","#D97706","#7C3AED","#DC2626","#64748B"];
-          return depts.length>0?h("div",{style:{marginBottom:10}},
-            h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:6}},"BY DEPARTMENT"),
-            depts.map(function(d,i){
-              var pct=actEmps.length>0?Math.round(d[1]*100/actEmps.length):0;
-              return h("div",{key:d[0],style:{marginBottom:5}},
-                h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},h("span",{style:{fontSize:10,color:NVY,fontWeight:600}},d[0]),h("span",{style:{fontSize:9,color:GRY}},d[1]+" · "+pct+"%")),
-                h("div",{style:{background:BDR,borderRadius:99,height:5,overflow:"hidden"}},h("div",{style:{width:pct+"%",height:"100%",background:colors[i%colors.length],borderRadius:99}}))
-              );
-            })
-          ):null;
-        })(),
-        (function(){
-          var ranges=[{l:"<15K",min:0,max:15000},{l:"15-30K",min:15000,max:30000},{l:"30-50K",min:30000,max:50000},{l:">50K",min:50000,max:Infinity}];
-          var counts=ranges.map(function(r){return actEmps.filter(function(e){var c=Number(e.monthlyCTC||e.fixedSalary||0);return c>=r.min&&c<r.max;}).length;});
-          var mx=Math.max.apply(null,counts)||1;
-          return h("div",{style:{marginBottom:10}},
-            h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:6}},"SALARY RANGE"),
-            ranges.map(function(r,i){
-              return h("div",{key:r.l,style:{display:"flex",alignItems:"center",gap:6,marginBottom:4}},
-                h("span",{style:{fontSize:9,color:GRY,width:40,flexShrink:0}},r.l),
-                h("div",{style:{flex:1,background:BDR,borderRadius:99,height:6,overflow:"hidden"}},h("div",{style:{width:(counts[i]/mx*100)+"%",height:"100%",background:"#2563EB",borderRadius:99}})),
-                h("span",{style:{fontSize:10,fontWeight:700,color:NVY,width:16,textAlign:"right"}},counts[i])
-              );
-            })
-          );
-        })(),
-        (function(){
-          var al=(loans||[]).filter(function(l){return l.status==="active";});
-          if(!al.length)return null;
-          var out=al.reduce(function(s,l){return s+Math.max(0,Math.round(((l.tenure||0)-(l.paidInstallments||0))*(l.emi||0)));},0);
-          return h("div",{style:{background:RED+"08",borderRadius:9,padding:"8px 10px",border:"1px solid "+RED+"15",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            h("div",null,h("div",{style:{fontSize:9,color:GRY,marginBottom:1}},"LOAN OUTSTANDING"),h("div",{style:{fontSize:14,fontWeight:900,color:RED}},fmt(out))),
-            h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:9,color:GRY,marginBottom:1}},"ACTIVE"),h("div",{style:{fontSize:18,fontWeight:900,color:RED}},al.length))
-          );
-        })()
-      ),
+
       h("button",{onClick:function(){setTab("attendance");},style:{width:"100%",background:themeMode==="dark"?"#4F46E5":"#0F172A",border:"none",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 16px rgba(15,23,42,.25)"}},
         h("div",{style:{width:44,height:44,borderRadius:13,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(ICONS.cal,"#fff",22)),
         h("div",{style:{flex:1,textAlign:"left"}},
@@ -3184,6 +3219,7 @@ export default function App(){
         })()
       ),0),
       renderComplianceCard()
+      ):null
     );
   }
 
@@ -5698,6 +5734,86 @@ null
           })
         ),
         h("div",{style:{background:SFT,borderRadius:10,padding:"8px 12px",border:"1px solid "+BDR,fontSize:10,color:GRY}},"Salary data pulled from payroll for "+MOS2[coExpM]+" "+coExpY+". Change month using selector above.")
+      ),
+      /* ── Staff Claims ── */
+      h("div",{style:{marginTop:8}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,paddingTop:14,borderTop:"1px solid "+BDR}},
+          h("div",null,
+            h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},"Staff Claims"),
+            h("div",{style:{fontSize:10,color:GRY,marginTop:1}},(claims||[]).filter(function(c){return c.status==="pending";}).length+" pending · "+(claims||[]).filter(function(c){return c.status==="approved";}).length+" approved")
+          ),
+          h("button",{onClick:function(){setShowClaimForm(!showClaimForm);},
+            style:{background:showClaimForm?SFT:NVY,border:showClaimForm?"1px solid "+BDR:"none",borderRadius:9,padding:"6px 12px",fontSize:11,fontWeight:700,color:showClaimForm?GRY:CARD,cursor:"pointer"}},
+            showClaimForm?"Cancel":"+ Add")
+        ),
+        showClaimForm?h("div",{style:{background:SFT,borderRadius:12,border:"1px solid "+BDR,padding:12,marginBottom:12}},
+          lbl("EMPLOYEE"),
+          h("select",{value:claimEmp,onChange:function(e){setClaimEmp(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}},
+            h("option",{value:""},"Select employee"),actEmps.map(function(e){return h("option",{key:e.id,value:String(e.id)},e.name);})),
+          h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+            h("div",{style:{flex:1}},lbl("CATEGORY"),
+              h("select",{value:claimCat,onChange:function(e){setClaimCat(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},
+                [["travel","Travel"],["food","Food & Meals"],["medical","Medical"],["accommodation","Accommodation"],["stationery","Stationery"],["other","Other"]].map(function(c){return h("option",{key:c[0],value:c[0]},c[1]);}))),
+            h("div",{style:{flex:1}},lbl("AMOUNT (RS.)"),
+              h("input",{type:"number",value:claimAmt,onChange:function(e){setClaimAmt(e.target.value);},placeholder:"0",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+          ),
+          h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+            h("div",{style:{flex:1}},lbl("DATE"),
+              h("input",{type:"date",value:claimDate,onChange:function(e){setClaimDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+            h("div",{style:{flex:1}},lbl("DESCRIPTION"),
+              h("input",{type:"text",value:claimDesc,onChange:function(e){setClaimDesc(e.target.value);},placeholder:"Brief note",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+          ),
+          h("button",{onClick:function(){
+            if(!claimEmp||!claimAmt||!claimDate)return showT("Fill all required fields","err");
+            var emp2=actEmps.find(function(e){return String(e.id)===claimEmp;});
+            if(!emp2)return showT("Select employee","err");
+            var d2=new Date(claimDate+"T00:00:00");
+            var c={id:Date.now(),employeeId:claimEmp,employeeName:emp2.name,category:claimCat,amount:Number(claimAmt),date:claimDate,description:claimDesc,status:"pending",month:d2.getMonth(),year:d2.getFullYear()};
+            setClaims(function(p){return [c].concat(p||[]);});
+            _sb.from("staff_claims").insert({id:String(c.id),employer_email:gUser.email,employee_id:claimEmp,employee_name:emp2.name,category:claimCat,amount:c.amount,date:claimDate,description:claimDesc,status:"pending",month:c.month,year:c.year}).then(function(r){if(r&&r.error)showT("Error","err");else showT("Claim added");});
+            setClaimEmp("");setClaimAmt("");setClaimDate("");setClaimDesc("");setShowClaimForm(false);
+          },style:{width:"100%",background:NVY,border:"none",borderRadius:9,padding:"11px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Claim")
+        ):null,
+        (function(){
+          var claimCats2={travel:"Travel",food:"Food & Meals",medical:"Medical",accommodation:"Accommodation",stationery:"Stationery",other:"Other"};
+          var clrMap={travel:"#2563EB",food:"#10B981",medical:"#DC2626",accommodation:"#7C3AED",stationery:"#D97706",other:"#64748B"};
+          var pending2=(claims||[]).filter(function(c){return c.status==="pending";});
+          var approved2=(claims||[]).filter(function(c){return c.status==="approved";});
+          var rejected2=(claims||[]).filter(function(c){return c.status==="rejected";});
+          function claimCard2(c,actions){
+            var clr2=clrMap[c.category]||GRY;
+            var sClr=c.status==="approved"?GRN:c.status==="rejected"?RED:AMB;
+            return h("div",{key:c.id,style:{background:CARD,borderRadius:10,border:"1px solid "+BDR,marginBottom:7,overflow:"hidden"}},
+              h("div",{style:{background:clr2,padding:"7px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+                h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  h("div",{style:{fontSize:11,fontWeight:700,color:"#fff"}},claimCats2[c.category]||c.category),
+                  h("div",{style:{fontSize:9,background:"rgba(255,255,255,.2)",color:"#fff",borderRadius:10,padding:"1px 6px"}},c.employeeName)
+                ),
+                h("div",{style:{fontSize:13,fontWeight:900,color:"#fff"}},fmt(c.amount))
+              ),
+              h("div",{style:{padding:"8px 12px"}},
+                h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:actions?8:0}},
+                  h("div",null,
+                    h("div",{style:{fontSize:10,color:GRY}},new Date(c.date+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})),
+                    c.description?h("div",{style:{fontSize:10,color:GRY,fontStyle:"italic",marginTop:1}},c.description):null
+                  ),
+                  h("div",{style:{fontSize:10,fontWeight:700,background:sClr+"12",color:sClr,borderRadius:6,padding:"3px 8px"}},c.status.toUpperCase())
+                ),
+                actions?h("div",{style:{display:"flex",gap:6}},
+                  h("button",{onClick:function(){setClaims(function(p){return p.map(function(x){return x.id===c.id?Object.assign({},x,{status:"approved"}):x;});});_sb.from("staff_claims").update({status:"approved"}).eq("id",String(c.id)).then(function(){});showT("Approved — added to payroll");},style:{flex:1,background:GRN+"12",border:"1px solid "+GRN+"33",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:GRN,cursor:"pointer"}},"Approve"),
+                  h("button",{onClick:function(){setClaims(function(p){return p.map(function(x){return x.id===c.id?Object.assign({},x,{status:"rejected"}):x;});});_sb.from("staff_claims").update({status:"rejected"}).eq("id",String(c.id)).then(function(){});showT("Rejected");},style:{flex:1,background:RED+"12",border:"1px solid "+RED+"33",borderRadius:7,padding:"7px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},"Reject"),
+                  h("button",{onClick:function(){if(!window.confirm("Delete?"))return;setClaims(function(p){return p.filter(function(x){return x.id!==c.id;});});_sb.from("staff_claims").delete().eq("id",String(c.id)).then(function(){});},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",cursor:"pointer"}},ic("delete",GRY,12))
+                ):h("button",{onClick:function(){if(!window.confirm("Delete?"))return;setClaims(function(p){return p.filter(function(x){return x.id!==c.id;});});_sb.from("staff_claims").delete().eq("id",String(c.id)).then(function(){});},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"4px 8px",fontSize:10,color:GRY,cursor:"pointer",marginTop:4}},ic("delete",GRY,11))
+              )
+            );
+          }
+          return h("div",null,
+            pending2.length>0?h("div",{style:{marginBottom:10}},h("div",{style:{fontSize:9,fontWeight:700,color:AMB,letterSpacing:.5,marginBottom:6}},"PENDING ("+pending2.length+")"),pending2.map(function(c){return claimCard2(c,true);})):null,
+            approved2.length>0?h("div",{style:{marginBottom:10}},h("div",{style:{fontSize:9,fontWeight:700,color:GRN,letterSpacing:.5,marginBottom:6}},"APPROVED — IN PAYROLL ("+approved2.length+")"),approved2.map(function(c){return claimCard2(c,false);})):null,
+            rejected2.length>0?h("div",null,h("div",{style:{fontSize:9,fontWeight:700,color:RED,letterSpacing:.5,marginBottom:6}},"REJECTED ("+rejected2.length+")"),rejected2.map(function(c){return claimCard2(c,false);})):null,
+            (claims||[]).length===0&&!showClaimForm?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY,fontSize:11}},"No claims yet"):null
+          );
+        })()
       )
     );
   }
@@ -5802,11 +5918,11 @@ null
         h("button",{onClick:function(){setProTab("expenses");},style:{flex:1,background:proTab==="expenses"?NVY:"transparent",border:"none",borderRadius:9,padding:"9px",color:proTab==="expenses"?"#fff":GRY,fontSize:11,fontWeight:proTab==="expenses"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
           ic("account_balance_wallet",proTab==="expenses"?"#fff":GRY,14),"Expenses"
         ),
-        h("button",{onClick:function(){setProTab("claims");},style:{flex:1,background:proTab==="claims"?NVY:"transparent",border:"none",borderRadius:9,padding:"9px",color:proTab==="claims"?"#fff":GRY,fontSize:11,fontWeight:proTab==="claims"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
-          ic("forward_to_inbox",proTab==="claims"?"#fff":GRY,14),"Claims"
+        h("button",{onClick:function(){setProTab("analytics");},style:{flex:1,background:proTab==="analytics"?NVY:"transparent",border:"none",borderRadius:9,padding:"9px",color:proTab==="analytics"?"#fff":GRY,fontSize:11,fontWeight:proTab==="analytics"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
+          ic("monitoring",proTab==="analytics"?"#fff":GRY,14),"Analytics"
         )
       ),
-      proTab==="expenses"?renderCompanyExpenses():proTab==="claims"?renderStaffClaims():proTab==="kpi"?renderKpiSection():h("div",null,
+      proTab==="expenses"?renderCompanyExpenses():proTab==="analytics"?renderHRAnalytics():proTab==="kpi"?renderKpiSection():h("div",null,
       pendingLeaves.length>0?h("div",{onClick:function(){setTab("attendance");setAttTab("leaves");},style:{background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:14,padding:"10px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:10,cursor:"pointer"}},
         h("div",{style:{width:36,height:36,borderRadius:10,background:AMB+"20",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("event_busy",AMB,18)),
         h("div",{style:{flex:1}},
