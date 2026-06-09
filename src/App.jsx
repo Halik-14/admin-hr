@@ -193,11 +193,14 @@ function calcPay(e,absent,half,unpaid,inc,shiftAllow,workingDays){
   var fixedAmt=Number(e.fixedSalary)||Number(e.monthlyCTC)||0;
   // For fixed salary: full amount is the base, no HRA/allowance split
   // For split salary: use existing basic/hra/allow fields
-  var basicBase=isFixed?fixedAmt:(e.basic||0);
+  var ctcFallback=Number(e.monthlyCTC||e.fixedSalary||0);
+  var basicBase=isFixed?fixedAmt:(Number(e.basic)||Math.round(ctcFallback*0.5));
+  var hraVal=isFixed?0:(Number(e.hra)||Math.round(ctcFallback*0.2));
+  var allowVal=isFixed?0:(Number(e.allow)||Math.round(ctcFallback*0.3));
   var pd=basicBase/wDays; // per day rate based on actual working days
   var ad=absent*pd,hd=half*(pd/2),ud=unpaid*pd;
   var eb=Math.max(0,basicBase-ad-hd-ud);
-  var gr=isFixed?(eb+inc+shiftAllow):(eb+(e.hra||0)+(e.allow||0)+inc+shiftAllow);
+  var gr=isFixed?(eb+inc+shiftAllow):(eb+hraVal+allowVal+inc+shiftAllow);
   // PF: on basic (capped at 15000 if mode=capped)
   var pfB=e.pf?(e.pfMode==="actual"?eb:Math.min(eb,15000)):0;
   var pfE=Math.round(pfB*.12),pfR=Math.round(pfB*.12);
@@ -1629,6 +1632,27 @@ export default function App(){
   var revCtcR=sr(null),revDateR=sr(null),revNoteR=sr(null);
   var edn=sr(null),edm=sr(null),edem=sr(null),edei=sr(null),edro=sr(null),edctc=sr(null),edhi=sr(null),edpa=sr(null),edua=sr(null);
 
+  
+  // ── System back button handler ──
+  se(function(){
+    if(screen!=="app")return;
+    var lastBackTime=0;
+    function handleBack(e){
+      // If on sub-page, go back within app
+      if(selE){setSelE(null);setEditE(null);setOffE(null);history.pushState(null,"",location.href);return;}
+      if(editE){setEditE(null);history.pushState(null,"",location.href);return;}
+      if(offE){setOffE(null);history.pushState(null,"",location.href);return;}
+      // On main tab - show exit toast or exit
+      var now=Date.now();
+      if(now-lastBackTime<2000){window.history.back();return;}
+      lastBackTime=now;
+      showT("Press back again to exit","info");
+      history.pushState(null,"",location.href);
+    }
+    history.pushState(null,"",location.href);
+    window.addEventListener("popstate",handleBack);
+    return function(){window.removeEventListener("popstate",handleBack);};
+  },[screen,selE,editE,offE]);
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
   se(function(){
@@ -3227,18 +3251,15 @@ null
               ):h("div",null,
                 h("div",{style:{fontSize:11,color:GRY,marginTop:1}},e.role+" \u2022 "+e.dept),
                 h("div",{style:{display:"flex",gap:5,marginTop:3,alignItems:"center"}},
-                  h("div",{style:{fontSize:9,fontWeight:700,padding:"1px 6px",borderRadius:10,background:e.salaryType==="fixed"?ACCENT+"12":"#10B981"+"12",color:e.salaryType==="fixed"?ACCENT:"#10B981"}},
-                    e.salaryType==="fixed"?"Fixed":"Split"
-                  ),
                   h("div",{style:{fontSize:10,color:GRY,opacity:.8}},e.eid+" \u2022 Joined "+e.joined)
                 ),
                 
               )
             ),
             overLim?null:h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
-              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="tel:"+e.mob;},style:{width:28,height:28,borderRadius:8,background:"#10B98112",border:"1px solid #10B98125",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("phone","#10B981",13)):null,
-              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.open("https://wa.me/91"+String(e.mob).replace(/\D/g,""),"_blank");},style:{width:28,height:28,borderRadius:8,background:"#25D36612",border:"1px solid #25D36625",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("whatsapp","#25D366",13)):null,
-              e.email?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="mailto:"+e.email;},style:{width:28,height:28,borderRadius:8,background:"#2563EB12",border:"1px solid #2563EB25",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("mail","#2563EB",13)):null,
+              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="tel:"+e.mob;},style:{width:34,height:34,borderRadius:9,background:"#10B98112",border:"1px solid #10B98125",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("phone","#10B981",15)):null,
+              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.open("https://wa.me/91"+String(e.mob).replace(/\D/g,""),"_blank");},style:{width:34,height:34,borderRadius:9,background:"#25D36612",border:"1px solid #25D36625",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("whatsapp","#25D366",15)):null,
+              e.email?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="mailto:"+e.email;},style:{width:34,height:34,borderRadius:9,background:"#2563EB12",border:"1px solid #2563EB25",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("mail","#2563EB",15)):null,
               h("div",{style:{width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.chev,GRY,16))
             )
           );
@@ -6183,7 +6204,7 @@ null
           h("div",{style:{fontSize:10,fontWeight:tab==="pro"?700:500,letterSpacing:.2}},"Insight")
         )
       ),
-      toast?h("div",{style:{position:"fixed",top:18,left:"50%",transform:"translateX(-50%)",background:toast.type==="err"?RED:(themeMode==="light"?"#0F172A":"#fff"),color:toast.type==="err"?"#fff":(themeMode==="light"?"#fff":"#0F172A"),padding:"10px 20px",borderRadius:30,fontSize:13,fontWeight:600,zIndex:999,whiteSpace:"nowrap",boxShadow:T.SHADOW_LG,animation:"fU .2s ease"}},toast.msg):null,
+      toast?h("div",{style:{position:"fixed",top:18,left:"50%",transform:"translateX(-50%)",background:toast.type==="err"?RED:toast.type==="info"?AMB:(themeMode==="light"?"#0F172A":"#fff"),color:toast.type==="err"?"#fff":toast.type==="info"?"#fff":(themeMode==="light"?"#fff":"#0F172A"),padding:"10px 20px",borderRadius:30,fontSize:13,fontWeight:600,zIndex:999,whiteSpace:"nowrap",boxShadow:T.SHADOW_LG,animation:"fU .2s ease"}},toast.msg):null,
       showBkup?h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px"}},
         h("div",{style:{background:CARD,borderRadius:18,padding:22,width:"100%",maxWidth:360,boxShadow:"0 20px 60px rgba(0,0,0,.35)",animation:"sU .3s ease"}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}},
