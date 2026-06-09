@@ -1477,6 +1477,7 @@ export default function App(){
   var sAuthSign=st(lsGet("hr_auth_sign","")),authSign=sAuthSign[0],setAuthSign=sAuthSign[1];
   var sWaOfficial=st(lsGet("hr_wa_official","")),waOfficial=sWaOfficial[0],setWaOfficial=sWaOfficial[1];
   var sET=st("active"),empTab=sET[0],setEmpTab=sET[1];
+  var sEmpSalFilter=st("all"),empSalFilter=sEmpSalFilter[0],setEmpSalFilter=sEmpSalFilter[1];
   var sOE=st(null),offE=sOE[0],setOffE=sOE[1];
   var sOS=st(1),offStep=sOS[0],setOffStep=sOS[1];
   var sOD=st({reason:"",type:"resigned",handover:[],note:"",resignDate:""}),offData=sOD[0],setOffData=sOD[1];
@@ -3016,14 +3017,14 @@ export default function App(){
           return h("div",{key:i,style:{
             background:CARD,
             border:"1px solid "+BDR,
-            borderRadius:11,
-            padding:"8px 10px",
-            boxShadow:themeMode==="light"?"0 1px 6px rgba(15,23,42,.05)":"0 1px 4px rgba(0,0,0,.2)",
+            borderRadius:9,
+            padding:"6px 8px",
+            boxShadow:themeMode==="light"?"0 1px 4px rgba(15,23,42,.04)":"0 1px 3px rgba(0,0,0,.15)",
             position:"relative",overflow:"hidden"
           }},
             h("div",{style:{position:"absolute",right:-8,top:-8,width:44,height:44,borderRadius:"50%",background:s.bg,opacity:.4}}),
-            h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:4}},
-              h("div",{style:{width:26,height:26,borderRadius:7,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(s.ico,s.ic,13)),
+            h("div",{style:{display:"flex",alignItems:"center",gap:4,marginBottom:3}},
+              h("div",{style:{width:22,height:22,borderRadius:6,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(s.ico,s.ic,11)),
               h("div",{style:{fontSize:8,fontWeight:700,color:GRY,letterSpacing:.4,lineHeight:1.2}},s.l.toUpperCase())
             ),
             h("div",{style:{fontSize:String(s.v).length>8?16:24,fontWeight:900,color:NVY,letterSpacing:-.5,lineHeight:1,marginBottom:3}},s.v),
@@ -3151,7 +3152,7 @@ export default function App(){
     if(editE)return renderEditEmp();
     if(offE)return renderOffboard();
     var q=searchQ.trim().toLowerCase();
-    var filteredEmps=q?actEmps.filter(function(e){return(e.name||"").toLowerCase().includes(q)||(e.role||"").toLowerCase().includes(q)||(e.dept||"").toLowerCase().includes(q)||(e.eid||"").toLowerCase().includes(q);}):actEmps;
+    var filteredEmps=(q?actEmps.filter(function(e){return(e.name||"").toLowerCase().includes(q)||(e.role||"").toLowerCase().includes(q)||(e.dept||"").toLowerCase().includes(q)||(e.eid||"").toLowerCase().includes(q);}):actEmps).filter(function(e){return empSalFilter==="all"?true:e.salaryType===empSalFilter||(empSalFilter==="split"&&!e.salaryType);});
     // ── Over-limit: sort active emps by join date, last added = suspended first ──
     var activeLimit=empLimit||5;
     var sortedActive=actEmps.slice().sort(function(a,b){return new Date(a.joined||0)-new Date(b.joined||0);});
@@ -3163,6 +3164,14 @@ export default function App(){
         [["active","Active"],["terminated","Offboarded"]].map(function(item){return h("button",{key:item[0],onClick:function(){setEmpTab(item[0]);},style:{flex:1,background:empTab===item[0]?ACCENT:"transparent",border:"none",borderRadius:9,padding:"8px",color:empTab===item[0]?ACCENT_FG:GRY,fontSize:12,fontWeight:600,cursor:"pointer"}},item[1]);})
       ),
       empTab==="active"?h("div",null,
+        /* Salary type filter */
+        h("div",{style:{display:"flex",gap:6,marginBottom:10}},
+          [["all","All"],["split","Split"],["fixed","Fixed"]].map(function(f){
+            var active=empSalFilter===f[0];
+            return h("button",{key:f[0],onClick:function(){setEmpSalFilter(f[0]);},
+              style:{background:active?NVY:SFT,border:"1px solid "+(active?NVY:BDR),borderRadius:20,padding:"5px 12px",fontSize:10,fontWeight:active?700:500,color:active?CARD:GRY,cursor:"pointer"}},f[1]);
+          })
+        ),
         // Over-limit warning
         actEmps.length>(empLimit||5)?h("div",{style:{background:RED+"10",border:"1px solid "+RED+"33",borderRadius:12,padding:"10px 14px",marginBottom:10,display:"flex",gap:8,alignItems:"flex-start"}},
           ic("warning",RED,16),
@@ -3223,12 +3232,13 @@ null
                   ),
                   h("div",{style:{fontSize:10,color:GRY,opacity:.8}},e.eid+" \u2022 Joined "+e.joined)
                 ),
-                h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginTop:4}},"Net "+fmt(d.net)+" / mo")
+                
               )
             ),
             overLim?null:h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
-              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="tel:"+e.mob;},style:{width:30,height:30,borderRadius:8,background:"#10B98112",border:"1px solid #10B98125",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("phone","#10B981",14)):null,
-              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.open("https://wa.me/91"+String(e.mob).replace(/\D/g,""),"_blank");},style:{width:30,height:30,borderRadius:8,background:"#25D36612",border:"1px solid #25D36625",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("whatsapp","#25D366",14)):null,
+              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="tel:"+e.mob;},style:{width:28,height:28,borderRadius:8,background:"#10B98112",border:"1px solid #10B98125",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("phone","#10B981",13)):null,
+              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.open("https://wa.me/91"+String(e.mob).replace(/\D/g,""),"_blank");},style:{width:28,height:28,borderRadius:8,background:"#25D36612",border:"1px solid #25D36625",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("whatsapp","#25D366",13)):null,
+              e.email?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="mailto:"+e.email;},style:{width:28,height:28,borderRadius:8,background:"#2563EB12",border:"1px solid #2563EB25",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("mail","#2563EB",13)):null,
               h("div",{style:{width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.chev,GRY,16))
             )
           );
@@ -3665,8 +3675,25 @@ null
           lbl("FIXED MONTHLY SALARY (Rs.)"),
           h("input",{type:"number",value:editE.fixedSalary||editE.monthlyCTC||"",onChange:function(e){setEditE(function(p){return Object.assign({},p,{fixedSalary:e.target.value,monthlyCTC:e.target.value,basic:e.target.value,hra:0,allow:0});});},placeholder:"e.g. 20000",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})
         ):h("div",null,
-        lbl("MONTHLY CTC (Rs.)"),edInp("monthlyCTC","number","e.g. 50000"),
-        h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:10,fontSize:11,color:GRY}},"Auto-split: 50% Basic, 20% HRA, 30% Allow")
+        lbl("MONTHLY CTC (Rs.)"),
+        h("input",{type:"number",value:editE.monthlyCTC||"",onChange:function(ev){
+          var v=Number(ev.target.value)||0;
+          setEditE(function(p){return Object.assign({},p,{
+            monthlyCTC:String(v),
+            basic:Math.round(v*0.5),
+            hra:Math.round(v*0.2),
+            allow:Math.round(v*0.3)
+          });});
+        },placeholder:"e.g. 50000",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6}}),
+        h("div",{style:{background:ACCENT_SOFT,borderRadius:8,padding:"7px 10px",marginBottom:4,fontSize:10,color:"#4F46E5"}},"Auto-split: 50% Basic · 20% HRA · 30% Allowance"),
+        editE.monthlyCTC?h("div",{style:{display:"flex",gap:6,marginBottom:10}},
+          [["Basic",Math.round(Number(editE.monthlyCTC)*0.5)],["HRA",Math.round(Number(editE.monthlyCTC)*0.2)],["Allow",Math.round(Number(editE.monthlyCTC)*0.3)]].map(function(x){
+            return h("div",{key:x[0],style:{flex:1,background:SFT,borderRadius:8,padding:"6px 8px",textAlign:"center",border:"1px solid "+BDR}},
+              h("div",{style:{fontSize:9,color:GRY,marginBottom:1}},x[0]),
+              h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},"Rs."+x[1].toLocaleString())
+            );
+          })
+        ):null
         ),
         lbl("LEAVE ENTITLEMENT (days/year)"),edInp("leaveEntitlement","number","e.g. 12"),
         lbl("HEALTH INS. (Rs./mo)"),edInp("hi","number","e.g. 500")
