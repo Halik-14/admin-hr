@@ -61,7 +61,7 @@ var COLS=["#6366F1","#EC4899","#F59E0B","#10B981","#8B5CF6","#0D9488","#DC2626",
 var OT=["IT / Software","Institute / Education","Manufacturing","Healthcare","Retail","Finance","Logistics","NGO","Other"];
 var ATC={present:GRN,absent:RED,half:AMB,paid:PUR,unpaid:IND,holiday:SKY,unmarked:GRY};
 var ATL={present:"Present",absent:"Absent",half:"Half Day",paid:"Paid Leave",unpaid:"Unpaid Leave",holiday:"Holiday",unmarked:"Not Marked"};
-var ATO=["present","absent","half","paid","unpaid","holiday","unmarked"];
+var ATO=["present","absent","half","paid","unpaid","holiday","ot","unmarked"];
 var HO=["ID Card","Laptop","Access Card","Office Keys","Company Phone","Uniform","Documents","Other"];
 function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
 var SVG_ICONS={
@@ -1441,6 +1441,9 @@ export default function App(){
   var sBonusDate=st(""),bonusDate=sBonusDate[0],setBonusDate=sBonusDate[1];
   var sCoExp=st([]),coExp=sCoExp[0],setCoExp=sCoExp[1];
   var sDashView=st("overview"),dashView=sDashView[0],setDashView=sDashView[1];
+  var sAnaDate=st(new Date().toISOString().split("T")[0]),anaDate=sAnaDate[0],setAnaDate=sAnaDate[1];
+  var sAnaView=st("day"),anaView=sAnaView[0],setAnaView=sAnaView[1];
+  var sAnaMonth=st(new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0")),anaMonth=sAnaMonth[0],setAnaMonth=sAnaMonth[1];
   var sClaims=st([]),claims=sClaims[0],setClaims=sClaims[1];
   var sClaimEmp=st(""),claimEmp=sClaimEmp[0],setClaimEmp=sClaimEmp[1];
   var sClaimCat=st("travel"),claimCat=sClaimCat[0],setClaimCat=sClaimCat[1];
@@ -1895,7 +1898,7 @@ export default function App(){
   var mAtt=uc(function(id,y,m2){
     var pfx=y+"-"+String(m2+1).padStart(2,"0");
     var a=0,h2=0,p=0,pl=0,ul=0,hl=0;
-    Object.entries(att).forEach(function(kv){var k=kv[0],v=kv[1];if(k.startsWith(pfx)&&k.endsWith("_"+id)){if(v==="absent")a++;else if(v==="half")h2++;else if(v==="present")p++;else if(v==="paid")pl++;else if(v==="unpaid")ul++;else if(v==="holiday")hl++;}});
+    Object.entries(att).forEach(function(kv){var k=kv[0],v=kv[1];if(k.startsWith(pfx)&&k.endsWith("_"+id)){if(v==="absent")a++;else if(v==="half")h2++;else if(v==="present"||v==="ot")p++;else if(v==="paid")pl++;else if(v==="unpaid")ul++;else if(v==="holiday")hl++;}});
     return{absent:a,half:h2,present:p,paid:pl,unpaid:ul,holiday:hl};
   },[att]);
 
@@ -3004,77 +3007,211 @@ export default function App(){
     var showRemSection=true; // Always show reminder card so user can add reminders
     return h("div",{className:"fd"},
       !onboardDone?renderOnboarding():null,
-      /* ── Dashboard Tab: Overview | Analytics ── */
-      h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:12,border:"1px solid "+BDR}},
-        ["overview","analytics"].map(function(v){
-          var active=dashView===v;
-          return h("button",{key:v,onClick:function(){setDashView(v);},
-            style:{flex:1,background:active?CARD:"transparent",border:"none",borderRadius:10,
-              padding:"8px",fontSize:12,fontWeight:active?700:500,
-              color:active?NVY:GRY,cursor:"pointer",
-              boxShadow:active?"0 1px 4px rgba(0,0,0,.08)":"none",
-              display:"flex",alignItems:"center",justifyContent:"center",gap:5,transition:"all .2s"}},
-            ic(v==="overview"?"dashboard":"monitoring",active?NVY:GRY,13),
-            v==="overview"?"Overview":"Analytics"
-          );
-        })
-      ),
+
       /* ── Analytics View ── */
       dashView==="analytics"?h("div",null,
+
+        /* === ATTENDANCE ANALYTICS === */
         h("div",{style:{background:CARD,borderRadius:14,border:"1px solid "+BDR,padding:"14px",marginBottom:12}},
-          h("div",{style:{fontSize:12,fontWeight:800,color:NVY,marginBottom:12}},"Team Analytics"),
+          /* Header + Day/Month toggle */
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+            h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},"Attendance"),
+            h("div",{style:{display:"flex",background:SFT,borderRadius:9,padding:2}},
+              h("button",{onClick:function(){setAnaView("day");},style:{background:anaView==="day"?CARD:"transparent",border:"none",borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:anaView==="day"?700:500,color:anaView==="day"?NVY:GRY,cursor:"pointer"}},"Day"),
+              h("button",{onClick:function(){setAnaView("month");},style:{background:anaView==="month"?CARD:"transparent",border:"none",borderRadius:7,padding:"4px 10px",fontSize:10,fontWeight:anaView==="month"?700:500,color:anaView==="month"?NVY:GRY,cursor:"pointer"}},"Month")
+            )
+          ),
+          /* Date/Month picker */
+          anaView==="day"?
+            h("input",{type:"date",value:anaDate,onChange:function(e){setAnaDate(e.target.value);},
+              style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}):
+            h("input",{type:"month",value:anaMonth,onChange:function(e){setAnaMonth(e.target.value);},
+              style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
+
+          /* Day view - summary tiles + employee breakdown */
+          anaView==="day"?(function(){
+            var dayEmps=actEmps.map(function(e){
+              var status=getAtt(anaDate,e.id)||"unmarked";
+              var shift=(shifts[e.id]||{}).type||"General";
+              var shiftAllow=getShiftAllow(e.id,anaDate);
+              return {emp:e,status:status,shift:shift,shiftAllow:shiftAllow};
+            });
+            var groups={present:[],absent:[],half:[],leave:[],holiday:[],ot:[],unmarked:[]};
+            dayEmps.forEach(function(d){
+              var s=d.status;
+              if(s==="paid"||s==="unpaid")groups.leave.push(d);
+              else if(groups[s])groups[s].push(d);
+              else groups.unmarked.push(d);
+            });
+            var total=actEmps.length;
+            var statusColors={present:"#10B981",absent:RED,half:AMB,leave:"#7C3AED",holiday:"#0EA5E9",ot:"#2563EB",unmarked:GRY};
+            var statusLabels={present:"Present",absent:"Absent",half:"Half Day",leave:"On Leave",holiday:"Holiday",ot:"Overtime",unmarked:"Unmarked"};
+            return h("div",null,
+              /* Summary tiles */
+              h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}},
+                Object.entries(groups).filter(function(g){return g[1].length>0;}).map(function(g){
+                  var clr=statusColors[g[0]]||GRY;
+                  return h("div",{key:g[0],style:{background:clr+"12",borderRadius:8,padding:"6px 10px",border:"1px solid "+clr+"25",flex:"1 1 calc(33% - 6px)"}},
+                    h("div",{style:{fontSize:16,fontWeight:900,color:clr}},g[1].length),
+                    h("div",{style:{fontSize:9,color:GRY,marginTop:1}},statusLabels[g[0]])
+                  );
+                })
+              ),
+              /* Employee breakdown */
+              h("div",null,
+                Object.entries(groups).filter(function(g){return g[1].length>0;}).map(function(g){
+                  var clr=statusColors[g[0]]||GRY;
+                  return h("div",{key:g[0],style:{marginBottom:10}},
+                    h("div",{style:{fontSize:9,fontWeight:700,color:clr,letterSpacing:.5,marginBottom:5}},statusLabels[g[0]].toUpperCase()+" ("+g[1].length+")"),
+                    g[1].map(function(d){
+                      return h("div",{key:d.emp.id,style:{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",background:SFT,borderRadius:8,marginBottom:4}},
+                        av(d.emp,26),
+                        h("div",{style:{flex:1}},
+                          h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},d.emp.name),
+                          h("div",{style:{fontSize:9,color:GRY}},d.shift+(d.shiftAllow>0?" · "+fmt(d.shiftAllow)+"/mo":""))
+                        ),
+                        h("div",{style:{fontSize:9,fontWeight:700,background:clr+"15",color:clr,borderRadius:6,padding:"2px 7px"}},statusLabels[g[0]])
+                      );
+                    })
+                  );
+                })
+              )
+            );
+          })():
+
+          /* Month view - per employee summary */
+          (function(){
+            var parts=anaMonth.split("-");
+            var my=Number(parts[0]),mm=Number(parts[1])-1;
+            return h("div",null,
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:8}},["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][mm]+" "+my+" — All Employees"),
+              actEmps.map(function(e){
+                var ma2=mAtt(e.id,my,mm);
+                var total2=ma2.present+ma2.absent+ma2.half+ma2.paidLeave+ma2.unpaid+ma2.holiday;
+                var attRate=total2>0?Math.round(ma2.present*100/total2):0;
+                var clr=attRate>=90?"#10B981":attRate>=75?AMB:RED;
+                return h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:8,padding:"7px 8px",background:SFT,borderRadius:9,marginBottom:5}},
+                  av(e,28),
+                  h("div",{style:{flex:1}},
+                    h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:3}},e.name),
+                    h("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
+                      [["P",ma2.present,"#10B981"],["A",ma2.absent,RED],["H",ma2.half,AMB],["L",(ma2.paidLeave||0)+(ma2.unpaid||0),"#7C3AED"],["Hol",ma2.holiday,"#0EA5E9"]].filter(function(x){return x[1]>0;}).map(function(x){
+                        return h("div",{key:x[0],style:{fontSize:9,fontWeight:700,background:x[2]+"12",color:x[2],borderRadius:4,padding:"1px 5px"}},x[0]+":"+x[1]);
+                      })
+                    )
+                  ),
+                  h("div",{style:{fontSize:12,fontWeight:900,color:clr}},attRate+"%")
+                );
+              })
+            );
+          })()
+        ),
+
+        /* === TEAM ANALYTICS === */
+        h("div",{style:{background:CARD,borderRadius:14,border:"1px solid "+BDR,padding:"14px",marginBottom:12}},
+          h("div",{style:{fontSize:13,fontWeight:800,color:NVY,marginBottom:12}},"Team Analytics"),
           (function(){
             var deptMap={};actEmps.forEach(function(e){var d=e.dept||"Others";deptMap[d]=(deptMap[d]||0)+1;});
             var depts=Object.entries(deptMap).sort(function(a,b){return b[1]-a[1];});
             var colors=["#2563EB","#10B981","#D97706","#7C3AED","#DC2626","#64748B"];
-            return h("div",{style:{marginBottom:14}},
-              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"BY DEPARTMENT"),
+            return h("div",{style:{marginBottom:12}},
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:8}},"BY DEPARTMENT"),
               depts.length>0?depts.map(function(d,i){
                 var pct=actEmps.length>0?Math.round(d[1]*100/actEmps.length):0;
                 return h("div",{key:d[0],style:{marginBottom:7}},
-                  h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},
-                    h("span",{style:{fontSize:11,color:NVY,fontWeight:600}},d[0]),
-                    h("span",{style:{fontSize:10,color:GRY}},d[1]+" emp · "+pct+"%")
-                  ),
-                  h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden"}},
-                    h("div",{style:{width:pct+"%",height:"100%",background:colors[i%colors.length],borderRadius:99}}))
+                  h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},h("span",{style:{fontSize:11,color:NVY,fontWeight:600}},d[0]),h("span",{style:{fontSize:9,color:GRY}},d[1]+" emp · "+pct+"%")),
+                  h("div",{style:{background:BDR,borderRadius:99,height:6,overflow:"hidden"}},h("div",{style:{width:pct+"%",height:"100%",background:colors[i%colors.length],borderRadius:99}}))
                 );
-              }):h("div",{style:{fontSize:10,color:GRY,padding:"8px 0"}},"Add departments to employees to see breakdown")
+              }):h("div",{style:{fontSize:10,color:GRY,padding:"4px 0"}},"Add departments to employees to see breakdown")
             );
           })(),
           (function(){
-            var ranges=[{l:"Below ₹15K",min:0,max:15000},{l:"₹15K – 30K",min:15000,max:30000},{l:"₹30K – 50K",min:30000,max:50000},{l:"Above ₹50K",min:50000,max:Infinity}];
+            var ranges=[{l:"Below ₹15K",min:0,max:15000},{l:"₹15K-30K",min:15000,max:30000},{l:"₹30K-50K",min:30000,max:50000},{l:"Above ₹50K",min:50000,max:Infinity}];
             var counts=ranges.map(function(r){return actEmps.filter(function(e){var c=Number(e.monthlyCTC||e.fixedSalary||0);return c>=r.min&&c<r.max;}).length;});
             var mx=Math.max.apply(null,counts)||1;
-            return h("div",{style:{marginBottom:14}},
-              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"SALARY DISTRIBUTION"),
+            return h("div",null,
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:8}},"SALARY DISTRIBUTION"),
               ranges.map(function(r,i){
-                return h("div",{key:r.l,style:{display:"flex",alignItems:"center",gap:8,marginBottom:6}},
-                  h("span",{style:{fontSize:10,color:GRY,width:80,flexShrink:0}},r.l),
-                  h("div",{style:{flex:1,background:BDR,borderRadius:99,height:7,overflow:"hidden"}},
-                    h("div",{style:{width:(counts[i]/mx*100)+"%",height:"100%",background:"#2563EB",borderRadius:99}})),
-                  h("span",{style:{fontSize:11,fontWeight:700,color:NVY,width:20,textAlign:"right",flexShrink:0}},counts[i])
+                return h("div",{key:r.l,style:{display:"flex",alignItems:"center",gap:8,marginBottom:5}},
+                  h("span",{style:{fontSize:9,color:GRY,width:68,flexShrink:0}},r.l),
+                  h("div",{style:{flex:1,background:BDR,borderRadius:99,height:6,overflow:"hidden"}},h("div",{style:{width:(counts[i]/mx*100)+"%",height:"100%",background:"#2563EB",borderRadius:99}})),
+                  h("span",{style:{fontSize:10,fontWeight:700,color:NVY,width:18,textAlign:"right",flexShrink:0}},counts[i])
                 );
               })
             );
-          })(),
-          (function(){
-            var al=(loans||[]).filter(function(l){return l.status==="active";});
-            if(!al.length)return h("div",{style:{fontSize:10,color:GRY,textAlign:"center",padding:"4px 0"}},"No active loans");
-            var out=al.reduce(function(s,l){return s+Math.max(0,Math.round(((l.tenure||0)-(l.paidInstallments||0))*(l.emi||0)));},0);
-            return h("div",{style:{background:RED+"08",borderRadius:9,padding:"10px 12px",border:"1px solid "+RED+"15",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-              h("div",null,
-                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"TOTAL LOAN OUTSTANDING"),
-                h("div",{style:{fontSize:16,fontWeight:900,color:RED}},fmt(out)),
-                h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"EMI drain: "+fmt(al.reduce(function(s,l){return s+(l.emi||0);},0))+"/mo")
-              ),
-              h("div",{style:{textAlign:"right"}},
-                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"ACTIVE LOANS"),
-                h("div",{style:{fontSize:22,fontWeight:900,color:RED}},al.length)
-              )
-            );
           })()
-        )
+        ),
+
+        /* === PAYROLL ANALYTICS === */
+        h("div",{style:{background:CARD,borderRadius:14,border:"1px solid "+BDR,padding:"14px",marginBottom:12}},
+          h("div",{style:{fontSize:13,fontWeight:800,color:NVY,marginBottom:12}},"Payroll Analytics"),
+          h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+            h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:9,padding:"10px"}},
+              h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"GROSS PAYROLL"),
+              h("div",{style:{fontSize:15,fontWeight:900,color:NVY}},fmt(tGross)),
+              h("div",{style:{fontSize:9,color:GRY,marginTop:1}},MOS[curM]+" "+curY)
+            ),
+            h("div",{style:{flex:1,background:"#10B98110",borderRadius:9,padding:"10px"}},
+              h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"NET PAYABLE"),
+              h("div",{style:{fontSize:15,fontWeight:900,color:"#10B981"}},fmt(tNet)),
+              h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"after deductions")
+            )
+          ),
+          /* Dept payroll breakdown */
+          (function(){
+            var deptPay={};
+            actEmps.forEach(function(e){
+              var d=e.dept||"Others";
+              var pay=Number(e.monthlyCTC||e.fixedSalary||0);
+              deptPay[d]=(deptPay[d]||0)+pay;
+            });
+            var depts=Object.entries(deptPay).sort(function(a,b){return b[1]-a[1];});
+            var mx=depts.length>0?depts[0][1]:1;
+            var colors=["#2563EB","#10B981","#D97706","#7C3AED","#DC2626","#64748B"];
+            return depts.length>0?h("div",null,
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:8}},"DEPT PAYROLL COST"),
+              depts.map(function(d,i){
+                return h("div",{key:d[0],style:{marginBottom:6}},
+                  h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},h("span",{style:{fontSize:10,color:NVY,fontWeight:600}},d[0]),h("span",{style:{fontSize:10,color:GRY}},fmt(d[1])+"/mo")),
+                  h("div",{style:{background:BDR,borderRadius:99,height:5,overflow:"hidden"}},h("div",{style:{width:(d[1]/mx*100)+"%",height:"100%",background:colors[i%colors.length],borderRadius:99}}))
+                );
+              })
+            ):null;
+          })()
+        ),
+
+        /* === LOAN EXPOSURE === */
+        (function(){
+          var al=(loans||[]).filter(function(l){return l.status==="active";});
+          if(!al.length)return null;
+          var out=al.reduce(function(s,l){return s+Math.max(0,Math.round(((l.tenure||0)-(l.paidInstallments||0))*(l.emi||0)));},0);
+          var emi=al.reduce(function(s,l){return s+(l.emi||0);},0);
+          return h("div",{style:{background:CARD,borderRadius:14,border:"1px solid "+BDR,padding:"14px",marginBottom:12}},
+            h("div",{style:{fontSize:13,fontWeight:800,color:NVY,marginBottom:10}},"Loan Exposure"),
+            h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+              h("div",{style:{flex:1,background:RED+"08",borderRadius:9,padding:"10px",border:"1px solid "+RED+"15"}},
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"OUTSTANDING"),
+                h("div",{style:{fontSize:15,fontWeight:900,color:RED}},fmt(out))
+              ),
+              h("div",{style:{flex:1,background:AMB+"08",borderRadius:9,padding:"10px",border:"1px solid "+AMB+"15"}},
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"EMI / MONTH"),
+                h("div",{style:{fontSize:15,fontWeight:900,color:AMB}},fmt(emi))
+              ),
+              h("div",{style:{flex:1,background:SFT,borderRadius:9,padding:"10px",border:"1px solid "+BDR}},
+                h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},"ACTIVE"),
+                h("div",{style:{fontSize:15,fontWeight:900,color:NVY}},al.length)
+              )
+            ),
+            al.map(function(l){
+              var remaining=Math.max(0,Math.round(((l.tenure||0)-(l.paidInstallments||0))*(l.emi||0)));
+              return h("div",{key:l.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+BDR}},
+                h("div",null,h("div",{style:{fontSize:11,fontWeight:700,color:NVY}},l.employeeName||"—"),h("div",{style:{fontSize:9,color:GRY}},(l.loan_type||l.advance_type||"Loan")+" · EMI: "+fmt(l.emi||0))),
+                h("div",{style:{fontSize:11,fontWeight:700,color:RED}},fmt(remaining)+" left")
+              );
+            })
+          );
+        })()
+
       ):null,
       /* ── Overview content (shown only in overview tab) ── */
       dashView==="overview"?h("div",null,
@@ -3084,7 +3221,22 @@ export default function App(){
         h("div",{style:{position:"absolute",top:14,right:16,fontSize:11,fontWeight:600,color:CARD,opacity:.75,letterSpacing:.5,fontVariantNumeric:"tabular-nums"}},timeStr),
         h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginBottom:3,fontWeight:500}},now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})),
         h("div",{style:{fontSize:22,fontWeight:600,color:CARD,letterSpacing:-.3}},greet),
-        h("div",{style:{fontSize:11,color:CARD,opacity:.7,marginTop:3,fontWeight:500}},org.position+" \u2022 "+org.name)
+        h("div",{style:{fontSize:11,color:CARD,opacity:.7,marginTop:3,fontWeight:500}},org.position+" \u2022 "+org.name),
+        /* Overview / Analytics pill toggle */
+        h("div",{style:{display:"flex",justifyContent:"flex-end",marginTop:10}},
+          h("div",{style:{display:"flex",background:"rgba(255,255,255,.12)",borderRadius:20,padding:2}},
+            h("button",{onClick:function(){setDashView("overview");},
+              style:{background:dashView==="overview"?"rgba(255,255,255,.22)":"transparent",border:"none",
+                borderRadius:18,padding:"4px 12px",fontSize:10,fontWeight:dashView==="overview"?700:500,
+                color:"#fff",cursor:"pointer",transition:"all .2s"}
+            },"Overview"),
+            h("button",{onClick:function(){setDashView("analytics");},
+              style:{background:dashView==="analytics"?"rgba(255,255,255,.22)":"transparent",border:"none",
+                borderRadius:18,padding:"4px 12px",fontSize:10,fontWeight:dashView==="analytics"?700:500,
+                color:"#fff",cursor:"pointer",transition:"all .2s"}
+            },"Analytics")
+          )
+        )
       ),
       expiryCountdown(),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
@@ -4774,8 +4926,8 @@ null
       var now=new Date();
       var todayKey=todayStr+"_"+(myRecord?myRecord.id:"");
       var todayAtt=myRecord?(att[todayKey]||"unmarked"):"unmarked";
-      var attColors={"present":"#10B981","absent":RED,"half":AMB,"pl":"#4F46E5","ul":GRY,"holiday":"#7C3AED","unmarked":GRY};
-      var attLabels={"present":"Present","absent":"Absent","half":"Half Day","pl":"Paid Leave","ul":"Unpaid Leave","holiday":"Holiday","unmarked":"Not marked"};
+      var attColors={"present":"#10B981","absent":RED,"half":AMB,"pl":"#4F46E5","ul":GRY,"holiday":"#7C3AED","ot":"#2563EB","unmarked":GRY};
+      var attLabels={"present":"Present","absent":"Absent","half":"Half Day","pl":"Paid Leave","ul":"Unpaid Leave","holiday":"Holiday","ot":"Overtime","unmarked":"Not marked"};
       var urgentTask=activeTasks.find(function(t){return t.priority==="high";});
       urgentTask=urgentTask||activeTasks[0];
       return h("div",null,
