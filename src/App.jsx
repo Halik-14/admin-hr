@@ -3132,20 +3132,6 @@ export default function App(){
       ):null,
       card(h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Attendance Snapshot"),
-          h("button",{onClick:function(){setTab("attendance");},style:{fontSize:11,color:NVY,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}},"Mark All")
-        ),
-        actEmps.slice(0,4).map(function(e,i){
-          var s=getTAtt(e.id);
-          return h("div",{key:e.id,onClick:function(){cycleAtt(todayStr,e.id);},className:"rh",style:{display:"flex",alignItems:"center",gap:8,padding:"6px 3px",borderBottom:i<3?"1px solid "+BDR:"none",cursor:"pointer",borderRadius:6}},
-            av(e,30),
-            h("div",{style:{flex:1}},h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),h("div",{style:{fontSize:10,color:GRY}},e.role)),
-            h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:16,background:ATC[s]+"18",color:ATC[s]}},ATL[s])
-          );
-        })
-      )),
-      card(h("div",null,
-        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Statutory Summary"),
           h("button",{onClick:function(){setTab("settings");setSettTab("tax");},style:{fontSize:11,color:NVY,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}},"Tax Slabs")
         ),
@@ -3240,8 +3226,10 @@ null
                 h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginTop:4}},"Net "+fmt(d.net)+" / mo")
               )
             ),
-            overLim?null:h("div",{style:{display:"flex",gap:4,alignItems:"center"}},
-              ic(ICONS.chev,GRY,16)
+            overLim?null:h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
+              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="tel:"+e.mob;},style:{width:30,height:30,borderRadius:8,background:"#10B98112",border:"1px solid #10B98125",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("phone","#10B981",14)):null,
+              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.open("https://wa.me/91"+String(e.mob).replace(/\D/g,""),"_blank");},style:{width:30,height:30,borderRadius:8,background:"#25D36612",border:"1px solid #25D36625",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("whatsapp","#25D366",14)):null,
+              h("div",{style:{width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.chev,GRY,16))
             )
           );
         })
