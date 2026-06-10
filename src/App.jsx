@@ -3453,8 +3453,27 @@ null
               h("div",{style:{width:usePct+"%",height:"100%",background:balColor,borderRadius:99}})
             ),
             h("div",{style:{fontSize:10,color:GRY}},usePct+"% of annual quota used"),
-            leaveEnt===0?h("div",{style:{marginTop:8,fontSize:10,color:AMB,fontWeight:600}},
-              "Set leave entitlement in Edit Employee →"):null
+            /* Set entitlement inline */
+          h("div",{style:{background:CARD,borderRadius:10,border:"1px solid "+BDR,overflow:"hidden",marginTop:8}},
+            h("div",{style:{background:"#10B981",padding:"6px 12px"}},
+              h("div",{style:{fontSize:10,fontWeight:700,color:"#fff",letterSpacing:.3}},"SET ANNUAL ENTITLEMENT"),
+              h("div",{style:{fontSize:9,color:"rgba(255,255,255,.7)"}},leaveEnt>0?"Current: "+leaveEnt+" days/year":"Not set yet")
+            ),
+            h("div",{style:{padding:"10px 12px",display:"flex",gap:8,alignItems:"center"}},
+              h("button",{onClick:function(){var inp=document.getElementById("lvEntInp");if(inp)inp.value=String(Math.max(0,Number(inp.value||0)-1));},style:{width:32,height:32,background:SFT,border:"1px solid "+BDR,borderRadius:7,fontSize:18,fontWeight:700,color:NVY,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},"-"),
+              h("input",{type:"number",id:"lvEntInp",defaultValue:String(leaveEnt||0),style:{flex:1,background:SFT,border:"1.5px solid #10B98155",borderRadius:8,padding:"8px",fontSize:18,fontWeight:900,color:"#10B981",outline:"none",fontFamily:"inherit",textAlign:"center"}}),
+              h("button",{onClick:function(){var inp=document.getElementById("lvEntInp");if(inp)inp.value=String(Number(inp.value||0)+1);},style:{width:32,height:32,background:SFT,border:"1px solid "+BDR,borderRadius:7,fontSize:18,fontWeight:700,color:NVY,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},"+")
+            ),
+            h("button",{onClick:function(){
+              var inp=document.getElementById("lvEntInp");
+              var n=Number(inp?inp.value:leaveEnt);
+              if(isNaN(n)||n<0)return showT("Enter valid days","err");
+              var upd=Object.assign({},selE,{leaveEntitlement:n});
+              setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd:e;});});
+              _sb.from("user_data").upsert({employer_email:gUser.email,employees:JSON.stringify(emps.map(function(e){return e.id===selE.id?upd:e;}))}).then(function(){});
+              showT("Leave entitlement saved");
+            },style:{width:"100%",background:"#10B981",border:"none",borderRadius:"0 0 10px 10px",padding:"10px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save Entitlement")
+          )
           );
         }
       ),
@@ -5734,9 +5753,10 @@ null
             if(!emp2)return showT("Select employee","err");
             var parts=claimDate.split("-");
             var cm=Number(parts[1])-1,cy=Number(parts[0]);
-            var c={id:Date.now(),employeeId:claimEmp,employeeName:emp2.name,category:claimCat,amount:Number(claimAmt),date:claimDate,description:claimDesc,status:"approved",month:cm,year:cy};
+            var dateStr=claimDate+"-01";
+            var c={id:Date.now(),employeeId:claimEmp,employeeName:emp2.name,category:claimCat,amount:Number(claimAmt),date:dateStr,description:claimDesc,status:"approved",month:cm,year:cy};
             setClaims(function(p){return [c].concat(p||[]);});
-            _sb.from("staff_claims").insert({id:String(c.id),employer_email:gUser.email,employee_id:claimEmp,employee_name:emp2.name,category:claimCat,amount:c.amount,date:claimDate,description:claimDesc,status:"approved",month:cm,year:cy}).then(function(r){if(r&&r.error)showT("Error: "+r.error.message,"err");else showT("Claim added to payroll!");});
+            _sb.from("staff_claims").insert({id:String(c.id),employer_email:gUser.email,employee_id:claimEmp,employee_name:emp2.name,category:claimCat,amount:c.amount,date:dateStr,description:claimDesc,status:"approved",month:cm,year:cy}).then(function(r){if(r&&r.error)showT("Error: "+r.error.message,"err");else showT("Claim added to payroll!");});
             setClaimEmp("");setClaimAmt("");setClaimDate("");setClaimDesc("");setShowClaimForm(false);
           },style:{width:"100%",background:NVY,border:"none",borderRadius:9,padding:"11px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Add to Payroll")
         ):null,
@@ -6752,18 +6772,11 @@ null
     }
 
     return h("div",null,
-      /* Header */
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#2563EB15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-          ic("account_balance","#2563EB",17)),
-        h("div",{style:{flex:1}},
-          h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Loans & Advances"),
-          h("div",{style:{fontSize:10,color:GRY}},
-            activeRec.length>0?activeRec.length+" active record"+(activeRec.length>1?"s":""):"No active records")
-        ),
+      /* Centered Add button */
+      h("div",{style:{textAlign:"center",marginBottom:10}},
         h("button",{onClick:function(){setShowLoanForm(!showLoanForm);},
-          style:{background:showLoanForm?SFT:"#2563EB",border:showLoanForm?"1px solid "+BDR:"none",borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:700,color:showLoanForm?NVY:"#fff",cursor:"pointer"}},
-          showLoanForm?"Cancel":"+ Add")
+          style:{background:showLoanForm?SFT:"#2563EB",border:showLoanForm?"1px solid "+BDR:"none",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:700,color:showLoanForm?NVY:"#fff",cursor:"pointer"}},
+          showLoanForm?"\u2715 Cancel":"+ Add Loan / Advance")
       ),
 
       /* Add form */
@@ -6902,10 +6915,6 @@ null
     var basic=emp.salaryType==="fixed"?Number(emp.fixedSalary||emp.monthlyCTC||0):Number(emp.basic||0);
     var gratuity=eligible?Math.round(basic*15*years/26):0;
     return h("div",null,
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#8B5CF615",display:"flex",alignItems:"center",justifyContent:"center"}},ic("savings","#8B5CF6",17)),
-        h("div",null,h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Gratuity Calculator"),h("div",{style:{fontSize:10,color:GRY}},"Payment of Gratuity Act"))
-      ),
       h("div",{style:{display:"flex",gap:8,marginBottom:10}},
         h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},years+"y "+months+"m"),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"SERVICE")),
         h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},fmt(basic)),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"BASIC")),
@@ -6958,10 +6967,8 @@ null
       showT("Warning issued");
     }
     return h("div",null,
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:RED+"12",display:"flex",alignItems:"center",justifyContent:"center"}},ic("pending_actions",RED,17)),
-        h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Warning Letters"),h("div",{style:{fontSize:10,color:GRY}},empWarnings.length+" issued")),
-        h("button",{onClick:function(){setShowWarnForm(!showWarnForm);},style:{background:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"5px 10px",fontSize:11,fontWeight:700,color:RED,cursor:"pointer"}},showWarnForm?"Cancel":"+ Issue")
+      h("div",{style:{textAlign:"center",marginBottom:10}},
+        h("button",{onClick:function(){setShowWarnForm(!showWarnForm);},style:{background:showWarnForm?SFT:RED+"12",border:"1px solid "+RED+"33",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:700,color:showWarnForm?GRY:RED,cursor:"pointer"}},showWarnForm?"\u2715 Cancel":"+ Issue Warning")
       ),
       showWarnForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
@@ -7292,10 +7299,8 @@ null
       showT("Bonus recorded");
     }
     return h("div",null,
-      h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:10}},
-        h("div",{style:{width:34,height:34,borderRadius:9,background:"#D9770612",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("monetization_on","#D97706",17)),
-        h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Bonus & One-Time Pay"),h("div",{style:{fontSize:10,color:GRY}},"Festival, performance, advance")),
-        h("button",{onClick:function(){setShowBonusForm(!showBonusForm);},style:{background:showBonusForm?SFT:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:8,padding:"4px 10px",fontSize:10,fontWeight:700,color:showBonusForm?GRY:AMB,cursor:"pointer"}},showBonusForm?"Cancel":"+ Add")
+      h("div",{style:{textAlign:"center",marginBottom:10}},
+        h("button",{onClick:function(){setShowBonusForm(!showBonusForm);},style:{background:showBonusForm?SFT:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:700,color:showBonusForm?GRY:AMB,cursor:"pointer"}},showBonusForm?"✕ Cancel":"+ Add Bonus")
       ),
       showBonusForm?h("div",{style:{background:SFT,borderRadius:11,padding:10,border:"1px solid "+BDR,marginBottom:8}},
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
