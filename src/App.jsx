@@ -1439,6 +1439,8 @@ export default function App(){
   var sShowBonusForm=st(false),showBonusForm=sShowBonusForm[0],setShowBonusForm=sShowBonusForm[1];
   var sBonusEmpId=st(""),bonusEmpId=sBonusEmpId[0],setBonusEmpId=sBonusEmpId[1];
   var sBonusAmt=st(""),bonusAmt=sBonusAmt[0],setBonusAmt=sBonusAmt[1];
+  var sBonusPayM=st(-1),bonusPayM=sBonusPayM[0],setBonusPayM=sBonusPayM[1];
+  var sBonusPayY=st(-1),bonusPayY=sBonusPayY[0],setBonusPayY=sBonusPayY[1];
   var sBonusType=st("festival"),bonusType=sBonusType[0],setBonusType=sBonusType[1];
   var sBonusNote=st(""),bonusNote=sBonusNote[0],setBonusNote=sBonusNote[1];
   var sBonusDate=st(""),bonusDate=sBonusDate[0],setBonusDate=sBonusDate[1];
@@ -1847,7 +1849,7 @@ export default function App(){
       try{setLoans((res[0]||[]).map(function(l){return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,employee_id:l.employee_id,employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,kind:l.kind||"loan",loanType:l.loan_type||"personal",advanceType:l.advance_type||"salary",interestRate:Number(l.interest_rate||0),tenure:Number(l.tenure||0),emi:Number(l.emi||0),startDate:l.start_date||l.date,endDate:l.end_date,paidInstallments:Number(l.paid_installments||0),totalPaid:Number(l.total_paid||0),closedDate:l.closed_date,monthlyDeduction:l.monthly_deduction,monthly_deduction:l.monthly_deduction,paidAmount:l.paid_amount,paid_amount:l.paid_amount,status:l.status,createdAt:l.created_at};}));}catch(e){}
       try{setExpenses((res[1]||[]).map(function(ex){return {id:ex.id,employerEmail:ex.employer_email,employeeId:ex.employee_id,employeeName:ex.employee_name,title:ex.title,amount:ex.amount,category:ex.category,description:ex.description,status:ex.status,month:ex.month,year:ex.year,createdAt:ex.created_at};}));}catch(e){}
       try{setClaims((res[7]||[]).map(function(c){return{id:c.id,employeeId:c.employee_id,employeeName:c.employee_name,category:c.category,amount:Number(c.amount),date:c.date,description:c.description,status:c.status||"approved",month:Number(c.month),year:Number(c.year)};}));}catch(e){}
-      try{setBonuses((res[6]||[]).map(function(b){return{id:b.id,employeeId:b.employee_id,employeeName:b.employee_name,amount:Number(b.amount),type:b.type,note:b.note,date:b.date};}));}catch(e){}
+      try{setBonuses((res[6]||[]).map(function(b){return{id:b.id,employeeId:b.employee_id,employeeName:b.employee_name,amount:Number(b.amount),type:b.type,note:b.note,date:b.date,payMonth:b.pay_month!=null?Number(b.pay_month):-1,payYear:b.pay_year!=null?Number(b.pay_year):-1};}));}catch(e){}
       try{setSalRevisions((res[5]||[]).map(function(r){return{id:r.id,employeeId:r.employee_id,employeeName:r.employee_name,effectiveDate:r.effective_date,oldCtc:Number(r.old_ctc),newCtc:Number(r.new_ctc),reason:r.reason};}));}catch(e){}
       try{setCoExp((res[4]||[]).map(function(e){return{id:e.id,date:e.date,category:e.category,customCategory:e.custom_category,amount:Number(e.amount),vendor:e.vendor,description:e.description,paymentMode:e.payment_mode,month:e.month,year:e.year};}));}catch(e){}
       try{setHolidays2((res[3]||[]).map(function(h2){return{id:h2.id,name:h2.name,date:h2.date};}));}catch(e){}
@@ -4188,10 +4190,58 @@ null
               ):null,
               // ── Working days + net ──
               h("div",{style:{fontSize:10,color:GRY,marginBottom:8}},"Working days: "+(d.wDays||26)+" \u2022 Per day rate: "+fmt(d.pd||0)),
-              h("div",{style:{background:"#0F172A",borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
-                h("span",{style:{fontSize:12,fontWeight:600,color:"rgba(255,255,255,.6)"}},"Net Take Home"),
-                h("span",{style:{fontSize:16,fontWeight:800,color:"#4ADE80"}},fmt(d.net))
-              )
+              /* ── Bonus add in payroll ── */
+              (function(){
+                var empBonuses2=(bonuses||[]).filter(function(b){return b.employeeId===String(e.id)&&b.payMonth===payM&&b.payYear===payY;});
+                var BTYPES={festival:"Festival Bonus",performance:"Performance Bonus",annual:"Annual Bonus",advance:"Advance Payment",other:"Other"};
+                var bColors={festival:AMB,performance:"#2563EB",annual:"#10B981",advance:"#7C3AED",other:GRY};
+                return h("div",{style:{marginBottom:6}},
+                  /* Existing bonuses for this month */
+                  empBonuses2.map(function(b){
+                    return h("div",{key:b.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",background:(bColors[b.type]||GRY)+"10",borderRadius:8,marginBottom:4,border:"1px solid "+(bColors[b.type]||GRY)+"25"}},
+                      h("span",{style:{fontSize:10,fontWeight:600,color:NVY}},b.note||(BTYPES[b.type]||b.type)),
+                      h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                        h("span",{style:{fontSize:11,fontWeight:700,color:bColors[b.type]||GRY}},fmt(b.amount)),
+                        h("button",{onClick:function(){if(!window.confirm("Remove this bonus?"))return;setBonuses(function(p){return p.filter(function(x){return x.id!==b.id;});});_sb.from("bonuses").delete().eq("id",String(b.id)).then(function(){});showT("Removed");},style:{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex"}},ic("delete",RED,11))
+                      )
+                    );
+                  }),
+                  /* Add bonus button + mini form */
+                  showBonusForm&&bonusPayM===payM&&bonusPayY===payY?h("div",{style:{background:SFT,borderRadius:9,padding:10,border:"1px solid "+BDR,marginBottom:6}},
+                    h("div",{style:{display:"flex",gap:6,marginBottom:6}},
+                      h("select",{value:bonusType,onChange:function(ev){setBonusType(ev.target.value);},style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit"}},
+                        Object.entries(BTYPES).map(function(t){return h("option",{key:t[0],value:t[0]},t[1]);})),
+                      h("input",{type:"number",value:bonusAmt,onChange:function(ev){setBonusAmt(ev.target.value);},placeholder:"Amount ₹",style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit"}})
+                    ),
+                    h("input",{type:"text",value:bonusNote,onChange:function(ev){setBonusNote(ev.target.value);},placeholder:"Specific name e.g. Diwali Bonus, Pongal Bonus",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}),
+                    h("div",{style:{display:"flex",gap:6}},
+                      h("button",{onClick:function(){
+                        if(!bonusAmt)return showT("Enter amount","err");
+                        var b={id:Date.now(),employeeId:String(e.id),employeeName:e.name,amount:Number(bonusAmt),type:bonusType,note:bonusNote,date:new Date().toISOString().split("T")[0],payMonth:payM,payYear:payY};
+                        setBonuses(function(p){return [b].concat(p||[]);});
+                        _sb.from("bonuses").insert({id:String(b.id),employer_email:gUser.email,employee_id:String(e.id),employee_name:e.name,amount:b.amount,type:b.type,note:b.note,date:b.date,pay_month:payM,pay_year:payY}).then(function(r){if(r&&r.error)showT("Error","err");else showT("Bonus added to payroll!");});
+                        setBonusAmt("");setBonusNote("");setShowBonusForm(false);setBonusPayM(-1);setBonusPayY(-1);
+                      },style:{flex:2,background:NVY,border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Add to Payroll"),
+                      h("button",{onClick:function(){setShowBonusForm(false);setBonusPayM(-1);setBonusPayY(-1);setBonusAmt("");},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"8px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
+                    )
+                  ):h("button",{onClick:function(){setShowBonusForm(true);setBonusPayM(payM);setBonusPayY(payY);setBonusAmt("");setBonusNote("");},style:{width:"100%",background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:8,padding:"6px",fontSize:10,fontWeight:700,color:AMB,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},ic("paid",AMB,12),"+ Add Bonus")
+                );
+              })(),
+              (function(){
+                var empClaimTotal=(claims||[]).filter(function(c){return c.employeeId===String(e.id)&&c.status==="approved"&&c.month===payM&&c.year===payY;}).reduce(function(s,c){return s+(c.amount||0);},0);
+                var empBonusTotal=(bonuses||[]).filter(function(b){return b.employeeId===String(e.id)&&b.payMonth===payM&&b.payYear===payY;}).reduce(function(s,b){return s+(b.amount||0);},0);
+                var empLoanDed=(loans||[]).filter(function(l){return (l.employeeId===String(e.id)||l.employee_id===String(e.id))&&l.status==="active";}).reduce(function(s,l){return s+(l.emi||l.monthlyDeduction||0);},0);
+                var finalNet=Math.max(0,d.net+empClaimTotal+empBonusTotal-empLoanDed);
+                return h("div",null,
+                  empClaimTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Reimbursement"),h("span",{style:{fontSize:11,fontWeight:600,color:"#10B981"}},"+"+fmt(empClaimTotal))):null,
+                  empBonusTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Bonus"),h("span",{style:{fontSize:11,fontWeight:600,color:AMB}},"+"+fmt(empBonusTotal))):null,
+                  empLoanDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Loan/Advance EMI"),h("span",{style:{fontSize:11,fontWeight:600,color:RED}},"-"+fmt(empLoanDed))):null,
+                  h("div",{style:{background:"#0F172A",borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}},
+                    h("span",{style:{fontSize:12,fontWeight:600,color:"rgba(255,255,255,.6)"}},"Net Take Home"),
+                    h("span",{style:{fontSize:16,fontWeight:800,color:"#4ADE80"}},fmt(finalNet))
+                  )
+                );
+              })()
             ):null
           );
         })
@@ -6916,9 +6966,9 @@ null
     var gratuity=eligible?Math.round(basic*15*years/26):0;
     return h("div",null,
       h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-        h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},years+"y "+months+"m"),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"SERVICE")),
-        h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"10px",textAlign:"center"}},h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},fmt(basic)),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"BASIC")),
-        h("div",{style:{flex:1,background:eligible?"#8B5CF612":SFT,borderRadius:10,padding:"10px",textAlign:"center",border:eligible?"1px solid #8B5CF633":"none"}},h("div",{style:{fontSize:16,fontWeight:800,color:eligible?"#8B5CF6":GRY}},eligible?fmt(gratuity):"—"),h("div",{style:{fontSize:9,color:GRY,marginTop:2}},"GRATUITY"))
+        h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"7px 8px",textAlign:"center"}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},years+"y "+months+"m"),h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"SERVICE")),
+        h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"7px 8px",textAlign:"center"}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},fmt(basic)),h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"BASIC")),
+        h("div",{style:{flex:1,background:eligible?"#8B5CF610":SFT,borderRadius:8,padding:"7px 8px",textAlign:"center",border:eligible?"1px solid #8B5CF625":"1px solid "+BDR}},h("div",{style:{fontSize:12,fontWeight:700,color:eligible?"#8B5CF6":GRY}},eligible?fmt(gratuity):"—"),h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"GRATUITY"))
       ),
       !eligible?h("div",{style:{background:AMB+"10",borderRadius:10,padding:"8px 12px",border:"1px solid "+AMB+"33",fontSize:11,color:AMB}},
         "Eligible after 5 years. "+(5-years)+" year(s) remaining."
@@ -7299,33 +7349,34 @@ null
       showT("Bonus recorded");
     }
     return h("div",null,
-      h("div",{style:{textAlign:"center",marginBottom:10}},
-        h("button",{onClick:function(){setShowBonusForm(!showBonusForm);},style:{background:showBonusForm?SFT:AMB+"15",border:"1px solid "+AMB+"33",borderRadius:8,padding:"7px 20px",fontSize:12,fontWeight:700,color:showBonusForm?GRY:AMB,cursor:"pointer"}},showBonusForm?"✕ Cancel":"+ Add Bonus")
+      h("div",{style:{background:ACCENT_SOFT,borderRadius:8,padding:"8px 10px",marginBottom:10,fontSize:10,color:"#4F46E5",display:"flex",alignItems:"center",gap:5}},
+        ic("info","#4F46E5",11)," Bonuses are added from the Payroll tab. This shows history."
       ),
-      showBonusForm?h("div",{style:{background:SFT,borderRadius:11,padding:10,border:"1px solid "+BDR,marginBottom:8}},
-        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-          h("div",{style:{flex:1}},lbl("DATE"),h("input",{type:"date",value:bonusDate,onChange:function(e){setBonusDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
-          h("div",{style:{flex:1}},lbl("AMOUNT"),h("input",{type:"number",value:bonusAmt,onChange:function(e){setBonusAmt(e.target.value);},placeholder:"0",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
-        ),
-        lbl("TYPE"),
-        h("select",{value:bonusType,onChange:function(e){setBonusType(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}},
-          Object.entries(bonusTypes).map(function(t){return h("option",{key:t[0],value:t[0]},t[1]);})),
-        lbl("NOTE (OPTIONAL)"),
-        h("input",{type:"text",value:bonusNote,onChange:function(e){setBonusNote(e.target.value);},placeholder:"Brief note",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 9px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
-        h("button",{onClick:saveBonus,style:{width:"100%",background:NVY,border:"none",borderRadius:8,padding:"9px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Save")
-      ):null,
-      empBonuses.length>0?h("div",null,
-        empBonuses.map(function(b,i){
-          return h("div",{key:b.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<empBonuses.length-1?"1px solid "+BDR:"none"}},
-            h("div",null,h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},bonusTypes[b.type]||b.type),h("div",{style:{fontSize:9,color:GRY}},new Date((b.date||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+(b.note?" • "+b.note:""))),
-            h("div",{style:{fontSize:13,fontWeight:800,color:AMB}},fmt(b.amount||0))
-          );
-        })
-      ):h("div",{style:{fontSize:10,color:GRY,textAlign:"center",padding:"8px 0"}},"No bonuses recorded yet")
+      empBonuses.length===0?h("div",{style:{textAlign:"center",padding:"12px 0",fontSize:10,color:GRY}},"No bonuses recorded yet. Add from Payroll tab."):null,
+      empBonuses.map(function(b,i){
+        var typeColors={festival:AMB,performance:"#2563EB",annual:"#10B981",advance:"#7C3AED",other:"#64748B"};
+        var clr=typeColors[b.type]||GRY;
+        var ms=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        var payLabel=b.payMonth>=0&&b.payYear>0?"Payroll: "+ms[b.payMonth]+" "+b.payYear:"Record only";
+        return h("div",{key:b.id,style:{background:CARD,borderRadius:10,border:"1px solid "+BDR,marginBottom:6,overflow:"hidden"}},
+          h("div",{style:{background:clr,padding:"6px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            h("div",{style:{fontSize:11,fontWeight:700,color:"#fff"}},b.note||bonusTypes[b.type]||b.type),
+            h("div",{style:{fontSize:13,fontWeight:900,color:"#fff"}},fmt(b.amount||0))
+          ),
+          h("div",{style:{padding:"6px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+            h("div",null,
+              h("div",{style:{fontSize:10,color:GRY}},new Date((b.date||"")+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})),
+              b.note?h("div",{style:{fontSize:9,color:GRY,fontStyle:"italic"}},b.note):null
+            ),
+            h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+              h("div",{style:{fontSize:9,fontWeight:700,background:b.payMonth>=0?"#10B98110":SFT,color:b.payMonth>=0?"#10B981":GRY,borderRadius:5,padding:"2px 6px",border:"1px solid "+(b.payMonth>=0?"#10B98125":BDR)}},payLabel),
+              h("button",{onClick:function(){if(!window.confirm("Delete this bonus?"))return;setBonuses(function(p){return p.filter(function(x){return x.id!==b.id;});});_sb.from("bonuses").delete().eq("id",String(b.id)).then(function(){});showT("Deleted");},style:{background:RED+"10",border:"1px solid "+RED+"22",borderRadius:5,width:20,height:20,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("delete",RED,10))
+            )
+          )
+        );
+      })
     );
   }
-
-
   function renderAdminPanel(){
     var now=new Date(); // triggers re-render each second via parent now state
     function inactiveDays(t){if(!t)return 9999;return Math.floor((new Date()-new Date(t))/86400000);}
