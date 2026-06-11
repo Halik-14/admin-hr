@@ -2654,8 +2654,8 @@ export default function App(){
     // Warning checkbox
     h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"44",borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer"},
       onClick:function(){setSuAgreed(function(v){return !v;});}},
-      h("div",{style:{width:18,height:18,borderRadius:4,border:"2px solid "+(suAgreed?AMB:T.AUTH_INPUT_BDR),background:suAgreed?AMB:"transparent",flexShrink:0,marginTop:1,display:"flex",alignItems:"center",justifyContent:"center"}},
-        suAgreed?h("div",{style:{color:"#fff",fontSize:12,fontWeight:900}},"\u2713"):null
+      h("div",{style:{width:20,height:20,borderRadius:5,border:"2.5px solid "+(suAgreed?AMB:NVY),background:suAgreed?AMB:"transparent",flexShrink:0,marginTop:1,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}},
+        suAgreed?h("div",{style:{color:"#fff",fontSize:13,fontWeight:900}},"\u2713"):null
       ),
       h("div",{style:{fontSize:11,color:T.AUTH_LABEL,lineHeight:1.5}},
         h("span",{style:{color:AMB,fontWeight:700}},"Important: "),
@@ -3688,6 +3688,8 @@ null
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Personal"),
         lbl("FULL NAME"),edInp("name","text","Full name"),
         lbl("MOBILE"),edInp("mob","tel","Mobile number"),
+        lbl("NATIONALITY"),
+        h("input",{type:"text",value:editE.nationality||"",onChange:function(e){setEditE(function(p){return Object.assign({},p,{nationality:e.target.value});});},placeholder:"e.g. Indian",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}),
         lbl("EMAIL"),edInp("email","email","Email address"),
         lbl("EMPLOYEE ID"),edInp("eid","text","e.g. EMP006"),
         lbl("DATE OF BIRTH"),edInp("dob","date",""),
