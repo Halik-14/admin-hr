@@ -2652,13 +2652,13 @@ export default function App(){
     authLbl("WORK EMAIL"),
     inp("email",authEmail,function(e){setAuthEmail(e.target.value);setAuthErr("");},"you@company.com",!!authErr),
     // Warning checkbox
-    h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"44",borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer"},
+    h("div",{style:{background:suAgreed?AMB+"18":T.AUTH_INPUT_BG,border:"2px solid "+(suAgreed?AMB:NVY),borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",gap:10,alignItems:"flex-start",cursor:"pointer",transition:"all .2s"},
       onClick:function(){setSuAgreed(function(v){return !v;});}},
       h("div",{style:{width:20,height:20,borderRadius:5,border:"2.5px solid "+(suAgreed?AMB:NVY),background:suAgreed?AMB:"transparent",flexShrink:0,marginTop:1,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}},
         suAgreed?h("div",{style:{color:"#fff",fontSize:13,fontWeight:900}},"\u2713"):null
       ),
       h("div",{style:{fontSize:11,color:T.AUTH_LABEL,lineHeight:1.5}},
-        h("span",{style:{color:AMB,fontWeight:700}},"Important: "),
+        h("span",{style:{color:suAgreed?AMB:NVY,fontWeight:700}},"Important: "),
         "This email will be your permanent login ID. It cannot be changed later. Please use a professional long-term email."
       )
     ),
