@@ -12,7 +12,7 @@ var THEMES={
     PILL_DANGER_BG:"#FEE2E2",PILL_DANGER_SOFT:"#FEF2F2",PILL_WARN_BG:"#FEF3C7",PILL_WARN_SOFT:"#FFFBEB",PILL_OK_BG:"#DCFCE7",PILL_INFO_BG:"#EEF2FF",PILL_SKY_BG:"#F0F9FF",
     CHIP_INFO:"#EEF2FF",CHIP_BORDER:"#C7D2FE",HEADER_BG:"#FFFFFF",DIVIDER:"#F1F5F9",
     SHADOW:"0 2px 8px rgba(15,23,42,.06)",SHADOW_LG:"0 8px 24px rgba(15,23,42,.10)",SHADOW_NAV:"0 -4px 14px rgba(15,23,42,.06)"},
-  dark:{GRY:"#9a9a9a",BDR:"#454343",NVY:"#FFFFFF",SFT:"#262525",CARD:"#302f2f",PAGE:"#1f1e1e",MUTED:"#8a8a8a",HOVER:"#3a3939",ACCENT:"#FFFFFF",ACCENT_FG:"#1a1a1a",ACCENT_SOFT:"#3a3a3a",
+  dark:{GRY:"#9a9a9a",BDR:"#403f3f",NVY:"#FFFFFF",SFT:"#2a2929",CARD:"#2e2d2d",PAGE:"#242323",MUTED:"#8a8a8a",HOVER:"#3a3939",ACCENT:"#FFFFFF",ACCENT_FG:"#1a1a1a",ACCENT_SOFT:"#3a3a3a",
     INPUT_BG:"#2a2929",AUTH_BG:"#242323",AUTH_CARD:"#2e2d2d",AUTH_INPUT_BG:"#2e2d2d",AUTH_INPUT_BDR:"#3a3939",AUTH_INPUT_TEXT:"#FFFFFF",AUTH_LABEL:"#8a8a8a",AUTH_TEXT:"#FFFFFF",AUTH_SUB:"#8a8a8a",AUTH_LINK:"#FFFFFF",AUTH_BTN_BG:"#FFFFFF",AUTH_BTN_TEXT:"#242323",AUTH_OTP_BG:"#2e2d2d",AUTH_OTP_BDR:"#FFFFFF",AUTH_OTP_TEXT:"#FFFFFF",
     PILL_DANGER_BG:"#3a2727",PILL_DANGER_SOFT:"#332626",PILL_WARN_BG:"#3a3322",PILL_WARN_SOFT:"#332e22",PILL_OK_BG:"#1f3328",PILL_INFO_BG:"#262838",PILL_SKY_BG:"#22323a",
     CHIP_INFO:"#262838",CHIP_BORDER:"#3a3a55",HEADER_BG:"#2e2d2d",DIVIDER:"#3a3939",
@@ -65,6 +65,22 @@ var ATO=["present","absent","half","paid","unpaid","holiday","ot","unmarked"];
 var HO=["ID Card","Laptop","Access Card","Office Keys","Company Phone","Uniform","Documents","Other"];
 function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
 var SVG_ICONS={
+"arrow_back":"<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>",
+"calendar_today":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" ry=\"2\"/><line x1=\"16\" x2=\"16\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"2\" y2=\"6\"/><line x1=\"3\" x2=\"21\" y1=\"10\" y2=\"10\"/>",
+"cancel":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/>",
+"chat_bubble":"<path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/>",
+"description":"<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/><path d=\"M10 9H8\"/>",
+"event_busy":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" ry=\"2\"/><line x1=\"16\" x2=\"16\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"2\" y2=\"6\"/><line x1=\"3\" x2=\"21\" y1=\"10\" y2=\"10\"/><path d=\"m14 14-4 4\"/><path d=\"m10 14 4 4\"/>",
+"event_note":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" ry=\"2\"/><line x1=\"16\" x2=\"16\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"2\" y2=\"6\"/><line x1=\"3\" x2=\"21\" y1=\"10\" y2=\"10\"/><path d=\"M8 14h8\"/><path d=\"M8 18h5\"/>",
+"help":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\"/><path d=\"M12 17h.01\"/>",
+"info":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4\"/><path d=\"M12 8h.01\"/>",
+"manage_accounts":"<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><circle cx=\"19\" cy=\"11\" r=\"2\"/><path d=\"M19 8v1\"/><path d=\"M19 13v1\"/><path d=\"m21.6 9.5-.87.5\"/><path d=\"m17.27 12-.87.5\"/><path d=\"m21.6 12.5-.87-.5\"/><path d=\"m17.27 10-.87-.5\"/>",
+"person":"<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>",
+"receipt":"<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>",
+"receipt_long":"<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M8 7h8\"/><path d=\"M8 11h8\"/><path d=\"M8 15h5\"/>",
+"upload":"<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"17 8 12 3 7 8\"/><line x1=\"12\" x2=\"12\" y1=\"3\" y2=\"15\"/>",
+"upload_file":"<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M12 18v-6\"/><path d=\"m9 15 3-3 3 3\"/>",
+"smartphone":"<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M12 18h.01\"/>",
 "warning":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z\"/><line x1=\"12\" x2=\"12\" y1=\"9\" y2=\"13\"/><line x1=\"12\" x2=\"12.01\" y1=\"17\" y2=\"17\"/>",
 "clock":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/>",
 "group":"<path d=\"M18 21a8 8 0 0 0-16 0\"/><circle cx=\"10\" cy=\"8\" r=\"5\"/><path d=\"M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3\"/>",
@@ -3265,7 +3281,7 @@ null
             ),
             overLim?null:h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
               e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="tel:"+e.mob;},style:{width:34,height:34,borderRadius:9,background:"#10B98112",border:"1px solid #10B98125",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("phone","#10B981",15)):null,
-              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.open("https://wa.me/91"+String(e.mob).replace(/\D/g,""),"_blank");},style:{width:34,height:34,borderRadius:9,background:"#25D36612",border:"1px solid #25D36625",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("whatsapp","#25D366",15)):null,
+              e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.open("https://wa.me/91"+String(e.mob).replace(/\D/g,""),"_blank");},style:{width:34,height:34,borderRadius:9,background:"#25D36612",border:"1px solid #25D36625",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("whatsapp","#25D366",19)):null,
               e.email?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="mailto:"+e.email;},style:{width:34,height:34,borderRadius:9,background:"#2563EB12",border:"1px solid #2563EB25",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("mail","#2563EB",15)):null,
               h("div",{style:{width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.chev,GRY,16))
             )
@@ -4138,7 +4154,7 @@ null
                     h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"),
                     h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er")
                   ):h("button",{onClick:needPaid,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"),
-              h("button",{onClick:function(){sharePayslip(e,d,payM,payY);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.wa,NVY,13),"WhatsApp"),
+              h("button",{onClick:function(){if(!isPaid){showT("WhatsApp share is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for WhatsApp payslip sharing"),"_blank");return;}sharePayslip(e,d,payM,payY);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.wa:"lock",isPaid?"#25D366":GRY,13),"WhatsApp"),
               h("button",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:isO?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isO?ACCENT_FG:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isO?"expand_less":"expand_more",isO?CARD:NVY,13),isO?"Hide":"Details")
             ),
             isO?h("div",{style:{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:"12px",border:"1px solid "+BDR,marginTop:4}},
