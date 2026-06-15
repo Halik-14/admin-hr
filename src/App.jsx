@@ -2292,6 +2292,7 @@ export default function App(){
   }
 
   function shareAtt(emp){
+    if(!isPaid){showT("WhatsApp share is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}
     if(!emp.mob){showT("No mobile number saved","err");return;}
     var ma=mAtt(emp.id,attY,attM);
     var text=(org.name||"")+(org.name?" - Attendance Report\n":"")+emp.name+" | "+MOS[attM]+" "+attY+"\n\nPresent: "+ma.present+" days\nAbsent: "+ma.absent+" days\nHalf Day: "+ma.half+" days\nPaid Leave: "+ma.paidLeave+" days\nUnpaid: "+ma.unpaid+" days\n\nGenerated via Admin HR app";
@@ -3358,7 +3359,12 @@ null
           selE.eid?h("div",{style:{fontSize:10,color:CARD,opacity:.55}},"ID: "+selE.eid):null,
           selE.joined?h("div",{style:{fontSize:10,color:CARD,opacity:.55}},"Joined: "+selE.joined):null,
           selE.phone?h("div",{style:{fontSize:10,color:CARD,opacity:.55}},selE.phone):null
-        )
+        ),
+        (selE.mob||selE.email)?h("div",{style:{position:"absolute",right:12,bottom:12,display:"flex",gap:7,alignItems:"center"}},
+          selE.mob?h("button",{onClick:function(){window.location.href="tel:"+selE.mob;},style:{width:32,height:32,borderRadius:9,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("phone","#10B981",15)):null,
+          selE.mob?h("button",{onClick:function(){window.open("https://wa.me/"+(selE.ccode||"91").replace(/\D/g,"")+String(selE.mob).replace(/\D/g,""),"_blank");},style:{width:32,height:32,borderRadius:9,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("whatsapp","#25D366",18)):null,
+          selE.email?h("button",{onClick:function(){window.location.href="mailto:"+selE.email;},style:{width:32,height:32,borderRadius:9,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("mail","#2563EB",15)):null
+        ):null
       ),
       /* Action buttons */
       h("div",{style:{display:"flex",gap:6,marginBottom:8}},
@@ -3389,7 +3395,7 @@ null
               d.esiR>0?h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:2}},h("span",{style:{fontSize:11,color:GRY}},"ESI (Employer)"),h("span",{style:{fontSize:11,fontWeight:600,color:NVY}},fmt(d.esiR))):null,
               h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4,paddingTop:4,borderTop:"1px solid "+BDR}},h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Total CTC"),h("span",{style:{fontSize:12,fontWeight:800,color:NVY}},fmt(d.net+d.pfR+d.esiR)))
             ),
-            h("button",{onClick:function(){makePayslipPDF(selE,d,curM,curY,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},ic("download",CARD,14),"Download Payslip")
+            h("button",{onClick:function(){if(!isPaid){showT("Download payslip is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}makePayslipPDF(selE,d,curM,curY,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},ic(isPaid?"download":"lock",CARD,14),"Download Payslip")
           );
         }
       ),
@@ -3915,7 +3921,7 @@ null
             ),
             h("div",{style:{display:"flex",gap:5,marginTop:5,marginLeft:45}},
               h("button",{onClick:function(){setSheetE(e);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},"Sheet"),
-              h("button",{onClick:function(){shareAtt(e);},style:{display:"flex",alignItems:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},ic(ICONS.wa,"#25D366",11),"WhatsApp")
+              h("button",{onClick:function(){shareAtt(e);},style:{display:"flex",alignItems:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},ic(isPaid?"whatsapp":"lock",isPaid?"#25D366":GRY,11),"WhatsApp")
             )
           );
         })
@@ -3980,7 +3986,7 @@ null
         h("div",null,h("div",{style:{fontSize:14,fontWeight:800,color:NVY}},sheetE.name),h("div",{style:{fontSize:11,color:GRY}},MOS[mo]+" "+yr)),
         h("div",{style:{display:"flex",gap:5}},
           h("button",{onClick:isPaid?function(){var recs={};Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+sheetE.id)&&kv[0].startsWith(yr+"-"+String(mo+1).padStart(2,"0"));}).forEach(function(kv){recs[kv[0].split("_")[0]]=kv[1];});try{makeAttPDF(sheetE.name,yr,mo,recs,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 10px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.dl:"lock",CARD,13),isPaid?"PDF":"PDF"),
-          h("button",{onClick:function(){shareAtt(sheetE);},style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 10px",fontSize:11,color:NVY,fontWeight:700,cursor:"pointer"}},ic(ICONS.wa,"#25D366",13),"WhatsApp")
+          h("button",{onClick:function(){shareAtt(sheetE);},style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 10px",fontSize:11,color:NVY,fontWeight:700,cursor:"pointer"}},ic(isPaid?"whatsapp":"lock",isPaid?"#25D366":GRY,13),"WhatsApp")
         )
       ),
       h("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:5,marginBottom:10}},
@@ -5877,22 +5883,14 @@ null
   }
 
   function renderPro(){
-    if(!isPaid)return h("div",{style:{padding:"24px 16px",textAlign:"center"}},
-      h("div",{style:{width:64,height:64,borderRadius:20,background:"linear-gradient(135deg,#4F46E5,#7C3AED)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px"}},
-        ic("workspace_premium","#fff",32)
+    if(!isPaid)return h("div",{style:{padding:"40px 20px",textAlign:"center",display:"flex",flexDirection:"column",alignItems:"center"}},
+      h("div",{style:{width:88,height:88,borderRadius:"50%",background:ACCENT+"12",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:20}},
+        ic("lock","#4F46E5",42)
       ),
-      h("div",{style:{fontSize:20,fontWeight:800,color:NVY,marginBottom:8}},"Admin HR Pro"),
-      h("div",{style:{fontSize:13,color:GRY,marginBottom:24,lineHeight:1.7}},"Unlock the full power of HR management with Pro features."),
-      h("div",{style:{textAlign:"left",marginBottom:24}},
-        [["Task management & tracking","target"],["KPI & performance reviews","insights"],["Employee self-service portal","smartphone"],["Leave apply & approval","event_available"],["In-app notifications","notifications"]].map(function(item){
-          return h("div",{key:item[0],style:{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid "+BDR}},
-            h("div",{style:{width:32,height:32,borderRadius:8,background:ACCENT+"12",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(item[1],ACCENT,16)),
-            h("div",{style:{fontSize:13,color:NVY}},item[0])
-          );
-        })
-      ),
-      h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro"),"_blank");},style:{width:"100%",background:NVY,border:"none",borderRadius:14,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10}},
-        ic("whatsapp","#25D366",20),"Contact to Upgrade"
+      h("div",{style:{fontSize:18,fontWeight:800,color:NVY,marginBottom:8}},"This is a paid feature"),
+      h("div",{style:{fontSize:13,color:GRY,marginBottom:24,lineHeight:1.6,maxWidth:280}},"The Insight section includes task management, KPI tracking, employee self-service, leave approvals and notifications. Subscribe to unlock."),
+      h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to the paid features of Admin HR"),"_blank");},style:{background:NVY,border:"none",borderRadius:12,padding:"13px 28px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10}},
+        ic("whatsapp","#25D366",18),"Contact to Subscribe"
       )
     );
 
