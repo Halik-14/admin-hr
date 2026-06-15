@@ -139,17 +139,17 @@ var SVG_ICONS={
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
-  cal:"calendar_month",dl:"download",wa:"whatsapp",mail:"chat",edit:"edit",
+  cal:"calendar_month",dl:"download",wa:"whatsapp",mail:"mail",edit:"edit",
   del:"delete",user:"account_circle",plus:"add",chev:"chevron_right",
-  lock:"lock",sun:"light_mode",grid:"dashboard",set:"settings",work:"monitoring",
+  lock:"lock",sun:"light_mode",grid:"dashboard",set:"settings",work:"insights",
   pay:"payments",save:"save"
 };
+var PH_MAP={"group":"users-three","groups":"users-three","how_to_reg":"user-check","check_circle":"check-circle","currency_rupee":"currency-inr","trending_up":"trend-up","calendar_month":"calendar-dots","download":"download-simple","chat":"chat-circle","edit":"pencil-simple","delete":"trash","account_circle":"user-circle","add":"plus","chevron_right":"caret-right","lock":"lock","light_mode":"sun","dark_mode":"moon","dashboard":"squares-four","settings":"gear-six","payments":"credit-card","save":"floppy-disk","search":"magnifying-glass","close":"x","notifications":"bell","cake":"cake","workspace_premium":"medal","briefcase":"briefcase","target":"target","arrow_right":"arrow-right","delete_forever":"trash-simple","bolt":"lightning","pending_actions":"clipboard-text","task_alt":"check-square","assignment":"clipboard-text","forum":"chats-circle","send":"paper-plane-tilt","refresh":"arrows-clockwise","cases":"suitcase","paid":"coins","local_atm":"money","business_center":"briefcase","whatsapp":"whatsapp-logo","forward_to_inbox":"envelope-simple","play_arrow":"play","business":"buildings","language":"globe","edit_calendar":"calendar-plus","logout":"sign-out","mail":"envelope","phone":"phone","verified":"seal-check","add_task":"plus-circle","insights":"chart-line-up","account_balance_wallet":"wallet","event_available":"calendar-check","expand_more":"caret-down","expand_less":"caret-up","table_view":"table","check":"check","fact_check":"list-checks","savings":"piggy-bank","account_balance":"bank","price_check":"receipt","supervisor_account":"user-gear","sync_alt":"arrows-left-right","cloud_upload":"cloud-arrow-up","people_alt":"users","monitoring":"chart-line","wallet":"wallet","badge":"identification-badge","monetization_on":"coin"};
 function ic(name,color,size){
   var s=size||20;
-  var path=SVG_ICONS[name]||SVG_ICONS["check"];
-  return h("svg",{viewBox:"0 0 24 24",width:s,height:s,style:{display:"inline-block",verticalAlign:"middle",flexShrink:0},fill:color||"currentColor"},
-    h("path",{d:path})
-  );
+  var phName=PH_MAP[name]||"circle";
+  var weight=(name==="whatsapp")?"ph-fill":"ph-duotone";
+  return h("i",{className:weight+" ph-"+phName,style:{fontSize:s+"px",color:color||"currentColor",display:"inline-flex",alignItems:"center",justifyContent:"center",lineHeight:1,verticalAlign:"middle",flexShrink:0}});
 }
 
 function calcTax(annual){
@@ -465,7 +465,7 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
 }
 
 
-function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign){
+function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,onDoc){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=16,cw=W-mg*2;
@@ -542,7 +542,7 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     }
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     var suffix=showEmployer?"-Employer":"-Employee";
-    downloadPDF(doc.output("blob"),"Payslip-"+(emp.name||"").replace(/ /g,"-")+suffix+"-"+MOS[m]+"-"+y+".pdf");
+    if(typeof onDoc==="function"){onDoc(doc);}else{downloadPDF(doc.output("blob"),"Payslip-"+(emp.name||"").replace(/ /g,"-")+suffix+"-"+MOS[m]+"-"+y+".pdf");}
   },function(){alert("PDF library failed to load.");});
 }
 function makePayrollPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign){
@@ -2239,37 +2239,39 @@ export default function App(){
   function removeEmp(id){setEmps(function(p){return p.filter(function(e){return e.id!==id;});});showT("Deleted.");}
 
   function sharePayslip(emp,d,m2,y){
-    try{
-      // Use same makePayslipPDF for consistent output
-      makePayslipPDF(emp,d,m2,y,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign);
-
-      var pdfBlob=doc.output("blob");
-      var fileName="Payslip_"+emp.name.replace(/\s+/g,"_")+"_"+MOS[m2]+"_"+y+".pdf";
-      var pdfFile=new File([pdfBlob],fileName,{type:"application/pdf"});
-
-      if(navigator.canShare&&navigator.canShare({files:[pdfFile]})){
-        navigator.share({
-          title:"Payslip - "+emp.name+" - "+mName,
-          text:text,
-          files:[pdfFile]
-        }).catch(function(){
-          // Fallback to WhatsApp text link
-          if(emp.mob)window.open("https://wa.me/91"+emp.mob+"?text="+encodeURIComponent(text),"_blank");
-        });
-      } else if(emp.mob){
-        // Fallback — download PDF + open WhatsApp with text
-        doc.save(fileName);
-        window.open("https://wa.me/91"+emp.mob+"?text="+encodeURIComponent(text+"\n\nPDF downloaded separately."),"_blank");
-      } else {
-        doc.save(fileName);
-        showT("PDF downloaded! Share manually.");
-      }
-    }catch(e){
-      // Final fallback
-      if(emp.mob)window.open("https://wa.me/91"+emp.mob+"?text="+encodeURIComponent(text),"_blank");
-      else showT("No mobile number saved","err");
-    }
+    var mName=MOS[m2]+" "+y;
+    var text="Hi "+emp.name+",\n\nPlease find your payslip for "+mName+".\n\nNet Pay: "+fmt(d.net)+"\n\nRegards,\n"+(org.name||"HR Team");
+    var fileName="Payslip_"+emp.name.replace(/\s+/g,"_")+"_"+MOS[m2]+"_"+y+".pdf";
+    makePayslipPDF(emp,d,m2,y,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,function(doc){
+      try{
+        var pdfBlob=doc.output("blob");
+        var pdfFile=new File([pdfBlob],fileName,{type:"application/pdf"});
+        if(navigator.canShare&&navigator.canShare({files:[pdfFile]})){
+          navigator.share({title:"Payslip - "+emp.name+" - "+mName,text:text,files:[pdfFile]})
+            .catch(function(err){
+              if(err&&err.name==="AbortError")return;
+              doc.save(fileName);
+              if(emp.mob)window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text),"_blank");
+            });
+        } else {
+          doc.save(fileName);
+          if(emp.mob){
+            window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text+"\n\n(Payslip PDF downloaded — please attach it in the chat.)"),"_blank");
+            showT("PDF downloaded. Attach it in WhatsApp.");
+          } else {
+            showT("PDF downloaded! No mobile number saved.");
+          }
+        }
+      }catch(e){showT("Could not share payslip","err");}
+    });
   }
+
+  function waNum(emp){
+    var cc=(emp.ccode||"91").replace(/\D/g,"");
+    var mob=String(emp.mob||"").replace(/\D/g,"");
+    return cc+mob;
+  }
+
   function shareAtt(emp){
     if(!emp.mob){showT("No mobile number saved","err");return;}
     var ma=mAtt(emp.id,attY,attM);
@@ -3677,7 +3679,13 @@ null
   function renderEditEmp(){
     if(!editE)return null;
     function setField(key,val){setEditE(function(prev){var n=Object.assign({},prev);n[key]=val;return n;});}
-    function edInp(key,type,ph){
+  
+  function ccFlag(code){
+    var map={"91":"\ud83c\uddee\ud83c\uddf3","1":"\ud83c\uddfa\ud83c\uddf8","44":"\ud83c\uddec\ud83c\udde7","971":"\ud83c\udde6\ud83c\uddea","966":"\ud83c\uddf8\ud83c\udde6","65":"\ud83c\uddf8\ud83c\uddec","60":"\ud83c\uddf2\ud83c\uddfe","61":"\ud83c\udde6\ud83c\uddfa","64":"\ud83c\uddf3\ud83c\uddff","94":"\ud83c\uddf1\ud83c\uddf0","880":"\ud83c\udde7\ud83c\udde9","977":"\ud83c\uddf3\ud83c\uddf5","974":"\ud83c\uddf6\ud83c\udde6","968":"\ud83c\uddf4\ud83c\uddf2","965":"\ud83c\uddf0\ud83c\uddfc","973":"\ud83c\udde7\ud83c\udded","49":"\ud83c\udde9\ud83c\uddea","33":"\ud83c\uddeb\ud83c\uddf7","81":"\ud83c\uddef\ud83c\uddf5","86":"\ud83c\udde8\ud83c\uddf3"};
+    return map[code]||"\ud83c\udf0d";
+  }
+
+  function edInp(key,type,ph){
       return h("input",{type:type||"text",value:editE[key]||"",onChange:function(e){setField(key,e.target.value);},placeholder:ph||"",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}});
     }
     var inpStyle={width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,fontFamily:"inherit",outline:"none",marginBottom:10};
@@ -3687,7 +3695,17 @@ null
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Personal"),
         lbl("FULL NAME"),edInp("name","text","Full name"),
-        lbl("MOBILE"),edInp("mob","tel","Mobile number"),
+        lbl("MOBILE"),
+        h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+          h("div",{style:{width:92,flexShrink:0}},
+            h("div",{style:{display:"flex",alignItems:"center",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"0 8px",height:"100%"}},
+              h("span",{style:{fontSize:14,marginRight:4}},ccFlag(editE.ccode||"91")),
+              h("span",{style:{fontSize:13,color:NVY,fontWeight:600,marginRight:2}},"+"),
+              h("input",{type:"tel",value:editE.ccode||"91",onChange:function(e){var v=e.target.value.replace(/\D/g,"").slice(0,4);setField("ccode",v);},placeholder:"91",style:{width:"100%",background:"transparent",border:"none",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",padding:"11px 0"}})
+            )
+          ),
+          h("input",{type:"tel",value:editE.mob||"",onChange:function(e){var v=e.target.value.replace(/\D/g,"").slice(0,10);setField("mob",v);},placeholder:"10-digit number",maxLength:10,style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+        ),
         lbl("NATIONALITY"),
         h("input",{type:"text",value:editE.nationality||"",onChange:function(e){setEditE(function(p){return Object.assign({},p,{nationality:e.target.value});});},placeholder:"e.g. Indian",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box"}}),
         lbl("EMAIL"),edInp("email","email","Email address"),
