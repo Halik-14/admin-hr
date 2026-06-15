@@ -485,7 +485,7 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
 }
 
 
-function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,onDoc){
+function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,onDoc,bonusList,claimTotal){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=16,cw=W-mg*2;
@@ -524,9 +524,14 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     var earns=[["Basic Salary",fmtIN(d.eb||0)],["HRA",fmtIN(emp.hra||0)],["Allowances",fmtIN(emp.allow||0)]];
     if(d.shiftAllow>0)earns.push(["Shift Allowance",fmtIN(d.shiftAllow)]);
     if(d.inc>0)earns.push(["Incentive",fmtIN(d.inc)]);
+    var bonusSum=0;
+    if(bonusList&&bonusList.length){bonusList.forEach(function(b){bonusSum+=(b.amount||0);earns.push([(b.note||b.type||"Bonus"),fmtIN(b.amount||0)]);});}
+    var claimSum=Number(claimTotal||0);
+    if(claimSum>0)earns.push(["Reimbursement",fmtIN(claimSum)]);
     earns.forEach(function(r,i){colRow(c1x,er+i*rh,cw2,r[0],r[1],null,i%2===0);});
+    var grossWithExtras=d.gr+bonusSum+claimSum;
     var gr_y=er+earns.length*rh;
-    colTotal(c1x,gr_y,cw2,"Gross Earnings",fmtIN(d.gr),[232,248,240],[5,120,80]);
+    colTotal(c1x,gr_y,cw2,"Gross Earnings",fmtIN(grossWithExtras),[232,248,240],[5,120,80]);
     colHead(c2x,ry,cw2,"DEDUCTIONS",[180,30,30]);
     var dr=ry+rh,deds=[];
     if(d.ad>0)deds.push(["Absent Deduction","-"+fmtIN(d.ad)]);
@@ -548,7 +553,7 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
     doc.text("NET TAKE HOME  —  "+MOS[m]+" "+y,mg+4,net_y+5);
     doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(5,120,80);
-    doc.text(fmtIN(d.net),W-mg-4,net_y+6,{align:"right"});
+    doc.text(fmtIN(d.net+bonusSum+claimSum),W-mg-4,net_y+6,{align:"right"});
     net_y+=14;doc.setDrawColor(180,195,215);doc.line(mg,net_y,mg+cw,net_y);
     if(showEmployer){
       var ec_y=net_y+23;
@@ -1175,6 +1180,16 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
     doc.setFontSize(7);
     doc.text("Date & Seal",mg,ry+4);
     doc.text(authSign?"Signature of "+(authSign||orgPos):"Signature of Employer / HR Manager",W-mg-65,ry+4);
+
+    // ── Abbreviation legend ──
+    ry+=14;
+    doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.setTextColor(90,100,115);
+    doc.text("ABBREVIATIONS",mg,ry);
+    ry+=4;doc.setFont("helvetica","normal");doc.setTextColor(110,120,135);
+    var legend1="Ded = Deduction   |   PF Emp = Provident Fund (Employee 12%)   |   ESI Emp = Employee State Insurance (0.75%)   |   Prof Tax = Professional Tax   |   TDS = Tax Deducted at Source";
+    var legend2="Health Ins = Health Insurance   |   Er PF = Employer Provident Fund (12%)   |   Er ESI = Employer ESI (3.25%)   |   CTC = Cost to Company (Gross + Employer Contributions)";
+    doc.text(legend1,mg,ry);
+    ry+=4;doc.text(legend2,mg,ry);
 
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     downloadPDF(doc.output("blob"),"Salary-Register-"+MOS[m]+"-"+String(y)+".pdf");
@@ -2283,7 +2298,15 @@ export default function App(){
           }
         }
       }catch(e){showT("Could not share payslip","err");}
-    });
+    },getEmpBonuses(emp.id,m2,y),getEmpClaimTotal(emp.id,m2,y));
+  }
+
+
+  function getEmpBonuses(empId,m2,y){
+    return (bonuses||[]).filter(function(b){return b.employeeId===String(empId)&&b.payMonth===m2&&b.payYear===y;});
+  }
+  function getEmpClaimTotal(empId,m2,y){
+    return (claims||[]).filter(function(c){return c.employeeId===String(empId)&&c.status==="approved"&&c.month===m2&&c.year===y;}).reduce(function(s,c){return s+(c.amount||0);},0);
   }
 
   function waNum(emp){
@@ -3396,7 +3419,7 @@ null
               d.esiR>0?h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:2}},h("span",{style:{fontSize:11,color:GRY}},"ESI (Employer)"),h("span",{style:{fontSize:11,fontWeight:600,color:NVY}},fmt(d.esiR))):null,
               h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4,paddingTop:4,borderTop:"1px solid "+BDR}},h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Total CTC"),h("span",{style:{fontSize:12,fontWeight:800,color:NVY}},fmt(d.net+d.pfR+d.esiR)))
             ),
-            h("button",{onClick:function(){if(!isPaid){showT("Download payslip is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}makePayslipPDF(selE,d,curM,curY,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},ic(isPaid?"download":"lock",CARD,14),"Download Payslip")
+            h("button",{onClick:function(){if(!isPaid){showT("Download payslip is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}makePayslipPDF(selE,d,curM,curY,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,null,getEmpBonuses(selE.id,curM,curY),getEmpClaimTotal(selE.id,curM,curY));},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},ic(isPaid?"download":"lock",CARD,14),"Download Payslip")
           );
         }
       ),
@@ -4158,8 +4181,8 @@ null
             ),
             h("div",{style:{display:"flex",gap:5,marginBottom:6}},
               isPaid?h("div",{style:{display:"flex",gap:5,flex:1}},
-                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"),
-                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"");},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er")
+                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonuses(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"),
+                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonuses(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er")
                   ):h("button",{onClick:needPaid,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"),
               h("button",{onClick:function(){if(!isPaid){showT("WhatsApp share is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for WhatsApp payslip sharing"),"_blank");return;}sharePayslip(e,d,payM,payY);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.wa:"lock",isPaid?"#25D366":GRY,13),"WhatsApp"),
               h("button",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:isO?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isO?ACCENT_FG:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isO?"expand_less":"expand_more",isO?CARD:NVY,13),isO?"Hide":"Details")
@@ -7105,12 +7128,15 @@ null
           var isFixed2=emp.salaryType==="fixed";
           var gr2=isFixed2?Number(emp.fixedSalary||emp.monthlyCTC||0):(Number(emp.basic||0)+Number(emp.hra||0)+Number(emp.allow||0));
           var att2=d2.ad+d2.hd+d2.ud,tax2=d2.pfE+d2.esiE+d2.pt+d2.tds;
-          tG+=gr2;tA+=att2;tT+=tax2;tN+=d2.net;
+          var bon2=(bonuses||[]).filter(function(b){return b.employeeId===String(emp.id)&&b.payMonth===mo&&b.payYear===yr;}).reduce(function(s,b){return s+(b.amount||0);},0);
+          var clm2=(claims||[]).filter(function(c){return c.employeeId===String(emp.id)&&c.status==="approved"&&c.month===mo&&c.year===yr;}).reduce(function(s,c){return s+(c.amount||0);},0);
+          var netM=d2.net+bon2+clm2;
+          tG+=gr2+bon2+clm2;tA+=att2;tT+=tax2;tN+=netM;
           if(mi%2===0){doc.setFillColor(247,249,252);doc.rect(10,y2-4,190,6,"F");}
           doc.text(mn,cx2[0],y2);doc.text(fmtIN(gr2),cx2[1],y2);
           doc.setTextColor(att2>0?200:150,att2>0?40:160,att2>0?40:150);doc.text(att2>0?"-"+fmtIN(att2):"-",cx2[2],y2);
           doc.setTextColor(tax2>0?200:150,tax2>0?40:160,tax2>0?40:150);doc.text(tax2>0?"-"+fmtIN(tax2):"-",cx2[3],y2);
-          doc.setTextColor(5,120,80);doc.setFont(undefined,"bold");doc.text(fmtIN(d2.net),cx2[4],y2);doc.setFont(undefined,"normal");doc.setTextColor(15,23,42);
+          doc.setTextColor(5,120,80);doc.setFont(undefined,"bold");doc.text(fmtIN(netM),cx2[4],y2);doc.setFont(undefined,"normal");doc.setTextColor(15,23,42);
           y2+=6;
         });
         doc.line(10,y2,200,y2);y2+=5;
