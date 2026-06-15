@@ -65,6 +65,7 @@ var ATO=["present","absent","half","paid","unpaid","holiday","ot","unmarked"];
 var HO=["ID Card","Laptop","Access Card","Office Keys","Company Phone","Uniform","Documents","Other"];
 function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
 var SVG_ICONS={
+"star":"<polygon points=\"12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2\"/>",
 "arrow_back":"<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>",
 "calendar_today":"<rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" ry=\"2\"/><line x1=\"16\" x2=\"16\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"2\" y2=\"6\"/><line x1=\"3\" x2=\"21\" y1=\"10\" y2=\"10\"/>",
 "cancel":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/>",
@@ -3514,7 +3515,7 @@ null
       ),
 
       /* 5. Gratuity */
-      accSection("gratuity","savings","#8B5CF6","Gratuity Calculator",
+      accSection("gratuity","workspace_premium","#8B5CF6","Gratuity Calculator",
         (function(){if(!selE.joined)return "Join date not set";var ms=new Date()-new Date(selE.joined+"T00:00:00");var y=Math.floor(ms/(1000*60*60*24*365.25));var m=Math.floor((ms%(1000*60*60*24*365.25))/(1000*60*60*24*30.44));return y+"y "+m+"m · "+(y>=5?"Eligible":"Not eligible yet");}()),
         function(){return renderGratuityCard(selE);}
       ),
@@ -3680,7 +3681,7 @@ null
       ),
 
       /* 8. Bonus & One-Time Pay */
-      accSection("bonus","monetization_on",AMB,"Bonus & One-Time Pay",
+      accSection("bonus","star",AMB,"Bonus & One-Time Pay",
         empBonuses2.length>0?"Total: "+fmt(bonusTotal)+" · "+empBonuses2.length+" record"+(empBonuses2.length>1?"s":""):"No bonuses recorded",
         function(){return renderBonusSection(selE);}
       ),
@@ -4495,12 +4496,12 @@ null
         ),
         h("div",{style:{height:14}}),
 
-        // ── Sign out ──
-        h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:12,padding:"12px 14px",marginBottom:12}},
-          h("div",{style:{display:"flex",gap:8,alignItems:"flex-start"}},
-            ic("warning",AMB,16),
+        // ── Account Activity Notice ──
+        h("div",{style:{background:AMB+"18",border:"2px solid "+AMB,borderRadius:10,padding:"12px 14px",marginBottom:12}},
+          h("div",{style:{display:"flex",gap:10,alignItems:"flex-start"}},
+            h("div",{style:{width:22,height:22,borderRadius:6,background:AMB,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}},ic("warning","#fff",13)),
             h("div",null,
-              h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:4}},"\u26a0 Account Activity Notice"),
+              h("div",{style:{fontSize:12,fontWeight:700,color:AMB,marginBottom:4}},"Account Activity Notice"),
               h("div",{style:{fontSize:11,color:GRY,lineHeight:1.6}},"Accounts inactive for more than 90 days may be suspended or permanently deleted. All HR data will be lost."),
               h("div",{style:{fontSize:11,fontWeight:700,color:AMB,marginTop:5}},"Download your records monthly from Data & Tax \u2192 Data Downloads to keep a safe backup.")
             )
