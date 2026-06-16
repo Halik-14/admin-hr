@@ -976,6 +976,10 @@ function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgA
       {label:"TOTAL",align:"r"},
     ];
     var cws=[42,26,16,18,16,16,16,16,18];
+    var cwSum=cws.reduce(function(a,b){return a+b;},0);
+    var cwAvail=W-mg*2;
+    var scale=cwAvail/cwSum;
+    cws=cws.map(function(w){return Math.round(w*scale*10)/10;});
 
     var rows=[];
     var totGross=0,totPFW=0,totEmpPF=0,totErPF=0,totEmpESI=0,totErESI=0,totAll=0;
@@ -1093,8 +1097,8 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
       {label:"EMPLOYEE NAME",align:"l"},
       {label:"DESIGNATION",align:"l"},
       {label:"DEPT",align:"l"},
-      {label:"DAYS W",align:"r"},
-      {label:"DAYS P",align:"r"},
+      {label:"WORKED",align:"r"},
+      {label:"PAID",align:"r"},
       {label:"BASIC",align:"r"},
       {label:"HRA",align:"r"},
       {label:"ALLOW",align:"r"},
@@ -1107,7 +1111,7 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
       {label:"NET PAY",align:"r"},
       {label:"SIGN",align:"c"},
     ];
-    var cws=[8,34,26,18,10,10,18,14,14,20,14,12,10,12,16,20,16];
+    var cws=[7,30,22,15,11,11,18,15,15,20,15,13,11,13,17,21,13];
     // Verify: cws sum
     var cwSum=cws.reduce(function(a,b){return a+b;},0);
     var cw=W-mg*2;
@@ -1180,16 +1184,6 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
     doc.setFontSize(7);
     doc.text("Date & Seal",mg,ry+4);
     doc.text(authSign?"Signature of "+(authSign||orgPos):"Signature of Employer / HR Manager",W-mg-65,ry+4);
-
-    // ── Abbreviation legend ──
-    ry+=14;
-    doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.setTextColor(90,100,115);
-    doc.text("ABBREVIATIONS",mg,ry);
-    ry+=4;doc.setFont("helvetica","normal");doc.setTextColor(110,120,135);
-    var legend1="Ded = Deduction   |   PF Emp = Provident Fund (Employee 12%)   |   ESI Emp = Employee State Insurance (0.75%)   |   Prof Tax = Professional Tax   |   TDS = Tax Deducted at Source";
-    var legend2="Health Ins = Health Insurance   |   Er PF = Employer Provident Fund (12%)   |   Er ESI = Employer ESI (3.25%)   |   CTC = Cost to Company (Gross + Employer Contributions)";
-    doc.text(legend1,mg,ry);
-    ry+=4;doc.text(legend2,mg,ry);
 
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     downloadPDF(doc.output("blob"),"Salary-Register-"+MOS[m]+"-"+String(y)+".pdf");
@@ -1975,7 +1969,7 @@ export default function App(){
     })();
   var trmEmps=emps.filter(function(e){return e.status==="terminated"||e.status==="resigned";});
   var tGross=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).gr;},0);
-  var tNet=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).net;},0);
+  var tNet=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).net+getExtraPay(e.id,curM,curY);},0);
 
   function cycleAtt(date,id){
     var cur=getAtt(date,id),nxt=ATO[(ATO.indexOf(cur)+1)%ATO.length];
@@ -2301,6 +2295,13 @@ export default function App(){
     },getEmpBonuses(emp.id,m2,y),getEmpClaimTotal(emp.id,m2,y));
   }
 
+
+
+  function getExtraPay(empId,m2,y){
+    var b=(bonuses||[]).filter(function(x){return x.employeeId===String(empId)&&x.payMonth===m2&&x.payYear===y;}).reduce(function(s,x){return s+(x.amount||0);},0);
+    var c=(claims||[]).filter(function(x){return x.employeeId===String(empId)&&x.status==="approved"&&x.month===m2&&x.year===y;}).reduce(function(s,x){return s+(x.amount||0);},0);
+    return b+c;
+  }
 
   function getEmpBonuses(empId,m2,y){
     return (bonuses||[]).filter(function(b){return b.employeeId===String(empId)&&b.payMonth===m2&&b.payYear===y;});
@@ -4084,7 +4085,7 @@ null
     },0);
     var filtAttDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD);return a+d.ad+d.hd+d.ud;},0);
     var filtTaxDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD);return a+d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;},0);
-    var filtNet=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD).net;},0);
+    var filtNet=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD).net+getExtraPay(e.id,payM,payY);},0);
     var filtDed=filtGross-filtNet;
     return h("div",{className:"fd"},
       h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
@@ -4140,7 +4141,7 @@ null
           var deptList=payDept?[payDept]:getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
           return h("div",null,deptList.map(function(dept){
             var dEmps=actEmps.filter(function(e){return e.dept===dept;});
-            var dTot=dEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));a.gr+=d2.gr;a.net+=d2.net;a.ded+=d2.gr-d2.net;return a;},{gr:0,net:0,ded:0});
+            var dTot=dEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));var ex=getExtraPay(e.id,payM,payY);a.gr+=d2.gr+ex;a.net+=d2.net+ex;a.ded+=d2.gr-d2.net;return a;},{gr:0,net:0,ded:0});
             return card(h("div",null,
               h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
                 h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},dept),
@@ -4165,6 +4166,8 @@ null
           var attDed=d.ad+d.hd+d.ud;
           var statDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;
           var totalDed=attDed+statDed;
+          var extraPay=getExtraPay(e.id,payM,payY);
+          var netWithExtra=d.net+extraPay;
           return h("div",{key:e.id,style:{borderBottom:"1px solid "+BDR,paddingBottom:12,marginBottom:12}},
             // Row 1: avatar + name + salary type + NET PAY only
             h("div",{style:{display:"flex",alignItems:"center",gap:9,marginBottom:8}},
@@ -4176,7 +4179,7 @@ null
               ),
               h("div",{style:{textAlign:"right",flexShrink:0}},
                 h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:1}},"TO PAY"),
-                h("div",{style:{fontSize:20,fontWeight:800,color:"#10B981"}},fmt(d.net))
+                h("div",{style:{fontSize:20,fontWeight:800,color:"#10B981"}},fmt(netWithExtra))
               )
             ),
             h("div",{style:{display:"flex",gap:5,marginBottom:6}},
@@ -4210,10 +4213,15 @@ null
                     h("div",{style:{fontSize:8,color:RED,letterSpacing:.4,marginBottom:2}},"TAX/DED"),
                     h("div",{style:{fontSize:13,fontWeight:800,color:RED}},fmt(statDed))
                   ):null,
+                  extraPay>0?h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"+"):null,
+                  extraPay>0?h("div",{style:{textAlign:"center",flex:1}},
+                    h("div",{style:{fontSize:8,color:"#10B981",letterSpacing:.4,marginBottom:2}},"BONUS"),
+                    h("div",{style:{fontSize:13,fontWeight:800,color:"#10B981"}},fmt(extraPay))
+                  ):null,
                   h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"="),
                   h("div",{style:{textAlign:"center",flex:1}},
                     h("div",{style:{fontSize:8,color:"#10B981",letterSpacing:.4,marginBottom:2}},"NET PAY"),
-                    h("div",{style:{fontSize:13,fontWeight:800,color:"#10B981"}},fmt(d.net))
+                    h("div",{style:{fontSize:13,fontWeight:800,color:"#10B981"}},fmt(netWithExtra))
                   )
                 )
               ),
