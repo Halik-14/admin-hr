@@ -1536,7 +1536,7 @@ export default function App(){
   var sRevNewOldCtc=st(""),revNewOldCtc=sRevNewOldCtc[0],setRevNewOldCtc=sRevNewOldCtc[1];
   var sRevNewCtc=st(""),revNewCtc=sRevNewCtc[0],setRevNewCtc=sRevNewCtc[1];
   var sRevNewReason=st(""),revNewReason=sRevNewReason[0],setRevNewReason=sRevNewReason[1];
-  var sEmpSections=st({salary:false,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});
+  var sEmpSections=st({joined:false,personal:false,salary:false,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});
   var empSections=sEmpSections[0],setEmpSections=sEmpSections[1];
   var sAnnEmpId=st(""),annEmpId=sAnnEmpId[0],setAnnEmpId=sAnnEmpId[1];
   var curFY2=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
@@ -3415,28 +3415,84 @@ null
     return h("div",{className:"fd"},
       h("button",{onClick:function(){setSelE(null);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"5px 10px",color:NVY,fontSize:11,fontWeight:600,cursor:"pointer",marginBottom:10}},"← Back"),
       minWageWarn&&!minWageWarn.ok?h("div",{style:{background:AMB+"15",border:"1px solid "+AMB+"44",borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",alignItems:"center",gap:8}},ic("warning",AMB,16),h("div",null,h("div",{style:{fontSize:12,fontWeight:700,color:AMB}},"Below Minimum Wage"),h("div",{style:{fontSize:10,color:GRY}},"Min: "+fmtIN(minWageWarn.min)+" | Current: "+fmtIN(selE.monthlyCTC)))):null,
-      /* Profile */
-      h("div",{style:{background:NVY,borderRadius:15,padding:15,marginBottom:8,position:"relative",overflow:"hidden"}},
-        h("div",{style:{position:"absolute",right:-7,top:-7,width:60,height:60,borderRadius:"50%",background:"rgba(255,255,255,.04)"}}),
-        h("div",{style:{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:600,color:CARD,marginBottom:8}},selE.av),
-        h("div",{style:{fontSize:16,fontWeight:700,color:CARD}},selE.name),
-        h("div",{style:{fontSize:11,color:CARD,opacity:.7}},[selE.role,selE.dept].filter(Boolean).join(" - ")||"No designation"),
-        h("div",{style:{display:"flex",gap:12,marginTop:8,flexWrap:"wrap"}},
-          selE.eid?h("div",{style:{fontSize:10,color:CARD,opacity:.55}},"ID: "+selE.eid):null,
-          selE.joined?h("div",{style:{fontSize:10,color:CARD,opacity:.55}},"Joined: "+selE.joined):null,
-          selE.phone?h("div",{style:{fontSize:10,color:CARD,opacity:.55}},selE.phone):null
-        ),
-        (selE.mob||selE.email)?h("div",{style:{position:"absolute",right:12,bottom:12,display:"flex",gap:7,alignItems:"center"}},
-          selE.mob?h("button",{onClick:function(){window.location.href="tel:"+selE.mob;},style:{width:32,height:32,borderRadius:9,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("phone","#10B981",15)):null,
-          selE.mob?h("button",{onClick:function(){window.open("https://wa.me/"+(selE.ccode||"91").replace(/\D/g,"")+String(selE.mob).replace(/\D/g,""),"_blank");},style:{width:32,height:32,borderRadius:9,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("whatsapp","#25D366",18)):null,
-          selE.email?h("button",{onClick:function(){window.location.href="mailto:"+selE.email;},style:{width:32,height:32,borderRadius:9,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("mail","#2563EB",15)):null
-        ):null
+      /* Profile - compact */
+      h("div",{style:{background:NVY,borderRadius:14,padding:13,marginBottom:8,position:"relative",overflow:"hidden"}},
+        h("div",{style:{position:"absolute",right:-7,top:-7,width:54,height:54,borderRadius:"50%",background:"rgba(255,255,255,.04)"}}),
+        h("div",{style:{display:"flex",alignItems:"center",gap:11}},
+          h("div",{style:{width:42,height:42,borderRadius:11,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:600,color:CARD,flexShrink:0}},selE.av),
+          h("div",{style:{flex:1,minWidth:0}},
+            h("div",{style:{fontSize:15,fontWeight:700,color:CARD,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},selE.name),
+            h("div",{style:{fontSize:10.5,color:CARD,opacity:.7,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},[selE.role,selE.dept].filter(Boolean).join(" - ")||"No designation"),
+            h("div",{style:{display:"flex",gap:10,marginTop:3,flexWrap:"wrap"}},
+              selE.eid?h("div",{style:{fontSize:9.5,color:CARD,opacity:.55}},"ID: "+selE.eid):null,
+              selE.joined?h("div",{style:{fontSize:9.5,color:CARD,opacity:.55}},"Joined: "+selE.joined):null
+            )
+          ),
+          (selE.mob||selE.email)?h("div",{style:{display:"flex",gap:6,alignItems:"center",flexShrink:0}},
+            selE.mob?h("button",{onClick:function(){window.location.href="tel:"+selE.mob;},style:{width:30,height:30,borderRadius:8,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("phone","#10B981",14)):null,
+            selE.mob?h("button",{onClick:function(){window.open("https://wa.me/"+(selE.ccode||"91").replace(/\D/g,"")+String(selE.mob).replace(/\D/g,""),"_blank");},style:{width:30,height:30,borderRadius:8,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("whatsapp","#25D366",17)):null,
+            selE.email?h("button",{onClick:function(){window.location.href="mailto:"+selE.email;},style:{width:30,height:30,borderRadius:8,background:"#fff",border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("mail","#2563EB",14)):null
+          ):null
+        )
       ),
+
       /* Action buttons */
       h("div",{style:{display:"flex",gap:6,marginBottom:8}},
         h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:10,padding:"10px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
         h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1.5px solid "+RED,borderRadius:10,padding:"10px",color:RED,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard")
       ),
+
+      /* Joined Details */
+      accSection("joined","event_available","#2563EB","Joined Details","Joining date & package",function(){
+        var isFixed2=selE.salaryType==="fixed";
+        var monthly=isFixed2?Number(selE.fixedSalary||selE.monthlyCTC||0):(Number(selE.basic||0)+Number(selE.hra||0)+Number(selE.allow||0));
+        var annual=monthly*12;
+        function lpaFmt(n){return (n/100000).toFixed(2)+" LPA";}
+        return h("div",null,
+          h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+            h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"11px 12px"}},
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:3}},"DATE OF JOINING"),
+              h("div",{style:{fontSize:14,fontWeight:800,color:NVY}},selE.joined?new Date(selE.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"Not set")
+            ),
+            h("div",{style:{flex:1,background:"#2563EB10",borderRadius:10,padding:"11px 12px",border:"1px solid #2563EB22"}},
+              h("div",{style:{fontSize:9,fontWeight:700,color:"#2563EB",letterSpacing:.5,marginBottom:3}},"TENURE"),
+              h("div",{style:{fontSize:14,fontWeight:800,color:"#2563EB"}},(function(){if(!selE.joined)return "-";var dj=new Date(selE.joined+"T00:00:00"),nw=new Date();var mo=(nw.getFullYear()-dj.getFullYear())*12+(nw.getMonth()-dj.getMonth());if(mo<0)mo=0;var y=Math.floor(mo/12),mm=mo%12;return (y>0?y+"y ":"")+mm+"m";})())
+            )
+          ),
+          h("div",{style:{background:GRN+"10",borderRadius:10,padding:"13px 14px",border:"1px solid "+GRN+"22"}},
+            h("div",{style:{fontSize:9,fontWeight:700,color:GRN,letterSpacing:.5,marginBottom:4}},"SALARY PACKAGE"),
+            h("div",{style:{display:"flex",alignItems:"baseline",gap:8}},
+              h("div",{style:{fontSize:22,fontWeight:900,color:GRN}},lpaFmt(annual)),
+              h("div",{style:{fontSize:11,color:GRY}},"(\u20b9"+annual.toLocaleString("en-IN")+" / year)")
+            ),
+            h("div",{style:{fontSize:11,color:GRY,marginTop:3}},fmt(monthly)+" per month \u00b7 "+(isFixed2?"Fixed":"Split")+" structure")
+          )
+        );
+      }),
+
+      /* Personal Details */
+      accSection("personal","person","#7C3AED","Personal Details","Contact & identity info",function(){
+        var rows=[
+          ["Full Name",selE.name],
+          ["Mobile",selE.mob?("+"+(selE.ccode||"91")+" "+selE.mob):null],
+          ["Email",selE.email],
+          ["Nationality",selE.nationality],
+          ["Date of Birth",selE.dob?new Date(selE.dob+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):null],
+          ["Employee ID",selE.eid],
+          ["PAN Number",selE.pan],
+          ["UAN Number",selE.uan],
+          ["Aadhaar Number",selE.aadhar],
+          ["Department",selE.dept],
+          ["Designation",selE.role]
+        ].filter(function(r){return r[1];});
+        return h("div",null,
+          rows.length===0?h("div",{style:{textAlign:"center",padding:"14px 0",fontSize:11,color:GRY}},"No personal details added. Edit the employee to add them."):
+          rows.map(function(r,i){return h("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<rows.length-1?"1px solid "+BDR:"none"}},
+            h("span",{style:{fontSize:11,color:GRY}},r[0]),
+            h("span",{style:{fontSize:12,fontWeight:600,color:NVY,textAlign:"right",maxWidth:"60%",wordBreak:"break-word"}},r[1])
+          );})
+        );
+      }),
 
       /* 1. Salary & Pay */
       accSection("salary","payments","#059669","Salary & Pay",
@@ -4044,7 +4100,7 @@ null
   }
 
   function renderAttSheet(){
-    var ma=mAtt(sheetE.id,attY,attM),attWD=getWorkingDays(att,sheetE.id,attY,attM),d=calcPay(sheetE,ma.absent,ma.half,ma.unpaid,0,0,attWD);
+    var ma=mAtt(sheetE.id,attY,attM),attWD=getWorkingDays(att,sheetE.id,attY,attM),attPR=proRata(sheetE,attY,attM),d=(attPR.notYetJoined||attPR.alreadyLeft)?calcPay(sheetE,0,0,0,0,0,attWD,0,1):calcPay(sheetE,ma.absent,ma.half,ma.unpaid,0,getShiftAllow(sheetE.id,attY,attM),attWD,attPR.active,attPR.total);
     var yr=attY,mo=attM;
     var hasDeduct=ma.absent>0||ma.half>0||ma.unpaid>0;
     return h("div",{className:"fd"},
@@ -4105,8 +4161,8 @@ null
           Object.entries(ATL).filter(function(kv){return kv[0]!=="unmarked";}).map(function(kv){return h("div",{key:kv[0],style:{display:"flex",alignItems:"center",gap:3}},h("div",{style:{width:8,height:8,borderRadius:2,background:ATC[kv[0]]}}),h("span",{style:{fontSize:9,color:GRY}},kv[1]));})
         )
       ),0),
-      // ── Salary breakdown card ──
-      card(h("div",null,
+      // ── Salary breakdown card (hidden if not employed this period) ──
+      (proRata(sheetE,yr,mo).notYetJoined||proRata(sheetE,yr,mo).alreadyLeft)?null:card(h("div",null,
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},MOS[mo]+" "+yr+" — Salary Breakdown"),
         // Earnings section
         h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"EARNINGS"),
