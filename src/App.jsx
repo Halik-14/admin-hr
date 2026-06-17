@@ -1511,6 +1511,7 @@ export default function App(){
   var sShiftOtTab=st("shift"),shiftOtTab=sShiftOtTab[0],setShiftOtTab=sShiftOtTab[1];
   var sOtDateMode=st("today"),otDateMode=sOtDateMode[0],setOtDateMode=sOtDateMode[1];
   var sOtPickedDate=st(""),otPickedDate=sOtPickedDate[0],setOtPickedDate=sOtPickedDate[1];
+  var sOtMarkMode=st("hours"),otMarkMode=sOtMarkMode[0],setOtMarkMode=sOtMarkMode[1];
   var sBonuses=st([]),bonuses=sBonuses[0],setBonuses=sBonuses[1];
   var sShowBonusForm=st(false),showBonusForm=sShowBonusForm[0],setShowBonusForm=sShowBonusForm[1];
   var sBonusEmpId=st(""),bonusEmpId=sBonusEmpId[0],setBonusEmpId=sBonusEmpId[1];
@@ -2037,15 +2038,15 @@ export default function App(){
       day=pd.getDate();
     }
     if(!isEmployedOnDay(emp,y,m2,day))return showT("Employee not employed on that day","err");
-    // Read employee's OT config
-    var otType=emp.otType||"hours";
+    // Use the chosen mark mode (hourly or flat) with the employee's saved rates
+    var otType=otMarkMode;
     var empRate=Number(emp.otRate||0);
     var empFlat=Number(emp.otFlat||0);
     if(otType==="hours"){
-      if(!empRate)return showT("Set this employee's OT rate in their profile (Shift + OT)","err");
+      if(!empRate)return showT("No hourly rate set — add it in the Shift + OT tab","err");
       if(!otHours)return showT("Enter overtime hours","err");
     }else{
-      if(!empFlat)return showT("Set this employee's flat OT amount in their profile (Shift + OT)","err");
+      if(!empFlat)return showT("No flat amount set — add it in the Shift + OT tab","err");
     }
     var dup=getOTEntries(emp.id,m2,y).find(function(o){return o.day===day;});
     var rec={
@@ -3618,7 +3619,7 @@ null
 
       /* 2. Shift */
       accSection("shift","clock",GRY,"Shift + OT",
-        (empShiftData.type||"General")+(empShiftData.allowance>0?" \u00b7 "+fmt(empShiftData.allowance)+"/mo":"")+(selE.otType?" \u00b7 OT "+(selE.otType==="hours"?(fmt(selE.otRate||0)+"/hr"):(fmt(selE.otFlat||0)+"/day")):""),
+        (empShiftData.type||"General")+(empShiftData.allowance>0?" \u00b7 "+fmt(empShiftData.allowance)+"/mo":"")+((selE.otRate||selE.otFlat)?" \u00b7 OT set":""),
         function(){
           var curKey=curY+"-"+(curM+1<10?"0":"")+(curM+1);
           var es=shifts[selE.id]||{};
@@ -3631,15 +3632,15 @@ null
             setShifts(function(p){var o=Object.assign({},p);o[selE.id]=ns;return o;});
             showT("Shift saved");
           }
-          function saveOTConfig(otType){
+          function saveOTConfig(){
             var rateInp=document.getElementById("otRateInp");
             var flatInp=document.getElementById("otFlatInp");
             var rate=rateInp?Number(rateInp.value||0):Number(selE.otRate||0);
             var flat=flatInp?Number(flatInp.value||0):Number(selE.otFlat||0);
-            if(otType==="hours"&&!rate)return showT("Enter hourly OT rate","err");
-            if(otType==="amount"&&!flat)return showT("Enter flat OT amount","err");
-            var upd=Object.assign({},selE,{otType:otType,otRate:rate,otFlat:flat});
+            if(!rate&&!flat)return showT("Enter at least one OT rate","err");
+            var upd=Object.assign({},selE,{otRate:rate,otFlat:flat,otConfigured:true});
             setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd:e;});});
+            setSelE(upd);
             _sb.from("user_data").upsert({employer_email:gUser.email,employees:JSON.stringify(emps.map(function(e){return e.id===selE.id?upd:e;}))}).then(function(){});
             showT("Overtime pay saved");
           }
@@ -3676,7 +3677,7 @@ null
               ),
               lbl("ALLOWANCE (\u20b9/MO)"),
               h("div",{style:{display:"flex",gap:8}},
-                h("input",{type:"number",id:"shiftAllowInp",defaultValue:String(empShiftData.allowance||0),
+                h("input",{type:"number",id:"shiftAllowInp",key:"sa"+selE.id+curKey,defaultValue:String(empShiftData.allowance||0),
                   placeholder:"0",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,
                   padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
                 h("button",{onClick:function(){
@@ -3686,30 +3687,26 @@ null
                   fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save")
               )
             ):h("div",null,
-              /* Overtime Pay setup */
-              h("div",{style:{fontSize:11,color:GRY,lineHeight:1.5,marginBottom:11}},"Set how overtime is paid for "+selE.name+". This is used when you add overtime on the attendance sheet."),
-              /* OT type selector */
-              lbl("OVERTIME TYPE"),
-              h("div",{style:{display:"flex",gap:8,marginBottom:12}},
-                [["hours","Hourly Rate"],["amount","Flat / Day"]].map(function(t){
-                  var on=(selE.otType||"hours")===t[0];
-                  return h("button",{key:t[0],onClick:function(){saveOTConfig(t[0]);},style:{flex:1,background:on?TEL:SFT,border:"1px solid "+(on?TEL:BDR),borderRadius:9,padding:"10px",fontSize:11.5,fontWeight:700,color:on?"#fff":GRY,cursor:"pointer"}},t[1]);
-                })
-              ),
-              (selE.otType||"hours")==="hours"?h("div",null,
-                lbl("RATE PER HOUR (\u20b9)"),
-                h("div",{style:{display:"flex",gap:8}},
-                  h("input",{type:"number",id:"otRateInp",defaultValue:String(selE.otRate||0),placeholder:"e.g. 150",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
-                  h("button",{onClick:function(){saveOTConfig("hours");},style:{background:TEL,border:"none",borderRadius:8,padding:"8px 16px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save")
-                )
-              ):h("div",null,
-                lbl("FLAT AMOUNT PER OT DAY (\u20b9)"),
-                h("div",{style:{display:"flex",gap:8}},
-                  h("input",{type:"number",id:"otFlatInp",defaultValue:String(selE.otFlat||0),placeholder:"e.g. 500",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
-                  h("button",{onClick:function(){saveOTConfig("amount");},style:{background:TEL,border:"none",borderRadius:8,padding:"8px 16px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save")
+              /* Overtime Pay setup - both rates, editable */
+              h("div",{style:{fontSize:11,color:GRY,lineHeight:1.5,marginBottom:12}},"Set overtime pay for "+selE.name+". Both rates are saved \u2014 you choose hourly or flat when marking OT on the attendance sheet."),
+              h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+                h("div",{style:{flex:1}},
+                  h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.4,marginBottom:4}},"HOURLY RATE (\u20b9/HR)"),
+                  h("input",{type:"number",id:"otRateInp",key:"otr"+selE.id,defaultValue:String(selE.otRate||0),placeholder:"e.g. 150",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"10px",fontSize:13,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                ),
+                h("div",{style:{flex:1}},
+                  h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.4,marginBottom:4}},"FLAT (\u20b9/DAY)"),
+                  h("input",{type:"number",id:"otFlatInp",key:"otf"+selE.id,defaultValue:String(selE.otFlat||0),placeholder:"e.g. 500",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"10px",fontSize:13,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
                 )
               ),
-              selE.otType?h("div",{style:{marginTop:11,background:TEL+"0E",borderRadius:8,padding:"9px 11px",fontSize:10.5,color:GRY}},"Current: "+(selE.otType==="hours"?("Hourly \u00b7 "+fmt(selE.otRate||0)+" per hour"):("Flat \u00b7 "+fmt(selE.otFlat||0)+" per OT day"))):null
+              h("button",{onClick:function(){saveOTConfig();},style:{width:"100%",background:TEL,border:"none",borderRadius:9,padding:"11px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},(selE.otRate||selE.otFlat)?"Update Overtime Pay":"Save Overtime Pay"),
+              (selE.otRate||selE.otFlat)?h("div",{style:{marginTop:10,background:TEL+"0E",borderRadius:8,padding:"10px 12px"}},
+                h("div",{style:{fontSize:9,fontWeight:700,color:TEL,letterSpacing:.4,marginBottom:4}},"SAVED RATES"),
+                h("div",{style:{display:"flex",gap:14}},
+                  h("div",null,h("span",{style:{fontSize:11,color:GRY}},"Hourly: "),h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},selE.otRate?fmt(selE.otRate)+"/hr":"\u2014")),
+                  h("div",null,h("span",{style:{fontSize:11,color:GRY}},"Flat: "),h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},selE.otFlat?fmt(selE.otFlat)+"/day":"\u2014"))
+                )
+              ):null
             )
           );
         }
@@ -4331,41 +4328,41 @@ null
             );
           })):null,
           (function(){
-            var otType=sheetE.otType||"hours";
             var empRate=Number(sheetE.otRate||0);
             var empFlat=Number(sheetE.otFlat||0);
-            var notConfigured=(otType==="hours"&&!empRate)||(otType==="amount"&&!empFlat);
-            if(notConfigured){
+            if(!empRate&&!empFlat){
               return h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"30",borderRadius:10,padding:"13px 14px",display:"flex",gap:10,alignItems:"center"}},
                 ic("info",AMB,18),
                 h("div",null,
                   h("div",{style:{fontSize:11.5,fontWeight:700,color:NVY,marginBottom:2}},"OT pay not set up"),
-                  h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5}},"Set "+sheetE.name+"'s overtime type and rate in their profile \u2192 Shift + OT tab, then add overtime here.")
+                  h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5}},"Set "+sheetE.name+"'s overtime rates in their profile \u2192 Shift + OT tab, then add overtime here.")
                 )
               );
             }
+            var todayStr2=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"});
             return h("div",{style:{background:SFT,borderRadius:10,padding:11}},
               h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"ADD OVERTIME"),
-              /* OT type badge (read-only, from profile) */
-              h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:9}},
-                h("div",{style:{fontSize:9,fontWeight:700,color:TEL,background:TEL+"15",borderRadius:6,padding:"3px 8px"}},otType==="hours"?("HOURLY \u00b7 "+fmt(empRate)+"/hr"):("FLAT \u00b7 "+fmt(empFlat)+"/day")),
-                h("div",{style:{fontSize:9,color:GRY}},"from profile")
+              /* Date: Today / Pick */
+              h("div",{style:{display:"flex",gap:6,marginBottom:7}},
+                h("button",{onClick:function(){setOtDateMode("today");},style:{flex:1,background:otDateMode==="today"?TEL:CARD,border:"1px solid "+(otDateMode==="today"?TEL:BDR),borderRadius:8,padding:"8px",fontSize:11,fontWeight:700,color:otDateMode==="today"?"#fff":GRY,cursor:"pointer"}},"Today"),
+                h("button",{onClick:function(){setOtDateMode("pick");},style:{flex:1,background:otDateMode==="pick"?TEL:CARD,border:"1px solid "+(otDateMode==="pick"?TEL:BDR),borderRadius:8,padding:"8px",fontSize:11,fontWeight:700,color:otDateMode==="pick"?"#fff":GRY,cursor:"pointer"}},"Pick Date")
               ),
-              /* Date selector: Today / Pick date */
-              h("div",{style:{fontSize:9,fontWeight:600,color:GRY,marginBottom:4}},"DATE"),
-              h("div",{style:{display:"flex",gap:6,marginBottom:8}},
-                h("button",{onClick:function(){setOtDateMode("today");},style:{flex:1,background:otDateMode==="today"?TEL:CARD,border:"1px solid "+(otDateMode==="today"?TEL:BDR),borderRadius:8,padding:"9px",fontSize:11,fontWeight:700,color:otDateMode==="today"?"#fff":GRY,cursor:"pointer"}},"Today"),
-                h("button",{onClick:function(){setOtDateMode("pick");},style:{flex:1,background:otDateMode==="pick"?TEL:CARD,border:"1px solid "+(otDateMode==="pick"?TEL:BDR),borderRadius:8,padding:"9px",fontSize:11,fontWeight:700,color:otDateMode==="pick"?"#fff":GRY,cursor:"pointer"}},"Pick Date")
+              otDateMode==="pick"?h("input",{type:"date",value:otPickedDate,onChange:function(e){setOtPickedDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:7}}):h("div",{style:{fontSize:10,color:GRY,marginBottom:7}},"For today, "+todayStr2),
+              /* Hourly / Flat toggle */
+              h("div",{style:{display:"flex",gap:6,marginBottom:8,background:CARD,borderRadius:9,padding:3}},
+                [["hours","Hourly"],["amount","Flat"]].map(function(t){
+                  var on=otMarkMode===t[0];
+                  var dis=t[0]==="hours"?!empRate:!empFlat;
+                  return h("button",{key:t[0],onClick:function(){if(!dis)setOtMarkMode(t[0]);},style:{flex:1,background:on?TEL:"transparent",border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:dis?BDR:(on?"#fff":GRY),cursor:dis?"not-allowed":"pointer"}},t[1]+(t[0]==="hours"&&empRate?" \u00b7 "+fmt(empRate)+"/hr":"")+(t[0]==="amount"&&empFlat?" \u00b7 "+fmt(empFlat):""));
+                })
               ),
-              otDateMode==="pick"?h("input",{type:"date",value:otPickedDate,onChange:function(e){setOtPickedDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:9}}):h("div",{style:{fontSize:10.5,color:GRY,marginBottom:9}},"Overtime will be recorded for today, "+new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"})),
-              /* Hours input (only for hourly employees) */
-              otType==="hours"?h("div",{style:{marginBottom:9}},
-                h("div",{style:{fontSize:9,fontWeight:600,color:GRY,marginBottom:3}},"OVERTIME HOURS"),
-                h("input",{type:"number",value:otHours,onChange:function(e){setOtHours(e.target.value);},placeholder:"e.g. 3",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+              /* Hours input only when hourly */
+              otMarkMode==="hours"?h("div",{style:{marginBottom:8}},
+                h("input",{type:"number",value:otHours,onChange:function(e){setOtHours(e.target.value);},placeholder:"Enter hours, e.g. 3",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
               ):null,
-              /* Live preview */
-              otType==="hours"&&otHours?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:9,textAlign:"center"}},otHours+" hrs \u00d7 "+fmt(empRate)+" = "+fmt(Math.round(Number(otHours)*empRate))):null,
-              otType==="amount"?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:9,textAlign:"center"}},"Flat overtime: "+fmt(empFlat)):null,
+              /* Preview */
+              otMarkMode==="hours"&&otHours?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:8,textAlign:"center"}},otHours+" hrs \u00d7 "+fmt(empRate)+" = "+fmt(Math.round(Number(otHours)*empRate))):null,
+              otMarkMode==="amount"?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:8,textAlign:"center"}},"Flat overtime: "+fmt(empFlat)):null,
               h("button",{onClick:function(){addOTEntry(sheetE,mo,yr);},style:{width:"100%",background:TEL,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"+ Add Overtime")
             );
           })()
