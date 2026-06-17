@@ -1508,6 +1508,9 @@ export default function App(){
   var sOtRate=st(""),otRate=sOtRate[0],setOtRate=sOtRate[1];
   var sOtAmount=st(""),otAmount=sOtAmount[0],setOtAmount=sOtAmount[1];
   var sOtDay=st(""),otDay=sOtDay[0],setOtDay=sOtDay[1];
+  var sShiftOtTab=st("shift"),shiftOtTab=sShiftOtTab[0],setShiftOtTab=sShiftOtTab[1];
+  var sOtDateMode=st("today"),otDateMode=sOtDateMode[0],setOtDateMode=sOtDateMode[1];
+  var sOtPickedDate=st(""),otPickedDate=sOtPickedDate[0],setOtPickedDate=sOtPickedDate[1];
   var sBonuses=st([]),bonuses=sBonuses[0],setBonuses=sBonuses[1];
   var sShowBonusForm=st(false),showBonusForm=sShowBonusForm[0],setShowBonusForm=sShowBonusForm[1];
   var sBonusEmpId=st(""),bonusEmpId=sBonusEmpId[0],setBonusEmpId=sBonusEmpId[1];
@@ -2021,24 +2024,42 @@ export default function App(){
   var tNet=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).net+getExtraPay(e.id,curM,curY);},0);
 
   function addOTEntry(emp,m2,y){
-    var day=Number(otDay);
-    if(!day||day<1||day>31)return showT("Select a valid day","err");
+    // Determine the day from date mode (today or picked date)
+    var day;
+    if(otDateMode==="today"){
+      var td=new Date();
+      if(td.getFullYear()!==y||td.getMonth()!==m2)return showT("Today is not in the viewed month — use Pick Date","err");
+      day=td.getDate();
+    }else{
+      if(!otPickedDate)return showT("Pick a date first","err");
+      var pd=new Date(otPickedDate+"T00:00:00");
+      if(pd.getFullYear()!==y||pd.getMonth()!==m2)return showT("Pick a date within "+MOS[m2]+" "+y,"err");
+      day=pd.getDate();
+    }
     if(!isEmployedOnDay(emp,y,m2,day))return showT("Employee not employed on that day","err");
-    if(otMode==="hours"&&(!otHours||!otRate))return showT("Enter hours and rate","err");
-    if(otMode==="amount"&&!otAmount)return showT("Enter OT amount","err");
+    // Read employee's OT config
+    var otType=emp.otType||"hours";
+    var empRate=Number(emp.otRate||0);
+    var empFlat=Number(emp.otFlat||0);
+    if(otType==="hours"){
+      if(!empRate)return showT("Set this employee's OT rate in their profile (Shift + OT)","err");
+      if(!otHours)return showT("Enter overtime hours","err");
+    }else{
+      if(!empFlat)return showT("Set this employee's flat OT amount in their profile (Shift + OT)","err");
+    }
     var dup=getOTEntries(emp.id,m2,y).find(function(o){return o.day===day;});
     var rec={
       id:dup?dup.id:String(Date.now())+"_"+day,
       employeeId:String(emp.id),employeeName:emp.name,
-      month:m2,year:y,day:day,mode:otMode,
-      hours:otMode==="hours"?Number(otHours||0):0,
-      rate:otMode==="hours"?Number(otRate||0):0,
-      amount:otMode==="amount"?Number(otAmount||0):0,
+      month:m2,year:y,day:day,mode:otType,
+      hours:otType==="hours"?Number(otHours||0):0,
+      rate:otType==="hours"?empRate:0,
+      amount:otType==="amount"?empFlat:0,
       note:""
     };
     setOvertime(function(p){var others=(p||[]).filter(function(o){return o.id!==rec.id;});return others.concat([rec]);});
     _sb.from("overtime").upsert({id:rec.id,employer_email:gUser.email,employee_id:rec.employeeId,employee_name:rec.employeeName,month:m2,year:y,day:day,ot_mode:rec.mode,ot_hours:rec.hours,ot_rate:rec.rate,ot_amount:rec.amount,note:""}).then(function(r){if(r&&r.error)showT("Error saving OT","err");else showT(dup?"OT updated for day "+day:"OT added for day "+day);});
-    setOtHours("");setOtRate("");setOtAmount("");setOtDay("");
+    setOtHours("");setOtPickedDate("");
   }
   function deleteOTEntry(entryId){
     setOvertime(function(p){return (p||[]).filter(function(o){return o.id!==entryId;});});
@@ -3596,8 +3617,8 @@ null
       ),
 
       /* 2. Shift */
-      accSection("shift","clock",GRY,"Shift",
-        (empShiftData.type||"General")+(empShiftData.allowance>0?" · "+fmt(empShiftData.allowance)+"/mo":""),
+      accSection("shift","clock",GRY,"Shift + OT",
+        (empShiftData.type||"General")+(empShiftData.allowance>0?" \u00b7 "+fmt(empShiftData.allowance)+"/mo":"")+(selE.otType?" \u00b7 OT "+(selE.otType==="hours"?(fmt(selE.otRate||0)+"/hr"):(fmt(selE.otFlat||0)+"/day")):""),
         function(){
           var curKey=curY+"-"+(curM+1<10?"0":"")+(curM+1);
           var es=shifts[selE.id]||{};
@@ -3610,46 +3631,89 @@ null
             setShifts(function(p){var o=Object.assign({},p);o[selE.id]=ns;return o;});
             showT("Shift saved");
           }
+          function saveOTConfig(otType){
+            var rateInp=document.getElementById("otRateInp");
+            var flatInp=document.getElementById("otFlatInp");
+            var rate=rateInp?Number(rateInp.value||0):Number(selE.otRate||0);
+            var flat=flatInp?Number(flatInp.value||0):Number(selE.otFlat||0);
+            if(otType==="hours"&&!rate)return showT("Enter hourly OT rate","err");
+            if(otType==="amount"&&!flat)return showT("Enter flat OT amount","err");
+            var upd=Object.assign({},selE,{otType:otType,otRate:rate,otFlat:flat});
+            setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd:e;});});
+            _sb.from("user_data").upsert({employer_email:gUser.email,employees:JSON.stringify(emps.map(function(e){return e.id===selE.id?upd:e;}))}).then(function(){});
+            showT("Overtime pay saved");
+          }
           return h("div",null,
-            /* Current tiles — payroll style */
-            h("div",{style:{display:"flex",gap:8,marginBottom:12}},
-              h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:8,padding:"8px 10px"}},
-                h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Current Shift"),
-                h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},curType)
-              ),
-              h("div",{style:{flex:1,background:AMB+"12",borderRadius:8,padding:"8px 10px"}},
-                h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Allowance"),
-                h("div",{style:{fontSize:13,fontWeight:700,color:empShiftData.allowance>0?AMB:GRY}},
-                  empShiftData.allowance>0?fmt(empShiftData.allowance)+"/mo":"None")
-              )
-            ),
-            /* Shift type — compact pills */
-            lbl("SHIFT TYPE"),
-            h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}},
-              SHIFT_TYPES.map(function(s){
-                var active=curType===s;
-                return h("button",{key:s,onClick:function(){saveShift(s,empShiftData.allowance);},
-                  style:{background:active?NVY:SFT,border:"1px solid "+(active?NVY:BDR),
-                  borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:active?700:500,
-                  color:active?CARD:GRY,cursor:"pointer"}},s);
+            /* Inner toggle: Shift | Overtime */
+            h("div",{style:{display:"flex",gap:6,marginBottom:13,background:SFT,borderRadius:10,padding:4}},
+              [["shift","Shift"],["ot","Overtime Pay"]].map(function(t){
+                var on=shiftOtTab===t[0];
+                return h("button",{key:t[0],onClick:function(){setShiftOtTab(t[0]);},style:{flex:1,background:on?CARD:"transparent",border:on?"1px solid "+BDR:"1px solid transparent",borderRadius:8,padding:"8px",fontSize:11.5,fontWeight:700,color:on?NVY:GRY,cursor:"pointer"}},t[1]);
               })
             ),
-            /* Allowance input */
-            lbl("ALLOWANCE (₹/MO)"),
-            h("div",{style:{display:"flex",gap:8}},
-              h("input",{type:"number",id:"shiftAllowInp",defaultValue:String(empShiftData.allowance||0),
-                placeholder:"0",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,
-                padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
-              h("button",{onClick:function(){
-                var v=document.getElementById("shiftAllowInp");
-                saveShift(curType,v?v.value:0);
-              },style:{background:NVY,border:"none",borderRadius:8,padding:"8px 16px",
-                fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save")
+            shiftOtTab==="shift"?h("div",null,
+              /* Current tiles */
+              h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+                h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:8,padding:"8px 10px"}},
+                  h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Current Shift"),
+                  h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},curType)
+                ),
+                h("div",{style:{flex:1,background:AMB+"12",borderRadius:8,padding:"8px 10px"}},
+                  h("div",{style:{fontSize:10,color:GRY,marginBottom:2}},"Allowance"),
+                  h("div",{style:{fontSize:13,fontWeight:700,color:empShiftData.allowance>0?AMB:GRY}},
+                    empShiftData.allowance>0?fmt(empShiftData.allowance)+"/mo":"None")
+                )
+              ),
+              lbl("SHIFT TYPE"),
+              h("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}},
+                SHIFT_TYPES.map(function(s){
+                  var active=curType===s;
+                  return h("button",{key:s,onClick:function(){saveShift(s,empShiftData.allowance);},
+                    style:{background:active?NVY:SFT,border:"1px solid "+(active?NVY:BDR),
+                    borderRadius:8,padding:"6px 12px",fontSize:11,fontWeight:active?700:500,
+                    color:active?CARD:GRY,cursor:"pointer"}},s);
+                })
+              ),
+              lbl("ALLOWANCE (\u20b9/MO)"),
+              h("div",{style:{display:"flex",gap:8}},
+                h("input",{type:"number",id:"shiftAllowInp",defaultValue:String(empShiftData.allowance||0),
+                  placeholder:"0",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,
+                  padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
+                h("button",{onClick:function(){
+                  var v=document.getElementById("shiftAllowInp");
+                  saveShift(curType,v?v.value:0);
+                },style:{background:NVY,border:"none",borderRadius:8,padding:"8px 16px",
+                  fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save")
+              )
+            ):h("div",null,
+              /* Overtime Pay setup */
+              h("div",{style:{fontSize:11,color:GRY,lineHeight:1.5,marginBottom:11}},"Set how overtime is paid for "+selE.name+". This is used when you add overtime on the attendance sheet."),
+              /* OT type selector */
+              lbl("OVERTIME TYPE"),
+              h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+                [["hours","Hourly Rate"],["amount","Flat / Day"]].map(function(t){
+                  var on=(selE.otType||"hours")===t[0];
+                  return h("button",{key:t[0],onClick:function(){saveOTConfig(t[0]);},style:{flex:1,background:on?TEL:SFT,border:"1px solid "+(on?TEL:BDR),borderRadius:9,padding:"10px",fontSize:11.5,fontWeight:700,color:on?"#fff":GRY,cursor:"pointer"}},t[1]);
+                })
+              ),
+              (selE.otType||"hours")==="hours"?h("div",null,
+                lbl("RATE PER HOUR (\u20b9)"),
+                h("div",{style:{display:"flex",gap:8}},
+                  h("input",{type:"number",id:"otRateInp",defaultValue:String(selE.otRate||0),placeholder:"e.g. 150",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
+                  h("button",{onClick:function(){saveOTConfig("hours");},style:{background:TEL,border:"none",borderRadius:8,padding:"8px 16px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save")
+                )
+              ):h("div",null,
+                lbl("FLAT AMOUNT PER OT DAY (\u20b9)"),
+                h("div",{style:{display:"flex",gap:8}},
+                  h("input",{type:"number",id:"otFlatInp",defaultValue:String(selE.otFlat||0),placeholder:"e.g. 500",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,fontWeight:600,color:NVY,outline:"none",fontFamily:"inherit"}}),
+                  h("button",{onClick:function(){saveOTConfig("amount");},style:{background:TEL,border:"none",borderRadius:8,padding:"8px 16px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"Save")
+                )
+              ),
+              selE.otType?h("div",{style:{marginTop:11,background:TEL+"0E",borderRadius:8,padding:"9px 11px",fontSize:10.5,color:GRY}},"Current: "+(selE.otType==="hours"?("Hourly \u00b7 "+fmt(selE.otRate||0)+" per hour"):("Flat \u00b7 "+fmt(selE.otFlat||0)+" per OT day"))):null
             )
           );
         }
       ),
-
       /* 3. Leave Balance */
       accSection("leave","event_available","#10B981","Leave Balance",
         leaveEnt>0?leaveBal+" of "+leaveEnt+" days left":"Tap to set entitlement",
@@ -4256,41 +4320,55 @@ null
                 h("div",{style:{fontSize:6,color:TEL,fontWeight:600}},MOS[mo].slice(0,3).toUpperCase())
               ),
               h("div",{style:{flex:1,minWidth:0}},
-                h("div",{style:{fontSize:11.5,fontWeight:600,color:NVY}},o.mode==="hours"?(o.hours+" hrs \u00d7 "+fmt(o.rate)):"Flat amount"),
-                h("div",{style:{fontSize:9.5,color:GRY}},o.mode==="hours"?"Hourly overtime":"Fixed overtime")
+                h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:1}},
+                  h("div",{style:{fontSize:8,fontWeight:800,letterSpacing:.3,color:o.mode==="hours"?"#2563EB":AMB,background:(o.mode==="hours"?"#2563EB":AMB)+"18",borderRadius:4,padding:"1px 5px"}},o.mode==="hours"?"HOURLY":"FLAT"),
+                  h("div",{style:{fontSize:11.5,fontWeight:600,color:NVY}},o.mode==="hours"?(o.hours+" hrs \u00d7 "+fmt(o.rate)):"Flat amount")
+                ),
+                h("div",{style:{fontSize:9.5,color:GRY}},o.mode==="hours"?"Overtime pay":"Fixed overtime pay")
               ),
               h("div",{style:{fontSize:12.5,fontWeight:800,color:TEL,flexShrink:0}},fmt(otEntryAmount(o))),
               h("button",{onClick:function(){deleteOTEntry(o.id);},style:{background:"none",border:"none",cursor:"pointer",padding:2,flexShrink:0,display:"flex"}},ic("delete",RED,13))
             );
           })):null,
-          h("div",{style:{background:SFT,borderRadius:10,padding:11}},
-            h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"ADD OVERTIME DAY"),
-            h("div",{style:{marginBottom:8}},
-              h("div",{style:{fontSize:9,fontWeight:600,color:GRY,marginBottom:3}},"DAY OF "+MOS[mo].toUpperCase()),
-              h("input",{type:"number",min:1,max:31,value:otDay,onChange:function(e){setOtDay(e.target.value);},placeholder:"e.g. 12",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-            ),
-            h("div",{style:{display:"flex",gap:6,marginBottom:8,background:CARD,borderRadius:9,padding:3}},
-              [["amount","Flat Amount"],["hours","Hours \u00d7 Rate"]].map(function(t){
-                var on=otMode===t[0];
-                return h("button",{key:t[0],onClick:function(){setOtMode(t[0]);},style:{flex:1,background:on?TEL:"transparent",border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:on?"#fff":GRY,cursor:"pointer"}},t[1]);
-              })
-            ),
-            otMode==="hours"?h("div",{style:{display:"flex",gap:8,marginBottom:9}},
-              h("div",{style:{flex:1}},
-                h("div",{style:{fontSize:9,fontWeight:600,color:GRY,marginBottom:3}},"HOURS"),
-                h("input",{type:"number",value:otHours,onChange:function(e){setOtHours(e.target.value);},placeholder:"0",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+          (function(){
+            var otType=sheetE.otType||"hours";
+            var empRate=Number(sheetE.otRate||0);
+            var empFlat=Number(sheetE.otFlat||0);
+            var notConfigured=(otType==="hours"&&!empRate)||(otType==="amount"&&!empFlat);
+            if(notConfigured){
+              return h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"30",borderRadius:10,padding:"13px 14px",display:"flex",gap:10,alignItems:"center"}},
+                ic("info",AMB,18),
+                h("div",null,
+                  h("div",{style:{fontSize:11.5,fontWeight:700,color:NVY,marginBottom:2}},"OT pay not set up"),
+                  h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5}},"Set "+sheetE.name+"'s overtime type and rate in their profile \u2192 Shift + OT tab, then add overtime here.")
+                )
+              );
+            }
+            return h("div",{style:{background:SFT,borderRadius:10,padding:11}},
+              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"ADD OVERTIME"),
+              /* OT type badge (read-only, from profile) */
+              h("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:9}},
+                h("div",{style:{fontSize:9,fontWeight:700,color:TEL,background:TEL+"15",borderRadius:6,padding:"3px 8px"}},otType==="hours"?("HOURLY \u00b7 "+fmt(empRate)+"/hr"):("FLAT \u00b7 "+fmt(empFlat)+"/day")),
+                h("div",{style:{fontSize:9,color:GRY}},"from profile")
               ),
-              h("div",{style:{flex:1}},
-                h("div",{style:{fontSize:9,fontWeight:600,color:GRY,marginBottom:3}},"RATE / HOUR"),
-                h("input",{type:"number",value:otRate,onChange:function(e){setOtRate(e.target.value);},placeholder:"0",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-              )
-            ):h("div",{style:{marginBottom:9}},
-              h("div",{style:{fontSize:9,fontWeight:600,color:GRY,marginBottom:3}},"OT AMOUNT (\u20b9)"),
-              h("input",{type:"number",value:otAmount,onChange:function(e){setOtAmount(e.target.value);},placeholder:"0",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-            ),
-            otMode==="hours"&&otHours&&otRate?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:9,textAlign:"center"}},otHours+" hrs \u00d7 "+fmt(Number(otRate))+" = "+fmt(Math.round(Number(otHours)*Number(otRate)))):null,
-            h("button",{onClick:function(){addOTEntry(sheetE,mo,yr);},style:{width:"100%",background:TEL,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"+ Add Overtime Day")
-          )
+              /* Date selector: Today / Pick date */
+              h("div",{style:{fontSize:9,fontWeight:600,color:GRY,marginBottom:4}},"DATE"),
+              h("div",{style:{display:"flex",gap:6,marginBottom:8}},
+                h("button",{onClick:function(){setOtDateMode("today");},style:{flex:1,background:otDateMode==="today"?TEL:CARD,border:"1px solid "+(otDateMode==="today"?TEL:BDR),borderRadius:8,padding:"9px",fontSize:11,fontWeight:700,color:otDateMode==="today"?"#fff":GRY,cursor:"pointer"}},"Today"),
+                h("button",{onClick:function(){setOtDateMode("pick");},style:{flex:1,background:otDateMode==="pick"?TEL:CARD,border:"1px solid "+(otDateMode==="pick"?TEL:BDR),borderRadius:8,padding:"9px",fontSize:11,fontWeight:700,color:otDateMode==="pick"?"#fff":GRY,cursor:"pointer"}},"Pick Date")
+              ),
+              otDateMode==="pick"?h("input",{type:"date",value:otPickedDate,onChange:function(e){setOtPickedDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",marginBottom:9}}):h("div",{style:{fontSize:10.5,color:GRY,marginBottom:9}},"Overtime will be recorded for today, "+new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"})),
+              /* Hours input (only for hourly employees) */
+              otType==="hours"?h("div",{style:{marginBottom:9}},
+                h("div",{style:{fontSize:9,fontWeight:600,color:GRY,marginBottom:3}},"OVERTIME HOURS"),
+                h("input",{type:"number",value:otHours,onChange:function(e){setOtHours(e.target.value);},placeholder:"e.g. 3",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+              ):null,
+              /* Live preview */
+              otType==="hours"&&otHours?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:9,textAlign:"center"}},otHours+" hrs \u00d7 "+fmt(empRate)+" = "+fmt(Math.round(Number(otHours)*empRate))):null,
+              otType==="amount"?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:9,textAlign:"center"}},"Flat overtime: "+fmt(empFlat)):null,
+              h("button",{onClick:function(){addOTEntry(sheetE,mo,yr);},style:{width:"100%",background:TEL,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"+ Add Overtime")
+            );
+          })()
         );
       })(),0),
       // ── Salary breakdown card (hidden if not employed this period) ──
