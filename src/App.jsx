@@ -3285,7 +3285,7 @@ export default function App(){
           );
         })
       ),
-      h("button",{onClick:function(){setTab("attendance");},style:{width:"100%",background:themeMode==="dark"?"#4F46E5":"#0F172A",border:"none",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 16px rgba(15,23,42,.25)"}},
+      h("button",{onClick:function(){setTab("attendance");},style:{width:"100%",background:"linear-gradient(145deg,#1a1a1a,#000000)",border:"1px solid rgba(255,255,255,.06)",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 18px rgba(0,0,0,.4)"}},
         h("div",{style:{width:44,height:44,borderRadius:13,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(ICONS.cal,"#fff",22)),
         h("div",{style:{flex:1,textAlign:"left"}},
           h("div",{style:{fontSize:14,fontWeight:700,color:"#fff"}},"Mark Today's Attendance"),
@@ -4510,7 +4510,7 @@ null
         )
       ),
       // ── Summary card — 3-part formula, dark mode safe ──
-      h("div",{style:{background:"#0F172A",borderRadius:18,padding:"16px",marginBottom:11,boxShadow:"0 4px 24px rgba(0,0,0,.35)"}},
+      h("div",{style:{background:"linear-gradient(145deg,#1a1a1a,#000000)",borderRadius:18,padding:"16px",marginBottom:11,boxShadow:"0 4px 24px rgba(0,0,0,.4)",border:"1px solid rgba(255,255,255,.06)"}},
         h("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:10,letterSpacing:.3}},MOS[payM]+" "+payY+" • "+filtEmps.length+" Employee"+(filtEmps.length===1?"":"s")+(hiddenCount>0?" • "+hiddenCount+" not in this period":"")),
         // 3-part formula row
         h("div",{style:{display:"flex",alignItems:"center",gap:filtBonus>0?4:8,marginBottom:14}},
@@ -6188,7 +6188,7 @@ null
           )
         ),
         /* Total tile */
-        h("div",{style:{background:NVY,borderRadius:12,padding:"12px 14px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        h("div",{style:{background:"linear-gradient(145deg,#1a1a1a,#000000)",borderRadius:12,padding:"12px 14px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"0 4px 18px rgba(0,0,0,.35)",border:"1px solid rgba(255,255,255,.06)"}},
           h("div",null,
             h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)",letterSpacing:.5,marginBottom:3}},"TOTAL "+( coExpView==="year"?String(coExpY):MOS2[coExpM]+" "+coExpY).toUpperCase()),
             h("div",{style:{fontSize:24,fontWeight:900,color:"#fff",letterSpacing:-.5}},fmt(total)),
