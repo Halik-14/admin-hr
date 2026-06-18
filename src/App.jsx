@@ -1422,6 +1422,7 @@ export default function App(){
                 setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
                 setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
                 setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+                try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
                 lsSet("hr_last_sync",dataRes.data.updated_at);
               }
             }catch(e){}
@@ -1598,6 +1599,7 @@ export default function App(){
   var sTaskPriority=st("medium"),taskPriority=sTaskPriority[0],setTaskPriority=sTaskPriority[1];
   var sTaskDeadline=st(""),taskDeadline=sTaskDeadline[0],setTaskDeadline=sTaskDeadline[1];
   var sTaskComment=st(""),taskComment=sTaskComment[0],setTaskComment=sTaskComment[1];
+  var sTaskStatusInput=st(""),taskStatusInput=sTaskStatusInput[0],setTaskStatusInput=sTaskStatusInput[1];
   var sLeaveReqs=st([]),leaveReqs=sLeaveReqs[0],setLeaveReqs=sLeaveReqs[1];
   var sSelLeave=st(null),selLeave=sSelLeave[0],setSelLeave=sSelLeave[1];
   var sShowLeaveForm=st(false),showLeaveForm=sShowLeaveForm[0],setShowLeaveForm=sShowLeaveForm[1];
@@ -1828,7 +1830,7 @@ export default function App(){
           // Load employer's org info (company name, logo)
           Promise.all([
             _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website").eq("email",employerEmail).maybeSingle(),
-            _sb.from("user_data").select("emps_json,att_json,inc_json").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",employerEmail).maybeSingle(),
             _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
           ]).then(function(empResults){
             var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
@@ -1848,6 +1850,7 @@ export default function App(){
               setEmps(JSON.parse(empData.emps_json||"[]"));
               setAtt(JSON.parse(empData.att_json||"{}"));
               setIncentives(JSON.parse(empData.inc_json||"{}"));
+              try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
             }catch(e){}}
             _dataLoaded.current=false;
             setScreen("app"); // routes to renderEmployeeDashboard() via userRole check
@@ -1876,6 +1879,7 @@ export default function App(){
             setReminders(JSON.parse(dataRes.data.reminders_json||"[]"));
             setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
             setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
+                try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
           _dataLoaded.current=false;
@@ -1968,6 +1972,20 @@ export default function App(){
     },1500);
     return function(){if(_syncTimer.current)clearTimeout(_syncTimer.current);};
   },[emps,att,incentives,shifts,reminders,notices,revisions]);
+
+  // Debounced task sync (separate from main sync) — persists tasks_json
+  var _taskSyncTimer=React.useRef(null);
+  var _tasksLoaded=React.useRef(false);
+  se(function(){
+    if(!gUser||!gUser.email)return;
+    // Skip first render — tasks haven't loaded yet
+    if(!_tasksLoaded.current){_tasksLoaded.current=true;return;}
+    if(_taskSyncTimer.current)clearTimeout(_taskSyncTimer.current);
+    _taskSyncTimer.current=setTimeout(function(){
+      syncTasks(tasks);
+    },1200);
+    return function(){if(_taskSyncTimer.current)clearTimeout(_taskSyncTimer.current);};
+  },[tasks]);
 
 
 
@@ -2277,6 +2295,15 @@ export default function App(){
       setIsSyncing(false);
       if(!res.error){setLastSync(new Date());lsSet("hr_last_sync",new Date().toISOString());}
     }).catch(function(){setIsSyncing(false);});
+  }
+
+  // Persist tasks to Supabase (tasks_json column on user_data) — owner only
+  function syncTasks(tasksData){
+    var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
+    if(!email)return;
+    // Only the owner/employer persists the task list
+    if(userRole&&userRole!=="owner"&&userRole!=="admin")return;
+    _sb.from("user_data").upsert({email:email,tasks_json:JSON.stringify(tasksData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
   }
 
   function loadFromSupabase(email,cb){
@@ -3020,6 +3047,37 @@ export default function App(){
     showT(status==="verified"?"Task verified!":status==="rejected"?"Task sent back":"Status updated");
   }
 
+  // Add a typed status update to the task's history
+  function addStatusUpdate(taskId){
+    var txt=taskStatusInput.trim();
+    if(!txt)return showT("Type a status update","err");
+    var entry={id:Date.now(),text:txt,by:gUser.email,at:new Date().toISOString()};
+    setTasks(function(p){return p.map(function(t){
+      if(t.id!==taskId)return t;
+      var hist=(t.statusHistory||[]).concat([entry]);
+      return Object.assign({},t,{statusHistory:hist,updatedAt:new Date().toISOString()});
+    });});
+    var task=tasks.find(function(t){return t.id===taskId;});
+    if(task){
+      var toEmail=gUser.email===task.employerEmail?task.assignTarget:task.employerEmail;
+      addNotif(toEmail,gUser.email,"task_status","Task status update",gUser.email.split("@")[0]+": "+txt,String(taskId),"task");
+    }
+    setTaskStatusInput("");
+    showT("Status updated");
+  }
+
+  // Share the latest status to the assigned employee via WhatsApp (with deadline reminder)
+  function shareTaskStatusWA(task,statusText){
+    var assignedEmp=emps.find(function(e){return e.email===task.assignTarget||e.name===task.assignTarget;});
+    if(!assignedEmp||!assignedEmp.mob){showT("No mobile number for this employee","err");return;}
+    var name=assignedEmp.name||task.assignTarget||"";
+    var msg="Hi "+name+",\n\nUpdate on your task: \""+task.title+"\"\n";
+    if(statusText)msg+="\nStatus: "+statusText+"\n";
+    if(task.deadline)msg+="\nDeadline: "+task.deadline+" (please complete on time)\n";
+    msg+="\n- "+((org&&org.name)||"Admin HR");
+    window.open("https://wa.me/"+waNum(assignedEmp)+"?text="+encodeURIComponent(msg),"_blank");
+  }
+
   function addTaskComment(taskId){
     if(!taskComment.trim())return;
     var comment={id:Date.now(),taskId:taskId,fromEmail:gUser.email,message:taskComment.trim(),createdAt:new Date().toISOString()};
@@ -3412,20 +3470,14 @@ null
         })().map(function(e){
           var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),payWD=getWorkingDays(att,e.id,curY,curM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM),payWD,proRata(e,curY,curM).active,proRata(e,curY,curM).total);
           var overLim=isOverLimit(e);
-          return h("div",{key:e.id,className:"rh",onClick:function(){if(!overLim)setSelE(e);},style:{background:overLim?SFT:CARD,border:"1px solid "+(overLim?RED+"33":BDR),borderRadius:14,padding:"13px 14px",display:"flex",gap:12,alignItems:"center",marginBottom:9,boxShadow:T.SHADOW,cursor:overLim?"default":"pointer",opacity:overLim?.65:1}},
-            av(e,44),
+          return h("div",{key:e.id,className:"rh",onClick:function(){if(!overLim)setSelE(e);},style:{background:overLim?SFT:CARD,border:"1px solid "+(overLim?RED+"33":BDR),borderRadius:14,padding:"11px 13px",display:"flex",gap:11,alignItems:"center",marginBottom:8,boxShadow:T.SHADOW,cursor:overLim?"default":"pointer",opacity:overLim?.65:1}},
+            av(e,40),
             h("div",{style:{flex:1,minWidth:0}},
-              h("div",{style:{fontSize:14,fontWeight:600,color:NVY,letterSpacing:-.1}},e.name),
+              h("div",{style:{fontSize:14,fontWeight:600,color:NVY,letterSpacing:-.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},e.name),
               overLim?h("div",{style:{display:"flex",alignItems:"center",gap:5,marginTop:3}},
                 h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,background:RED+"15",color:RED}},"Suspended — Plan limit reached"),
                 ic("lock",RED,11)
-              ):h("div",null,
-                h("div",{style:{fontSize:11,color:GRY,marginTop:1}},e.role+" \u2022 "+e.dept),
-                h("div",{style:{display:"flex",gap:5,marginTop:3,alignItems:"center"}},
-                  h("div",{style:{fontSize:10,color:GRY,opacity:.8}},e.eid+(e.dept?" \u2022 "+e.dept:""))
-                ),
-                
-              )
+              ):h("div",{style:{fontSize:11,color:GRY,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},[e.role,e.dept].filter(Boolean).join(" \u00b7 "))
             ),
             overLim?null:h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
               e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="tel:"+e.mob;},style:{width:34,height:34,borderRadius:9,background:"#10B98112",border:"1px solid #10B98125",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("phone","#10B981",15)):null,
@@ -5163,7 +5215,7 @@ null
         // Now load employer's data so employee dashboard has everything
         return Promise.all([
           _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website").eq("email",inviteData.employerEmail).maybeSingle(),
-          _sb.from("user_data").select("emps_json,att_json,inc_json").eq("email",inviteData.employerEmail).maybeSingle(),
+          _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",inviteData.employerEmail).maybeSingle(),
           _sb.from("user_plans").select("plan,emp_limit").eq("email",inviteData.employerEmail).maybeSingle()
         ]).then(function(empResults){
           var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
@@ -5191,6 +5243,7 @@ null
             setEmps(JSON.parse(empData.emps_json||"[]"));
             setAtt(JSON.parse(empData.att_json||"{}"));
             setIncentives(JSON.parse(empData.inc_json||"{}"));
+            try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
           }catch(e){}}
           _dataLoaded.current=false;
           setScreen("app");
@@ -5457,20 +5510,20 @@ null
           t.status==="assigned"?h("button",{onClick:function(){updateTaskStatus(t.id,"in_progress");setEmpSelTask(Object.assign({},t,{status:"in_progress"}));showT("Started!");},style:{width:"100%",background:ACCENT,border:"none",borderRadius:12,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("play_arrow",ACCENT_FG,18),"Start Task"):null,
           (t.status==="in_progress"||t.status==="rejected")&&t.assignType==="individual"?h("button",{onClick:function(){var note=window.prompt("Add completion note (optional):")||"";updateTaskStatus(t.id,"completed",note);setEmpSelTask(Object.assign({},t,{status:"completed",completionNote:note}));showT("Marked complete!");},style:{width:"100%",background:"#10B981",border:"none",borderRadius:12,padding:"12px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("task_alt","#fff",18),"Mark Complete"):null,
           h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10,display:"flex",alignItems:"center",gap:6}},ic("forum",NVY,15),"Comments ("+(tComments.length)+")"),
-            h("div",{style:{maxHeight:180,overflowY:"auto",marginBottom:10}},
-              tComments.length===0?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY,fontSize:12}},"No comments yet."):
-              tComments.map(function(c){
-                var isMe=c.fromEmail===myEmail;
-                return h("div",{key:c.id,style:{marginBottom:10,display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start"}},
-                  h("div",{style:{fontSize:9,color:GRY,marginBottom:3}},isMe?"You":c.fromEmail.split("@")[0]),
-                  h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?ACCENT_FG:NVY,borderRadius:isMe?"14px 14px 3px 14px":"14px 14px 14px 3px",padding:"8px 12px",fontSize:12,maxWidth:"80%",lineHeight:1.5}},c.message)
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10,display:"flex",alignItems:"center",gap:6}},ic("forum",NVY,15),"Status Updates ("+((t.statusHistory||[]).length)+")"),
+            h("div",{style:{maxHeight:200,overflowY:"auto",marginBottom:10}},
+              (!t.statusHistory||t.statusHistory.length===0)?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY,fontSize:12}},"No status updates yet."):
+              t.statusHistory.map(function(s){
+                var isMe=s.by===gUser.email;
+                return h("div",{key:s.id,style:{marginBottom:9,paddingBottom:9,borderBottom:"1px solid "+BDR}},
+                  h("div",{style:{fontSize:9,color:GRY,fontWeight:600,marginBottom:3}},(isMe?"You":s.by.split("@")[0])+" \u00b7 "+new Date(s.at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" "+new Date(s.at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})),
+                  h("div",{style:{fontSize:12,color:NVY,lineHeight:1.45}},s.text)
                 );
               })
             ),
             h("div",{style:{display:"flex",gap:8}},
-              h("input",{type:"text",value:empTaskComment,onChange:function(e){setEmpTaskComment(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&empTaskComment.trim()){addTaskComment(t.id);setEmpTaskComment("");}},placeholder:"Comment or ask...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:22,padding:"10px 14px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-              h("button",{onClick:function(){if(empTaskComment.trim()){addTaskComment(t.id);setEmpTaskComment("");}},style:{width:40,height:40,background:ACCENT,border:"none",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("send","#fff",16))
+              h("input",{type:"text",value:taskStatusInput,onChange:function(e){setTaskStatusInput(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"){addStatusUpdate(t.id);}},placeholder:"Type status update...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:"50px",padding:"10px 16px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
+              h("button",{onClick:function(){addStatusUpdate(t.id);},style:{width:40,height:40,background:ACCENT,border:"none",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("send",ACCENT_FG,16))
             )
           )
         );
@@ -5517,7 +5570,7 @@ null
                       ic("calendar_today",isOverdue?RED:GRY,10),
                       t.deadline?(isOverdue?"Overdue: ":"Due: ")+t.deadline:"No deadline"
                     ),
-                    (taskComments[t.id]||[]).length>0?h("div",{style:{fontSize:10,color:GRY,display:"flex",alignItems:"center",gap:2}},ic("forum",GRY,10),(taskComments[t.id]||[]).length):null
+                    ((t.statusHistory||[]).length)>0?h("div",{style:{fontSize:10,color:GRY,display:"flex",alignItems:"center",gap:2}},ic("forum",GRY,10),(t.statusHistory||[]).length):null
                   )
                 );
               })
@@ -5851,20 +5904,28 @@ null
           h("button",{onClick:function(){updateTaskStatus(t.id,"verified");setSelTask(null);},style:{flex:1,background:"#10B981",border:"none",borderRadius:9,padding:"9px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Verify Complete"),
           h("button",{onClick:function(){var r=window.prompt("Rejection reason:");if(r)updateTaskStatus(t.id,"rejected",r);setSelTask(null);},style:{flex:1,background:RED,border:"none",borderRadius:9,padding:"9px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Reject")
         ):null,
-        h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"COMMENTS"),
-        h("div",{style:{background:SFT,borderRadius:10,padding:10,marginBottom:8,maxHeight:180,overflowY:"auto"}},
-          tComments.length===0?h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:12}},"No comments yet"):
-          tComments.map(function(c){
-            var isMe=c.fromEmail===gUser.email;
-            return h("div",{key:c.id,style:{marginBottom:8,textAlign:isMe?"right":"left"}},
-              h("div",{style:{fontSize:9,color:GRY,marginBottom:2}},isMe?"You":c.fromEmail.split("@")[0]+" \u2022 "+new Date(c.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})),
-              h("div",{style:{display:"inline-block",background:isMe?ACCENT:CARD,color:isMe?"#fff":NVY,borderRadius:10,padding:"6px 10px",fontSize:11,maxWidth:"80%",border:isMe?"none":"1px solid "+BDR,lineHeight:1.4}},c.message)
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1}},"STATUS UPDATES"),
+          (t.statusHistory&&t.statusHistory.length>0)?h("button",{onClick:function(){var last=t.statusHistory[t.statusHistory.length-1];shareTaskStatusWA(t,last?last.text:"");},style:{display:"flex",alignItems:"center",gap:4,background:"#25D366",border:"none",borderRadius:8,padding:"5px 9px",fontSize:10,fontWeight:700,color:"#fff",cursor:"pointer"}},ic("whatsapp",NVY==="#FFFFFF"?"#fff":"#fff",12),"Share"):null
+        ),
+        /* History list */
+        h("div",{style:{background:SFT,borderRadius:10,padding:10,marginBottom:8,maxHeight:200,overflowY:"auto"}},
+          (!t.statusHistory||t.statusHistory.length===0)?h("div",{style:{fontSize:11,color:GRY,textAlign:"center",padding:12}},"No status updates yet"):
+          t.statusHistory.map(function(s){
+            var isMe=s.by===gUser.email;
+            return h("div",{key:s.id,style:{marginBottom:9,paddingBottom:9,borderBottom:"1px solid "+BDR}},
+              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}},
+                h("div",{style:{fontSize:9,color:GRY,fontWeight:600}},(isMe?"You":s.by.split("@")[0])+" \u00b7 "+new Date(s.at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" "+new Date(s.at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})),
+                h("button",{onClick:function(){shareTaskStatusWA(t,s.text);},style:{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:"#25D366",fontSize:9,fontWeight:700,padding:0}},ic("whatsapp",TEL,11),"Send")
+              ),
+              h("div",{style:{fontSize:12,color:NVY,lineHeight:1.45}},s.text)
             );
           })
         ),
+        /* Type a new status */
         h("div",{style:{display:"flex",gap:8}},
-          h("input",{type:"text",value:taskComment,onChange:function(e){setTaskComment(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addTaskComment(t.id);},placeholder:"Add comment...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-          h("button",{onClick:function(){addTaskComment(t.id);},style:{background:ACCENT,border:"none",borderRadius:9,padding:"8px 12px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Send")
+          h("input",{type:"text",value:taskStatusInput,onChange:function(e){setTaskStatusInput(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addStatusUpdate(t.id);},placeholder:"Type status update...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+          h("button",{onClick:function(){addStatusUpdate(t.id);},style:{background:NVY,border:"none",borderRadius:9,padding:"9px 14px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Update")
         )
       ),0);
     }
@@ -5904,7 +5965,7 @@ null
       filteredTasks.length===0?h("div",{style:{textAlign:"center",padding:"32px 0",color:GRY,fontSize:13}},"No tasks in this category"):null,
 
       filteredTasks.map(function(t){
-        var tCommentCount=(taskComments[t.id]||[]).length;
+        var tCommentCount=(t.statusHistory||[]).length;
         return h("div",{key:t.id,onClick:function(){setSelTask(t);},style:{background:CARD,border:"1px solid "+(t.status==="completed"?TEL:t.status==="verified"?"#10B981":t.status==="rejected"?RED:BDR),borderRadius:12,padding:"11px 12px",marginBottom:8,cursor:"pointer"}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
             h("div",{style:{fontSize:12,fontWeight:600,color:NVY,flex:1,marginRight:8}},t.title),
@@ -5913,7 +5974,7 @@ null
           h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
             h("div",{style:{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20,background:t.status==="verified"?"#D1FAE5":t.status==="completed"?"#EFF6FF":t.status==="rejected"?"#FEE2E2":"#FEF3C7",color:t.status==="verified"?"#065F46":t.status==="completed"?"#1E40AF":t.status==="rejected"?"#991B1B":"#92400E"}},t.status.replace("_"," ")),
             h("div",{style:{fontSize:10,color:GRY,display:"flex",alignItems:"center",gap:3}},ic("calendar_today",GRY,10),t.deadline),
-            tCommentCount>0?h("div",{style:{fontSize:10,color:GRY,display:"flex",alignItems:"center",gap:3}},ic("chat_bubble",GRY,10),tCommentCount+" comments"):null
+            tCommentCount>0?h("div",{style:{fontSize:10,color:GRY,display:"flex",alignItems:"center",gap:3}},ic("chat_bubble",GRY,10),tCommentCount+" updates"):null
           ),
           h("div",{style:{fontSize:10,color:GRY,marginTop:4}},
             t.assignType==="individual"?("Assigned to: "+(emps.find(function(e){return e.email===t.assignTarget;})||{name:t.assignTarget}).name):
@@ -6343,20 +6404,26 @@ null
           h("button",{onClick:function(){var r=window.prompt("Reason:");if(r!==null){updateTaskStatus(t.id,"rejected",r);setSelTask(null);}},style:{flex:1,background:RED,border:"none",borderRadius:12,padding:"12px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},ic("cancel","#fff",16),"Send Back")
         ):null,
         h("div",{style:{background:CARD,borderRadius:16,padding:"14px 16px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10,display:"flex",alignItems:"center",gap:6}},ic("forum",NVY,15),"Comments ("+(tComments.length)+")"),
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("forum",NVY,15),"Status Updates ("+((t.statusHistory||[]).length)+")"),
+            (t.statusHistory&&t.statusHistory.length>0)?h("button",{onClick:function(){var last=t.statusHistory[t.statusHistory.length-1];shareTaskStatusWA(t,last?last.text:"");},style:{display:"flex",alignItems:"center",gap:4,background:"#25D366",border:"none",borderRadius:8,padding:"5px 9px",fontSize:10,fontWeight:700,color:"#fff",cursor:"pointer"}},ic("whatsapp","#fff",12),"Share"):null
+          ),
           h("div",{style:{maxHeight:200,overflowY:"auto",marginBottom:10}},
-            tComments.length===0?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY,fontSize:12}},"No comments yet."):
-            tComments.map(function(c){
-              var isMe=c.fromEmail===gUser.email;
-              return h("div",{key:c.id,style:{marginBottom:10,display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start"}},
-                h("div",{style:{fontSize:9,color:GRY,marginBottom:3}},isMe?"You":c.fromEmail.split("@")[0]),
-                h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?ACCENT_FG:NVY,borderRadius:10,padding:"8px 12px",fontSize:12,maxWidth:"80%",lineHeight:1.5}},c.message)
+            (!t.statusHistory||t.statusHistory.length===0)?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY,fontSize:12}},"No status updates yet."):
+            t.statusHistory.map(function(s){
+              var isMe=s.by===gUser.email;
+              return h("div",{key:s.id,style:{marginBottom:9,paddingBottom:9,borderBottom:"1px solid "+BDR}},
+                h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:3}},
+                  h("div",{style:{fontSize:9,color:GRY,fontWeight:600}},(isMe?"You":s.by.split("@")[0])+" \u00b7 "+new Date(s.at).toLocaleDateString("en-IN",{day:"numeric",month:"short"})+" "+new Date(s.at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})),
+                  h("button",{onClick:function(){shareTaskStatusWA(t,s.text);},style:{display:"flex",alignItems:"center",gap:3,background:"none",border:"none",cursor:"pointer",color:"#25D366",fontSize:9,fontWeight:700,padding:0}},ic("whatsapp",TEL,11),"Send")
+                ),
+                h("div",{style:{fontSize:12,color:NVY,lineHeight:1.45}},s.text)
               );
             })
           ),
           h("div",{style:{display:"flex",gap:8}},
-            h("input",{type:"text",value:taskComment,onChange:function(e){setTaskComment(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addTaskComment(t.id);},placeholder:"Type a comment...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:22,padding:"10px 14px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-            h("button",{onClick:function(){addTaskComment(t.id);},style:{width:40,height:40,background:ACCENT,border:"none",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("send","#fff",16))
+            h("input",{type:"text",value:taskStatusInput,onChange:function(e){setTaskStatusInput(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addStatusUpdate(t.id);},placeholder:"Type status update...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:22,padding:"10px 14px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+            h("button",{onClick:function(){addStatusUpdate(t.id);},style:{background:NVY,border:"none",borderRadius:22,padding:"10px 16px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Update")
           )
         )
       );
@@ -6413,7 +6480,7 @@ null
         filteredTasks.length===0?h("div",{style:{background:SFT,borderRadius:14,padding:20,textAlign:"center",color:GRY,fontSize:12}},tasks.length===0?"No tasks yet. Tap Assign to get started.":"No tasks in this category."):
         filteredTasks.map(function(t){
           var assignedEmp=emps.find(function(e){return e.email===t.assignTarget||e.name===t.assignTarget;});
-          var tCommentCount=(taskComments[t.id]||[]).length;
+          var tCommentCount=(t.statusHistory||[]).length;
           var isOverdue=t.deadline&&new Date(t.deadline)<new Date()&&t.status!=="verified"&&t.status!=="completed";
           return h("div",{key:t.id,onClick:function(){setSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",borderLeft:"3px solid "+(t.priority==="high"?RED:t.priority==="medium"?AMB:"#10B981"),display:"flex",gap:12,alignItems:"flex-start"}},
             h("div",{style:{width:32,height:32,borderRadius:9,background:t.status==="verified"?"#D1FAE5":t.status==="completed"?"#EFF6FF":SFT,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
