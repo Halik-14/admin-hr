@@ -1771,6 +1771,8 @@ export default function App(){
 
     function loadUserData(user){
       var em=user.email;
+      if(_lastAuthEmail.current===em)return; // already loaded this session — avoid full re-fetch
+      _lastAuthEmail.current=em;
       setGUser({name:em.split("@")[0],email:em,photo:""});
       lsSet("hr_guser",{name:em.split("@")[0],email:em,photo:""});
       Promise.all([
@@ -1904,7 +1906,7 @@ export default function App(){
         setScreen("login");setAuthMode("landing");
       }
       if(event==="SIGNED_OUT"){
-        loaded=false;
+        loaded=false;_lastAuthEmail.current=null;
         setGUser(null);lsSet("hr_guser",null);
         setEmps([]);setAtt({});setIncentives({});setRevisions({});setReminders([]);setShifts({});setNotices([]);
         setOrg({name:"",type:"",email:"",position:"",plan:"free",address:"",logo:""});
@@ -1920,8 +1922,10 @@ export default function App(){
 
   
   se(function(){
-    if(!gUser||!gUser.email)return;
+    if(!gUser||!gUser.email){_lastLoadedEmail.current=null;return;}
     var em=gUser.email;
+    if(_lastLoadedEmail.current===em)return;
+    _lastLoadedEmail.current=em;
     var safe=function(t,c,v){try{return _sb.from(t).select("*").eq(c,v).then(function(r){return r.data||[];}).catch(function(){return[];});}catch(e){return Promise.resolve([]);}};
     Promise.all([safe("loans","employer_email",em),safe("expenses","employer_email",em),safe("warnings","employer_email",em),safe("holidays","employer_email",em),safe("company_expenses","employer_email",em),safe("salary_revisions","employer_email",em),safe("bonuses","employer_email",em),safe("staff_claims","employer_email",em),safe("overtime","employer_email",em)]).then(function(res){
       try{setLoans((res[0]||[]).map(function(l){return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,employee_id:l.employee_id,employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,kind:l.kind||"loan",loanType:l.loan_type||"personal",advanceType:l.advance_type||"salary",interestRate:Number(l.interest_rate||0),tenure:Number(l.tenure||0),emi:Number(l.emi||0),startDate:l.start_date||l.date,endDate:l.end_date,paidInstallments:Number(l.paid_installments||0),totalPaid:Number(l.total_paid||0),closedDate:l.closed_date,monthlyDeduction:l.monthly_deduction,monthly_deduction:l.monthly_deduction,paidAmount:l.paid_amount,paid_amount:l.paid_amount,status:l.status,createdAt:l.created_at};}));}catch(e){}
@@ -1934,7 +1938,7 @@ export default function App(){
       try{setHolidays2((res[3]||[]).map(function(h2){return{id:h2.id,name:h2.name,date:h2.date};}));}catch(e){}
       try{setWarnings((res[2]||[]).map(function(w){return {id:w.id,employerEmail:w.employer_email,employeeId:w.employee_id,employee_id:w.employee_id,employeeName:w.employee_name,incidentDate:w.incident_date,incident:w.incident,actionRequired:w.action_required,warningType:w.warning_type,acknowledged:w.acknowledged,createdAt:w.created_at};}));}catch(e){}
     }).catch(function(){});
-  },[gUser]);
+  },[gUser&&gUser.email]);
 
   se(function(){
     lsSet("hr_org",org);
@@ -1947,6 +1951,8 @@ export default function App(){
   // ── Auto-sync to Supabase on any data change (debounced 2s) ──
   var _syncTimer=React.useRef(null);
   var _dataLoaded=React.useRef(false);
+  var _lastLoadedEmail=React.useRef(null);
+  var _lastAuthEmail=React.useRef(null);
   se(function(){
     if(!gUser||!gUser.email)return;
     // Skip first render — data hasn't loaded from Supabase yet
@@ -3292,7 +3298,7 @@ export default function App(){
                 if(!remTxt.trim())return showT("Enter reminder text","err");
                 setReminders(function(p){return p.concat([{id:Date.now(),text:remTxt.trim(),date:remDate||"",done:false}]);});
                 setRemTxt("");setRemDate("");setRemOpen(false);showT("Reminder added!");
-              },style:{background:NVY,border:"none",borderRadius:8,padding:"8px 14px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Add")
+              },style:{background:NVY,border:"none",borderRadius:8,padding:"8px 14px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Add")
             )
           ):null,
           activeRems.length===0&&!remOpen?h("div",{style:{textAlign:"center",padding:"8px 0",color:GRY,fontSize:11}},"No active reminders"):null,
@@ -4726,12 +4732,13 @@ null
       tabs.map(function(t){
         var on=settTab===t[0];
         return h("button",{key:t[0],onClick:function(){setSettTab(t[0]);},style:{
-          flex:1,padding:"8px 4px",borderRadius:9,border:"none",
+          flex:1,padding:"8px 4px",borderRadius:9,
+          border:on?"1px solid "+BDR:"1px solid transparent",
           background:on?CARD:"transparent",
           color:on?NVY:GRY,
           fontSize:12,fontWeight:on?700:500,
           cursor:"pointer",
-          boxShadow:on?"0 1px 4px rgba(15,23,42,.10)":"none",
+          boxShadow:on?T.SHADOW:"none",
           transition:"all .15s"
         }},t[1]);
       })
@@ -5457,7 +5464,7 @@ null
                 var isMe=c.fromEmail===myEmail;
                 return h("div",{key:c.id,style:{marginBottom:10,display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start"}},
                   h("div",{style:{fontSize:9,color:GRY,marginBottom:3}},isMe?"You":c.fromEmail.split("@")[0]),
-                  h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?"#fff":NVY,borderRadius:isMe?"14px 14px 3px 14px":"14px 14px 14px 3px",padding:"8px 12px",fontSize:12,maxWidth:"80%",lineHeight:1.5}},c.message)
+                  h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?ACCENT_FG:NVY,borderRadius:isMe?"14px 14px 3px 14px":"14px 14px 14px 3px",padding:"8px 12px",fontSize:12,maxWidth:"80%",lineHeight:1.5}},c.message)
                 );
               })
             ),
@@ -6105,7 +6112,7 @@ null
             h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},"Company Expenses"),
             h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Operational & business costs")
           ),
-          h("button",{onClick:function(){setShowCoExpForm(!showCoExpForm);},style:{background:showCoExpForm?SFT:ACCENT,border:showCoExpForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"6px 12px",fontSize:11,fontWeight:700,color:showCoExpForm?NVY:"#fff",cursor:"pointer"}},showCoExpForm?"Cancel":"+ Add")
+          h("button",{onClick:function(){setShowCoExpForm(!showCoExpForm);},style:{background:showCoExpForm?SFT:ACCENT,border:showCoExpForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"6px 12px",fontSize:11,fontWeight:700,color:showCoExpForm?NVY:ACCENT_FG,cursor:"pointer"}},showCoExpForm?"Cancel":"+ Add")
         ),
         /* Period selector */
         h("div",{style:{display:"flex",gap:6,marginBottom:10,alignItems:"center"}},
@@ -6343,7 +6350,7 @@ null
               var isMe=c.fromEmail===gUser.email;
               return h("div",{key:c.id,style:{marginBottom:10,display:"flex",flexDirection:"column",alignItems:isMe?"flex-end":"flex-start"}},
                 h("div",{style:{fontSize:9,color:GRY,marginBottom:3}},isMe?"You":c.fromEmail.split("@")[0]),
-                h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?"#fff":NVY,borderRadius:10,padding:"8px 12px",fontSize:12,maxWidth:"80%",lineHeight:1.5}},c.message)
+                h("div",{style:{background:isMe?ACCENT:SFT,color:isMe?ACCENT_FG:NVY,borderRadius:10,padding:"8px 12px",fontSize:12,maxWidth:"80%",lineHeight:1.5}},c.message)
               );
             })
           ),
@@ -6361,15 +6368,15 @@ null
     return h("div",{className:"fd"},
       // ── Work inner tabs ──
       h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:14,gap:3}},
-        h("button",{onClick:function(){setProTab("tasks");},style:{flex:1,background:proTab==="tasks"?NVY:"transparent",border:"none",borderRadius:9,padding:"9px",color:proTab==="tasks"?"#fff":GRY,fontSize:11,fontWeight:proTab==="tasks"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
-          ic("assignment",proTab==="tasks"?"#fff":GRY,14),"Tasks",
+        h("button",{onClick:function(){setProTab("tasks");},style:{flex:1,background:proTab==="tasks"?CARD:"transparent",border:proTab==="tasks"?"1px solid "+BDR:"1px solid transparent",borderRadius:9,padding:"9px",color:proTab==="tasks"?NVY:GRY,fontSize:11,fontWeight:proTab==="tasks"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,boxShadow:proTab==="tasks"?T.SHADOW:"none"}},
+          ic("assignment",proTab==="tasks"?(ACCENT==="#FFFFFF"?NVY:ACCENT):GRY,14),"Tasks",
           tasks.filter(function(t){return t.status==="completed";}).length>0?h("span",{style:{background:RED,color:"#fff",fontSize:9,fontWeight:700,borderRadius:10,padding:"0 5px",marginLeft:2}},tasks.filter(function(t){return t.status==="completed";}).length):null
         ),
-        h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTab==="kpi"?NVY:"transparent",border:"none",borderRadius:9,padding:"9px",color:proTab==="kpi"?"#fff":GRY,fontSize:11,fontWeight:proTab==="kpi"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
-          ic("insights",proTab==="kpi"?"#fff":GRY,14),"KPI"
+        h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTab==="kpi"?CARD:"transparent",border:proTab==="kpi"?"1px solid "+BDR:"1px solid transparent",borderRadius:9,padding:"9px",color:proTab==="kpi"?NVY:GRY,fontSize:11,fontWeight:proTab==="kpi"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,boxShadow:proTab==="kpi"?T.SHADOW:"none"}},
+          ic("insights",proTab==="kpi"?(ACCENT==="#FFFFFF"?NVY:ACCENT):GRY,14),"KPI"
         ),
-        h("button",{onClick:function(){setProTab("expenses");},style:{flex:1,background:proTab==="expenses"?NVY:"transparent",border:"none",borderRadius:9,padding:"9px",color:proTab==="expenses"?"#fff":GRY,fontSize:11,fontWeight:proTab==="expenses"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
-          ic("account_balance_wallet",proTab==="expenses"?"#fff":GRY,14),"Expenses"
+        h("button",{onClick:function(){setProTab("expenses");},style:{flex:1,background:proTab==="expenses"?CARD:"transparent",border:proTab==="expenses"?"1px solid "+BDR:"1px solid transparent",borderRadius:9,padding:"9px",color:proTab==="expenses"?NVY:GRY,fontSize:11,fontWeight:proTab==="expenses"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,boxShadow:proTab==="expenses"?T.SHADOW:"none"}},
+          ic("account_balance_wallet",proTab==="expenses"?(ACCENT==="#FFFFFF"?NVY:ACCENT):GRY,14),"Expenses"
         )
       ),
       proTab==="expenses"?renderCompanyExpenses():proTab==="kpi"?renderKpiSection():h("div",null,
@@ -6543,7 +6550,7 @@ null
     return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:200,display:"flex",alignItems:"flex-end"}},
       h("div",{style:{background:CARD,borderRadius:"20px 20px 0 0",padding:20,width:"100%",maxWidth:430,margin:"0 auto",maxHeight:"91vh",overflowY:"auto"}},
         h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:14}},
-          [1,2,3,4].map(function(s){return h("div",{key:s,style:{display:"flex",alignItems:"center",gap:5,flex:s<4?1:"auto"}},h("div",{style:{width:24,height:24,borderRadius:12,background:step>=s?NVY:BDR,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:step>=s?"#fff":GRY,flexShrink:0}},s),s<4?h("div",{style:{flex:1,height:2,background:step>s?NVY:BDR,borderRadius:1}}):null);})
+          [1,2,3,4].map(function(s){return h("div",{key:s,style:{display:"flex",alignItems:"center",gap:5,flex:s<4?1:"auto"}},h("div",{style:{width:24,height:24,borderRadius:12,background:step>=s?NVY:BDR,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:step>=s?CARD:GRY,flexShrink:0}},s),s<4?h("div",{style:{flex:1,height:2,background:step>s?NVY:BDR,borderRadius:1}}):null);})
         ),
         h("div",{style:{fontSize:14,fontWeight:800,color:NVY,marginBottom:1}},step===1?"Personal":step===2?"Employment":step===3?"Identity":"Tax and Deductions"),
         h("div",{style:{fontSize:11,color:GRY,marginBottom:13}},"Step "+step+" of 4"),
@@ -6578,7 +6585,7 @@ null
         step===3?h("div",null,lbl("PAN"),h("input",{value:fPan,onChange:function(e){setFPan(e.target.value);},placeholder:"ABCDE1234F",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("UAN (PF Account)"),h("input",{value:fUan,onChange:function(e){setFUan(e.target.value);},placeholder:"Universal Account No.",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),lbl("AADHAR"),h("input",{value:fAadhar,onChange:function(e){setFAadhar(e.target.value);},placeholder:"XXXX-XXXX-XXXX",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})):null,
         step===4?h("div",null,
           togEl("EPF / PF","12% emp + 12% employer",pf,setPf),
-          pf?h("div",{style:{padding:"8px 0",borderBottom:"1px solid "+BDR}},lbl("PF Mode"),h("div",{style:{display:"flex",gap:7}},[["capped","Capped Rs.1800"],["actual","Actual Basic"]].map(function(item){return h("button",{key:item[0],onClick:function(){setPfMode(item[0]);},style:{flex:1,background:pfMode===item[0]?NVY:SFT,border:"1.5px solid "+(pfMode===item[0]?NVY:BDR),borderRadius:9,padding:"8px",color:pfMode===item[0]?"#fff":GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);}))):null,
+          pf?h("div",{style:{padding:"8px 0",borderBottom:"1px solid "+BDR}},lbl("PF Mode"),h("div",{style:{display:"flex",gap:7}},[["capped","Capped Rs.1800"],["actual","Actual Basic"]].map(function(item){return h("button",{key:item[0],onClick:function(){setPfMode(item[0]);},style:{flex:1,background:pfMode===item[0]?NVY:SFT,border:"1.5px solid "+(pfMode===item[0]?NVY:BDR),borderRadius:9,padding:"8px",color:pfMode===item[0]?CARD:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},item[1]);}))):null,
           togEl("ESI","0.75% emp if gross up to Rs.21K",esi,setEsi),
           togEl("Professional Tax","Rs.200/mo if above Rs.15K",pt,setPt),
           togEl("TDS","FY 2025-26 new regime",tds,setTds),
@@ -6790,7 +6797,7 @@ null
           h("div",{style:{fontSize:10,color:GRY,marginTop:2}},allExp.length+" records  —  Total: "+fmt(total))
         ),
         h("button",{onClick:function(){setShowExpForm(!showExpForm);},
-          style:{background:showExpForm?SFT:ACCENT,border:showExpForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"7px 14px",fontSize:11,fontWeight:700,color:showExpForm?NVY:"#fff",cursor:"pointer"}},
+          style:{background:showExpForm?SFT:ACCENT,border:showExpForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"7px 14px",fontSize:11,fontWeight:700,color:showExpForm?NVY:ACCENT_FG,cursor:"pointer"}},
           showExpForm?"Cancel":"+ Add Expense")
       ),
 
@@ -7267,8 +7274,8 @@ null
       showLoanForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
         /* Loan / Advance toggle */
         h("div",{style:{display:"flex",background:CARD,borderRadius:9,padding:3,marginBottom:10,gap:3}},
-          h("button",{onClick:function(){setLoanKind("loan");},style:{flex:1,background:loanKind==="loan"?NVY:"transparent",border:"none",borderRadius:7,padding:"8px",fontSize:12,fontWeight:700,color:loanKind==="loan"?"#fff":GRY,cursor:"pointer"}},"Loan"),
-          h("button",{onClick:function(){setLoanKind("advance");},style:{flex:1,background:loanKind==="advance"?NVY:"transparent",border:"none",borderRadius:7,padding:"8px",fontSize:12,fontWeight:700,color:loanKind==="advance"?"#fff":GRY,cursor:"pointer"}},"Advance")
+          h("button",{onClick:function(){setLoanKind("loan");},style:{flex:1,background:loanKind==="loan"?CARD:"transparent",border:loanKind==="loan"?"1px solid "+BDR:"1px solid transparent",borderRadius:7,padding:"8px",fontSize:12,fontWeight:700,color:loanKind==="loan"?NVY:GRY,boxShadow:loanKind==="loan"?T.SHADOW:"none",cursor:"pointer"}},"Loan"),
+          h("button",{onClick:function(){setLoanKind("advance");},style:{flex:1,background:loanKind==="advance"?CARD:"transparent",border:loanKind==="advance"?"1px solid "+BDR:"1px solid transparent",borderRadius:7,padding:"8px",fontSize:12,fontWeight:700,color:loanKind==="advance"?NVY:GRY,boxShadow:loanKind==="advance"?T.SHADOW:"none",cursor:"pointer"}},"Advance")
         ),
         /* Type */
         lbl("TYPE"),
@@ -7622,7 +7629,7 @@ null
     return h("div",{className:"fd"},
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
         h("div",null,h("div",{style:{display:"flex",alignItems:"center",gap:6}},ic("event_available",ACCENT,18),h("div",{style:{fontSize:14,fontWeight:700,color:NVY}},"Holiday Calendar")),h("div",{style:{fontSize:10,color:GRY,marginTop:2}},sorted.length+" holidays set")),
-        h("button",{onClick:function(){setShowHolForm(!showHolForm);},style:{background:showHolForm?SFT:ACCENT,border:showHolForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"7px 14px",fontSize:11,fontWeight:700,color:showHolForm?NVY:"#fff",cursor:"pointer"}},showHolForm?"Cancel":"+ Add Holiday")
+        h("button",{onClick:function(){setShowHolForm(!showHolForm);},style:{background:showHolForm?SFT:ACCENT,border:showHolForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"7px 14px",fontSize:11,fontWeight:700,color:showHolForm?NVY:ACCENT_FG,cursor:"pointer"}},showHolForm?"Cancel":"+ Add Holiday")
       ),
       showHolForm?h("div",{style:{background:SFT,borderRadius:14,padding:14,border:"1px solid "+BDR,marginBottom:14}},
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:10}},"Add Company Holiday"),
@@ -7837,7 +7844,7 @@ null
       h("div",{style:{background:T.BG,borderRadius:"20px 20px 0 0",width:"100%",maxWidth:430,height:"92vh",display:"flex",flexDirection:"column"}},
 
         // ── Header ──
-        h("div",{style:{background:NVY,borderRadius:"20px 20px 0 0",padding:"14px 16px 12px",flexShrink:0}},
+        h("div",{style:{background:"#0F172A",borderRadius:"20px 20px 0 0",padding:"14px 16px 12px",flexShrink:0}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
             h("div",null,
               h("div",{style:{fontSize:16,fontWeight:800,color:"#fff"}},"Admin Panel"),
