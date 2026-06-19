@@ -559,7 +559,7 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     var c1x=mg,c2x=mg+cw2+2;
     colHead(c1x,ry,cw2,"EARNINGS",[15,23,42]);
     var er=ry+rh;
-    var earns=[["Basic Salary",fmtIN(d.eb||0)],["HRA",fmtIN(emp.hra||0)],["Allowances",fmtIN(emp.allow||0)]];
+    var earns=d.isFixed?[["Fixed Salary",fmtIN(d.eb||0)]]:[["Basic Salary",fmtIN(d.eb||0)],["HRA",fmtIN(d.hra||0)],["Allowances",fmtIN(d.allow||0)]];
     if(d.shiftAllow>0)earns.push(["Shift Allowance",fmtIN(d.shiftAllow)]);
     if(d.inc>0)earns.push(["Incentive",fmtIN(d.inc)]);
     var bonusSum=0;
@@ -4540,29 +4540,29 @@ null
         h("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:10,letterSpacing:.3}},MOS[payM]+" "+payY+" • "+filtEmps.length+" Employee"+(filtEmps.length===1?"":"s")+(hiddenCount>0?" • "+hiddenCount+" not in this period":"")),
         // 3-part formula row
         h("div",{style:{display:"flex",alignItems:"center",gap:filtBonus>0?4:8,marginBottom:14}},
-          h("div",{style:{flex:1,textAlign:"center"}},
+          h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
             h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"GROSS"),
-            h("div",{style:{fontSize:filtBonus>0?12.5:15,fontWeight:800,color:"#fff"}},fmt(filtGross))
+            h("div",{style:{fontSize:filtBonus>0?11:14,fontWeight:800,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtGross))
           ),
           h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:filtBonus>0?14:18,fontWeight:300,flexShrink:0}},"−"),
-          h("div",{style:{flex:1,textAlign:"center"}},
+          h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
             h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"ABSENT"),
-            h("div",{style:{fontSize:filtBonus>0?12.5:15,fontWeight:800,color:"#FCA5A5"}},filtAttDed>0?fmt(filtAttDed):"Nil")
+            h("div",{style:{fontSize:filtBonus>0?11:14,fontWeight:800,color:"#FCA5A5",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},filtAttDed>0?fmt(filtAttDed):"Nil")
           ),
           h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:filtBonus>0?14:18,fontWeight:300,flexShrink:0}},"−"),
-          h("div",{style:{flex:1,textAlign:"center"}},
+          h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
             h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"TAX/DED"),
-            h("div",{style:{fontSize:filtBonus>0?12.5:15,fontWeight:800,color:"#FCA5A5"}},filtTaxDed>0?fmt(filtTaxDed):"Nil")
+            h("div",{style:{fontSize:filtBonus>0?11:14,fontWeight:800,color:"#FCA5A5",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},filtTaxDed>0?fmt(filtTaxDed):"Nil")
           ),
           filtBonus>0?h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:14,fontWeight:300,flexShrink:0}},"+"):null,
-          filtBonus>0?h("div",{style:{flex:1,textAlign:"center"}},
+          filtBonus>0?h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
             h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"BONUS"),
-            h("div",{style:{fontSize:filtBonus>0?12.5:15,fontWeight:800,color:"#FCD34D"}},fmt(filtBonus))
+            h("div",{style:{fontSize:11,fontWeight:800,color:"#FCD34D",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtBonus))
           ):null,
           h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:filtBonus>0?14:18,fontWeight:300,flexShrink:0}},"="),
-          h("div",{style:{flex:1,textAlign:"center"}},
+          h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
             h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"NET PAY"),
-            h("div",{style:{fontSize:filtBonus>0?13:15,fontWeight:800,color:"#4ADE80"}},fmt(filtNet))
+            h("div",{style:{fontSize:filtBonus>0?11:14,fontWeight:800,color:"#4ADE80",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtNet))
           )
         ),
         h("div",{style:{height:1,background:"rgba(255,255,255,.08)",marginBottom:10}}),
@@ -4592,8 +4592,8 @@ null
                 h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:13,fontWeight:800,color:GRN}},fmt(dTot.net)),h("div",{style:{fontSize:9,color:GRY}},dEmps.length+" employees"))
               ),
               h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-                h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:8,padding:"6px 10px"}},h("div",{style:{fontSize:10,color:GRY}},"Gross"),h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},fmt(dTot.gr))),
-                h("div",{style:{flex:1,background:RED+"12",borderRadius:8,padding:"6px 10px"}},h("div",{style:{fontSize:10,color:GRY}},"Deductions"),h("div",{style:{fontSize:12,fontWeight:700,color:RED}},fmt(dTot.ded)))
+                h("div",{style:{flex:1,minWidth:0,overflow:"hidden",background:ACCENT_SOFT,borderRadius:8,padding:"6px 10px"}},h("div",{style:{fontSize:10,color:GRY}},"Gross"),h("div",{style:{fontSize:12,fontWeight:700,color:NVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(dTot.gr))),
+                h("div",{style:{flex:1,minWidth:0,overflow:"hidden",background:RED+"12",borderRadius:8,padding:"6px 10px"}},h("div",{style:{fontSize:10,color:GRY}},"Deductions"),h("div",{style:{fontSize:12,fontWeight:700,color:RED,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(dTot.ded)))
               ),
               dEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));return h("div",{key:e.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+BDR}},
                 h("div",{style:{display:"flex",alignItems:"center",gap:7}},av(e,28),h("div",null,h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},e.name),h("div",{style:{fontSize:9,color:GRY}},e.role))),
@@ -4645,31 +4645,31 @@ null
                 h("button",{onClick:function(){var k=e.id+"_"+payY+"_"+payM;setIncentives(function(p){var o=Object.assign({},p);o[k]=Number(editPayInc)||0;return o;});showT("Saved!");},style:{display:"flex",alignItems:"center",gap:4,background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,CARD,13),"Save")
               ),
               // ── Formula: compact single row inside tinted box ──
-              h("div",{style:{background:"rgba(0,0,0,0.04)",borderRadius:10,padding:"10px 12px",marginBottom:10}},
-                h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:2}},
-                  h("div",{style:{textAlign:"center",flex:1}},
+              h("div",{style:{background:"rgba(0,0,0,0.04)",borderRadius:10,padding:"10px 8px",marginBottom:10}},
+                h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1}},
+                  h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
                     h("div",{style:{fontSize:8,color:GRY,letterSpacing:.4,marginBottom:2}},"ACTUAL"),
-                    h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},fmt(isFixed?Number(eEff.fixedSalary||eEff.monthlyCTC||0):(Number(eEff.basic)||0)+(Number(eEff.hra)||0)+(Number(eEff.allow)||0)))
+                    h("div",{style:{fontSize:12,fontWeight:800,color:NVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(isFixed?Number(eEff.fixedSalary||eEff.monthlyCTC||0):(Number(eEff.basic)||0)+(Number(eEff.hra)||0)+(Number(eEff.allow)||0)))
                   ),
-                  attDed>0?h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"\u2212"):null,
-                  attDed>0?h("div",{style:{textAlign:"center",flex:1}},
+                  attDed>0?h("div",{style:{color:GRY,fontSize:13,paddingBottom:2,flexShrink:0}},"\u2212"):null,
+                  attDed>0?h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
                     h("div",{style:{fontSize:8,color:AMB,letterSpacing:.4,marginBottom:2}},"ABSENT"),
-                    h("div",{style:{fontSize:13,fontWeight:800,color:AMB}},fmt(attDed))
+                    h("div",{style:{fontSize:12,fontWeight:800,color:AMB,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(attDed))
                   ):null,
-                  statDed>0?h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"\u2212"):null,
-                  statDed>0?h("div",{style:{textAlign:"center",flex:1}},
+                  statDed>0?h("div",{style:{color:GRY,fontSize:13,paddingBottom:2,flexShrink:0}},"\u2212"):null,
+                  statDed>0?h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
                     h("div",{style:{fontSize:8,color:RED,letterSpacing:.4,marginBottom:2}},"TAX/DED"),
-                    h("div",{style:{fontSize:13,fontWeight:800,color:RED}},fmt(statDed))
+                    h("div",{style:{fontSize:12,fontWeight:800,color:RED,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(statDed))
                   ):null,
-                  extraPay>0?h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"+"):null,
-                  extraPay>0?h("div",{style:{textAlign:"center",flex:1}},
+                  extraPay>0?h("div",{style:{color:GRY,fontSize:13,paddingBottom:2,flexShrink:0}},"+"):null,
+                  extraPay>0?h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
                     h("div",{style:{fontSize:8,color:"#10B981",letterSpacing:.4,marginBottom:2}},"BONUS"),
-                    h("div",{style:{fontSize:13,fontWeight:800,color:"#10B981"}},fmt(extraPay))
+                    h("div",{style:{fontSize:12,fontWeight:800,color:"#10B981",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(extraPay))
                   ):null,
-                  h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"="),
-                  h("div",{style:{textAlign:"center",flex:1}},
+                  h("div",{style:{color:GRY,fontSize:13,paddingBottom:2,flexShrink:0}},"="),
+                  h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
                     h("div",{style:{fontSize:8,color:"#10B981",letterSpacing:.4,marginBottom:2}},"NET PAY"),
-                    h("div",{style:{fontSize:13,fontWeight:800,color:"#10B981"}},fmt(netWithExtra))
+                    h("div",{style:{fontSize:12,fontWeight:800,color:"#10B981",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(netWithExtra))
                   )
                 )
               ),
@@ -4778,7 +4778,7 @@ null
           actEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return h("div",{key:e.id,style:{padding:"9px 0",borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none"}},
             h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:5}},av(e,31),h("div",{style:{flex:1}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},e.name),h("div",{style:{fontSize:10,color:GRY}},e.dept)),h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:12,fontWeight:800,color:AMB}},fmt(d.gr+d.pfR+d.esiR)),h("div",{style:{fontSize:9,color:GRY}},"CTC/mo"))),
             h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5}},
-              [["Gross",fmt(d.gr),NVY],["Er PF",fmt(d.pfR),"#374151"],["Er ESI",fmt(d.esiR),TEL]].map(function(item){return h("div",{key:item[0],style:{background:item[2]+"18",borderRadius:7,padding:"6px",textAlign:"center"}},h("div",{style:{fontSize:11,fontWeight:700,color:item[2]}},item[1]),h("div",{style:{fontSize:9,color:GRY}},item[0]));})
+              [["Gross",fmt(d.gr),NVY],["Er PF",fmt(d.pfR),"#374151"],["Er ESI",fmt(d.esiR),TEL]].map(function(item){return h("div",{key:item[0],style:{background:item[2]+"18",borderRadius:7,padding:"6px",textAlign:"center",minWidth:0,overflow:"hidden"}},h("div",{style:{fontSize:11,fontWeight:700,color:item[2],whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},item[1]),h("div",{style:{fontSize:9,color:GRY}},item[0]));})
             )
           );}),
           (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);a.g+=d.gr;a.p+=d.pfR;a.e+=d.esiR;return a;},{g:0,p:0,e:0});return h("div",{style:{background:AMB+"14",border:"1px solid "+AMB+"38",borderRadius:11,padding:11,marginTop:9}},[["Total Gross",fmt(tot.g),false],["Employer PF",fmt(tot.p),false],["Employer ESI",fmt(tot.e),false],["Total CTC",fmt(tot.g+tot.p+tot.e),true]].map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px dashed "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:700,color:item[2]?AMB:NVY}},item[1]));}))})())) , 
