@@ -4518,7 +4518,8 @@ null
     var hiddenCount=filtEmpsRaw.length-filtEmps.length;
     var filtGross=filtEmps.reduce(function(a,e){
       var isFixed=e.salaryType==="fixed";
-      return a+(isFixed?Number(e.fixedSalary||e.monthlyCTC||0):(e.basic||0)+(e.hra||0)+(e.allow||0));
+      var eEff=getEffectiveEmp(e,payY,payM); // use salary-revision-aware figures for the month
+      return a+(isFixed?Number(eEff.fixedSalary||eEff.monthlyCTC||0):(eEff.basic||0)+(eEff.hra||0)+(eEff.allow||0));
     },0);
     var filtAttDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return a+d.ad+d.hd+d.ud;},0);
     var filtTaxDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return a+d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;},0);
@@ -4605,7 +4606,8 @@ null
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:11}},"Individual Payslips"),
         actEmps.map(function(e){
           var isFixed=e.salaryType==="fixed"; // declare here so it's in scope for Details section
-          var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total),isO=editPayE&&editPayE.id===e.id;
+          var eEff=getEffectiveEmp(e,payY,payM); // salary-revision-aware employee for THIS month (display rows must use this, not raw e)
+          var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(eEff,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total),isO=editPayE&&editPayE.id===e.id;
           var attDed=d.ad+d.hd+d.ud;
           var statDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;
           var totalDed=attDed+statDed;
@@ -4647,7 +4649,7 @@ null
                 h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:2}},
                   h("div",{style:{textAlign:"center",flex:1}},
                     h("div",{style:{fontSize:8,color:GRY,letterSpacing:.4,marginBottom:2}},"ACTUAL"),
-                    h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},fmt(isFixed?Number(e.fixedSalary||e.monthlyCTC||0):(Number(e.basic)||0)+(Number(e.hra)||0)+(Number(e.allow)||0)))
+                    h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},fmt(isFixed?Number(eEff.fixedSalary||eEff.monthlyCTC||0):(Number(eEff.basic)||0)+(Number(eEff.hra)||0)+(Number(eEff.allow)||0)))
                   ),
                   attDed>0?h("div",{style:{color:GRY,fontSize:14,paddingBottom:2,flexShrink:0}},"\u2212"):null,
                   attDed>0?h("div",{style:{textAlign:"center",flex:1}},
@@ -4674,9 +4676,9 @@ null
               // ── Earnings breakdown ──
               h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4}},"EARNINGS"),
               [
-                isFixed?["Fixed Salary",fmt(Number(e.fixedSalary||e.monthlyCTC||0)),NVY]:["Basic",fmt(e.basic||0),NVY],
-                isFixed?null:["HRA",fmt(e.hra||0),NVY],
-                isFixed?null:["Allowances",fmt(e.allow||0),NVY],
+                isFixed?["Fixed Salary",fmt(Number(eEff.fixedSalary||eEff.monthlyCTC||0)),NVY]:["Basic",fmt(eEff.basic||0),NVY],
+                isFixed?null:["HRA",fmt(eEff.hra||0),NVY],
+                isFixed?null:["Allowances",fmt(eEff.allow||0),NVY],
                 d.inc>0?["Incentive",fmt(d.inc),"#059669"]:null,
                 d.shiftAllow>0?["Shift Allow.",fmt(d.shiftAllow),TEL]:null,
                 attDed>0?["Absent/Half","-"+fmt(attDed),AMB]:null,
@@ -5747,9 +5749,9 @@ null
           ),
           // ── Earnings breakdown ──
           h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"EARNINGS"),
-          (emp.salaryType==="fixed"?[["Fixed Salary",fmt(emp.fixedSalary||emp.monthlyCTC||0),NVY]]:
-            [["Basic",fmt(emp.basic||0),NVY],["HRA",fmt(emp.hra||0),NVY],["Allowances",fmt(emp.allow||0),NVY]]
-          ).map(function(item){
+          (function(){var eE=getEffectiveEmp(emp,empPayYear,empPayMonth);return (emp.salaryType==="fixed"?[["Fixed Salary",fmt(eE.fixedSalary||eE.monthlyCTC||0),NVY]]:
+            [["Basic",fmt(eE.basic||0),NVY],["HRA",fmt(eE.hra||0),NVY],["Allowances",fmt(eE.allow||0),NVY]]);})()
+          .map(function(item){
             return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
               h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:item[2]}},item[1])
             );
@@ -7498,7 +7500,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           var ma2=mAtt(emp.id,yr,mo),inc2=getInc(emp.id,yr,mo),wD2=getWorkingDays(att,emp.id,yr,mo);
           var pr2=empActiveRangeInMonth(emp,yr,mo),effEmp2=getEffectiveEmp(emp,yr,mo);var d2=(pr2.notYetJoined||pr2.alreadyLeft)?calcPay(effEmp2,0,0,0,0,0,wD2,0,1):calcPay(effEmp2,ma2.absent,ma2.half,ma2.unpaid,inc2,0,wD2,pr2.activeDays,pr2.fullDays);
           var isFixed2=emp.salaryType==="fixed";
-          var gr2=isFixed2?Number(emp.fixedSalary||emp.monthlyCTC||0):(Number(emp.basic||0)+Number(emp.hra||0)+Number(emp.allow||0));
+          var gr2=isFixed2?Number(effEmp2.fixedSalary||effEmp2.monthlyCTC||0):(Number(effEmp2.basic||0)+Number(effEmp2.hra||0)+Number(effEmp2.allow||0));
           var att2=d2.ad+d2.hd+d2.ud,tax2=d2.pfE+d2.esiE+d2.pt+d2.tds;
           var bon2=(bonuses||[]).filter(function(b){return b.employeeId===String(emp.id)&&b.payMonth===mo&&b.payYear===yr;}).reduce(function(s,b){return s+(b.amount||0);},0);
           var clm2=(claims||[]).filter(function(c){return c.employeeId===String(emp.id)&&c.status==="approved"&&c.month===mo&&c.year===yr;}).reduce(function(s,c){return s+(c.amount||0);},0);
