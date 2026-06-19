@@ -1515,6 +1515,7 @@ export default function App(){
   var sOtPickedDate=st(""),otPickedDate=sOtPickedDate[0],setOtPickedDate=sOtPickedDate[1];
   var sOtMarkMode=st("hours"),otMarkMode=sOtMarkMode[0],setOtMarkMode=sOtMarkMode[1];
   var sAttStatsOpen=st(false),attStatsOpen=sAttStatsOpen[0],setAttStatsOpen=sAttStatsOpen[1];
+  var sAttSortDept=st(false),attSortDept=sAttSortDept[0],setAttSortDept=sAttSortDept[1]; // true = group attendance list by department A-Z
   var sBonuses=st([]),bonuses=sBonuses[0],setBonuses=sBonuses[1];
   var sShowBonusForm=st(false),showBonusForm=sShowBonusForm[0],setShowBonusForm=sShowBonusForm[1];
   var sBonusEmpId=st(""),bonusEmpId=sBonusEmpId[0],setBonusEmpId=sBonusEmpId[1];
@@ -3267,10 +3268,10 @@ export default function App(){
     var presentCount=actEmps.filter(function(e){return getTAtt(e.id)==="present";}).length;
     var absentCount=actEmps.filter(function(e){return getTAtt(e.id)==="absent";}).length;
     var statCards=[
-      {l:"Total Team",v:actEmps.length,ico:"groups",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active"},
-      {l:"Present Today",v:presentCount,ico:"event_available",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today"},
-      {l:"Gross Payroll",v:fmt(tGross),ico:"business_center",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY},
-      {l:"Net Payable",v:fmt(tNet),ico:"account_balance_wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions"},
+      {l:"Total Team",v:actEmps.length,ico:"groups",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active",big:false},
+      {l:"Present Today",v:presentCount,ico:"event_available",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today",big:false},
+      {l:"Gross Payroll",v:fmt(tGross),ico:"business_center",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY,big:true},
+      {l:"Net Payable",v:fmt(tNet),ico:"account_balance_wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions",big:true},
     ];
     var hr=now.getHours(),greet=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
     // Pre-compute reminder urgency
@@ -3305,7 +3306,7 @@ export default function App(){
               h("div",{style:{width:22,height:22,borderRadius:6,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(s.ico,s.ic,11)),
               h("div",{style:{fontSize:8,fontWeight:700,color:GRY,letterSpacing:.4,lineHeight:1.2}},s.l.toUpperCase())
             ),
-            h("div",{style:{fontSize:String(s.v).length>8?16:24,fontWeight:900,color:NVY,letterSpacing:-.5,lineHeight:1,marginBottom:3}},s.v),
+            h("div",{style:{fontSize:s.big?22:15,fontWeight:900,color:NVY,letterSpacing:-.5,lineHeight:1,marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.v),
             h("div",{style:{fontSize:9,color:GRY,fontWeight:500}},s.s)
           );
         })
@@ -4257,8 +4258,24 @@ null
       ),
       isPaid?dlBtn("Download Attendance Report",function(){makeAttSummaryPDF(actEmps,att,attM,attY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance Report — Paid Plan"),
       card(h("div",null,
-        h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
-        actEmps.map(function(e,i){
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
+          h("button",{onClick:function(){setAttSortDept(!attSortDept);},style:{display:"flex",alignItems:"center",gap:4,background:attSortDept?ACCENT:SFT,border:"1px solid "+(attSortDept?ACCENT:BDR),borderRadius:20,padding:"4px 10px",color:attSortDept?ACCENT_FG:GRY,fontSize:10.5,fontWeight:700,cursor:"pointer"}},ic("groups",attSortDept?ACCENT_FG:GRY,12),"Dept A\u2013Z")
+        ),
+        (attSortDept?actEmps.slice().sort(function(a,b){return (a.dept||"No Department").toLowerCase().localeCompare((b.dept||"No Department").toLowerCase())||(a.name||"").localeCompare(b.name||"");}):actEmps).map(function(e,i,arr){
+          var deptHeader=null;
+          if(attSortDept){
+            var curDept=e.dept||"No Department";
+            var prevDept=i>0?(arr[i-1].dept||"No Department"):null;
+            if(curDept!==prevDept){
+              var deptCount=arr.filter(function(x){return (x.dept||"No Department")===curDept;}).length;
+              deptHeader=h("div",{key:"hdr-"+curDept,style:{display:"flex",alignItems:"center",gap:8,margin:i===0?"0 0 8px":"14px 0 8px"}},
+                h("div",{style:{fontSize:11,fontWeight:700,color:NVY,letterSpacing:.3}},curDept),
+                h("div",{style:{flex:1,height:1,background:BDR}}),
+                h("div",{style:{fontSize:10,color:GRY,fontWeight:600,background:SFT,borderRadius:10,padding:"2px 8px"}},deptCount)
+              );
+            }
+          }
           var s=getAtt(todayDate,e.id),ma=mAtt(e.id,attY,attM);
           // Per-employee working days = marked days EXCLUDING holidays
           var daysInMo2=new Date(attY,attM+1,0).getDate();
@@ -4278,7 +4295,7 @@ null
           var attRateCol=empAttRate>=95?"#10B981":empAttRate>=80?AMB:empAttRate>0?RED:GRY;
           // Display: "18.5 / 22 days" where half day = 0.5
           var presentDisplay=empHalf>0?(empPresentDays%1===0?empPresentDays:empPresentDays.toFixed(1)):empPresentDays;
-          return h("div",{key:e.id,style:{borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none",paddingBottom:8,marginBottom:8}},
+          return h(React.Fragment,{key:e.id},deptHeader,h("div",{onClick:function(){setSheetE(e);},style:{borderBottom:i<arr.length-1?"1px solid "+BDR:"none",paddingBottom:8,marginBottom:8,cursor:"pointer"}},
             h("div",{className:"rh",style:{display:"flex",alignItems:"center",gap:9,borderRadius:6,padding:"2px 2px"}},
               av(e,36),
               h("div",{style:{flex:1,minWidth:0}},
@@ -4292,16 +4309,12 @@ null
                 var dParts=todayDate.split("-");
                 var empOnDay=isEmployedOnDay(e,Number(dParts[0]),Number(dParts[1])-1,Number(dParts[2]));
                 if(!empOnDay){
-                  return h("div",{style:{fontSize:10,fontWeight:700,padding:"7px 13px",borderRadius:16,background:SFT,color:GRY,border:"1px dashed "+BDR,flexShrink:0,userSelect:"none",alignSelf:"flex-start",marginTop:-4}},"Not joined");
+                  return h("div",{onClick:function(ev){ev.stopPropagation();},style:{fontSize:10,fontWeight:700,padding:"7px 13px",borderRadius:16,background:SFT,color:GRY,border:"1px dashed "+BDR,flexShrink:0,userSelect:"none"}},"Not joined");
                 }
-                return h("div",{onClick:function(){cycleAtt(todayDate,e.id);},style:{fontSize:11.5,fontWeight:700,padding:"7px 13px",borderRadius:16,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35",flexShrink:0,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none",alignSelf:"flex-start",marginTop:-4}},ATL[s]);
+                return h("div",{onClick:function(ev){ev.stopPropagation();cycleAtt(todayDate,e.id);},style:{fontSize:11.5,fontWeight:700,padding:"7px 13px",borderRadius:16,background:ATC[s]+"14",color:ATC[s],border:"1px solid "+ATC[s]+"35",flexShrink:0,cursor:"pointer",userSelect:"none",WebkitUserSelect:"none"}},ATL[s]);
               })()
-            ),
-            h("div",{style:{display:"flex",gap:5,marginTop:5,marginLeft:45,justifyContent:"flex-end"}},
-              h("button",{onClick:function(){setSheetE(e);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},"Sheet"),
-              h("button",{onClick:function(){shareAtt(e);},style:{display:"flex",alignItems:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"2px 9px",fontSize:10,color:NVY,fontWeight:600,cursor:"pointer"}},ic(isPaid?"whatsapp":"lock",isPaid?"#25D366":GRY,11),"WhatsApp")
             )
-          );
+          ));
         })
       ),0)
       )
@@ -4967,20 +4980,15 @@ null
             ic(ICONS.wa,GRN,13),"Chat")
         ),
         h("div",{style:{height:14}}),
-        sectionTitle("AUTHORISED SIGNATORY & HIGHER OFFICIAL"),
-        (authEditMode||(!authSign&&!waOfficial))?h("div",null,
+        sectionTitle("AUTHORISED SIGNATORY"),
+        (authEditMode||(!authSign&&!authPos))?h("div",null,
           h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},"Name and position appear on payslips, payroll reports and all downloaded PDFs."),
           h("input",{type:"text",value:authSign,onChange:function(e){setAuthSign(e.target.value);},placeholder:"Your full name",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
           h("input",{type:"text",value:authPos,onChange:function(e){setAuthPos(e.target.value);},placeholder:"Your designation e.g. Managing Director",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:14,boxSizing:"border-box"}}),
-          h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},"Higher official's WhatsApp number for sharing attendance/payroll reports. Include country code."),
-          h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-            h("div",{style:{width:36,height:36,borderRadius:9,background:"#25D36615",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("whatsapp","#25D366",18)),
-            h("input",{type:"tel",value:waOfficial,onChange:function(e){setWaOfficial(e.target.value);},placeholder:"e.g. 919876543210",style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-          ),
           h("button",{onClick:function(){
-            if(!authSign.trim()&&!authPos.trim()&&!waOfficial.trim())return showT("Enter at least one detail","err");
-            lsSet("hr_auth_sign",authSign);lsSet("hr_auth_pos",authPos);lsSet("hr_wa_official",waOfficial);
-            _sb.from("user_orgs").upsert({email:gUser?gUser.email:"",org_name:org.name,org_type:org.type,position:org.position,auth_sign:authSign,auth_pos:authPos,wa_official:waOfficial},{onConflict:"email"}).then(function(){
+            if(!authSign.trim()&&!authPos.trim())return showT("Enter at least one detail","err");
+            lsSet("hr_auth_sign",authSign);lsSet("hr_auth_pos",authPos);
+            _sb.from("user_orgs").upsert({email:gUser?gUser.email:"",org_name:org.name,org_type:org.type,position:org.position,auth_sign:authSign,auth_pos:authPos},{onConflict:"email"}).then(function(){
               setAuthEditMode(false);showT("Saved!");
             }).catch(function(){showT("Could not save — try again","err");});
           },style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:14}},ic("save",CARD,14),"Save Details")
@@ -4988,8 +4996,7 @@ null
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
             h("div",{style:{flex:1,minWidth:0}},
               authSign?h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:1}},authSign):null,
-              authPos?h("div",{style:{fontSize:11,color:GRY,marginBottom:authSign||authPos?6:0}},authPos):null,
-              waOfficial?h("div",{style:{display:"flex",alignItems:"center",gap:5}},ic("whatsapp","#25D366",13),h("span",{style:{fontSize:11,color:NVY,fontWeight:600}},waOfficial)):null
+              authPos?h("div",{style:{fontSize:11,color:GRY}},authPos):null
             ),
             h("button",{onClick:function(){setAuthEditMode(true);},style:{display:"flex",alignItems:"center",gap:4,background:ACCENT_SOFT,border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer",flexShrink:0}},ic("edit",NVY,12),"Edit")
           )
@@ -7143,10 +7150,8 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         )
       ),
 
-      // ── WA Share ──
-      h("button",{onClick:shareWA,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:8,background:"#25D36615",border:"1.5px solid #25D36644",borderRadius:12,padding:"12px",fontSize:13,fontWeight:700,color:"#128C7E",cursor:"pointer",marginTop:4}},
-        ic("whatsapp","#25D366",18),"Share Report on WhatsApp"
-      )
+      // ── WA Share — disabled for now (Higher Official WhatsApp number feature removed) ──
+      null
     );
   }
 
