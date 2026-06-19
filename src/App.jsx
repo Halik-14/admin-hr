@@ -1471,6 +1471,7 @@ export default function App(){
   var sAuthPos=st(lsGet("hr_auth_pos","")),authPos=sAuthPos[0],setAuthPos=sAuthPos[1];
   var sAuthSign=st(lsGet("hr_auth_sign","")),authSign=sAuthSign[0],setAuthSign=sAuthSign[1];
   var sWaOfficial=st(lsGet("hr_wa_official","")),waOfficial=sWaOfficial[0],setWaOfficial=sWaOfficial[1];
+  var sAuthEdit=st(false),authEditMode=sAuthEdit[0],setAuthEditMode=sAuthEdit[1]; // true while editing Authorised Signatory + WhatsApp section
   var sLoans=st([]),loans=sLoans[0],setLoans=sLoans[1];
   var sExpenses=st([]),expenses=sExpenses[0],setExpenses=sExpenses[1];
   var sWarnings=st([]),warnings=sWarnings[0],setWarnings=sWarnings[1];
@@ -1557,9 +1558,6 @@ export default function App(){
   var curFY2=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
   var sAnnFY=st(curFY2),annFY=sAnnFY[0],setAnnFY=sAnnFY[1];
   var sProTab=st("kpi"),proTab=sProTab[0],setProTab=sProTab[1];
-  var sAuthPos=st(lsGet("hr_auth_pos","")),authPos=sAuthPos[0],setAuthPos=sAuthPos[1];
-  var sAuthSign=st(lsGet("hr_auth_sign","")),authSign=sAuthSign[0],setAuthSign=sAuthSign[1];
-  var sWaOfficial=st(lsGet("hr_wa_official","")),waOfficial=sWaOfficial[0],setWaOfficial=sWaOfficial[1];
   var sET=st("active"),empTab=sET[0],setEmpTab=sET[1];
   var sEmpSalFilter=st("all"),empSalFilter=sEmpSalFilter[0],setEmpSalFilter=sEmpSalFilter[1];
   var sOE=st(null),offE=sOE[0],setOffE=sOE[1];
@@ -1871,6 +1869,10 @@ export default function App(){
             website:(orgRes.data&&orgRes.data.website)||""
           };
           lsSet("hr_org_"+em,o);setOrg(o);
+          // Load Authorised Signatory + Higher Official WhatsApp from Supabase (synced across devices)
+          setAuthSign(orgRes.data.auth_sign||"");lsSet("hr_auth_sign",orgRes.data.auth_sign||"");
+          setAuthPos(orgRes.data.auth_pos||"");lsSet("hr_auth_pos",orgRes.data.auth_pos||"");
+          setWaOfficial(orgRes.data.wa_official||"");lsSet("hr_wa_official",orgRes.data.wa_official||"");
           if(dataRes.data){try{
             setEmps(JSON.parse(dataRes.data.emps_json||"[]"));
             setAtt(JSON.parse(dataRes.data.att_json||"{}"));
@@ -3490,10 +3492,24 @@ null
             return 0;
           });
           return sorted;
-        })().map(function(e){
+        })().map(function(e,idx,arr){
           var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),payWD=getWorkingDays(att,e.id,curY,curM),d=calcPay(getEffectiveEmp(e,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM),payWD,proRata(e,curY,curM).active,proRata(e,curY,curM).total);
           var overLim=isOverLimit(e);
-          return h("div",{key:e.id,className:"rh",onClick:function(){if(!overLim)setSelE(e);},style:{background:overLim?SFT:CARD,border:"1px solid "+(overLim?RED+"33":BDR),borderRadius:14,padding:"11px 13px",display:"flex",gap:11,alignItems:"center",marginBottom:8,boxShadow:T.SHADOW,cursor:overLim?"default":"pointer",opacity:overLim?.65:1}},
+          // When sorted by Dept, show a department header whenever the department changes
+          var deptHeader=null;
+          if(empSort==="dept"){
+            var curDept=e.dept||"No Department";
+            var prevDept=idx>0?(arr[idx-1].dept||"No Department"):null;
+            if(curDept!==prevDept){
+              var deptCount=arr.filter(function(x){return (x.dept||"No Department")===curDept;}).length;
+              deptHeader=h("div",{key:"hdr-"+curDept,style:{display:"flex",alignItems:"center",gap:8,margin:idx===0?"0 0 8px":"16px 0 8px"}},
+                h("div",{style:{fontSize:11,fontWeight:700,color:NVY,letterSpacing:.3}},curDept),
+                h("div",{style:{flex:1,height:1,background:BDR}}),
+                h("div",{style:{fontSize:10,color:GRY,fontWeight:600,background:SFT,borderRadius:10,padding:"2px 8px"}},deptCount)
+              );
+            }
+          }
+          return h(React.Fragment,{key:e.id},deptHeader,h("div",{className:"rh",onClick:function(){if(!overLim)setSelE(e);},style:{background:overLim?SFT:CARD,border:"1px solid "+(overLim?RED+"33":BDR),borderRadius:14,padding:"11px 13px",display:"flex",gap:11,alignItems:"center",marginBottom:8,boxShadow:T.SHADOW,cursor:overLim?"default":"pointer",opacity:overLim?.65:1}},
             av(e,40),
             h("div",{style:{flex:1,minWidth:0}},
               h("div",{style:{fontSize:14,fontWeight:600,color:NVY,letterSpacing:-.1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},e.name),
@@ -3508,7 +3524,7 @@ null
               e.email?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="mailto:"+e.email;},style:{width:34,height:34,borderRadius:9,background:"#2563EB12",border:"1px solid #2563EB25",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("mail","#2563EB",15)):null,
               h("div",{style:{width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.chev,GRY,16))
             )
-          );
+          ));
         })
       ):h("div",null,
         h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},trmEmps.length+" offboarded"),
@@ -4951,15 +4967,32 @@ null
             ic(ICONS.wa,GRN,13),"Chat")
         ),
         h("div",{style:{height:14}}),
-        sectionTitle("AUTHORISED SIGNATORY — SHOWN ON PDFs"),
-        h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},"Name and position appear on payslips, payroll reports and all downloaded PDFs."),
-        h("input",{type:"text",value:authSign,onChange:function(e){setAuthSign(e.target.value);lsSet("hr_auth_sign",e.target.value);},placeholder:"Your full name",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
-        h("input",{type:"text",value:authPos,onChange:function(e){setAuthPos(e.target.value);lsSet("hr_auth_pos",e.target.value);},placeholder:"Your designation e.g. Managing Director",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:14,boxSizing:"border-box"}}),
-        sectionTitle("HIGHER OFFICIAL — FOR REPORT SHARING"),
-        h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},"WhatsApp number to share attendance reports. Include country code."),
-        h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
-          h("div",{style:{width:36,height:36,borderRadius:9,background:"#25D36615",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("whatsapp","#25D366",18)),
-          h("input",{type:"tel",value:waOfficial,onChange:function(e){setWaOfficial(e.target.value);lsSet("hr_wa_official",e.target.value);},placeholder:"e.g. 919876543210",style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+        sectionTitle("AUTHORISED SIGNATORY & HIGHER OFFICIAL"),
+        (authEditMode||(!authSign&&!waOfficial))?h("div",null,
+          h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},"Name and position appear on payslips, payroll reports and all downloaded PDFs."),
+          h("input",{type:"text",value:authSign,onChange:function(e){setAuthSign(e.target.value);},placeholder:"Your full name",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
+          h("input",{type:"text",value:authPos,onChange:function(e){setAuthPos(e.target.value);},placeholder:"Your designation e.g. Managing Director",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:14,boxSizing:"border-box"}}),
+          h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},"Higher official's WhatsApp number for sharing attendance/payroll reports. Include country code."),
+          h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+            h("div",{style:{width:36,height:36,borderRadius:9,background:"#25D36615",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("whatsapp","#25D366",18)),
+            h("input",{type:"tel",value:waOfficial,onChange:function(e){setWaOfficial(e.target.value);},placeholder:"e.g. 919876543210",style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+          ),
+          h("button",{onClick:function(){
+            if(!authSign.trim()&&!authPos.trim()&&!waOfficial.trim())return showT("Enter at least one detail","err");
+            lsSet("hr_auth_sign",authSign);lsSet("hr_auth_pos",authPos);lsSet("hr_wa_official",waOfficial);
+            _sb.from("user_orgs").upsert({email:gUser?gUser.email:"",org_name:org.name,org_type:org.type,position:org.position,auth_sign:authSign,auth_pos:authPos,wa_official:waOfficial},{onConflict:"email"}).then(function(){
+              setAuthEditMode(false);showT("Saved!");
+            }).catch(function(){showT("Could not save — try again","err");});
+          },style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:14}},ic("save",CARD,14),"Save Details")
+        ):h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:12,padding:"12px 14px",marginBottom:14}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}},
+            h("div",{style:{flex:1,minWidth:0}},
+              authSign?h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:1}},authSign):null,
+              authPos?h("div",{style:{fontSize:11,color:GRY,marginBottom:authSign||authPos?6:0}},authPos):null,
+              waOfficial?h("div",{style:{display:"flex",alignItems:"center",gap:5}},ic("whatsapp","#25D366",13),h("span",{style:{fontSize:11,color:NVY,fontWeight:600}},waOfficial)):null
+            ),
+            h("button",{onClick:function(){setAuthEditMode(true);},style:{display:"flex",alignItems:"center",gap:4,background:ACCENT_SOFT,border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer",flexShrink:0}},ic("edit",NVY,12),"Edit")
+          )
         ),
         sectionTitle("APPEARANCE"),
         h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:"1px solid "+BDR}},
