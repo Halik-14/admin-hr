@@ -1515,7 +1515,7 @@ export default function App(){
   var sOtPickedDate=st(""),otPickedDate=sOtPickedDate[0],setOtPickedDate=sOtPickedDate[1];
   var sOtMarkMode=st("hours"),otMarkMode=sOtMarkMode[0],setOtMarkMode=sOtMarkMode[1];
   var sAttStatsOpen=st(false),attStatsOpen=sAttStatsOpen[0],setAttStatsOpen=sAttStatsOpen[1];
-  var sAttSortDept=st(false),attSortDept=sAttSortDept[0],setAttSortDept=sAttSortDept[1]; // true = group attendance list by department A-Z
+  var sAttSortDept=st(true),attSortDept=sAttSortDept[0],setAttSortDept=sAttSortDept[1]; // default ON — group attendance list by department A-Z
   var sBonuses=st([]),bonuses=sBonuses[0],setBonuses=sBonuses[1];
   var sShowBonusForm=st(false),showBonusForm=sShowBonusForm[0],setShowBonusForm=sShowBonusForm[1];
   var sBonusEmpId=st(""),bonusEmpId=sBonusEmpId[0],setBonusEmpId=sBonusEmpId[1];
@@ -1568,7 +1568,7 @@ export default function App(){
   var sBR=st([]),bRemind=sBR[0],setBRemind=sBR[1];
   var sSB=st([]),skipB=sSB[0],setSkipB=sSB[1];
   var sAR=st([]),annivRemind=sAR[0],setAnnivRemind=sAR[1];
-  var sESort=st("name"),empSort=sESort[0],setEmpSort=sESort[1];
+  var sESort=st("dept"),empSort=sESort[0],setEmpSort=sESort[1]; // default Team list grouping = department A-Z
   var sESDir=st("asc"),empSortDir=sESDir[0],setEmpSortDir=sESDir[1];
   // ── Pro features state ──
   var sRole=st("owner"),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee
@@ -2400,29 +2400,18 @@ export default function App(){
   function removeEmp(id){setEmps(function(p){return p.filter(function(e){return e.id!==id;});});showT("Deleted.");}
 
   function sharePayslip(emp,d,m2,y){
+    // Goes straight to the employee's WhatsApp chat (like Attendance share).
+    // Note: phones don't allow a website to pre-pick a WhatsApp contact when attaching a real file,
+    // so to jump straight to the chat we send text only — the PDF downloads separately for you to attach.
     var mName=MOS[m2]+" "+y;
     var text="Hi "+emp.name+",\n\nPlease find your payslip for "+mName+".\n\nNet Pay: "+fmt(d.net)+"\n\nRegards,\n"+(org.name||"HR Team");
     var fileName="Payslip_"+emp.name.replace(/\s+/g,"_")+"_"+MOS[m2]+"_"+y+".pdf";
+    if(!emp.mob){showT("No mobile number saved for "+emp.name,"err");return;}
     makePayslipPDF(emp,d,m2,y,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,function(doc){
       try{
-        var pdfBlob=doc.output("blob");
-        var pdfFile=new File([pdfBlob],fileName,{type:"application/pdf"});
-        if(navigator.canShare&&navigator.canShare({files:[pdfFile]})){
-          navigator.share({title:"Payslip - "+emp.name+" - "+mName,text:text,files:[pdfFile]})
-            .catch(function(err){
-              if(err&&err.name==="AbortError")return;
-              doc.save(fileName);
-              if(emp.mob)window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text),"_blank");
-            });
-        } else {
-          doc.save(fileName);
-          if(emp.mob){
-            window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text+"\n\n(Payslip PDF downloaded — please attach it in the chat.)"),"_blank");
-            showT("PDF downloaded. Attach it in WhatsApp.");
-          } else {
-            showT("PDF downloaded! No mobile number saved.");
-          }
-        }
+        doc.save(fileName);
+        window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text+"\n\n(Payslip PDF downloaded — please attach it in this chat.)"),"_blank");
+        showT("PDF downloaded. Attach it in WhatsApp.");
       }catch(e){showT("Could not share payslip","err");}
     },getEmpBonusesWithOT(emp.id,m2,y),getEmpClaimTotal(emp.id,m2,y));
   }
@@ -3517,7 +3506,7 @@ null
               overLim?h("div",{style:{display:"flex",alignItems:"center",gap:5,marginTop:3}},
                 h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:10,background:RED+"15",color:RED}},"Suspended — Plan limit reached"),
                 ic("lock",RED,11)
-              ):h("div",{style:{fontSize:11,color:GRY,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},[e.role,e.dept].filter(Boolean).join(" \u00b7 "))
+              ):h("div",{style:{fontSize:11,color:GRY,marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},e.role||"No designation")
             ),
             overLim?null:h("div",{style:{display:"flex",gap:6,alignItems:"center"}},
               e.mob?h("button",{onClick:function(ev){ev.stopPropagation();window.location.href="tel:"+e.mob;},style:{width:34,height:34,borderRadius:9,background:"#10B98112",border:"1px solid #10B98125",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("phone","#10B981",15)):null,
@@ -4300,7 +4289,7 @@ null
               av(e,36),
               h("div",{style:{flex:1,minWidth:0}},
                 h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
-                h("div",{style:{fontSize:10,color:GRY}},[e.role,e.dept].filter(Boolean).join(" \u2022 ")||"No designation"),
+                h("div",{style:{fontSize:10,color:GRY}},e.role||"No designation"),
                 empWorkingDays>0?h("div",{style:{fontSize:10,fontWeight:600,color:attRateCol,marginTop:3}},
                   presentDisplay+" / "+empWorkingDays+" days"+(empHalf>0?" (incl. "+empHalf+" half)":"")
                 ):h("div",{style:{fontSize:10,color:GRY,marginTop:3}},"No days marked")
