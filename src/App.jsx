@@ -434,30 +434,107 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
 }
 
 
+// ── Combined Expense & Payroll Summary PDF (Company Expenses + Salary Summary + Staff Claims) ──
+function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
+  loadJsPDFGlobal(function(JsPDF){
+    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,mg=14;
+    var ry=pdfHeader(doc,W,mg,null,org.name,org.position,org.email,"EXPENSE & PAYROLL SUMMARY",data.periodLabel,org.address||"",org.logo||"");
+
+    // ── Section 1: Company Expenses ──
+    doc.setFontSize(10.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text("Company Expenses",mg,ry);ry+=5;
+    if(data.expenses.length===0){
+      doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text("No company expenses recorded for this period.",mg,ry+2);ry+=10;
+    } else {
+      var expCols=[{label:"DATE",align:"l"},{label:"CATEGORY",align:"l"},{label:"VENDOR",align:"l"},{label:"MODE",align:"l"},{label:"AMOUNT",align:"r"}];
+      var expCws=[24,42,52,30,34];
+      var expRows=data.expenses.map(function(e){
+        var catName=e.category==="custom"?(e.customCategory||"Other"):(data.catLabels[e.category]||e.category);
+        return [
+          new Date(e.date+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}),
+          catName,
+          e.vendor||"-",
+          data.modeLabels[e.paymentMode]||e.paymentMode||"-",
+          {val:"₹"+fmtIN(e.amount||0),align:"r"}
+        ];
+      });
+      expRows.push([{val:"TOTAL",bold:true},"","","",{val:"₹"+fmtIN(data.expTotal),bold:true}]);
+      ry=pdfTable(doc,ry,mg,expCols,expCws,expRows,{rowH:7,fontSize:7.5,totalsRow:true});
+      ry+=10;
+    }
+
+    // ── Section 2: Salary Summary ──
+    if(ry>250){doc.addPage();ry=14;}
+    doc.setFontSize(10.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text("Salary Summary",mg,ry);ry+=2;
+    doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text(data.periodLabel+" — "+data.staffCount+" employees",mg,ry+5);ry+=10;
+    var statCols=[["Total Gross",data.salaryGross],["Total Net Pay",data.salaryNet],["PF (Employee+Employer)",data.salaryPF],["Total Staff",data.staffCount+" employees"]];
+    var statW=(W-mg*2-3*4)/4;
+    statCols.forEach(function(s,i){
+      var x=mg+i*(statW+4);
+      doc.setDrawColor(220,228,240);doc.setLineWidth(0.4);doc.roundedRect(x,ry,statW,18,1.5,1.5);
+      doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.setTextColor(120,135,155);doc.text(s[0].toUpperCase(),x+3,ry+6);
+      doc.setFontSize(9.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text(typeof s[1]==="number"?"₹"+fmtIN(s[1]):String(s[1]),x+3,ry+13);
+    });
+    ry+=26;
+
+    // ── Section 3: Staff Claims ──
+    if(ry>250){doc.addPage();ry=14;}
+    doc.setFontSize(10.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text("Staff Claims",mg,ry);ry+=5;
+    if(data.claims.length===0){
+      doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text("No staff claims recorded for this period.",mg,ry+2);ry+=10;
+    } else {
+      var claimCols=[{label:"EMPLOYEE",align:"l"},{label:"CATEGORY",align:"l"},{label:"PAYROLL MONTH",align:"l"},{label:"DESCRIPTION",align:"l"},{label:"AMOUNT",align:"r"}];
+      var claimCws=[40,28,30,50,34];
+      var claimRows=data.claims.map(function(c){
+        return [
+          c.employeeName||"-",
+          data.claimCatLabels[c.category]||c.category||"-",
+          data.mosLabels[c.month]+" "+c.year,
+          c.description||"-",
+          {val:"₹"+fmtIN(c.amount||0),align:"r"}
+        ];
+      });
+      claimRows.push([{val:"TOTAL",bold:true},"","","",{val:"₹"+fmtIN(data.claimsTotal),bold:true}]);
+      ry=pdfTable(doc,ry,mg,claimCols,claimCws,claimRows,{rowH:7,fontSize:7.5,totalsRow:true});
+      ry+=6;
+      doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(120,135,155);
+      doc.text("Note: Staff claims are paid out as part of the Net Pay shown in Salary Summary above — they are not an additional outflow.",mg,ry);
+    }
+
+    pdfFooter(doc,W,mg,doc.internal.pageSize.getHeight(),org.name,org.email,null,authPos2,authSign2);
+    downloadPDF(doc.output("blob"),"Expense-Summary-"+data.periodLabel.replace(/\s+/g,"-")+".pdf");
+    showT("Expense summary downloaded");
+  },function(){showT("PDF library error","err");});
+}
+
 function makeOfferLetterPDF(emp,org,authPos2,authSign2){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    var W=210,mg=20,ry=44;
-    doc.setFillColor(30,58,138);doc.rect(0,0,W,28,"F");
-    doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);doc.text(org.name||"Company",mg,12);
-    doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(200,215,255);if(org.address)doc.text(org.address,mg,19);
-    doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,12,{align:"right"});
-    doc.setDrawColor(30,58,138);doc.setLineWidth(0.5);doc.line(mg,ry,W-mg,ry);ry+=8;
-    doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);doc.text("APPOINTMENT LETTER",W/2,ry+4,{align:"center"});ry+=14;
-    doc.line(mg,ry,W-mg,ry);ry+=10;
-    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);doc.text("Dear "+emp.name+",",mg,ry);ry+=8;
-    doc.setFontSize(9.5);doc.setTextColor(60,80,100);
+    var W=210,mg=22,ry=18;
+    var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
+    // Letterhead — typography only, no solid color block
+    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
+    doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);}
+    doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
+    ry+=11;doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
+    doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("APPOINTMENT LETTER",W/2,ry,{align:"center"});ry+=2;
+    doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-16,ry+2,W/2+16,ry+2);ry+=14;
+    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=8;
+    doc.setFontSize(9.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
     var openLines=doc.splitTextToSize("We are pleased to offer you the position of "+(emp.role||"Employee")+" at "+(org.name||"our organization")+". This letter confirms the terms of your employment.",W-mg*2);
-    doc.text(openLines,mg,ry);ry+=openLines.length*5+6;
+    doc.text(openLines,mg,ry);ry+=openLines.length*5+8;
     var rows2=[["Position",emp.role||"-"],["Department",emp.dept||"-"],["Date of Joining",emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-"],["Employee ID",emp.eid||"To be assigned"],["Monthly CTC","₹"+fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0))],["Annual CTC","₹"+fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0)*12)],["Employment Type","Full-Time, Permanent"],["Probation Period","3 months from date of joining"],["Leave Entitlement",emp.leaveEntitlement?emp.leaveEntitlement+" days paid leave per year":"As per company policy"]];
-    doc.setFillColor(239,246,255);doc.rect(mg,ry,W-mg*2,7,"F");doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);doc.text("TERMS OF EMPLOYMENT",mg+3,ry+5);ry+=9;
-    rows2.forEach(function(row,i){if(i%2===0){doc.setFillColor(249,251,253);doc.rect(mg,ry,W-mg*2,7,"F");}doc.setFont("helvetica","normal");doc.setTextColor(80,100,130);doc.setFontSize(8.5);doc.text(row[0],mg+3,ry+5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(String(row[1]),mg+85,ry+5);doc.setDrawColor(220,230,245);doc.line(mg,ry+7,W-mg,ry+7);ry+=7;});
-    ry+=8;var sigY=Math.max(ry,230);
-    doc.setDrawColor(150,165,185);doc.line(mg,sigY,mg+60,sigY);doc.line(W-mg-60,sigY,W-mg,sigY);
-    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(authSign2||org.name||"Authorised Signatory",mg,sigY+5);doc.text(emp.name,W-mg-60,sigY+5);
-    doc.setFont("helvetica","normal");doc.setTextColor(100,120,145);doc.text(authPos2||"Authorised Signatory",mg,sigY+9);doc.text("Employee Signature",W-mg-60,sigY+9);
-    doc.setDrawColor(30,58,138);doc.setLineWidth(0.4);doc.line(mg,287,W-mg,287);
-    doc.setFontSize(7.5);doc.setTextColor(100,120,145);doc.text("ADMIN HR"+(org.name?" | "+org.name:""),mg,292);doc.text("Generated by Admin HR",W-mg,292,{align:"right"});
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("TERMS OF EMPLOYMENT",mg,ry);ry+=2;
+    doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,ry+1.5,W-mg,ry+1.5);ry+=7;
+    rows2.forEach(function(row){doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.setFontSize(8.5);doc.text(row[0],mg,ry+3.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(String(row[1]),mg+85,ry+3.5);doc.setDrawColor(235,239,245);doc.setLineWidth(0.3);doc.line(mg,ry+6.5,W-mg,ry+6.5);ry+=7;});
+    ry+=10;var sigY=Math.max(ry,228);
+    doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);doc.line(mg,sigY,mg+60,sigY);doc.line(W-mg-60,sigY,W-mg,sigY);
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(authSign2||org.name||"Authorised Signatory",mg,sigY+5);doc.text(emp.name,W-mg-60,sigY+5);
+    doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text(authPos2||"Authorised Signatory",mg,sigY+9);doc.text("Employee Signature",W-mg-60,sigY+9);
+    doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,283,W-mg,283);
+    doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text((org.name||""),mg,288);doc.text("Generated by Admin HR",W-mg,288,{align:"right"});
     downloadPDF(doc.output("blob"),"Offer-Letter-"+(emp.name||"Employee").replace(/s/g,"-")+".pdf");showT("Offer letter downloaded");
   },function(){showT("PDF library error","err");});
 }
@@ -466,29 +543,31 @@ function makeOfferLetterPDF(emp,org,authPos2,authSign2){
 function makeExperienceLetterPDF(emp,org,authPos2,authSign2){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    var W=210,mg=20,ry=44;
-    doc.setFillColor(30,58,138);doc.rect(0,0,W,28,"F");
-    doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);doc.text(org.name||"Company",mg,12);
-    doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(200,215,255);if(org.address)doc.text(org.address,mg,19);
-    doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,12,{align:"right"});
-    doc.setDrawColor(30,58,138);doc.setLineWidth(0.5);doc.line(mg,ry,W-mg,ry);ry+=8;
-    doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);doc.text("EXPERIENCE CERTIFICATE",W/2,ry+4,{align:"center"});ry+=14;
-    doc.line(mg,ry,W-mg,ry);ry+=10;
-    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);doc.text("To Whomsoever It May Concern,",mg,ry);ry+=10;
+    var W=210,mg=22,ry=18;
+    var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
+    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
+    doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);}
+    doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
+    ry+=11;doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
+    doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("EXPERIENCE CERTIFICATE",W/2,ry,{align:"center"});ry+=2;
+    doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-22,ry+2,W/2+22,ry+2);ry+=14;
+    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("To Whomsoever It May Concern,",mg,ry);ry+=10;
     var joined=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"—";
     var relieved=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
     var body="This is to certify that "+emp.name+" (Employee ID: "+(emp.eid||"N/A")+") was employed with "+
       (org.name||"our organization")+" as "+( emp.role||"Employee")+
       (emp.dept?" in the "+emp.dept+" department":"")+
       " from "+joined+" to "+relieved+".";
+    doc.setFontSize(9.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
     var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5+6;
     var body2="During the tenure, "+emp.name+" has shown dedication, professionalism and commitment to work. We found "+emp.name+" to be a sincere and hardworking individual. We wish "+(emp.name)+" all the best in future endeavours.";
-    var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5+20;
-    doc.setDrawColor(150,165,185);doc.line(mg,ry,mg+60,ry);
-    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(authSign2||org.position||"Authorised Signatory",mg,ry+5);
-    doc.setFont("helvetica","normal");doc.setTextColor(100,120,145);doc.text(authPos2||"Authorised Signatory",mg,ry+9);doc.text(org.name||"",mg,ry+13);
-    doc.setDrawColor(30,58,138);doc.setLineWidth(0.4);doc.line(mg,287,W-mg,287);
-    doc.setFontSize(7.5);doc.setTextColor(100,120,145);doc.text("ADMIN HR"+(org.name?" | "+org.name:""),mg,292);doc.text("Generated by Admin HR",W-mg,292,{align:"right"});
+    var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5+22;
+    doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);doc.line(mg,ry,mg+60,ry);
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(authSign2||org.position||"Authorised Signatory",mg,ry+5);
+    doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text(authPos2||"Authorised Signatory",mg,ry+9);doc.text(org.name||"",mg,ry+13);
+    doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,283,W-mg,283);
+    doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text((org.name||""),mg,288);doc.text("Generated by Admin HR",W-mg,288,{align:"right"});
     downloadPDF(doc.output("blob"),"Experience-Certificate-"+(emp.name||"").replace(/s/g,"-")+".pdf");showT("Experience letter downloaded");
   },function(){showT("PDF error","err");});
 }
@@ -496,28 +575,30 @@ function makeExperienceLetterPDF(emp,org,authPos2,authSign2){
 function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    var W=210,mg=20,ry=44;
-    doc.setFillColor(30,58,138);doc.rect(0,0,W,28,"F");
-    doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);doc.text(org.name||"Company",mg,12);
-    doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(200,215,255);if(org.address)doc.text(org.address,mg,19);
-    doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,12,{align:"right"});
-    doc.setDrawColor(30,58,138);doc.setLineWidth(0.5);doc.line(mg,ry,W-mg,ry);ry+=8;
-    doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(30,58,138);doc.text("RELIEVING LETTER",W/2,ry+4,{align:"center"});ry+=14;
-    doc.line(mg,ry,W-mg,ry);ry+=10;
-    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);doc.text("Dear "+emp.name+",",mg,ry);ry+=10;
+    var W=210,mg=22,ry=18;
+    var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
+    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
+    doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);}
+    doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
+    ry+=11;doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
+    doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("RELIEVING LETTER",W/2,ry,{align:"center"});ry+=2;
+    doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-18,ry+2,W/2+18,ry+2);ry+=14;
+    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=10;
     var relievedDate=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
     var joined=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"—";
     var body="This is to confirm that your resignation has been accepted and you have been officially relieved from the position of "+
       (emp.role||"Employee")+(emp.dept?" — "+emp.dept+" Department":"")+
       " effective "+relievedDate+". You joined "+( org.name||"our organization")+" on "+joined+".";
+    doc.setFontSize(9.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
     var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5+6;
     var body2="We confirm that you have completed all required handover procedures and have no dues outstanding with the organization. We appreciate your contributions and wish you success in your future endeavours.";
-    var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5+20;
-    doc.setDrawColor(150,165,185);doc.line(mg,ry,mg+60,ry);
-    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(authSign2||org.position||"Authorised Signatory",mg,ry+5);
-    doc.setFont("helvetica","normal");doc.setTextColor(100,120,145);doc.text(authPos2||"Authorised Signatory",mg,ry+9);doc.text(org.name||"",mg,ry+13);
-    doc.setDrawColor(30,58,138);doc.setLineWidth(0.4);doc.line(mg,287,W-mg,287);
-    doc.setFontSize(7.5);doc.setTextColor(100,120,145);doc.text("ADMIN HR"+(org.name?" | "+org.name:""),mg,292);doc.text("Generated by Admin HR",W-mg,292,{align:"right"});
+    var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5+22;
+    doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);doc.line(mg,ry,mg+60,ry);
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(authSign2||org.position||"Authorised Signatory",mg,ry+5);
+    doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text(authPos2||"Authorised Signatory",mg,ry+9);doc.text(org.name||"",mg,ry+13);
+    doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,283,W-mg,283);
+    doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text((org.name||""),mg,288);doc.text("Generated by Admin HR",W-mg,288,{align:"right"});
     downloadPDF(doc.output("blob"),"Relieving-Letter-"+(emp.name||"").replace(/s/g,"-")+".pdf");showT("Relieving letter downloaded");
   },function(){showT("PDF error","err");});
 }
@@ -1568,7 +1649,8 @@ export default function App(){
   var sBR=st([]),bRemind=sBR[0],setBRemind=sBR[1];
   var sSB=st([]),skipB=sSB[0],setSkipB=sSB[1];
   var sAR=st([]),annivRemind=sAR[0],setAnnivRemind=sAR[1];
-  var sESort=st("dept"),empSort=sESort[0],setEmpSort=sESort[1]; // default Team list grouping = department A-Z
+  var sESort=st("name"),empSort=sESort[0],setEmpSort=sESort[1];
+  var sTeamGroupDept=st(true),teamGroupDept=sTeamGroupDept[0],setTeamGroupDept=sTeamGroupDept[1]; // default ON — group Team list by department, independent of A-Z/Seniority/Salary ordering
   var sESDir=st("asc"),empSortDir=sESDir[0],setEmpSortDir=sESDir[1];
   // ── Pro features state ──
   var sRole=st("owner"),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee
@@ -3457,9 +3539,9 @@ export default function App(){
           h("button",{onClick:function(){setAddOpen(true);setStep(1);},style:{background:NVY,border:"none",borderRadius:12,padding:"0 14px",color:CARD,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}},ic(ICONS.plus,CARD,22)),
 null
         ),
-        // ── Sort bar ──
+        // ── Sort bar — A-Z/Seniority/Salary ordering, plus an independent Group-by-Department toggle ──
         h("div",{style:{display:"flex",gap:5,marginBottom:8,overflowX:"auto"}},
-          [["name","A–Z"],["joined","Seniority"],["monthlyCTC","Salary"],["dept","Dept"]].map(function(item){
+          [["name","A–Z"],["joined","Seniority"],["monthlyCTC","Salary"]].map(function(item){
             var active=empSort===item[0];
             return h("button",{key:item[0],onClick:function(){
               if(active)setEmpSortDir(function(d){return d==="asc"?"desc":"asc";});
@@ -3468,17 +3550,23 @@ null
               item[1],
               active?h("span",{style:{fontSize:10}},empSortDir==="asc"?"↑":"↓"):null
             );
-          })
+          }),
+          h("div",{style:{width:1,background:BDR,flexShrink:0,margin:"3px 2px"}}),
+          h("button",{onClick:function(){setTeamGroupDept(!teamGroupDept);},style:{flexShrink:0,display:"flex",alignItems:"center",gap:4,background:teamGroupDept?ACCENT:CARD,border:"1px solid "+(teamGroupDept?ACCENT:BDR),borderRadius:20,padding:"4px 10px",color:teamGroupDept?ACCENT_FG:GRY,fontSize:11,fontWeight:teamGroupDept?700:500,cursor:"pointer",whiteSpace:"nowrap"}},ic("groups",teamGroupDept?ACCENT_FG:GRY,12),"Group by Dept")
         ),
         h("div",{style:{fontSize:11,color:GRY,marginBottom:9,fontWeight:500,letterSpacing:.3}},empCountLabel),
         q&&filteredEmps.length===0?h("div",{style:{textAlign:"center",padding:32,color:GRY,fontSize:13}},'No results for "'+searchQ+'"'):null,
         (function(){
           var sorted=filteredEmps.slice().sort(function(a,b){
             var av2,bv2;
+            // Group-by-Department takes priority when ON — departments are always A-Z, then the chosen ordering applies within each
+            if(teamGroupDept){
+              var ad=(a.dept||"No Department").toLowerCase(),bd=(b.dept||"No Department").toLowerCase();
+              if(ad!==bd)return ad.localeCompare(bd);
+            }
             if(empSort==="name"){av2=(a.name||"").toLowerCase();bv2=(b.name||"").toLowerCase();return empSortDir==="asc"?av2.localeCompare(bv2):bv2.localeCompare(av2);}
             if(empSort==="joined"){av2=a.joined||"9999";bv2=b.joined||"9999";return empSortDir==="asc"?av2.localeCompare(bv2):bv2.localeCompare(av2);}
             if(empSort==="monthlyCTC"){av2=Number(a.monthlyCTC)||0;bv2=Number(b.monthlyCTC)||0;return empSortDir==="asc"?av2-bv2:bv2-av2;}
-            if(empSort==="dept"){av2=(a.dept||"").toLowerCase();bv2=(b.dept||"").toLowerCase();return empSortDir==="asc"?av2.localeCompare(bv2):bv2.localeCompare(av2);}
             return 0;
           });
           return sorted;
@@ -3487,7 +3575,7 @@ null
           var overLim=isOverLimit(e);
           // When sorted by Dept, show a department header whenever the department changes
           var deptHeader=null;
-          if(empSort==="dept"){
+          if(teamGroupDept){
             var curDept=e.dept||"No Department";
             var prevDept=idx>0?(arr[idx-1].dept||"No Department"):null;
             if(curDept!==prevDept){
@@ -6201,6 +6289,29 @@ null
       _sb.from("company_expenses").delete().eq("id",String(id)).then(function(){});
       showT("Deleted");
     }
+    function downloadExpenseSummary(){
+      var periodLabel=coExpView==="year"?String(coExpY):MOS2[coExpM]+" "+coExpY;
+      var filteredClaims=(claims||[]).filter(function(c){
+        if(coExpView==="year")return c.year===coExpY;
+        return c.month===coExpM&&c.year===coExpY;
+      });
+      var claimsTotal=filteredClaims.reduce(function(s,c){return s+(c.amount||0);},0);
+      makeExpenseSummaryPDF({
+        periodLabel:periodLabel,
+        expenses:filtered,
+        catLabels:cats,
+        modeLabels:modes,
+        expTotal:total,
+        salaryGross:salaryTotal,
+        salaryNet:netTotal,
+        salaryPF:pfTotal,
+        staffCount:actEmps.length,
+        claims:filteredClaims,
+        claimsTotal:claimsTotal,
+        claimCatLabels:{travel:"Travel",food:"Food",medical:"Medical",accommodation:"Stay",stationery:"Stationery",other:"Other"},
+        mosLabels:MOS2
+      },org,authPos,authSign);
+    }
 
     return h("div",{className:"fd"},
       /* Section A: Company Expenses */
@@ -6211,7 +6322,10 @@ null
             h("div",{style:{fontSize:13,fontWeight:800,color:NVY}},"Company Expenses"),
             h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Operational & business costs")
           ),
-          h("button",{onClick:function(){setShowCoExpForm(!showCoExpForm);},style:{background:showCoExpForm?SFT:ACCENT,border:showCoExpForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"6px 12px",fontSize:11,fontWeight:700,color:showCoExpForm?NVY:ACCENT_FG,cursor:"pointer"}},showCoExpForm?"Cancel":"+ Add")
+          h("div",{style:{display:"flex",gap:6}},
+            h("button",{onClick:downloadExpenseSummary,style:{display:"flex",alignItems:"center",gap:5,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"6px 11px",fontSize:11,fontWeight:700,color:NVY,cursor:"pointer"}},ic("download",NVY,13),"PDF"),
+            h("button",{onClick:function(){setShowCoExpForm(!showCoExpForm);},style:{background:showCoExpForm?SFT:ACCENT,border:showCoExpForm?"1.5px solid "+BDR:"none",borderRadius:9,padding:"6px 12px",fontSize:11,fontWeight:700,color:showCoExpForm?NVY:ACCENT_FG,cursor:"pointer"}},showCoExpForm?"Cancel":"+ Add")
+          )
         ),
         /* Period selector */
         h("div",{style:{display:"flex",gap:6,marginBottom:10,alignItems:"center"}},
