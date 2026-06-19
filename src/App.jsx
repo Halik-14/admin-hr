@@ -643,7 +643,7 @@ function makePayrollPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,sh
     var tG=0,tN=0,tD=0,tPR=0,tER=0;
 
     emps.forEach(function(emp){
-      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
+      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(getEffectiveEmp(emp,y,m),ma.absent,ma.half,ma.unpaid,inc,0);
       var ded=d.gr-d.net;
       tG+=d.gr;tN+=d.net;tD+=ded;tPR+=d.pfR;tER+=d.esiR;
       if(showEmployer){
@@ -1023,7 +1023,7 @@ function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgA
     var totGross=0,totPFW=0,totEmpPF=0,totErPF=0,totEmpESI=0,totErESI=0,totAll=0;
 
     eligible.forEach(function(emp){
-      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),prSR=empActiveRangeInMonth(emp,y,m),d=(prSR.notYetJoined||prSR.alreadyLeft)?calcPay(emp,0,0,0,0,0,(ma.present+(ma.half*0.5)+ma.paid+ma.holiday)||1,0,1):calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0,(ma.present+(ma.half*0.5)+ma.paid+ma.holiday)||1,prSR.activeDays,prSR.fullDays);
+      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),prSR=empActiveRangeInMonth(emp,y,m),effEmp=getEffectiveEmp(emp,y,m),d=(prSR.notYetJoined||prSR.alreadyLeft)?calcPay(effEmp,0,0,0,0,0,(ma.present+(ma.half*0.5)+ma.paid+ma.holiday)||1,0,1):calcPay(effEmp,ma.absent,ma.half,ma.unpaid,inc,0,(ma.present+(ma.half*0.5)+ma.paid+ma.holiday)||1,prSR.activeDays,prSR.fullDays);
       var pfWage=emp.pfMode==="actual"?d.eb:Math.min(d.eb,15000);
       var total=d.pfE+d.pfR+(d.esiE||0)+(d.esiR||0);
       totGross+=d.gr;totPFW+=pfWage;totEmpPF+=d.pfE;totErPF+=d.pfR;
@@ -1089,7 +1089,7 @@ function generateECR(emps,m,y,mAttFn,incFn){
   }
   var lines=["#~#"];
   eligible.forEach(function(emp){
-    var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
+    var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(getEffectiveEmp(emp,y,m),ma.absent,ma.half,ma.unpaid,inc,0);
     var pfWage=emp.pfMode==="actual"?d.eb:Math.min(d.eb,15000);
     var epsWage=Math.min(pfWage,15000);
     var epfContri=d.pfE;
@@ -1161,7 +1161,7 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
     var totW=0,totD=0,totB=0,totH=0,totA=0,totG=0,totPF=0,totESI=0,totPT=0,totTDS=0,totDed=0,totNet=0;
 
     emps.filter(function(e){return e.status==="active";}).forEach(function(emp,ei){
-      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc,0);
+      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(getEffectiveEmp(emp,y,m),ma.absent,ma.half,ma.unpaid,inc,0);
       // Days Worked = physically present (excludes leave, includes holiday if worked)
       var daysWork=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.holiday||0));
       // Days Paid = entitled to pay (present + half + paid leave + holiday)
@@ -1232,7 +1232,7 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
 function makePayrollCSV(emps,m,y,mAttFn,incFn){
   var header=["Name","Dept","Gross","Absent Ded","Half Ded","Unpaid Ded","PF Emp","ESI Emp","Prof Tax","TDS","Health Ins","Custom","Net Pay","Er PF","Er ESI","Total CTC"];
   var rows=emps.map(function(emp){
-    var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(emp,ma.absent,ma.half,ma.unpaid,inc);
+    var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(getEffectiveEmp(emp,y,m),ma.absent,ma.half,ma.unpaid,inc);
     return [emp.name,emp.dept||"",d.gr,d.ad,d.hd,d.ud,d.pfE,d.esiE,d.pt,d.tds,d.hi,d.cd,d.net,d.pfR,d.esiR,d.gr+d.pfR+d.esiR];
   });
   var csv=[header].concat(rows).map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
@@ -2046,8 +2046,8 @@ export default function App(){
       return sorted.slice(0,lim);
     })();
   var trmEmps=emps.filter(function(e){return e.status==="terminated"||e.status==="resigned";});
-  var tGross=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).gr;},0);
-  var tNet=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).net+getExtraPay(e.id,curM,curY);},0);
+  var tGross=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(getEffectiveEmp(e,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).gr;},0);
+  var tNet=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(getEffectiveEmp(e,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).net+getExtraPay(e.id,curM,curY);},0);
 
   function addOTEntry(emp,m2,y){
     // Determine the day from date mode (today or picked date)
@@ -2479,6 +2479,29 @@ export default function App(){
     var key=y+"-"+(m+1<10?"0":"")+(m+1);
     var entry=(es.log||[]).find(function(l){return l.month===key;});
     return Number((entry?entry.allowance:es.allowance)||0);
+  }
+
+  // Resolve an employee's salary fields as of a given year/month, using salary revision history.
+  // Picks the latest revision whose effective date is on/before the target month; falls back to the
+  // employee's own record if no revision applies yet. Returns a patched copy of the employee object
+  // so calcPay() and everything downstream automatically uses the right-for-that-month salary.
+  function getEffectiveEmp(emp,y,m){
+    if(!emp)return emp;
+    var revs=(salRevisions||[]).filter(function(r){return String(r.employeeId)===String(emp.id);});
+    if(!revs.length)return emp;
+    var targetKey=y+"-"+(m+1<10?"0":"")+(m+1);
+    // Keep only revisions effective on/before the target month, pick the most recent one
+    var applicable=revs.filter(function(r){
+      if(!r.effectiveDate)return false;
+      var d=String(r.effectiveDate);
+      var revKey=d.slice(0,7); // "YYYY-MM"
+      return revKey<=targetKey;
+    }).sort(function(a,b){return String(b.effectiveDate).localeCompare(String(a.effectiveDate));});
+    if(!applicable.length)return emp;
+    var newCtc=Number(applicable[0].newCtc)||0;
+    if(!newCtc)return emp;
+    var bd=brkSal(newCtc);
+    return Object.assign({},emp,{monthlyCTC:newCtc,basic:bd.basic,hra:bd.hra,allow:bd.allow});
   }
   var darkGrad="linear-gradient(155deg,#0F172A 0%,#1E1B4B 55%,#312E81 100%)";
 
@@ -3389,7 +3412,7 @@ export default function App(){
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Statutory Summary"),
           h("button",{onClick:function(){setTab("settings");setSettTab("tax");},style:{fontSize:11,color:NVY,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}},"Tax Slabs")
         ),
-        (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),payWD=getWorkingDays(att,e.id,curY,curM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM),payWD,proRata(e,curY,curM).active,proRata(e,curY,curM).total);a.pf+=d.pfE+d.pfR;a.esi+=d.esiE+d.esiR;a.pt+=d.pt;a.td+=d.tds;return a;},{pf:0,esi:0,pt:0,td:0});
+        (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),payWD=getWorkingDays(att,e.id,curY,curM),d=calcPay(getEffectiveEmp(e,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM),payWD,proRata(e,curY,curM).active,proRata(e,curY,curM).total);a.pf+=d.pfE+d.pfR;a.esi+=d.esiE+d.esiR;a.pt+=d.pt;a.td+=d.tds;return a;},{pf:0,esi:0,pt:0,td:0});
           var eligCount=actEmps.filter(function(e){return calcGratuity(e).eligible;}).length;
           var totalGrat=actEmps.reduce(function(a,e){return a+calcGratuity(e).amount;},0);
           return[["PF (Emp+Er)",fmt(tot.pf),NVY],["ESI (Emp+Er)",fmt(tot.esi),TEL],["Prof. Tax",fmt(tot.pt),AMB],["TDS",fmt(tot.td),RED],["Gratuity Accrued",fmt(totalGrat)+(eligCount>0?" ("+eligCount+" eligible)":""),GRN]].map(function(item){return row(item[0],item[1],item[2]);});
@@ -3468,7 +3491,7 @@ null
           });
           return sorted;
         })().map(function(e){
-          var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),payWD=getWorkingDays(att,e.id,curY,curM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM),payWD,proRata(e,curY,curM).active,proRata(e,curY,curM).total);
+          var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),payWD=getWorkingDays(att,e.id,curY,curM),d=calcPay(getEffectiveEmp(e,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM),payWD,proRata(e,curY,curM).active,proRata(e,curY,curM).total);
           var overLim=isOverLimit(e);
           return h("div",{key:e.id,className:"rh",onClick:function(){if(!overLim)setSelE(e);},style:{background:overLim?SFT:CARD,border:"1px solid "+(overLim?RED+"33":BDR),borderRadius:14,padding:"11px 13px",display:"flex",gap:11,alignItems:"center",marginBottom:8,boxShadow:T.SHADOW,cursor:overLim?"default":"pointer",opacity:overLim?.65:1}},
             av(e,40),
@@ -3507,7 +3530,7 @@ null
 
 
   function renderEmpDetail(){
-    var ma=mAtt(selE.id,curY,curM),inc=getInc(selE.id,curY,curM),d=calcPay(selE,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(selE.id,curY,curM),getWorkingDays(att,selE.id,curY,curM),proRata(selE,curY,curM).active,proRata(selE,curY,curM).total);
+    var ma=mAtt(selE.id,curY,curM),inc=getInc(selE.id,curY,curM),d=calcPay(getEffectiveEmp(selE,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(selE.id,curY,curM),getWorkingDays(att,selE.id,curY,curM),proRata(selE,curY,curM).active,proRata(selE,curY,curM).total);
     var leaveUsed=getLeaveUsed(selE,att,curY);
     var leaveEnt=getLeaveEntitlement(selE);
     var leaveBal=Math.max(0,leaveEnt-leaveUsed);
@@ -4316,7 +4339,7 @@ null
   }
 
   function renderAttSheet(){
-    var ma=mAtt(sheetE.id,attY,attM),attWD=getWorkingDays(att,sheetE.id,attY,attM),attPR=proRata(sheetE,attY,attM),d=(attPR.notYetJoined||attPR.alreadyLeft)?calcPay(sheetE,0,0,0,0,0,attWD,0,1):calcPay(sheetE,ma.absent,ma.half,ma.unpaid,0,getShiftAllow(sheetE.id,attY,attM),attWD,attPR.active,attPR.total);
+    var ma=mAtt(sheetE.id,attY,attM),attWD=getWorkingDays(att,sheetE.id,attY,attM),attPR=proRata(sheetE,attY,attM),effSheetE=getEffectiveEmp(sheetE,attY,attM),d=(attPR.notYetJoined||attPR.alreadyLeft)?calcPay(effSheetE,0,0,0,0,0,attWD,0,1):calcPay(effSheetE,ma.absent,ma.half,ma.unpaid,0,getShiftAllow(sheetE.id,attY,attM),attWD,attPR.active,attPR.total);
     var yr=attY,mo=attM;
     var hasDeduct=ma.absent>0||ma.half>0||ma.unpaid>0;
     return h("div",{className:"fd"},
@@ -4497,9 +4520,9 @@ null
       var isFixed=e.salaryType==="fixed";
       return a+(isFixed?Number(e.fixedSalary||e.monthlyCTC||0):(e.basic||0)+(e.hra||0)+(e.allow||0));
     },0);
-    var filtAttDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return a+d.ad+d.hd+d.ud;},0);
-    var filtTaxDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return a+d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;},0);
-    var filtNet=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total).net+getExtraPay(e.id,payM,payY);},0);
+    var filtAttDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return a+d.ad+d.hd+d.ud;},0);
+    var filtTaxDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return a+d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;},0);
+    var filtNet=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total).net+getExtraPay(e.id,payM,payY);},0);
     var filtBonus=filtEmps.reduce(function(a,e){return a+getExtraPay(e.id,payM,payY);},0);
     var filtDed=filtGross-filtNet;
     return h("div",{className:"fd"},
@@ -4561,7 +4584,7 @@ null
           var deptList=payDept?[payDept]:getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
           return h("div",null,deptList.map(function(dept){
             var dEmps=actEmps.filter(function(e){return e.dept===dept;});
-            var dTot=dEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));var ex=getExtraPay(e.id,payM,payY);a.gr+=d2.gr+ex;a.net+=d2.net+ex;a.ded+=d2.gr-d2.net;return a;},{gr:0,net:0,ded:0});
+            var dTot=dEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));var ex=getExtraPay(e.id,payM,payY);a.gr+=d2.gr+ex;a.net+=d2.net+ex;a.ded+=d2.gr-d2.net;return a;},{gr:0,net:0,ded:0});
             return card(h("div",null,
               h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
                 h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},dept),
@@ -4571,7 +4594,7 @@ null
                 h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:8,padding:"6px 10px"}},h("div",{style:{fontSize:10,color:GRY}},"Gross"),h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},fmt(dTot.gr))),
                 h("div",{style:{flex:1,background:RED+"12",borderRadius:8,padding:"6px 10px"}},h("div",{style:{fontSize:10,color:GRY}},"Deductions"),h("div",{style:{fontSize:12,fontWeight:700,color:RED}},fmt(dTot.ded)))
               ),
-              dEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));return h("div",{key:e.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+BDR}},
+              dEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));return h("div",{key:e.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+BDR}},
                 h("div",{style:{display:"flex",alignItems:"center",gap:7}},av(e,28),h("div",null,h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},e.name),h("div",{style:{fontSize:9,color:GRY}},e.role))),
                 h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:11,fontWeight:700,color:GRN}},fmt(d2.net)),h("div",{style:{fontSize:9,color:RED}},"-"+fmt(d2.gr-d2.net)))
               );})
@@ -4582,7 +4605,7 @@ null
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:11}},"Individual Payslips"),
         actEmps.map(function(e){
           var isFixed=e.salaryType==="fixed"; // declare here so it's in scope for Details section
-          var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total),isO=editPayE&&editPayE.id===e.id;
+          var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total),isO=editPayE&&editPayE.id===e.id;
           var attDed=d.ad+d.hd+d.ud;
           var statDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;
           var totalDed=attDed+statDed;
@@ -4750,13 +4773,13 @@ null
       ),0):repV==="annual"?renderAnnualStatement():h("div",null,
         card(h("div",null,
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},"Employer Cost - "+MOS[payM]+" "+payY),
-          actEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return h("div",{key:e.id,style:{padding:"9px 0",borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none"}},
+          actEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return h("div",{key:e.id,style:{padding:"9px 0",borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none"}},
             h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:5}},av(e,31),h("div",{style:{flex:1}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},e.name),h("div",{style:{fontSize:10,color:GRY}},e.dept)),h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:12,fontWeight:800,color:AMB}},fmt(d.gr+d.pfR+d.esiR)),h("div",{style:{fontSize:9,color:GRY}},"CTC/mo"))),
             h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5}},
               [["Gross",fmt(d.gr),NVY],["Er PF",fmt(d.pfR),"#374151"],["Er ESI",fmt(d.esiR),TEL]].map(function(item){return h("div",{key:item[0],style:{background:item[2]+"18",borderRadius:7,padding:"6px",textAlign:"center"}},h("div",{style:{fontSize:11,fontWeight:700,color:item[2]}},item[1]),h("div",{style:{fontSize:9,color:GRY}},item[0]));})
             )
           );}),
-          (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(e,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);a.g+=d.gr;a.p+=d.pfR;a.e+=d.esiR;return a;},{g:0,p:0,e:0});return h("div",{style:{background:AMB+"14",border:"1px solid "+AMB+"38",borderRadius:11,padding:11,marginTop:9}},[["Total Gross",fmt(tot.g),false],["Employer PF",fmt(tot.p),false],["Employer ESI",fmt(tot.e),false],["Total CTC",fmt(tot.g+tot.p+tot.e),true]].map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px dashed "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:700,color:item[2]?AMB:NVY}},item[1]));}))})())) , 
+          (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);a.g+=d.gr;a.p+=d.pfR;a.e+=d.esiR;return a;},{g:0,p:0,e:0});return h("div",{style:{background:AMB+"14",border:"1px solid "+AMB+"38",borderRadius:11,padding:11,marginTop:9}},[["Total Gross",fmt(tot.g),false],["Employer PF",fmt(tot.p),false],["Employer ESI",fmt(tot.e),false],["Total CTC",fmt(tot.g+tot.p+tot.e),true]].map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px dashed "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:700,color:item[2]?AMB:NVY}},item[1]));}))})())) , 
         isPaid?h("div",{style:{display:"flex",gap:8,marginBottom:10}},
               h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,15),"Employee Copy"),
               h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1.5px solid "+BDR,borderRadius:12,padding:"11px",color:NVY,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,15),"Employer Copy")
@@ -5654,7 +5677,7 @@ null
     function empProfile(){
       var emp=myRecord;
       var wDaysE=emp?getWorkingDays(att,emp.id,empPayYear,empPayMonth):26;
-        var payData=emp?calcPay(emp,0,0,0,0,0,wDaysE):null;
+        var payData=emp?calcPay(getEffectiveEmp(emp,empPayYear,empPayMonth),0,0,0,0,0,wDaysE):null;
       return h("div",{className:"fd"},
         h("div",{style:{background:"linear-gradient(135deg,#0F172A,#1E293B)",borderRadius:20,padding:"20px 16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
           h("div",{style:{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}),
@@ -6119,15 +6142,15 @@ null
 
     // Salary summary from payroll
     var salaryTotal=actEmps.reduce(function(s,e){
-      var d=calcPay(e,mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
+      var d=calcPay(getEffectiveEmp(e,coExpY,coExpM),mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
       return s+d.gr;
     },0);
     var netTotal=actEmps.reduce(function(s,e){
-      var d=calcPay(e,mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
+      var d=calcPay(getEffectiveEmp(e,coExpY,coExpM),mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
       return s+d.net;
     },0);
     var pfTotal=actEmps.reduce(function(s,e){
-      var d=calcPay(e,mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
+      var d=calcPay(getEffectiveEmp(e,coExpY,coExpM),mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
       return s+d.pfE+d.pfR;
     },0);
 
@@ -7473,7 +7496,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         months.forEach(function(mn,mi){
           var mo=mi+3>11?mi+3-12:mi+3,yr=mi<9?fy:fy+1;
           var ma2=mAtt(emp.id,yr,mo),inc2=getInc(emp.id,yr,mo),wD2=getWorkingDays(att,emp.id,yr,mo);
-          var pr2=empActiveRangeInMonth(emp,yr,mo);var d2=(pr2.notYetJoined||pr2.alreadyLeft)?calcPay(emp,0,0,0,0,0,wD2,0,1):calcPay(emp,ma2.absent,ma2.half,ma2.unpaid,inc2,0,wD2,pr2.activeDays,pr2.fullDays);
+          var pr2=empActiveRangeInMonth(emp,yr,mo),effEmp2=getEffectiveEmp(emp,yr,mo);var d2=(pr2.notYetJoined||pr2.alreadyLeft)?calcPay(effEmp2,0,0,0,0,0,wD2,0,1):calcPay(effEmp2,ma2.absent,ma2.half,ma2.unpaid,inc2,0,wD2,pr2.activeDays,pr2.fullDays);
           var isFixed2=emp.salaryType==="fixed";
           var gr2=isFixed2?Number(emp.fixedSalary||emp.monthlyCTC||0):(Number(emp.basic||0)+Number(emp.hra||0)+Number(emp.allow||0));
           var att2=d2.ad+d2.hd+d2.ud,tax2=d2.pfE+d2.esiE+d2.pt+d2.tds;
