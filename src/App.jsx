@@ -2558,10 +2558,19 @@ export default function App(){
     // Note: phones don't allow a website to pre-pick a WhatsApp contact when attaching a real file,
     // so to jump straight to the chat we send text only — the PDF downloads separately for you to attach.
     var mName=MOS[m2]+" "+y;
-    var text="*"+(org.name||"Payslip")+"*\n"+
-      "Hi "+emp.name+", your payslip for "+mName+" is ready.\n\n"+
-      "Net Pay: "+fmt(d.net)+"\n\n"+
-      "📎 The PDF has been downloaded to this device — please attach it above before sending.\n\n"+
+    var totalDed=(d.ad||0)+(d.hd||0)+(d.ud||0)+(d.pfE||0)+(d.esiE||0)+(d.pt||0)+(d.tds||0)+(d.hi||0)+(d.cd||0);
+    var text="*"+(org.name||"Company")+"*\n*PAYSLIP SUMMARY*\n\n"+
+      "```\n"+
+      "------------------------\n"+
+      "Employee   : "+emp.name+"\n"+
+      "Month      : "+mName+"\n"+
+      "------------------------\n"+
+      "Gross Pay  : "+fmtIN(d.gr||0)+"\n"+
+      "Deductions : "+fmtIN(totalDed)+"\n"+
+      "Net Pay    : "+fmtIN(d.net||0)+"\n"+
+      "------------------------\n"+
+      "```\n\n"+
+      "Thank you for your work and dedication.\n\n"+
       "Regards,\n"+(org.name||"HR Team");
     var fileName="Payslip_"+emp.name.replace(/\s+/g,"_")+"_"+MOS[m2]+"_"+y+".pdf";
     if(!emp.mob){showT("No mobile number saved for "+emp.name,"err");return;}
@@ -2619,14 +2628,22 @@ export default function App(){
     if(!isPaid){showT("WhatsApp share is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}
     if(!emp.mob){showT("No mobile number saved","err");return;}
     var ma=mAtt(emp.id,attY,attM);
-    var text="*"+(org.name||"Attendance Report")+"*\n"+emp.name+" — "+MOS[attM]+" "+attY+"\n\n"+
-      "Present: "+ma.present+" days\n"+
-      "Absent: "+ma.absent+" days\n"+
-      "Half Day: "+ma.half+" days\n"+
-      "Paid Leave: "+ma.paid+" days\n"+
-      "Unpaid Leave: "+ma.unpaid+" days\n"+
-      "Holiday: "+ma.holiday+" days\n\n"+
-      "Generated via Admin HR";
+    var mName2=MOS[attM]+" "+attY;
+    var text="*"+(org.name||"Company")+"*\n*ATTENDANCE SUMMARY*\n\n"+
+      "```\n"+
+      "------------------------\n"+
+      "Employee   : "+emp.name+"\n"+
+      "Month      : "+mName2+"\n"+
+      "------------------------\n"+
+      "Present    : "+ma.present+" days\n"+
+      "Absent     : "+ma.absent+" days\n"+
+      "Half Day   : "+ma.half+" days\n"+
+      "Paid Leave : "+ma.paid+" days\n"+
+      "Unpaid     : "+ma.unpaid+" days\n"+
+      "Holiday    : "+ma.holiday+" days\n"+
+      "------------------------\n"+
+      "```\n\n"+
+      "Regards,\n"+(org.name||"HR Team");
     window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text),"_blank");
   }
 
