@@ -336,7 +336,7 @@ function buildAttHTML(name,y,m,recs,orgName,orgEmail,orgPos,logoSrc){
   var summary="<div style='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px'>"+[["P",counts.present,"#059669"],["A",counts.absent,"#DC2626"],["H",counts.half,"#D97706"],["PL",counts.paid,"#7C3AED"],["UL",counts.unpaid,"#4F46E5"],["Hol",counts.holiday,"#0EA5E9"]].map(function(i){return "<div style='background:"+i[2]+"14;border:1px solid "+i[2]+"44;border-radius:8px;padding:8px 14px;text-align:center'><div style='font-size:16px;font-weight:800;color:"+i[2]+"'>"+i[1]+"</div><div style='font-size:9px;color:#64748B;font-weight:600'>"+i[0]+"</div></div>";}).join("")+"</div>";
   return "<!DOCTYPE html><html><head><meta charset=utf-8><title>Attendance - "+esc(name)+"</title>"+baseStyle()+"</head><body><div class='wrap'>"+pdfAppHeader(orgName||"",orgEmail||"",orgPos||"",logoSrc)+"<div class='body'><div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:14px'><div><div style='font-size:15px;font-weight:800;color:#0F172A'>Attendance Record</div><div style='font-size:11px;color:#64748B;margin-top:2px'>"+esc(name)+" &bull; "+esc(MOS[m]+" "+y)+"</div></div></div>"+summary+rows+"</div>"+pdfAppFooter(orgName||"",orgEmail||"")+"</div></body></html>";
 }
-function pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,title,subtitle,orgAddress,companyLogo){
+function pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,title,subtitle,orgAddress,companyLogo,orgContact){
   var logoW=0;
   if(companyLogo&&companyLogo.startsWith("data:")){
     try{
@@ -350,21 +350,41 @@ function pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,title,subtitle,orgAd
   doc.setFontSize(13);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
   doc.text(orgName||"",mg+logoW,11);
 
+  var infoY=17;
   if(orgAddress){
     var addrLines=(orgAddress||"").split("\n").map(function(s){return s.trim();}).filter(Boolean).slice(0,2);
-
     addrLines.forEach(function(line,i){
       doc.setFontSize(7.5);doc.setTextColor(100,115,135);
-      doc.text(line,mg+logoW,17+i*4);
+      doc.text(line,mg+logoW,infoY+i*4);
     });
+    if(addrLines.length)infoY+=addrLines.length*4;
+  }
+  // Contact line — phone, website, email (only the parts that exist)
+  var contactParts=[];
+  if(orgContact&&orgContact.phone)contactParts.push(orgContact.phone);
+  if(orgContact&&orgContact.website)contactParts.push(orgContact.website);
+  if(orgEmail)contactParts.push(orgEmail);
+  if(contactParts.length){
+    doc.setFontSize(7.5);doc.setTextColor(100,115,135);
+    doc.text(contactParts.join("   |   "),mg+logoW,infoY);
+    infoY+=4;
   }
   doc.setFontSize(13);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
   doc.text(title,W-mg,11,{align:"right"});
   doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(100,115,135);
   doc.text(subtitle||"",W-mg,17,{align:"right"});
-  var lineY=29;
+  var lineY=Math.max(29,infoY+5);
   doc.setDrawColor(180,195,215);doc.setLineWidth(0.5);doc.line(mg,lineY,W-mg,lineY);
   return lineY+5;
+}
+// Builds a single "phone | website | email" line for letterheads (skips parts that are empty)
+function orgContactLine(org){
+  var parts=[];
+  if(org.phone)parts.push(org.phone);
+  if(org.website)parts.push(org.website);
+  var em=org.contactEmail||org.email;
+  if(em)parts.push(em);
+  return parts.join("   |   ");
 }
 function pdfFooter(doc,W,mg,H,orgName,orgEmail,appLogoSrc,authPos,authSign){
   var sigY=H-38;
@@ -439,7 +459,7 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,mg=14;
-    var ry=pdfHeader(doc,W,mg,null,org.name,org.position,org.email,"EXPENSE & PAYROLL SUMMARY",data.periodLabel,org.address||"",org.logo||"");
+    var ry=pdfHeader(doc,W,mg,null,org.name,org.position,org.contactEmail||org.email,"EXPENSE & PAYROLL SUMMARY",data.periodLabel,org.address||"",org.logo||"",{phone:org.phone,website:org.website});
 
     // Subtle section marker — small colored tick + heading, neutral grey rule (the only color cue per section)
     function sectionTab(label,rgb){
@@ -531,9 +551,12 @@ function makeOfferLetterPDF(emp,org,authPos2,authSign2){
     // Letterhead — typography only, no solid color block
     doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
-    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);}
+    var addrShown=false;
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);addrShown=true;}
+    var contactLine=orgContactLine(org);
+    if(contactLine)doc.text(contactLine,mg,ry+(addrShown?10:5.5));
     doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
-    ry+=11;doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
+    ry+=(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
     doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("APPOINTMENT LETTER",W/2,ry,{align:"center"});ry+=2;
     doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-16,ry+2,W/2+16,ry+2);ry+=14;
     doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=8;
@@ -547,7 +570,7 @@ function makeOfferLetterPDF(emp,org,authPos2,authSign2){
     ry+=10;var sigY=Math.max(ry,228);
     doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);doc.line(mg,sigY,mg+60,sigY);doc.line(W-mg-60,sigY,W-mg,sigY);
     doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(authSign2||org.name||"Authorised Signatory",mg,sigY+5);doc.text(emp.name,W-mg-60,sigY+5);
-    doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text(authPos2||"Higher Official",mg,sigY+9);doc.text("Employee Signature",W-mg-60,sigY+9);
+    doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text(authPos2||"Authorised Signatory",mg,sigY+9);doc.text("Employee Signature",W-mg-60,sigY+9);
     doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,283,W-mg,283);
     doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text((org.name||""),mg,288);doc.text("Generated by Admin HR",W-mg,288,{align:"right"});
     downloadPDF(doc.output("blob"),"Offer-Letter-"+(emp.name||"Employee").replace(/s/g,"-")+".pdf");showT("Offer letter downloaded");
@@ -562,9 +585,12 @@ function makeExperienceLetterPDF(emp,org,authPos2,authSign2){
     var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
     doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
-    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);}
+    var addrShown=false;
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);addrShown=true;}
+    var contactLine=orgContactLine(org);
+    if(contactLine)doc.text(contactLine,mg,ry+(addrShown?10:5.5));
     doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
-    ry+=11;doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
+    ry+=(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
     doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("EXPERIENCE CERTIFICATE",W/2,ry,{align:"center"});ry+=2;
     doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-22,ry+2,W/2+22,ry+2);ry+=14;
     doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("To Whomsoever It May Concern,",mg,ry);ry+=10;
@@ -578,14 +604,13 @@ function makeExperienceLetterPDF(emp,org,authPos2,authSign2){
     var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5+6;
     var body2="During the tenure, "+emp.name+" has shown dedication, professionalism and commitment to work. We found "+emp.name+" to be a sincere and hardworking individual. We wish "+(emp.name)+" all the best in future endeavours.";
     var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5+22;
-    // Two signature blocks: Higher Official (left) + HR Department (right)
+    // Two signature blocks: Authorised Signatory (left) + HR Department (right)
     doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);
     doc.line(mg,ry,mg+62,ry);doc.line(W-mg-62,ry,W-mg,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
     doc.text(authSign2||"Authorised Signatory",mg,ry+5);doc.text("HR Department",W-mg-62,ry+5);
     doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
-    doc.text(authPos2||"Higher Official",mg,ry+9);doc.text(org.name||"",W-mg-62,ry+9);
-    doc.setFontSize(7);doc.text("Higher Official",mg,ry+13);
+    doc.text(authPos2||"Authorised Signatory",mg,ry+9);doc.text(org.name||"",W-mg-62,ry+9);
     doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,283,W-mg,283);
     doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text((org.name||""),mg,288);doc.text("Generated by Admin HR",W-mg,288,{align:"right"});
     downloadPDF(doc.output("blob"),"Experience-Certificate-"+(emp.name||"").replace(/s/g,"-")+".pdf");showT("Experience letter downloaded");
@@ -599,9 +624,12 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
     var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
     doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
-    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);}
+    var addrShown=false;
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);addrShown=true;}
+    var contactLine=orgContactLine(org);
+    if(contactLine)doc.text(contactLine,mg,ry+(addrShown?10:5.5));
     doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
-    ry+=11;doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
+    ry+=(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
     doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("RELIEVING LETTER",W/2,ry,{align:"center"});ry+=2;
     doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-18,ry+2,W/2+18,ry+2);ry+=14;
     doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=10;
@@ -614,14 +642,13 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
     var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5+6;
     var body2="We confirm that you have completed all required handover procedures and have no dues outstanding with the organization. We appreciate your contributions and wish you success in your future endeavours.";
     var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5+22;
-    // Two signature blocks: Higher Official (left) + HR Department (right)
+    // Two signature blocks: Authorised Signatory (left) + HR Department (right)
     doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);
     doc.line(mg,ry,mg+62,ry);doc.line(W-mg-62,ry,W-mg,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
     doc.text(authSign2||"Authorised Signatory",mg,ry+5);doc.text("HR Department",W-mg-62,ry+5);
     doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
-    doc.text(authPos2||"Higher Official",mg,ry+9);doc.text(org.name||"",W-mg-62,ry+9);
-    doc.setFontSize(7);doc.text("Higher Official",mg,ry+13);
+    doc.text(authPos2||"Authorised Signatory",mg,ry+9);doc.text(org.name||"",W-mg-62,ry+9);
     doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,283,W-mg,283);
     doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text((org.name||""),mg,288);doc.text("Generated by Admin HR",W-mg,288,{align:"right"});
     downloadPDF(doc.output("blob"),"Relieving-Letter-"+(emp.name||"").replace(/s/g,"-")+".pdf");showT("Relieving letter downloaded");
@@ -629,12 +656,12 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
 }
 
 
-function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,onDoc,bonusList,claimTotal){
+function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,onDoc,bonusList,claimTotal,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=16,cw=W-mg*2;
     var nd=new Date();
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY PAYSLIP",MOS[m]+" "+y+" | Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"");
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY PAYSLIP",MOS[m]+" "+y+" | Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     doc.setFillColor(244,247,252);doc.roundedRect(mg,ry,cw,20,3,3,"F");
     doc.setDrawColor(210,220,235);doc.roundedRect(mg,ry,cw,20,3,3,"S");
     doc.setFontSize(12);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
@@ -714,12 +741,12 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     if(typeof onDoc==="function"){onDoc(doc);}else{downloadPDF(doc.output("blob"),"Payslip-"+(emp.name||"").replace(/ /g,"-")+suffix+"-"+MOS[m]+"-"+y+".pdf");}
   },function(){alert("PDF library failed to load.");});
 }
-function makePayrollPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign){
+function makePayrollPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=12;
     var nd=new Date();
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,showEmployer?"PAYROLL REPORT (EMPLOYER)":"PAYROLL REPORT",MOS[m]+" "+String(y)+" — Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"");
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,showEmployer?"PAYROLL REPORT (EMPLOYER)":"PAYROLL REPORT",MOS[m]+" "+String(y)+" — Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
 
     var cols=showEmployer?[
       {label:"EMPLOYEE NAME",align:"l"},
@@ -810,13 +837,13 @@ function makePayrollPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,sh
 }
 
 
-function makeAttPDF(name,y,m,recs,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
+function makeAttPDF(name,y,m,recs,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=16,cw=W-mg*2,rh=9;
     var nd=new Date();
     var titleName=name||"All Employees";
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"ATTENDANCE RECORD",titleName+" | "+MOS[m]+" "+y,orgAddress||"",companyLogo||"");
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"ATTENDANCE RECORD",titleName+" | "+MOS[m]+" "+y,orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     var ATColors={present:[5,150,105],absent:[220,38,38],half:[217,119,6],paid:[124,58,237],unpaid:[79,70,229],holiday:[14,165,233],unmarked:[148,163,184]};
     var counts={present:0,absent:0,half:0,paid:0,unpaid:0,holiday:0};
     var recEntries=recs?Object.entries(recs):[];
@@ -869,11 +896,11 @@ function makeAttPDF(name,y,m,recs,orgName,orgEmail,orgPos,logoSrc,orgAddress,com
     downloadPDF(doc.output("blob"),fname+"-"+MOS[m]+"-"+y+".pdf");
   },function(){alert("PDF library failed to load.");});
 }
-function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
+function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=12;
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"ATTENDANCE SUMMARY",MOS[m]+" "+String(y),orgAddress||"",companyLogo||"");
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"ATTENDANCE SUMMARY",MOS[m]+" "+String(y),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
 
     var daysInMonth=new Date(y,m+1,0).getDate();
     // Count holidays (days where all emps marked holiday)
@@ -951,11 +978,11 @@ function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddre
 }
 
 
-function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
+function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
     var W=297,H=210,mg=10;
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"ANNUAL ATTENDANCE SUMMARY","Year "+String(y),orgAddress||"",companyLogo||"");
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"ANNUAL ATTENDANCE SUMMARY","Year "+String(y),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
 
     var monthCols=["APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC","JAN","FEB","MAR"];
     var months=[3,4,5,6,7,8,9,10,11,0,1,2];
@@ -1005,12 +1032,12 @@ function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAdd
 }
 
 
-function makeEmpPDF(emps,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
+function makeEmpPDF(emps,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
     var W=297,H=210,mg=14,cw=W-mg*2,rh=9;
     var nd=new Date();
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"EMPLOYEE RECORDS",emps.length+" Employees | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"");
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"EMPLOYEE RECORDS",emps.length+" Employees | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     var cols=["EMPLOYEE NAME","EMP ID","ROLE / DESIGNATION","DEPARTMENT","MOBILE","MONTHLY CTC","STATUS"];
     var cws=[50,22,45,32,28,30,22];
     var cx=[mg];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
@@ -1089,11 +1116,11 @@ function checkMinWage(salary,state,category){
 }
 
 // ── PF/ESI SUMMARY PDF ───────────────────────────────────────────────────
-function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
+function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=12,cw=W-mg*2;
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"PF / ESI SUMMARY",MOS[m]+" "+String(y),orgAddress||"",companyLogo||"");
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"PF / ESI SUMMARY",MOS[m]+" "+String(y),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     // Info note
     doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(80,100,140);
     doc.text("PF wage ceiling: Rs.15,000  |  ESI applicable if gross <= Rs.21,000  |  PF: 12%+12%  |  ESI: 0.75%+3.25%",mg,ry+4);
@@ -1227,11 +1254,11 @@ function generateECR(emps,m,y,mAttFn,incFn){
 }
 
 // ── SALARY REGISTER PDF (Statutory format) ────────────────────────────────
-function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign){
+function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
     var W=297,H=210,mg=10;
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY REGISTER",MOS[m]+" "+String(y)+" — Payment of Wages Act",orgAddress||"",companyLogo||"");
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY REGISTER",MOS[m]+" "+String(y)+" — Payment of Wages Act",orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     doc.setFontSize(7);doc.setFont("helvetica","normal");doc.setTextColor(80,100,140);
     doc.text("Statutory salary register. Maintain for minimum 3 years as per Payment of Wages Act, 1936.",mg,ry+4);
     ry+=9;
@@ -1746,6 +1773,8 @@ export default function App(){
   var sOA=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.address||"";}),orgAddr=sOA[0],setOrgAddr=sOA[1];
   var sOPh=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.phone||"";}),orgPhone=sOPh[0],setOrgPhone=sOPh[1];
   var sOWb=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.website||"";}),orgWebsite=sOWb[0],setOrgWebsite=sOWb[1];
+  var sOCE=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.contactEmail||"";}),orgContactEmail=sOCE[0],setOrgContactEmail=sOCE[1];
+  var sSettReview=st(false),settReviewMode=sSettReview[0],setSettReviewMode=sSettReview[1]; // shows a review/confirm step before Company Details actually saves
   var sSQ=st(""),searchQ=sSQ[0],setSearchQ=sSQ[1];
   var sPW=st(""),pwd=sPW[0],setPwd=sPW[1];
   var sPW2=st(""),pwd2=sPW2[0],setPwd2=sPW2[1];
@@ -1937,7 +1966,7 @@ export default function App(){
           setSuName(empFullName); // used in employee dashboard greeting
           // Load employer's org info (company name, logo)
           Promise.all([
-            _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email").eq("email",employerEmail).maybeSingle(),
             _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",employerEmail).maybeSingle(),
             _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
           ]).then(function(empResults){
@@ -1948,6 +1977,7 @@ export default function App(){
               logo:(empOrg&&empOrg.logo_base64)||"",
               address:(empOrg&&empOrg.address)||"",
               phone:(empOrg&&empOrg.phone)||"",
+              contactEmail:(empOrg&&empOrg.contact_email)||"",
               website:(empOrg&&empOrg.website)||"",
               email:employerEmail,
               plan:(empPlan&&empPlan.plan)||"free",
@@ -1977,7 +2007,8 @@ export default function App(){
             address:(orgRes.data&&orgRes.data.address)||"",
             logo:(orgRes.data&&orgRes.data.logo_base64)||"",
             phone:(orgRes.data&&orgRes.data.phone)||"",
-            website:(orgRes.data&&orgRes.data.website)||""
+            website:(orgRes.data&&orgRes.data.website)||"",
+            contactEmail:(orgRes.data&&orgRes.data.contact_email)||""
           };
           lsSet("hr_org_"+em,o);setOrg(o);
           // Load Authorised Signatory + Higher Official WhatsApp from Supabase (synced across devices)
@@ -2059,12 +2090,18 @@ export default function App(){
   },[gUser&&gUser.email]);
 
   se(function(){
-    lsSet("hr_org",org);
+    lsSet("hr_org",org); // cache org for offline/fast-load — safe to do on every change
+  },[org]);
+  // Hydrate the editable Settings form fields from org ONLY once per login (not on every org change),
+  // so a background org refresh (e.g. after saving, or a Supabase round-trip) can never clobber an
+  // in-progress edit — this was the root cause of the logo (and occasionally address/phone) disappearing.
+  se(function(){
     if(org.logo!==undefined)setOrgLogo(org.logo||"");
     if(org.address!==undefined)setOrgAddr(org.address||"");
     if(org.phone!==undefined)setOrgPhone(org.phone||"");
     if(org.website!==undefined)setOrgWebsite(org.website||"");
-  },[org]);
+    if(org.contactEmail!==undefined)setOrgContactEmail(org.contactEmail||"");
+  },[gUser&&gUser.email]);
 
   // ── Auto-sync to Supabase on any data change (debounced 2s) ──
   var _syncTimer=React.useRef(null);
@@ -2524,13 +2561,13 @@ export default function App(){
     var text="Hi "+emp.name+",\n\nPlease find your payslip for "+mName+".\n\nNet Pay: "+fmt(d.net)+"\n\nRegards,\n"+(org.name||"HR Team");
     var fileName="Payslip_"+emp.name.replace(/\s+/g,"_")+"_"+MOS[m2]+"_"+y+".pdf";
     if(!emp.mob){showT("No mobile number saved for "+emp.name,"err");return;}
-    makePayslipPDF(emp,d,m2,y,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,function(doc){
+    makePayslipPDF(emp,d,m2,y,org.name,org.contactEmail||org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,function(doc){
       try{
         doc.save(fileName);
         window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text+"\n\n(Payslip PDF downloaded — please attach it in this chat.)"),"_blank");
         showT("PDF downloaded. Attach it in WhatsApp.");
       }catch(e){showT("Could not share payslip","err");}
-    },getEmpBonusesWithOT(emp.id,m2,y),getEmpClaimTotal(emp.id,m2,y));
+    },getEmpBonusesWithOT(emp.id,m2,y),getEmpClaimTotal(emp.id,m2,y),org.phone,org.website);
   }
 
 
@@ -3823,7 +3860,7 @@ null
               d.esiR>0?h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:2}},h("span",{style:{fontSize:11,color:GRY}},"ESI (Employer)"),h("span",{style:{fontSize:11,fontWeight:600,color:NVY}},fmt(d.esiR))):null,
               h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4,paddingTop:4,borderTop:"1px solid "+BDR}},h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Total CTC"),h("span",{style:{fontSize:12,fontWeight:800,color:NVY}},fmt(d.net+d.pfR+d.esiR)))
             ),
-            h("button",{onClick:function(){if(!isPaid){showT("Download payslip is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}makePayslipPDF(selE,d,curM,curY,org.name,org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,null,getEmpBonusesWithOT(selE.id,curM,curY),getEmpClaimTotal(selE.id,curM,curY));},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},ic(isPaid?"download":"lock",CARD,14),"Download Payslip")
+            h("button",{onClick:function(){if(!isPaid){showT("Download payslip is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}makePayslipPDF(selE,d,curM,curY,org.name,org.contactEmail||org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,null,getEmpBonusesWithOT(selE.id,curM,curY),getEmpClaimTotal(selE.id,curM,curY),org.phone,org.website);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},ic(isPaid?"download":"lock",CARD,14),"Download Payslip")
           );
         }
       ),
@@ -4372,7 +4409,7 @@ null
         },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:GRN+"14",border:"1px solid "+GRN+"55",borderRadius:10,padding:"9px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("check_circle",GRN,15),"Mark All Present"),
         h("button",{onClick:function(){markHolidayAll(todayDate);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"14",border:"1px solid "+AMB+"55",borderRadius:10,padding:"9px",color:AMB,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.sun,AMB,15),"Mark All Holiday")
       ),
-      isPaid?dlBtn("Download Attendance Report",function(){makeAttSummaryPDF(actEmps,att,attM,attY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance Report — Paid Plan"),
+      isPaid?dlBtn("Download Attendance Report",function(){makeAttSummaryPDF(actEmps,att,attM,attY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance Report — Paid Plan"),
       card(h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
@@ -4492,7 +4529,7 @@ null
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
         h("div",null,h("div",{style:{fontSize:14,fontWeight:800,color:NVY}},sheetE.name),h("div",{style:{fontSize:11,color:GRY}},MOS[mo]+" "+yr)),
         h("div",{style:{display:"flex",gap:5}},
-          h("button",{onClick:isPaid?function(){var recs={};Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+sheetE.id)&&kv[0].startsWith(yr+"-"+String(mo+1).padStart(2,"0"));}).forEach(function(kv){recs[kv[0].split("_")[0]]=kv[1];});try{makeAttPDF(sheetE.name,yr,mo,recs,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 10px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.dl:"lock",CARD,13),isPaid?"PDF":"PDF"),
+          h("button",{onClick:isPaid?function(){var recs={};Object.entries(att).filter(function(kv){return kv[0].endsWith("_"+sheetE.id)&&kv[0].startsWith(yr+"-"+String(mo+1).padStart(2,"0"));}).forEach(function(kv){recs[kv[0].split("_")[0]]=kv[1];});try{makeAttPDF(sheetE.name,yr,mo,recs,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 10px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.dl:"lock",CARD,13),isPaid?"PDF":"PDF"),
           h("button",{onClick:function(){shareAtt(sheetE);},style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 10px",fontSize:11,color:NVY,fontWeight:700,cursor:"pointer"}},ic(isPaid?"whatsapp":"lock",isPaid?"#25D366":GRY,13),"WhatsApp")
         )
       ),
@@ -4782,8 +4819,8 @@ null
             ),
             h("div",{style:{display:"flex",gap:5,marginBottom:6}},
               isPaid?h("div",{style:{display:"flex",gap:5,flex:1}},
-                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"),
-                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er")
+                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"),
+                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er")
                   ):h("button",{onClick:needPaid,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"),
               h("button",{onClick:function(){if(!isPaid){showT("WhatsApp share is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for WhatsApp payslip sharing"),"_blank");return;}sharePayslip(e,d,payM,payY);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.wa:"lock",isPaid?"#25D366":GRY,13),"WhatsApp"),
               h("button",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:isO?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isO?ACCENT_FG:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isO?"expand_less":"expand_more",isO?CARD:NVY,13),isO?"Hide":"Details")
@@ -4933,8 +4970,8 @@ null
           );}),
           (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);a.g+=d.gr;a.p+=d.pfR;a.e+=d.esiR;return a;},{g:0,p:0,e:0});return h("div",{style:{background:AMB+"14",border:"1px solid "+AMB+"38",borderRadius:11,padding:11,marginTop:9}},[["Total Gross",fmt(tot.g),false],["Employer PF",fmt(tot.p),false],["Employer ESI",fmt(tot.e),false],["Total CTC",fmt(tot.g+tot.p+tot.e),true]].map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px dashed "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:700,color:item[2]?AMB:NVY}},item[1]));}))})())) , 
         isPaid?h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-              h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,15),"Employee Copy"),
-              h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1.5px solid "+BDR,borderRadius:12,padding:"11px",color:NVY,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,15),"Employer Copy")
+              h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,15),"Employee Copy"),
+              h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1.5px solid "+BDR,borderRadius:12,padding:"11px",color:NVY,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,15),"Employer Copy")
             ):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Payroll PDF — Paid Plan Only")
       )
     );
@@ -5003,63 +5040,97 @@ null
         ),
         h("div",{style:{height:14}}),
 
-        // ── Editable: Address ──
-        sectionTitle("COMPANY ADDRESS — SHOWN ON PDFs"),
-        h("textarea",{
-          value:orgAddr,
-          onChange:function(e){setOrgAddr(e.target.value);},
-          placeholder:"e.g. 123, Anna Salai, Chennai - 600002, Tamil Nadu",
-          rows:3,
-          style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"none",marginBottom:14,boxSizing:"border-box"}
-        }),
+        !settReviewMode?h("div",null,
+          // ── Editable: Address ──
+          sectionTitle("COMPANY ADDRESS — SHOWN ON PDFs"),
+          h("textarea",{
+            value:orgAddr,
+            onChange:function(e){setOrgAddr(e.target.value);},
+            placeholder:"e.g. 123, Anna Salai, Chennai - 600002, Tamil Nadu",
+            rows:3,
+            style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"none",marginBottom:14,boxSizing:"border-box"}
+          }),
 
-        // ── Editable: Logo ──
-        sectionTitle("COMPANY LOGO — SHOWN ON PDFs"),
-        h("div",{style:{display:"flex",gap:12,alignItems:"center",marginBottom:16}},
-          orgLogo
-            ?h("img",{src:orgLogo,style:{width:64,height:64,borderRadius:10,objectFit:"contain",border:"1.5px solid "+BDR,background:"#fff",padding:4,flexShrink:0}})
-            :h("div",{style:{width:64,height:64,borderRadius:10,border:"1.5px dashed "+BDR,background:SFT,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,flexShrink:0}},
-              ic("add",GRY,18),
-              h("div",{style:{fontSize:9,color:GRY,textAlign:"center"}},"No logo")
-            ),
-          h("div",{style:{flex:1}},
-            h("label",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:SFT,border:"1.5px solid "+BDR,borderRadius:9,padding:"9px 14px",fontSize:12,fontWeight:600,color:NVY,cursor:"pointer",marginBottom:7}},
-              ic("upload",NVY,14),"Upload Logo",
-              h("input",{type:"file",accept:"image/*",style:{display:"none"},onChange:function(e){
-                var file=e.target.files[0];if(!file)return;
-                if(file.size>500000){showT("Logo too large. Use max 500KB.","err");return;}
-                var reader=new FileReader();
-                reader.onload=function(ev){setOrgLogo(ev.target.result);};
-                reader.readAsDataURL(file);
-              }})
-            ),
+          // ── Editable: Logo ──
+          sectionTitle("COMPANY LOGO — SHOWN ON PDFs"),
+          h("div",{style:{display:"flex",gap:12,alignItems:"center",marginBottom:16}},
             orgLogo
-              ?h("button",{onClick:function(){setOrgLogo("");},style:{display:"flex",alignItems:"center",gap:4,background:"none",border:"none",fontSize:11,color:RED,cursor:"pointer",padding:0,marginBottom:4}},ic("delete",RED,12),"Remove logo")
-              :null,
-            h("div",{style:{fontSize:10,color:GRY}},"PNG or JPG · Max 500 KB")
-          )
-        ),
+              ?h("img",{src:orgLogo,style:{width:64,height:64,borderRadius:10,objectFit:"contain",border:"1.5px solid "+BDR,background:"#fff",padding:4,flexShrink:0}})
+              :h("div",{style:{width:64,height:64,borderRadius:10,border:"1.5px dashed "+BDR,background:SFT,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:3,flexShrink:0}},
+                ic("add",GRY,18),
+                h("div",{style:{fontSize:9,color:GRY,textAlign:"center"}},"No logo")
+              ),
+            h("div",{style:{flex:1}},
+              h("label",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:SFT,border:"1.5px solid "+BDR,borderRadius:9,padding:"9px 14px",fontSize:12,fontWeight:600,color:NVY,cursor:"pointer",marginBottom:7}},
+                ic("upload",NVY,14),"Upload Logo",
+                h("input",{type:"file",accept:"image/*",style:{display:"none"},onChange:function(e){
+                  var file=e.target.files[0];if(!file)return;
+                  if(file.size>500000){showT("Logo too large. Use max 500KB.","err");return;}
+                  var reader=new FileReader();
+                  reader.onload=function(ev){setOrgLogo(ev.target.result);};
+                  reader.readAsDataURL(file);
+                }})
+              ),
+              orgLogo
+                ?h("button",{onClick:function(){setOrgLogo("");},style:{display:"flex",alignItems:"center",gap:4,background:"none",border:"none",fontSize:11,color:RED,cursor:"pointer",padding:0,marginBottom:4}},ic("delete",RED,12),"Remove logo")
+                :null,
+              h("div",{style:{fontSize:10,color:GRY}},"PNG or JPG · Max 500 KB")
+            )
+          ),
 
-        // ── Save button ──
-        sectionTitle("CONTACT DETAILS — SHOWN ON PDFs"),
-        h("input",{type:"tel",value:orgPhone,onChange:function(e){setOrgPhone(e.target.value);},placeholder:"e.g. +91 98765 43210",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
-        h("input",{type:"url",value:orgWebsite,onChange:function(e){setOrgWebsite(e.target.value);},placeholder:"e.g. www.yourcompany.com",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:14,boxSizing:"border-box"}}),
-        h("button",{onClick:function(){
-          var updated=Object.assign({},org,{address:orgAddr,logo:orgLogo,phone:orgPhone,website:orgWebsite});
-          setOrg(updated);
-          lsSet("hr_org_"+(gUser?gUser.email:""),updated);
-          _sb.from("user_orgs").upsert({
-            email:gUser?gUser.email:"",
-            org_name:org.name,
-            org_type:org.type,
-            position:org.position,
-            address:orgAddr,
-            logo_base64:orgLogo,
-            phone:orgPhone,
-            website:orgWebsite
-          },{onConflict:"email"}).then(function(){showT("Company details saved!");});
-        },style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"12px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}},
-          ic("save",CARD,16),"Save Company Details")
+          // ── Editable: Contact details ──
+          sectionTitle("CONTACT DETAILS — SHOWN ON PDFs"),
+          h("input",{type:"tel",value:orgPhone,onChange:function(e){setOrgPhone(e.target.value);},placeholder:"e.g. +91 98765 43210",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
+          h("input",{type:"url",value:orgWebsite,onChange:function(e){setOrgWebsite(e.target.value);},placeholder:"e.g. www.yourcompany.com",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
+          h("input",{type:"email",value:orgContactEmail,onChange:function(e){setOrgContactEmail(e.target.value);},placeholder:"e.g. contact@yourcompany.com",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:14,boxSizing:"border-box"}}),
+          h("button",{onClick:function(){
+            if(!orgAddr.trim()&&!orgPhone.trim()&&!orgWebsite.trim()&&!orgContactEmail.trim()&&!orgLogo){return showT("Enter at least one detail","err");}
+            setSettReviewMode(true);
+          },style:{width:"100%",background:NVY,border:"none",borderRadius:10,padding:"12px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7}},
+            ic("fact_check",CARD,16),"Review & Save")
+        ):h("div",null,
+          // ── Review step — make sure everything looks right before it goes on every PDF ──
+          sectionTitle("REVIEW BEFORE SAVING"),
+          h("div",{style:{fontSize:11,color:GRY,marginBottom:10}},"These details appear on every payslip, report and letter you download. Please check them carefully."),
+          h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:12,padding:14,marginBottom:14}},
+            h("div",{style:{display:"flex",gap:12,alignItems:"center",marginBottom:12,paddingBottom:12,borderBottom:"1px solid "+BDR}},
+              orgLogo?h("img",{src:orgLogo,style:{width:48,height:48,borderRadius:9,objectFit:"contain",border:"1px solid "+BDR,background:"#fff",padding:3,flexShrink:0}}):h("div",{style:{width:48,height:48,borderRadius:9,border:"1.5px dashed "+BDR,background:CARD,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("business",GRY,18)),
+              h("div",{style:{flex:1,minWidth:0}},
+                h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},org.name||"—"),
+                h("div",{style:{fontSize:10,color:GRY}},orgLogo?"Logo set":"No logo uploaded")
+              )
+            ),
+            [["Address",orgAddr],["Phone",orgPhone],["Website",orgWebsite],["Email",orgContactEmail]].map(function(row){
+              return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:10,padding:"6px 0",fontSize:12}},
+                h("div",{style:{color:GRY,flexShrink:0}},row[0]),
+                h("div",{style:{color:row[1]?NVY:GRY,fontWeight:row[1]?600:400,textAlign:"right"}},row[1]||"Not set")
+              );
+            })
+          ),
+          h("div",{style:{display:"flex",gap:8}},
+            h("button",{onClick:function(){setSettReviewMode(false);},style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"12px",color:NVY,fontSize:13,fontWeight:700,cursor:"pointer"}},"Back to Edit"),
+            h("button",{onClick:function(){
+              var updated=Object.assign({},org,{address:orgAddr,logo:orgLogo,phone:orgPhone,website:orgWebsite,contactEmail:orgContactEmail});
+              setOrg(updated);
+              lsSet("hr_org_"+(gUser?gUser.email:""),updated);
+              _sb.from("user_orgs").upsert({
+                email:gUser?gUser.email:"",
+                org_name:org.name,
+                org_type:org.type,
+                position:org.position,
+                address:orgAddr,
+                logo_base64:orgLogo,
+                phone:orgPhone,
+                website:orgWebsite,
+                contact_email:orgContactEmail
+              },{onConflict:"email"}).then(function(res){
+                if(res&&res.error){showT("Could not save — please try again","err");return;}
+                setSettReviewMode(false);
+                showT("Company details saved!");
+              }).catch(function(){showT("Could not save — check your connection","err");});
+            },style:{flex:1,background:NVY,border:"none",borderRadius:10,padding:"12px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6}},ic("check",CARD,15),"Confirm & Save")
+          )
+        )
       ))
     ):null;
 
@@ -5186,7 +5257,7 @@ null
                 h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Monthly compliance report")
               )
             ),
-            h("button",{onClick:isPaid?function(){makePFESIPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");}:needPaid,
+            h("button",{onClick:isPaid?function(){makePFESIPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}:needPaid,
               style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
               ic(isPaid?ICONS.dl:"lock","#fff",12),isPaid?"PDF":"Paid")
           ),
@@ -5199,7 +5270,7 @@ null
                 h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Payment of Wages Act format")
               )
             ),
-            h("button",{onClick:isPaid?function(){try{makeSalaryRegisterPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,
+            h("button",{onClick:isPaid?function(){try{makeSalaryRegisterPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,
               style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
               ic(isPaid?ICONS.dl:"lock","#fff",12),isPaid?"PDF":"Paid")
           ),
@@ -5233,7 +5304,7 @@ null
               )
             ),
             h("div",{style:{display:"flex",gap:5}},
-              h("button",{onClick:isPaid?function(){try{makeEmpPDF(emps,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,
+              h("button",{onClick:isPaid?function(){try{makeEmpPDF(emps,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,
                 style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
                 ic(isPaid?ICONS.dl:"lock","#fff",12),"PDF"),
               h("button",{onClick:isPaid?function(){makeEmpCSV(emps);}:needPaid,
@@ -5402,7 +5473,7 @@ null
       ]).then(function(){
         // Now load employer's data so employee dashboard has everything
         return Promise.all([
-          _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website").eq("email",inviteData.employerEmail).maybeSingle(),
+          _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email").eq("email",inviteData.employerEmail).maybeSingle(),
           _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",inviteData.employerEmail).maybeSingle(),
           _sb.from("user_plans").select("plan,emp_limit").eq("email",inviteData.employerEmail).maybeSingle()
         ]).then(function(empResults){
@@ -5421,6 +5492,7 @@ null
             logo:(empOrg&&empOrg.logo_base64)||"",
             address:(empOrg&&empOrg.address)||"",
             phone:(empOrg&&empOrg.phone)||"",
+            contactEmail:(empOrg&&empOrg.contact_email)||"",
             website:(empOrg&&empOrg.website)||"",
             email:inviteData.employerEmail,
             plan:(empPlan&&empPlan.plan)||"free",
@@ -8237,7 +8309,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             pastYears().map(function(y){return h("option",{key:y,value:y},y);})
           )
         ),
-        h("button",{onClick:function(){setShowPFDl(false);makePFESIPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");},style:{width:"100%",background:"#4F46E5",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        h("button",{onClick:function(){setShowPFDl(false);makePFESIPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{width:"100%",background:"#4F46E5",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download PF/ESI Report")
       )
     );
@@ -8260,7 +8332,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             pastYears().map(function(y){return h("option",{key:y,value:y},y);})
           )
         ),
-        h("button",{onClick:function(){setShowSalRegDl(false);makeSalaryRegisterPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"");},style:{width:"100%",background:"#059669",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        h("button",{onClick:function(){setShowSalRegDl(false);makeSalaryRegisterPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{width:"100%",background:"#059669",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download Salary Register")
       )
     );
@@ -8328,7 +8400,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         ),
         h("button",{onClick:function(){
           setShowPayDl(false);
-          makePayrollPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.email,org.position,LOGO_SRC,payDlType==="er",org.address||"",org.logo||"",authPos,authSign);
+          makePayrollPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,payDlType==="er",org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);
         },style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download PDF")
       )
@@ -8363,9 +8435,9 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         h("button",{onClick:function(){
           setShowAttDl(false);
           if(attDlAll){
-            try{makeAttSummaryYearPDF(actEmps,att,attDlY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}
+            try{makeAttSummaryYearPDF(actEmps,att,attDlY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}catch(ex){showT("PDF error: "+ex.message,"err");}
           } else {
-            try{makeAttSummaryPDF(actEmps,att,attDlM,attDlY,org.name,org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}
+            try{makeAttSummaryPDF(actEmps,att,attDlM,attDlY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}catch(ex){showT("PDF error: "+ex.message,"err");}
           }
         },style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download PDF")
