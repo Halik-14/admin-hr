@@ -2558,13 +2558,17 @@ export default function App(){
     // Note: phones don't allow a website to pre-pick a WhatsApp contact when attaching a real file,
     // so to jump straight to the chat we send text only — the PDF downloads separately for you to attach.
     var mName=MOS[m2]+" "+y;
-    var text="Hi "+emp.name+",\n\nPlease find your payslip for "+mName+".\n\nNet Pay: "+fmt(d.net)+"\n\nRegards,\n"+(org.name||"HR Team");
+    var text="*"+(org.name||"Payslip")+"*\n"+
+      "Hi "+emp.name+", your payslip for "+mName+" is ready.\n\n"+
+      "Net Pay: "+fmt(d.net)+"\n\n"+
+      "📎 The PDF has been downloaded to this device — please attach it above before sending.\n\n"+
+      "Regards,\n"+(org.name||"HR Team");
     var fileName="Payslip_"+emp.name.replace(/\s+/g,"_")+"_"+MOS[m2]+"_"+y+".pdf";
     if(!emp.mob){showT("No mobile number saved for "+emp.name,"err");return;}
     makePayslipPDF(emp,d,m2,y,org.name,org.contactEmail||org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,function(doc){
       try{
         doc.save(fileName);
-        window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text+"\n\n(Payslip PDF downloaded — please attach it in this chat.)"),"_blank");
+        window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text),"_blank");
         showT("PDF downloaded. Attach it in WhatsApp.");
       }catch(e){showT("Could not share payslip","err");}
     },getEmpBonusesWithOT(emp.id,m2,y),getEmpClaimTotal(emp.id,m2,y),org.phone,org.website);
@@ -2615,8 +2619,15 @@ export default function App(){
     if(!isPaid){showT("WhatsApp share is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}
     if(!emp.mob){showT("No mobile number saved","err");return;}
     var ma=mAtt(emp.id,attY,attM);
-    var text=(org.name||"")+(org.name?" - Attendance Report\n":"")+emp.name+" | "+MOS[attM]+" "+attY+"\n\nPresent: "+ma.present+" days\nAbsent: "+ma.absent+" days\nHalf Day: "+ma.half+" days\nPaid Leave: "+ma.paidLeave+" days\nUnpaid: "+ma.unpaid+" days\n\nGenerated via Admin HR app";
-    window.open("https://wa.me/91"+emp.mob+"?text="+encodeURIComponent(text),"_blank");
+    var text="*"+(org.name||"Attendance Report")+"*\n"+emp.name+" — "+MOS[attM]+" "+attY+"\n\n"+
+      "Present: "+ma.present+" days\n"+
+      "Absent: "+ma.absent+" days\n"+
+      "Half Day: "+ma.half+" days\n"+
+      "Paid Leave: "+ma.paid+" days\n"+
+      "Unpaid Leave: "+ma.unpaid+" days\n"+
+      "Holiday: "+ma.holiday+" days\n\n"+
+      "Generated via Admin HR";
+    window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text),"_blank");
   }
 
   var timeStr=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
@@ -4818,12 +4829,11 @@ null
               )
             ),
             h("div",{style:{display:"flex",gap:5,marginBottom:6}},
-              isPaid?h("div",{style:{display:"flex",gap:5,flex:1}},
-                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"),
-                    h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er")
-                  ):h("button",{onClick:needPaid,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"),
-              h("button",{onClick:function(){if(!isPaid){showT("WhatsApp share is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for WhatsApp payslip sharing"),"_blank");return;}sharePayslip(e,d,payM,payY);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.wa:"lock",isPaid?"#25D366":GRY,13),"WhatsApp"),
-              h("button",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:isO?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px",color:isO?ACCENT_FG:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isO?"expand_less":"expand_more",isO?CARD:NVY,13),isO?"Hide":"Details")
+              isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"):null,
+              isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er"):null,
+              !isPaid?h("button",{onClick:needPaid,style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"):null,
+              h("button",{onClick:function(){if(!isPaid){showT("WhatsApp share is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for WhatsApp payslip sharing"),"_blank");return;}sharePayslip(e,d,payM,payY);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.wa:"lock",isPaid?"#25D366":GRY,13),"WhatsApp"),
+              h("button",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:isO?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:isO?ACCENT_FG:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isO?"expand_less":"expand_more",isO?CARD:NVY,13),isO?"Hide":"Details")
             ),
             isO?h("div",{style:{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:"12px",border:"1px solid "+BDR,marginTop:4}},
               lbl("INCENTIVE (Rs.)"),
