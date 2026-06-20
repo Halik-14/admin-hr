@@ -2554,9 +2554,8 @@ export default function App(){
   function removeEmp(id){setEmps(function(p){return p.filter(function(e){return e.id!==id;});});showT("Deleted.");}
 
   function sharePayslip(emp,d,m2,y){
-    // Goes straight to the employee's WhatsApp chat (like Attendance share).
-    // Note: phones don't allow a website to pre-pick a WhatsApp contact when attaching a real file,
-    // so to jump straight to the chat we send text only — the PDF downloads separately for you to attach.
+    // Just redirects to the employee's WhatsApp chat with the payslip summary text.
+    // No PDF download — use the "Download Payslip" action separately if a PDF is needed.
     var mName=MOS[m2]+" "+y;
     var totalDed=(d.ad||0)+(d.hd||0)+(d.ud||0)+(d.pfE||0)+(d.esiE||0)+(d.pt||0)+(d.tds||0)+(d.hi||0)+(d.cd||0);
     var text="*Payslip Summary*\n"+
@@ -2572,15 +2571,8 @@ export default function App(){
       "Thank you for your work and dedication.\n"+
       "Any clarification feel free to ask.\n\n"+
       "Regards,\n"+(org.name||"HR Team");
-    var fileName="Payslip_"+emp.name.replace(/\s+/g,"_")+"_"+MOS[m2]+"_"+y+".pdf";
     if(!emp.mob){showT("No mobile number saved for "+emp.name,"err");return;}
-    makePayslipPDF(emp,d,m2,y,org.name,org.contactEmail||org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,function(doc){
-      try{
-        doc.save(fileName);
-        window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text),"_blank");
-        showT("PDF downloaded. Attach it in WhatsApp.");
-      }catch(e){showT("Could not share payslip","err");}
-    },getEmpBonusesWithOT(emp.id,m2,y),getEmpClaimTotal(emp.id,m2,y),org.phone,org.website);
+    window.open("https://wa.me/"+waNum(emp)+"?text="+encodeURIComponent(text),"_blank");
   }
 
 
