@@ -741,7 +741,7 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     if(typeof onDoc==="function"){onDoc(doc);}else{downloadPDF(doc.output("blob"),"Payslip-"+(emp.name||"").replace(/ /g,"-")+suffix+"-"+MOS[m]+"-"+y+".pdf");}
   },function(){alert("PDF library failed to load.");});
 }
-function makePayrollPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
+function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=12;
@@ -776,7 +776,7 @@ function makePayrollPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,sh
     var tG=0,tN=0,tD=0,tPR=0,tER=0;
 
     emps.forEach(function(emp){
-      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(getEffectiveEmp(emp,y,m),ma.absent,ma.half,ma.unpaid,inc,0);
+      var mp=payFn(emp,y,m),d=mp.d;
       var ded=d.gr-d.net;
       tG+=d.gr;tN+=d.net;tD+=ded;tPR+=d.pfR;tER+=d.esiR;
       if(showEmployer){
@@ -1116,7 +1116,7 @@ function checkMinWage(salary,state,category){
 }
 
 // ── PF/ESI SUMMARY PDF ───────────────────────────────────────────────────
-function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
+function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=12,cw=W-mg*2;
@@ -1156,7 +1156,7 @@ function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgA
     var totGross=0,totPFW=0,totEmpPF=0,totErPF=0,totEmpESI=0,totErESI=0,totAll=0;
 
     eligible.forEach(function(emp){
-      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),prSR=empActiveRangeInMonth(emp,y,m),effEmp=getEffectiveEmp(emp,y,m),d=(prSR.notYetJoined||prSR.alreadyLeft)?calcPay(effEmp,0,0,0,0,0,(ma.present+(ma.half*0.5)+ma.paid+ma.holiday)||1,0,1):calcPay(effEmp,ma.absent,ma.half,ma.unpaid,inc,0,(ma.present+(ma.half*0.5)+ma.paid+ma.holiday)||1,prSR.activeDays,prSR.fullDays);
+      var mp=payFn(emp,y,m),d=mp.d;
       var pfWage=emp.pfMode==="actual"?d.eb:Math.min(d.eb,15000);
       var total=d.pfE+d.pfR+(d.esiE||0)+(d.esiR||0);
       totGross+=d.gr;totPFW+=pfWage;totEmpPF+=d.pfE;totErPF+=d.pfR;
@@ -1213,7 +1213,7 @@ function makePFESIPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgA
 
 
 // ── ECR FILE GENERATOR (EPFO ECR 2.0 format) ─────────────────────────────
-function generateECR(emps,m,y,mAttFn,incFn){
+function generateECR(emps,m,y,payFn){
   // ECR 2.0 format: UAN#MEMBER_NAME#GROSS_WAGES#EPF_WAGES#EPS_WAGES#EDLI_WAGES#EPF_CONTRI#EPS_CONTRI#EPF_EPS_DIFF_REMITTED#NCP_DAYS#REFUNDS
   var eligible=emps.filter(function(e){return e.status==="active"&&e.pf&&e.uan;});
   if(eligible.length===0){
@@ -1222,7 +1222,7 @@ function generateECR(emps,m,y,mAttFn,incFn){
   }
   var lines=["#~#"];
   eligible.forEach(function(emp){
-    var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(getEffectiveEmp(emp,y,m),ma.absent,ma.half,ma.unpaid,inc,0);
+    var mp=payFn(emp,y,m),d=mp.d,ma=mp.ma;
     var pfWage=emp.pfMode==="actual"?d.eb:Math.min(d.eb,15000);
     var epsWage=Math.min(pfWage,15000);
     var epfContri=d.pfE;
@@ -1254,7 +1254,7 @@ function generateECR(emps,m,y,mAttFn,incFn){
 }
 
 // ── SALARY REGISTER PDF (Statutory format) ────────────────────────────────
-function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
+function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
     var W=297,H=210,mg=10;
@@ -1294,14 +1294,14 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
     var totW=0,totD=0,totB=0,totH=0,totA=0,totG=0,totPF=0,totESI=0,totPT=0,totTDS=0,totDed=0,totNet=0;
 
     emps.filter(function(e){return e.status==="active";}).forEach(function(emp,ei){
-      var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(getEffectiveEmp(emp,y,m),ma.absent,ma.half,ma.unpaid,inc,0);
+      var mp=payFn(emp,y,m),d=mp.d,ma=mp.ma;
       // Days Worked = physically present (excludes leave, includes holiday if worked)
       var daysWork=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.holiday||0));
       // Days Paid = entitled to pay (present + half + paid leave + holiday)
       var daysPaid=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.paid||0)+(ma.holiday||0));
       var totalDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd+d.ad+d.hd+d.ud;
-      totW+=daysWork;totD+=daysPaid;totB+=d.eb;totH+=(emp.hra||0);
-      totA+=(emp.allow||0);totG+=d.gr;totPF+=d.pfE;totESI+=d.esiE;
+      totW+=daysWork;totD+=daysPaid;totB+=d.eb;totH+=d.hra;
+      totA+=d.allow;totG+=d.gr;totPF+=d.pfE;totESI+=d.esiE;
       totPT+=d.pt;totTDS+=d.tds;totDed+=totalDed;totNet+=d.net;
       rows.push([
         {val:ei+1,color:[120,130,145]},
@@ -1311,8 +1311,8 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
         {val:daysWork},
         {val:daysPaid},
         {val:fmtIN(d.eb),color:[60,80,180]},
-        {val:fmtIN(emp.hra||0)},
-        {val:fmtIN(emp.allow||0)},
+        {val:fmtIN(d.hra)},
+        {val:fmtIN(d.allow)},
         {val:fmtIN(d.gr),bold:true},
         {val:d.pfE>0?fmtIN(d.pfE):"-",color:[70,100,200]},
         {val:d.esiE>0?fmtIN(d.esiE):"-",color:[5,140,90]},
@@ -1362,10 +1362,10 @@ function makeSalaryRegisterPDF(emps,m,y,mAttFn,incFn,orgName,orgEmail,orgPos,log
 }
 
 
-function makePayrollCSV(emps,m,y,mAttFn,incFn){
+function makePayrollCSV(emps,m,y,payFn){
   var header=["Name","Dept","Gross","Absent Ded","Half Ded","Unpaid Ded","PF Emp","ESI Emp","Prof Tax","TDS","Health Ins","Custom","Net Pay","Er PF","Er ESI","Total CTC"];
   var rows=emps.map(function(emp){
-    var ma=mAttFn(emp.id,y,m),inc=incFn(emp.id,y,m),d=calcPay(getEffectiveEmp(emp,y,m),ma.absent,ma.half,ma.unpaid,inc);
+    var d=payFn(emp,y,m).d;
     return [emp.name,emp.dept||"",d.gr,d.ad,d.hd,d.ud,d.pfE,d.esiE,d.pt,d.tds,d.hi,d.cd,d.net,d.pfR,d.esiR,d.gr+d.pfR+d.esiR];
   });
   var csv=[header].concat(rows).map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
@@ -1651,6 +1651,7 @@ export default function App(){
   var sAttStatsOpen=st(false),attStatsOpen=sAttStatsOpen[0],setAttStatsOpen=sAttStatsOpen[1];
   var sAttSortDept=st(true),attSortDept=sAttSortDept[0],setAttSortDept=sAttSortDept[1]; // default ON — group attendance list by department A-Z
   var sPaySortDept=st(true),paySortDept=sPaySortDept[0],setPaySortDept=sPaySortDept[1]; // default ON — group payroll list by department A-Z
+  var sDeptExpEmp=st(null),deptExpEmp=sDeptExpEmp[0],setDeptExpEmp=sDeptExpEmp[1]; // which employee's row is expanded inside the Payroll Dept tab
   var sBonuses=st([]),bonuses=sBonuses[0],setBonuses=sBonuses[1];
   var sShowBonusForm=st(false),showBonusForm=sShowBonusForm[0],setShowBonusForm=sShowBonusForm[1];
   var sBonusEmpId=st(""),bonusEmpId=sBonusEmpId[0],setBonusEmpId=sBonusEmpId[1];
@@ -2198,8 +2199,8 @@ export default function App(){
       return sorted.slice(0,lim);
     })();
   var trmEmps=emps.filter(function(e){return e.status==="terminated"||e.status==="resigned";});
-  var tGross=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(getEffectiveEmp(e,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).gr;},0);
-  var tNet=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM);return a+calcPay(getEffectiveEmp(e,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM)).net+getExtraPay(e.id,curM,curY);},0);
+  var tGross=actEmps.reduce(function(a,e){var mp=getMonthPay(e,curY,curM);return mp.isActive?a+mp.d.gr:a;},0);
+  var tNet=actEmps.reduce(function(a,e){var mp=getMonthPay(e,curY,curM);return mp.isActive?a+mp.netFinal:a;},0);
 
   function addOTEntry(emp,m2,y){
     // Determine the day from date mode (today or picked date)
@@ -2669,6 +2670,32 @@ export default function App(){
     if(!newCtc)return emp;
     var bd=brkSal(newCtc);
     return Object.assign({},emp,{monthlyCTC:newCtc,basic:bd.basic,hra:bd.hra,allow:bd.allow});
+  }
+  // ── SINGLE SOURCE OF TRUTH for an employee's full pay breakdown in a given month ──
+  // Every screen (Dashboard, Payroll's 4 tabs, PDFs, exports) should call this instead of
+  // re-deriving mAtt/getInc/getWorkingDays/proRata/calcPay by hand — that hand-copying is
+  // exactly how Dashboard vs Payroll vs Dept tab ended up disagreeing on the same employee's pay.
+  function getMonthPay(emp,y,m){
+    var pr=proRata(emp,y,m);
+    var eEff=getEffectiveEmp(emp,y,m);
+    var ma=mAtt(emp.id,y,m);
+    var inc=getInc(emp.id,y,m);
+    var wD=getWorkingDays(att,emp.id,y,m);
+    var shiftAllow=getShiftAllow(emp.id,y,m);
+    var notActive=pr.notYetJoined||pr.alreadyLeft;
+    var d=notActive?calcPay(eEff,0,0,0,0,0,wD,0,1):calcPay(eEff,ma.absent,ma.half,ma.unpaid,inc,shiftAllow,wD,pr.active,pr.total);
+    var bonusTotal=(bonuses||[]).filter(function(b){return b.employeeId===String(emp.id)&&b.payMonth===m&&b.payYear===y;}).reduce(function(s,b){return s+(b.amount||0);},0);
+    var claimTotal=(claims||[]).filter(function(c){return c.employeeId===String(emp.id)&&c.status==="approved"&&c.month===m&&c.year===y;}).reduce(function(s,c){return s+(c.amount||0);},0);
+    var otTotal=getOTAmount(emp.id,m,y);
+    var loanDed=(loans||[]).filter(function(l){return (l.employeeId===String(emp.id)||l.employee_id===String(emp.id))&&l.status==="active";}).reduce(function(s,l){return s+(l.emi||l.monthlyDeduction||0);},0);
+    var extraPay=bonusTotal+claimTotal+otTotal;
+    var attDed=d.ad+d.hd+d.ud;
+    var statDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;
+    var totalDed=attDed+statDed;
+    var netFinal=Math.max(0,d.net+extraPay-loanDed); // the ONE true take-home figure — use this everywhere "net pay" is shown
+    return {emp:emp,eEff:eEff,ma:ma,inc:inc,wD:wD,shiftAllow:shiftAllow,pr:pr,d:d,isActive:!notActive,
+      bonusTotal:bonusTotal,claimTotal:claimTotal,otTotal:otTotal,loanDed:loanDed,extraPay:extraPay,
+      attDed:attDed,statDed:statDed,totalDed:totalDed,netFinal:netFinal};
   }
   var darkGrad="linear-gradient(155deg,#0F172A 0%,#1E1B4B 55%,#312E81 100%)";
 
@@ -4731,17 +4758,18 @@ null
   function renderPayroll(){
     var depts=[""].concat(getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}));
     var filtEmpsRaw=payFilt==="dept"&&payDept?actEmpsForPayroll.filter(function(e){return e.dept===payDept;}):actEmpsForPayroll;
-    var filtEmps=filtEmpsRaw.filter(function(e){var pr=proRata(e,payY,payM);return !pr.notYetJoined&&!pr.alreadyLeft;});
+    // One pay computation per employee — every number on this page derives from this single array,
+    // so Gross/Absent/Tax/Bonus/Loan/Net are guaranteed to add up exactly (no separately-recalculated figures to drift apart).
+    var filtPayData=filtEmpsRaw.map(function(e){return getMonthPay(e,payY,payM);});
+    var filtActivePD=filtPayData.filter(function(mp){return mp.isActive;});
+    var filtEmps=filtActivePD.map(function(mp){return mp.emp;});
     var hiddenCount=filtEmpsRaw.length-filtEmps.length;
-    var filtGross=filtEmps.reduce(function(a,e){
-      var isFixed=e.salaryType==="fixed";
-      var eEff=getEffectiveEmp(e,payY,payM); // use salary-revision-aware figures for the month
-      return a+(isFixed?Number(eEff.fixedSalary||eEff.monthlyCTC||0):(eEff.basic||0)+(eEff.hra||0)+(eEff.allow||0));
-    },0);
-    var filtAttDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return a+d.ad+d.hd+d.ud;},0);
-    var filtTaxDed=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return a+d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;},0);
-    var filtNet=filtEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM);return a+calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total).net+getExtraPay(e.id,payM,payY);},0);
-    var filtBonus=filtEmps.reduce(function(a,e){return a+getExtraPay(e.id,payM,payY);},0);
+    var filtGross=filtActivePD.reduce(function(a,mp){return a+mp.d.basic+mp.d.hra+mp.d.allow+mp.d.inc+mp.d.shiftAllow;},0); // full entitlement for active days, before absent/half-day deduction
+    var filtAttDed=filtActivePD.reduce(function(a,mp){return a+mp.attDed;},0);
+    var filtTaxDed=filtActivePD.reduce(function(a,mp){return a+mp.statDed;},0);
+    var filtBonus=filtActivePD.reduce(function(a,mp){return a+mp.extraPay;},0); // bonus + reimbursement + OT
+    var filtLoanDed=filtActivePD.reduce(function(a,mp){return a+mp.loanDed;},0);
+    var filtNet=filtActivePD.reduce(function(a,mp){return a+mp.netFinal;},0);
     var filtDed=filtGross-filtNet;
     return h("div",{className:"fd"},
       h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
@@ -4755,33 +4783,43 @@ null
       // ── Summary card — 3-part formula, dark mode safe ──
       h("div",{style:{background:"#242323",borderRadius:18,padding:"16px",marginBottom:11,boxShadow:"0 4px 24px rgba(0,0,0,.4)",border:"1px solid rgba(255,255,255,.06)"}},
         h("div",{style:{fontSize:11,color:"rgba(255,255,255,.5)",marginBottom:10,letterSpacing:.3}},MOS[payM]+" "+payY+" • "+filtEmps.length+" Employee"+(filtEmps.length===1?"":"s")+(hiddenCount>0?" • "+hiddenCount+" not in this period":"")),
-        // 3-part formula row
-        h("div",{style:{display:"flex",alignItems:"center",gap:filtBonus>0?4:8,marginBottom:14}},
-          h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
-            h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"GROSS"),
-            h("div",{style:{fontSize:filtBonus>0?11:14,fontWeight:800,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtGross))
-          ),
-          h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:filtBonus>0?14:18,fontWeight:300,flexShrink:0}},"−"),
-          h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
-            h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"ABSENT"),
-            h("div",{style:{fontSize:filtBonus>0?11:14,fontWeight:800,color:"#FCA5A5",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},filtAttDed>0?fmt(filtAttDed):"Nil")
-          ),
-          h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:filtBonus>0?14:18,fontWeight:300,flexShrink:0}},"−"),
-          h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
-            h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"TAX/DED"),
-            h("div",{style:{fontSize:filtBonus>0?11:14,fontWeight:800,color:"#FCA5A5",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},filtTaxDed>0?fmt(filtTaxDed):"Nil")
-          ),
-          filtBonus>0?h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:14,fontWeight:300,flexShrink:0}},"+"):null,
-          filtBonus>0?h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
-            h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"BONUS"),
-            h("div",{style:{fontSize:11,fontWeight:800,color:"#FCD34D",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtBonus))
-          ):null,
-          h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:filtBonus>0?14:18,fontWeight:300,flexShrink:0}},"="),
-          h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
-            h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"NET PAY"),
-            h("div",{style:{fontSize:filtBonus>0?11:14,fontWeight:800,color:"#4ADE80",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtNet))
-          )
-        ),
+        // formula row — every term here is pulled from the same getMonthPay() data, so it always reconciles to NET PAY exactly
+        (function(){
+          var extraItems=(filtBonus>0?1:0)+(filtLoanDed>0?1:0);
+          var tight=extraItems>0;
+          var fs=extraItems>=2?9.5:tight?11:14;
+          return h("div",{style:{display:"flex",alignItems:"center",gap:tight?3:8,marginBottom:14,flexWrap:"wrap",rowGap:6}},
+            h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
+              h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"GROSS"),
+              h("div",{style:{fontSize:fs,fontWeight:800,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtGross))
+            ),
+            h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:tight?14:18,fontWeight:300,flexShrink:0}},"−"),
+            h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
+              h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"ABSENT"),
+              h("div",{style:{fontSize:fs,fontWeight:800,color:"#FCA5A5",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},filtAttDed>0?fmt(filtAttDed):"Nil")
+            ),
+            h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:tight?14:18,fontWeight:300,flexShrink:0}},"−"),
+            h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
+              h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"TAX/DED"),
+              h("div",{style:{fontSize:fs,fontWeight:800,color:"#FCA5A5",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},filtTaxDed>0?fmt(filtTaxDed):"Nil")
+            ),
+            filtLoanDed>0?h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:14,fontWeight:300,flexShrink:0}},"−"):null,
+            filtLoanDed>0?h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
+              h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"LOAN/EMI"),
+              h("div",{style:{fontSize:fs,fontWeight:800,color:"#FCA5A5",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtLoanDed))
+            ):null,
+            filtBonus>0?h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:14,fontWeight:300,flexShrink:0}},"+"):null,
+            filtBonus>0?h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
+              h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"BONUS"),
+              h("div",{style:{fontSize:fs,fontWeight:800,color:"#FCD34D",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtBonus))
+            ):null,
+            h("div",{style:{color:"rgba(255,255,255,.3)",fontSize:tight?14:18,fontWeight:300,flexShrink:0}},"="),
+            h("div",{style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
+              h("div",{style:{fontSize:8.5,fontWeight:700,color:"rgba(255,255,255,.4)",letterSpacing:.5,marginBottom:4}},"NET PAY"),
+              h("div",{style:{fontSize:fs,fontWeight:800,color:"#4ADE80",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(filtNet))
+            )
+          );
+        })(),
         h("div",{style:{height:1,background:"rgba(255,255,255,.08)",marginBottom:10}}),
         h("div",{style:{textAlign:"center"}},
           h("div",{style:{fontSize:10,color:"rgba(255,255,255,.35)",marginBottom:3}},"TOTAL TRANSFER THIS MONTH"),
@@ -4802,20 +4840,63 @@ null
           var deptList=payDept?[payDept]:getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
           return h("div",null,deptList.map(function(dept){
             var dEmps=actEmps.filter(function(e){return e.dept===dept;});
-            var dTot=dEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));var ex=getExtraPay(e.id,payM,payY);a.gr+=d2.gr+ex;a.net+=d2.net+ex;a.ded+=d2.gr-d2.net;return a;},{gr:0,net:0,ded:0});
+            var dPD=dEmps.map(function(e){return {emp:e,mp:getMonthPay(e,payY,payM)};}); // one computation per employee — same source as Employee tab
+            var dTot=dPD.reduce(function(a,x){a.gross+=x.mp.d.basic+x.mp.d.hra+x.mp.d.allow+x.mp.d.inc+x.mp.d.shiftAllow;a.attDed+=x.mp.attDed;a.statDed+=x.mp.statDed;a.bonus+=x.mp.extraPay;a.loan+=x.mp.loanDed;a.net+=x.mp.netFinal;return a;},{gross:0,attDed:0,statDed:0,bonus:0,loan:0,net:0});
+            var dDed=dTot.attDed+dTot.statDed+dTot.loan;
             return card(h("div",null,
               h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
                 h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},dept),
-                h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:13,fontWeight:800,color:GRN}},fmt(dTot.net)),h("div",{style:{fontSize:9,color:GRY}},dEmps.length+" employees"))
+                h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:13,fontWeight:800,color:GRN}},fmt(dTot.net)),h("div",{style:{fontSize:9,color:GRY}},dEmps.length+" employee"+(dEmps.length===1?"":"s")))
               ),
-              h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-                h("div",{style:{flex:1,minWidth:0,overflow:"hidden",background:ACCENT_SOFT,borderRadius:8,padding:"6px 10px"}},h("div",{style:{fontSize:10,color:GRY}},"Gross"),h("div",{style:{fontSize:12,fontWeight:700,color:NVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(dTot.gr))),
-                h("div",{style:{flex:1,minWidth:0,overflow:"hidden",background:RED+"12",borderRadius:8,padding:"6px 10px"}},h("div",{style:{fontSize:10,color:GRY}},"Deductions"),h("div",{style:{fontSize:12,fontWeight:700,color:RED,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(dTot.ded)))
+              h("div",{style:{display:"flex",gap:6,marginBottom:10}},
+                h("div",{style:{flex:1,minWidth:0,overflow:"hidden",background:ACCENT_SOFT,borderRadius:8,padding:"6px 8px"}},h("div",{style:{fontSize:9,color:GRY}},"Gross"),h("div",{style:{fontSize:11,fontWeight:700,color:NVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(dTot.gross))),
+                h("div",{style:{flex:1,minWidth:0,overflow:"hidden",background:RED+"12",borderRadius:8,padding:"6px 8px"}},h("div",{style:{fontSize:9,color:GRY}},"Deductions"),h("div",{style:{fontSize:11,fontWeight:700,color:RED,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(dDed))),
+                dTot.bonus>0?h("div",{style:{flex:1,minWidth:0,overflow:"hidden",background:AMB+"14",borderRadius:8,padding:"6px 8px"}},h("div",{style:{fontSize:9,color:GRY}},"Bonus"),h("div",{style:{fontSize:11,fontWeight:700,color:AMB,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(dTot.bonus))):null
               ),
-              dEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),d2=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM));return h("div",{key:e.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderTop:"1px solid "+BDR}},
-                h("div",{style:{display:"flex",alignItems:"center",gap:7}},av(e,28),h("div",null,h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},e.name),h("div",{style:{fontSize:9,color:GRY}},e.role))),
-                h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:11,fontWeight:700,color:GRN}},fmt(d2.net)),h("div",{style:{fontSize:9,color:RED}},"-"+fmt(d2.gr-d2.net)))
-              );})
+              dPD.map(function(x,i){
+                var e=x.emp,mp=x.mp,d2=mp.d,isOd=deptExpEmp===(dept+"_"+e.id);
+                return h("div",{key:e.id,style:{borderTop:"1px solid "+BDR}},
+                  h("div",{onClick:function(){setDeptExpEmp(isOd?null:(dept+"_"+e.id));},style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",cursor:"pointer"}},
+                    h("div",{style:{display:"flex",alignItems:"center",gap:7}},av(e,28),h("div",null,h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},e.name),h("div",{style:{fontSize:9,color:GRY}},e.role||(mp.isActive?"":"Not active this month")))),
+                    h("div",{style:{display:"flex",alignItems:"center",gap:4}},
+                      h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:11,fontWeight:700,color:GRN}},fmt(mp.netFinal)),h("div",{style:{fontSize:9,color:RED}},(mp.attDed+mp.statDed+mp.loanDed)>0?"-"+fmt(mp.attDed+mp.statDed+mp.loanDed):"No deductions")),
+                      ic(isOd?"expand_less":"expand_more",GRY,16)
+                    )
+                  ),
+                  isOd?h("div",{style:{background:"rgba(0,0,0,0.03)",borderRadius:10,padding:"10px",border:"1px solid "+BDR,marginBottom:8}},
+                    h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4}},"EARNINGS"),
+                    [
+                      d2.isFixed?["Fixed Salary",fmt(d2.basic),NVY]:["Basic",fmt(d2.basic),NVY],
+                      d2.isFixed?null:["HRA",fmt(d2.hra),NVY],
+                      d2.isFixed?null:["Allowances",fmt(d2.allow),NVY],
+                      d2.inc>0?["Incentive",fmt(d2.inc),"#059669"]:null,
+                      d2.shiftAllow>0?["Shift Allow.",fmt(d2.shiftAllow),TEL]:null,
+                      mp.attDed>0?["Absent/Half","-"+fmt(mp.attDed),AMB]:null,
+                    ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},item[0]),h("span",{style:{fontSize:10.5,fontWeight:600,color:item[2]}},item[1]));}),
+                    h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",marginBottom:6}},h("span",{style:{fontSize:10.5,fontWeight:600,color:NVY}},"Effective Gross"),h("span",{style:{fontSize:10.5,fontWeight:800,color:NVY}},fmt(d2.gr))),
+                    mp.statDed>0?h("div",null,
+                      h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4}},"DEDUCTIONS"),
+                      [
+                        d2.pfE>0?["PF (Emp 12%)","-"+fmt(d2.pfE),NVY]:null,
+                        d2.esiE>0?["ESI (Emp 0.75%)","-"+fmt(d2.esiE),TEL]:null,
+                        d2.pt>0?["Prof. Tax","-"+fmt(d2.pt),AMB]:null,
+                        d2.tds>0?["TDS","-"+fmt(d2.tds),RED]:null,
+                        d2.hi>0?["Health Ins.","-"+fmt(d2.hi),"#EC4899"]:null,
+                        d2.cd>0?["Other","-"+fmt(d2.cd),GRY]:null,
+                      ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},item[0]),h("span",{style:{fontSize:10.5,fontWeight:600,color:item[2]}},item[1]));}),
+                      h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",marginBottom:6}},h("span",{style:{fontSize:10.5,fontWeight:600,color:NVY}},"Total Deductions"),h("span",{style:{fontSize:10.5,fontWeight:800,color:RED}},"-"+fmt(mp.statDed)))
+                    ):null,
+                    mp.claimTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},"Reimbursement"),h("span",{style:{fontSize:10.5,fontWeight:600,color:"#10B981"}},"+"+fmt(mp.claimTotal))):null,
+                    mp.otTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},"Overtime"),h("span",{style:{fontSize:10.5,fontWeight:600,color:TEL}},"+"+fmt(mp.otTotal))):null,
+                    mp.bonusTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},"Bonus"),h("span",{style:{fontSize:10.5,fontWeight:600,color:AMB}},"+"+fmt(mp.bonusTotal))):null,
+                    mp.loanDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},"Loan/Advance EMI"),h("span",{style:{fontSize:10.5,fontWeight:600,color:RED}},"-"+fmt(mp.loanDed))):null,
+                    h("div",{style:{background:"#0F172A",borderRadius:9,padding:"8px 12px",display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}},
+                      h("span",{style:{fontSize:11,fontWeight:600,color:"rgba(255,255,255,.6)"}},"Net Take Home"),
+                      h("span",{style:{fontSize:14,fontWeight:800,color:"#4ADE80"}},fmt(mp.netFinal))
+                    )
+                  ):null
+                );
+              })
             ));
           }));
         })()
@@ -4839,13 +4920,11 @@ null
             }
           }
           var isFixed=e.salaryType==="fixed"; // declare here so it's in scope for Details section
-          var eEff=getEffectiveEmp(e,payY,payM); // salary-revision-aware employee for THIS month (display rows must use this, not raw e)
-          var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(eEff,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total),isO=editPayE&&editPayE.id===e.id;
-          var attDed=d.ad+d.hd+d.ud;
-          var statDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;
-          var totalDed=attDed+statDed;
-          var extraPay=getExtraPay(e.id,payM,payY);
-          var netWithExtra=d.net+extraPay;
+          var mp=getMonthPay(e,payY,payM);
+          var eEff=mp.eEff,d=mp.d,isO=editPayE&&editPayE.id===e.id;
+          var attDed=mp.attDed,statDed=mp.statDed,totalDed=mp.totalDed;
+          var extraPay=mp.extraPay;
+          var netWithExtra=mp.netFinal; // = gross − absent − stat.ded + bonus/claim/OT − loan EMI (same figure shown when expanded)
           return h(React.Fragment,{key:e.id},deptHeader,h("div",{style:{borderBottom:i<arr.length-1?"1px solid "+BDR:"none",paddingBottom:12,marginBottom:12}},
             // Row 1: avatar + name + salary type + NET PAY — tap anywhere to expand/collapse details
             h("div",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{display:"flex",alignItems:"center",gap:9,marginBottom:isO?8:0,cursor:"pointer"}},
@@ -4987,11 +5066,7 @@ null
                 );
               })(),
               (function(){
-                var empClaimTotal=(claims||[]).filter(function(c){return c.employeeId===String(e.id)&&c.status==="approved"&&c.month===payM&&c.year===payY;}).reduce(function(s,c){return s+(c.amount||0);},0);
-                var empBonusTotal=(bonuses||[]).filter(function(b){return b.employeeId===String(e.id)&&b.payMonth===payM&&b.payYear===payY;}).reduce(function(s,b){return s+(b.amount||0);},0);
-                var empLoanDed=(loans||[]).filter(function(l){return (l.employeeId===String(e.id)||l.employee_id===String(e.id))&&l.status==="active";}).reduce(function(s,l){return s+(l.emi||l.monthlyDeduction||0);},0);
-                var empOT=getOTAmount(e.id,payM,payY);
-                var finalNet=Math.max(0,d.net+empClaimTotal+empBonusTotal+empOT-empLoanDed);
+                var empClaimTotal=mp.claimTotal,empBonusTotal=mp.bonusTotal,empLoanDed=mp.loanDed,empOT=mp.otTotal,finalNet=mp.netFinal;
                 return h("div",null,
                   empClaimTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Reimbursement"),h("span",{style:{fontSize:11,fontWeight:600,color:"#10B981"}},"+"+fmt(empClaimTotal))):null,
                   empOT>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Overtime"),h("span",{style:{fontSize:11,fontWeight:600,color:TEL}},"+"+fmt(empOT))):null,
@@ -5009,16 +5084,16 @@ null
       ),0):repV==="annual"?renderAnnualStatement():h("div",null,
         card(h("div",null,
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},"Employer Cost - "+MOS[payM]+" "+payY),
-          actEmps.map(function(e,i){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);return h("div",{key:e.id,style:{padding:"9px 0",borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none"}},
+          actEmps.map(function(e,i){var d=getMonthPay(e,payY,payM).d;return h("div",{key:e.id,style:{padding:"9px 0",borderBottom:i<actEmps.length-1?"1px solid "+BDR:"none"}},
             h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:5}},av(e,31),h("div",{style:{flex:1}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},e.name),h("div",{style:{fontSize:10,color:GRY}},e.dept)),h("div",{style:{textAlign:"right"}},h("div",{style:{fontSize:12,fontWeight:800,color:AMB}},fmt(d.gr+d.pfR+d.esiR)),h("div",{style:{fontSize:9,color:GRY}},"CTC/mo"))),
             h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5}},
               [["Gross",fmt(d.gr),NVY],["Er PF",fmt(d.pfR),"#374151"],["Er ESI",fmt(d.esiR),TEL]].map(function(item){return h("div",{key:item[0],style:{background:item[2]+"18",borderRadius:7,padding:"6px",textAlign:"center",minWidth:0,overflow:"hidden"}},h("div",{style:{fontSize:11,fontWeight:700,color:item[2],whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},item[1]),h("div",{style:{fontSize:9,color:GRY}},item[0]));})
             )
           );}),
-          (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),payWD=getWorkingDays(att,e.id,payY,payM),d=calcPay(getEffectiveEmp(e,payY,payM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),payWD,proRata(e,payY,payM).active,proRata(e,payY,payM).total);a.g+=d.gr;a.p+=d.pfR;a.e+=d.esiR;return a;},{g:0,p:0,e:0});return h("div",{style:{background:AMB+"14",border:"1px solid "+AMB+"38",borderRadius:11,padding:11,marginTop:9}},[["Total Gross",fmt(tot.g),false],["Employer PF",fmt(tot.p),false],["Employer ESI",fmt(tot.e),false],["Total CTC",fmt(tot.g+tot.p+tot.e),true]].map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px dashed "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:700,color:item[2]?AMB:NVY}},item[1]));}))})())) , 
+          (function(){var tot=actEmps.reduce(function(a,e){var d=getMonthPay(e,payY,payM).d;a.g+=d.gr;a.p+=d.pfR;a.e+=d.esiR;return a;},{g:0,p:0,e:0});return h("div",{style:{background:AMB+"14",border:"1px solid "+AMB+"38",borderRadius:11,padding:11,marginTop:9}},[["Total Gross",fmt(tot.g),false],["Employer PF",fmt(tot.p),false],["Employer ESI",fmt(tot.e),false],["Total CTC",fmt(tot.g+tot.p+tot.e),true]].map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px dashed "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:700,color:item[2]?AMB:NVY}},item[1]));}))})())) , 
         isPaid?h("div",{style:{display:"flex",gap:8,marginBottom:10}},
-              h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,15),"Employee Copy"),
-              h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1.5px solid "+BDR,borderRadius:12,padding:"11px",color:NVY,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,15),"Employer Copy")
+              h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,15),"Employee Copy"),
+              h("button",{onClick:function(){makePayrollPDF(actEmps,payM,payY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:SFT,border:"1.5px solid "+BDR,borderRadius:12,padding:"11px",color:NVY,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,15),"Employer Copy")
             ):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Payroll PDF — Paid Plan Only")
       )
     );
@@ -5304,7 +5379,7 @@ null
                 h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Monthly compliance report")
               )
             ),
-            h("button",{onClick:isPaid?function(){makePFESIPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}:needPaid,
+            h("button",{onClick:isPaid?function(){makePFESIPDF(actEmps,curM,curY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}:needPaid,
               style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
               ic(isPaid?ICONS.dl:"lock","#fff",12),isPaid?"PDF":"Paid")
           ),
@@ -5317,7 +5392,7 @@ null
                 h("div",{style:{fontSize:10,color:GRY,marginTop:1}},"Payment of Wages Act format")
               )
             ),
-            h("button",{onClick:isPaid?function(){try{makeSalaryRegisterPDF(actEmps,curM,curY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,
+            h("button",{onClick:isPaid?function(){try{makeSalaryRegisterPDF(actEmps,curM,curY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}catch(ex){showT("PDF error: "+ex.message,"err");}}:needPaid,
               style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 12px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
               ic(isPaid?ICONS.dl:"lock","#fff",12),isPaid?"PDF":"Paid")
           ),
@@ -5390,7 +5465,7 @@ null
               h("button",{onClick:isPaid?function(){setPayDlM(curM);setPayDlY(curY);setShowPayDl(true);}:needPaid,
                 style:{display:"flex",alignItems:"center",gap:4,background:isPaid?NVY:GRY,border:"none",borderRadius:7,padding:"6px 11px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},
                 ic(isPaid?ICONS.dl:"lock","#fff",12),"PDF"),
-              h("button",{onClick:isPaid?function(){makePayrollCSV(actEmps,curM,curY,mAtt,getInc);}:needPaid,
+              h("button",{onClick:isPaid?function(){makePayrollCSV(actEmps,curM,curY,getMonthPay);}:needPaid,
                 style:{display:"flex",alignItems:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"6px 11px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},
                 ic(isPaid?"table_view":"lock",isPaid?NVY:GRY,12),"CSV")
             )
@@ -5959,8 +6034,8 @@ null
     // ── Profile tab ──
     function empProfile(){
       var emp=myRecord;
-      var wDaysE=emp?getWorkingDays(att,emp.id,empPayYear,empPayMonth):26;
-        var payData=emp?calcPay(getEffectiveEmp(emp,empPayYear,empPayMonth),0,0,0,0,0,wDaysE):null;
+      var payMp=emp?getMonthPay(emp,empPayYear,empPayMonth):null;
+      var payData=payMp?payMp.d:null;
       return h("div",{className:"fd"},
         h("div",{style:{background:"linear-gradient(135deg,#0F172A,#1E293B)",borderRadius:20,padding:"20px 16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
           h("div",{style:{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}),
@@ -6025,13 +6100,16 @@ null
             h("div",{style:{display:"flex",alignItems:"center",padding:"0 3px",color:GRY,fontSize:16}},"="),
             h("div",{style:{flex:1,background:"#10B981"+"12",borderRadius:10,padding:"10px 8px",textAlign:"center"}},
               h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"NET PAY"),
-              h("div",{style:{fontSize:15,fontWeight:800,color:"#10B981"}},fmt(payData.net))
+              h("div",{style:{fontSize:15,fontWeight:800,color:"#10B981"}},fmt(payMp.netFinal))
             )
           ),
           // ── Earnings breakdown ──
           h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"EARNINGS"),
-          (function(){var eE=getEffectiveEmp(emp,empPayYear,empPayMonth);return (emp.salaryType==="fixed"?[["Fixed Salary",fmt(eE.fixedSalary||eE.monthlyCTC||0),NVY]]:
-            [["Basic",fmt(eE.basic||0),NVY],["HRA",fmt(eE.hra||0),NVY],["Allowances",fmt(eE.allow||0),NVY]]);})()
+          (emp.salaryType==="fixed"?[["Fixed Salary",fmt(payData.basic),NVY]]:
+            [["Basic",fmt(payData.basic),NVY],["HRA",fmt(payData.hra),NVY],["Allowances",fmt(payData.allow),NVY]])
+          .concat(payData.inc>0?[["Incentive",fmt(payData.inc),"#059669"]]:[])
+          .concat(payData.shiftAllow>0?[["Shift Allowance",fmt(payData.shiftAllow),"#0284C7"]]:[])
+          .concat((payData.ad+payData.hd+payData.ud)>0?[["Absent/Half Day","-"+fmt(payData.ad+payData.hd+payData.ud),AMB]]:[])
           .map(function(item){
             return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
               h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:item[2]}},item[1])
@@ -6055,14 +6133,19 @@ null
               );
             })
           ):h("div",{style:{fontSize:11,color:GRY,padding:"4px 0",marginBottom:8}},"No deductions"),
+          // ── Bonus / Reimbursement / OT / Loan ──
+          payMp.bonusTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Bonus"),h("span",{style:{fontSize:12,fontWeight:600,color:AMB}},"+"+fmt(payMp.bonusTotal))):null,
+          payMp.claimTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Reimbursement"),h("span",{style:{fontSize:12,fontWeight:600,color:"#10B981"}},"+"+fmt(payMp.claimTotal))):null,
+          payMp.otTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Overtime"),h("span",{style:{fontSize:12,fontWeight:600,color:TEL}},"+"+fmt(payMp.otTotal))):null,
+          payMp.loanDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Loan/Advance EMI"),h("span",{style:{fontSize:12,fontWeight:600,color:RED}},"-"+fmt(payMp.loanDed))):null,
           // ── Working days ──
           h("div",{style:{fontSize:10,color:GRY,padding:"4px 0",marginBottom:10,borderTop:"1px dashed "+BDR,marginTop:4,paddingTop:6}},
-            "Working days: "+(wDaysE||26)+" \u2022 Per day: "+fmt(payData.pd||Math.round(payData.gr/(wDaysE||26)))
+            "Working days: "+(payData.wDays||26)+" \u2022 Per day: "+fmt(payData.pd||Math.round(payData.gr/(payData.wDays||26)))
           ),
           // ── Net take home ──
           h("div",{style:{background:"#0F172A",borderRadius:14,padding:"14px 16px",marginTop:4,display:"flex",justifyContent:"space-between",alignItems:"center"}},
             h("div",{style:{fontSize:13,color:"rgba(255,255,255,0.65)"}},"Net Take Home"),
-            h("div",{style:{fontSize:22,fontWeight:800,color:"#4ADE80"}},fmt(payData.net))
+            h("div",{style:{fontSize:22,fontWeight:800,color:"#4ADE80"}},fmt(payMp.netFinal))
           ),
           isPaid?h("button",{onClick:function(){showT("Generating payslip...");},style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",marginTop:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("download",CARD,16),"Download Payslip"):
           h("div",{style:{background:AMB+"12",borderRadius:10,padding:"10px",marginTop:10,fontSize:11,color:AMB,textAlign:"center"}},"Payslip download available for Pro employers")
@@ -6424,18 +6507,9 @@ null
     var catList=Object.entries(catTotals).sort(function(a,b){return b[1]-a[1];});
 
     // Salary summary from payroll
-    var salaryTotal=actEmps.reduce(function(s,e){
-      var d=calcPay(getEffectiveEmp(e,coExpY,coExpM),mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
-      return s+d.gr;
-    },0);
-    var netTotal=actEmps.reduce(function(s,e){
-      var d=calcPay(getEffectiveEmp(e,coExpY,coExpM),mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
-      return s+d.net;
-    },0);
-    var pfTotal=actEmps.reduce(function(s,e){
-      var d=calcPay(getEffectiveEmp(e,coExpY,coExpM),mAtt(e.id,coExpY,coExpM).absent,mAtt(e.id,coExpY,coExpM).half,mAtt(e.id,coExpY,coExpM).unpaid,getInc(e.id,coExpY,coExpM),0);
-      return s+d.pfE+d.pfR;
-    },0);
+    var salaryTotal=actEmps.reduce(function(s,e){return s+getMonthPay(e,coExpY,coExpM).d.gr;},0);
+    var netTotal=actEmps.reduce(function(s,e){return s+getMonthPay(e,coExpY,coExpM).netFinal;},0);
+    var pfTotal=actEmps.reduce(function(s,e){var d=getMonthPay(e,coExpY,coExpM).d;return s+d.pfE+d.pfR;},0);
 
     function saveCoExp(){
       if(!coExpAmt||!coExpDate)return showT("Enter amount and date","err");
@@ -7045,7 +7119,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             lsSet("hr_bkup_dismissed",thisMonth);
             makeEmpCSV(emps);
             makeAttCSV(att,emps);
-            makePayrollCSV(actEmps,curM,curY,mAtt,getInc);
+            makePayrollCSV(actEmps,curM,curY,getMonthPay);
             setShowBkup(false);
             showT("Downloading all 3 reports...");
           },style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"13px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:7}},
@@ -8356,7 +8430,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             pastYears().map(function(y){return h("option",{key:y,value:y},y);})
           )
         ),
-        h("button",{onClick:function(){setShowPFDl(false);makePFESIPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{width:"100%",background:"#4F46E5",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        h("button",{onClick:function(){setShowPFDl(false);makePFESIPDF(actEmps,payDlM,payDlY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{width:"100%",background:"#4F46E5",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download PF/ESI Report")
       )
     );
@@ -8379,7 +8453,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             pastYears().map(function(y){return h("option",{key:y,value:y},y);})
           )
         ),
-        h("button",{onClick:function(){setShowSalRegDl(false);makeSalaryRegisterPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{width:"100%",background:"#059669",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        h("button",{onClick:function(){setShowSalRegDl(false);makeSalaryRegisterPDF(actEmps,payDlM,payDlY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);},style:{width:"100%",background:"#059669",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download Salary Register")
       )
     );
@@ -8408,7 +8482,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           )
         ),
         h("button",{onClick:function(){
-          var count=generateECR(actEmps,payDlM,payDlY,mAtt,getInc);
+          var count=generateECR(actEmps,payDlM,payDlY,getMonthPay);
           if(count){setShowECRDl(false);showT("ECR downloaded — "+count+" employees");}
         },style:{width:"100%",background:"#D97706",border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download ECR File")
@@ -8447,7 +8521,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         ),
         h("button",{onClick:function(){
           setShowPayDl(false);
-          makePayrollPDF(actEmps,payDlM,payDlY,mAtt,getInc,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,payDlType==="er",org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);
+          makePayrollPDF(actEmps,payDlM,payDlY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,payDlType==="er",org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);
         },style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"14px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic(ICONS.dl,CARD,18),"Download PDF")
       )
