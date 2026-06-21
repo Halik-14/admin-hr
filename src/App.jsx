@@ -407,7 +407,7 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
   // cws: column widths array (must sum to cw)
   // rows: array of arrays, each cell {val,bold,color}
   // opts: {rowH,fontSize,headerColor,altRow,totalsRow}
-  var o=Object.assign({rowH:8,fontSize:7.5,headerColor:[45,55,72],altRow:true},opts||{});
+  var o=Object.assign({rowH:9.5,fontSize:8,headerColor:[45,55,72],altRow:true},opts||{});
   var cx=[mg];
   for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
   var cw=cws.reduce(function(a,b){return a+b;},0);
@@ -438,9 +438,8 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
   doc.rect(mg,ry,cw,o.rowH,"F");
   doc.setFontSize(o.fontSize-0.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
   cols.forEach(function(col,i){
-    var x=col.align==="r"?cx[i]+cws[i]-padX:col.align==="c"?(cx[i]+cws[i]/2):cx[i]+padX;
-    var align=col.align==="r"?"right":col.align==="c"?"center":"left";
-    doc.text(fitText(col.label,cws[i]-padX*2),x,ry+o.rowH*0.65,{align:align});
+    var x=cx[i]+cws[i]/2;
+    doc.text(fitText(col.label,cws[i]-padX*2),x,ry+o.rowH*0.65,{align:"center"});
   });
   vLines(ry,o.rowH,true);
   ry+=o.rowH;
@@ -465,9 +464,8 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
       doc.setFont("helvetica",bold||isTotals?"bold":"normal");
       if(color)doc.setTextColor(color[0],color[1],color[2]);
       else doc.setTextColor(isTotals?255:15,isTotals?255:23,isTotals?255:42);
-      var align=cols[i]&&cols[i].align==="r"?"right":cols[i]&&cols[i].align==="c"?"center":"left";
-      var x=align==="right"?cx[i]+cws[i]-padX:align==="center"?(cx[i]+cws[i]/2):cx[i]+padX;
-      doc.text(fitText(val,cws[i]-padX*2),x,ry+o.rowH*0.65,{align:align});
+      var x=cx[i]+cws[i]/2;
+      doc.text(fitText(val,cws[i]-padX*2),x,ry+o.rowH*0.65,{align:"center"});
     });
     vLines(ry,o.rowH,isTotals);
     ry+=o.rowH;
@@ -503,7 +501,7 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
     if(data.expenses.length===0){
       doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text("No company expenses recorded for this period.",mg,ry+2);ry+=10;
     } else {
-      var expCols=[{label:"DATE",align:"l"},{label:"CATEGORY",align:"l"},{label:"VENDOR",align:"l"},{label:"MODE",align:"l"},{label:"AMOUNT",align:"r"}];
+      var expCols=[{label:"DATE",align:"l"},{label:"CATEGORY",align:"l"},{label:"VENDOR",align:"l"},{label:"MODE",align:"l"},{label:"AMOUNT (Rs.)",align:"r"}];
       var expCws=[24,42,52,30,34];
       var expRows=data.expenses.map(function(e){
         var catName=e.category==="custom"?(e.customCategory||"Other"):(data.catLabels[e.category]||e.category);
@@ -512,11 +510,11 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
           catName,
           e.vendor||"-",
           data.modeLabels[e.paymentMode]||e.paymentMode||"-",
-          {val:fmtIN(e.amount||0),align:"r"}
+          {val:fmtNum(e.amount||0),align:"r"}
         ];
       });
-      expRows.push([{val:"TOTAL",bold:true},"","","",{val:fmtIN(data.expTotal),bold:true}]);
-      ry=pdfTable(doc,ry,mg,expCols,expCws,expRows,{rowH:7,fontSize:7.5,totalsRow:true,headerColor:NEUTRAL_HEAD});
+      expRows.push([{val:"TOTAL",bold:true},"","","",{val:fmtNum(data.expTotal),bold:true}]);
+      ry=pdfTable(doc,ry,mg,expCols,expCws,expRows,{rowH:8.5,fontSize:8,totalsRow:true,headerColor:NEUTRAL_HEAD});
       ry+=10;
     }
 
@@ -542,7 +540,7 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
     if(data.claims.length===0){
       doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text("No staff claims recorded for this period.",mg,ry+2);ry+=10;
     } else {
-      var claimCols=[{label:"EMPLOYEE",align:"l"},{label:"CATEGORY",align:"l"},{label:"PAYROLL MONTH",align:"l"},{label:"DESCRIPTION",align:"l"},{label:"AMOUNT",align:"r"}];
+      var claimCols=[{label:"EMPLOYEE",align:"l"},{label:"CATEGORY",align:"l"},{label:"PAYROLL MONTH",align:"l"},{label:"DESCRIPTION",align:"l"},{label:"AMOUNT (Rs.)",align:"r"}];
       var claimCws=[40,28,30,50,34];
       var claimRows=data.claims.map(function(c){
         return [
@@ -550,11 +548,11 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
           data.claimCatLabels[c.category]||c.category||"-",
           data.mosLabels[c.month]+" "+c.year,
           c.description||"-",
-          {val:fmtIN(c.amount||0),align:"r"}
+          {val:fmtNum(c.amount||0),align:"r"}
         ];
       });
-      claimRows.push([{val:"TOTAL",bold:true},"","","",{val:fmtIN(data.claimsTotal),bold:true}]);
-      ry=pdfTable(doc,ry,mg,claimCols,claimCws,claimRows,{rowH:7,fontSize:7.5,totalsRow:true,headerColor:NEUTRAL_HEAD});
+      claimRows.push([{val:"TOTAL",bold:true},"","","",{val:fmtNum(data.claimsTotal),bold:true}]);
+      ry=pdfTable(doc,ry,mg,claimCols,claimCws,claimRows,{rowH:8.5,fontSize:8,totalsRow:true,headerColor:NEUTRAL_HEAD});
       ry+=6;
       doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(120,135,155);
       doc.text("Note: Staff claims are paid out as part of the Net Pay shown in Salary Summary above - they are not an additional outflow.",mg,ry);
@@ -770,6 +768,7 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
     var W=210,H=297,mg=12;
     var nd=new Date();
     var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,showEmployer?"PAYROLL REPORT (EMPLOYER)":"PAYROLL REPORT",MOS[m]+" "+String(y)+" - Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
+    doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(120,135,155);doc.text("All amounts in Rs.",mg,ry-1);
 
     var cols=showEmployer?[
       {label:"EMPLOYEE NAME",align:"l"},
@@ -806,20 +805,20 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
         rows.push([
           {val:(emp.name||"").substring(0,24),bold:true},
           {val:(emp.dept||"-").substring(0,11),color:[100,116,139]},
-          {val:fmtIN(d.gr),color:[60,80,180]},
-          {val:fmtIN(ded),color:[200,40,40]},
-          {val:fmtIN(d.net),bold:true,color:[5,140,90]},
-          {val:fmtIN(d.pfR),color:[80,100,200]},
-          {val:fmtIN(d.esiR),color:[5,140,90]},
-          {val:fmtIN(d.gr+d.pfR+d.esiR),bold:true,color:[160,100,0]},
+          {val:fmtNum(d.gr),color:[60,80,180]},
+          {val:fmtNum(ded),color:[200,40,40]},
+          {val:fmtNum(d.net),bold:true,color:[5,140,90]},
+          {val:fmtNum(d.pfR),color:[80,100,200]},
+          {val:fmtNum(d.esiR),color:[5,140,90]},
+          {val:fmtNum(d.gr+d.pfR+d.esiR),bold:true,color:[160,100,0]},
         ]);
       } else {
         rows.push([
           {val:(emp.name||"").substring(0,28),bold:true},
           {val:(emp.dept||"-").substring(0,16),color:[100,116,139]},
-          {val:fmtIN(d.gr),color:[60,80,180]},
-          {val:fmtIN(ded),color:[200,40,40]},
-          {val:fmtIN(d.net),bold:true,color:[5,140,90]},
+          {val:fmtNum(d.gr),color:[60,80,180]},
+          {val:fmtNum(ded),color:[200,40,40]},
+          {val:fmtNum(d.net),bold:true,color:[5,140,90]},
         ]);
       }
     });
@@ -829,24 +828,24 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
       rows.push([
         {val:"TOTAL",bold:true},
         {val:""},
-        {val:fmtIN(tG),bold:true,color:[160,185,255]},
-        {val:fmtIN(tD),bold:true,color:[255,150,150]},
-        {val:fmtIN(tN),bold:true,color:[100,255,160]},
-        {val:fmtIN(tPR),color:[160,185,255]},
-        {val:fmtIN(tER),color:[150,230,190]},
-        {val:fmtIN(tG+tPR+tER),bold:true,color:[255,210,120]},
+        {val:fmtNum(tG),bold:true,color:[160,185,255]},
+        {val:fmtNum(tD),bold:true,color:[255,150,150]},
+        {val:fmtNum(tN),bold:true,color:[100,255,160]},
+        {val:fmtNum(tPR),color:[160,185,255]},
+        {val:fmtNum(tER),color:[150,230,190]},
+        {val:fmtNum(tG+tPR+tER),bold:true,color:[255,210,120]},
       ]);
     } else {
       rows.push([
         {val:"TOTAL",bold:true},
         {val:""},
-        {val:fmtIN(tG),bold:true,color:[160,185,255]},
-        {val:fmtIN(tD),bold:true,color:[255,150,150]},
-        {val:fmtIN(tN),bold:true,color:[100,255,160]},
+        {val:fmtNum(tG),bold:true,color:[160,185,255]},
+        {val:fmtNum(tD),bold:true,color:[255,150,150]},
+        {val:fmtNum(tN),bold:true,color:[100,255,160]},
       ]);
     }
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9,fontSize:8,totalsRow:true});
+    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:10,fontSize:8.5,totalsRow:true});
     ry+=8;
 
     // Summary line
@@ -994,7 +993,7 @@ function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddre
       {val:""},
     ]);
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9,fontSize:8,totalsRow:true});
+    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:10,fontSize:8.5,totalsRow:true});
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     downloadPDF(doc.output("blob"),"Attendance-Summary-"+MOS[m]+"-"+String(y)+".pdf");
   },function(){alert("PDF library failed to load.");});
@@ -1048,7 +1047,7 @@ function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAdd
       rows.push(row);
     });
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:8,fontSize:7});
+    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9,fontSize:7.5});
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     downloadPDF(doc.output("blob"),"Annual-Attendance-"+String(y)+"-"+(String(y+1)).slice(2)+".pdf");
   },function(){alert("PDF library failed to load.");});
@@ -1187,13 +1186,13 @@ function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,
       rows.push([
         {val:(emp.name||"").substring(0,20),bold:true},
         {val:emp.uan||"-",color:[120,130,145]},
-        {val:fmtIN(d.gr)},
-        {val:fmtIN(pfWage),color:[60,80,180]},
-        {val:fmtIN(d.pfE),color:[60,80,180]},
-        {val:fmtIN(d.pfR),color:[60,80,180]},
-        {val:fmtIN(d.esiE||0),color:[5,140,90]},
-        {val:fmtIN(d.esiR||0),color:[5,140,90]},
-        {val:fmtIN(total),bold:true,color:[180,100,0]},
+        {val:fmtNum(d.gr)},
+        {val:fmtNum(pfWage),color:[60,80,180]},
+        {val:fmtNum(d.pfE),color:[60,80,180]},
+        {val:fmtNum(d.pfR),color:[60,80,180]},
+        {val:fmtNum(d.esiE||0),color:[5,140,90]},
+        {val:fmtNum(d.esiR||0),color:[5,140,90]},
+        {val:fmtNum(total),bold:true,color:[180,100,0]},
       ]);
     });
 
@@ -1201,16 +1200,17 @@ function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,
     rows.push([
       {val:"TOTALS",bold:true},
       {val:""},
-      {val:fmtIN(totGross),bold:true},
-      {val:fmtIN(totPFW),bold:true},
-      {val:fmtIN(totEmpPF),bold:true,color:[160,185,255]},
-      {val:fmtIN(totErPF),bold:true,color:[160,185,255]},
-      {val:fmtIN(totEmpESI),bold:true,color:[150,230,190]},
-      {val:fmtIN(totErESI),bold:true,color:[150,230,190]},
-      {val:fmtIN(totAll),bold:true,color:[255,210,120]},
+      {val:fmtNum(totGross),bold:true},
+      {val:fmtNum(totPFW),bold:true},
+      {val:fmtNum(totEmpPF),bold:true,color:[160,185,255]},
+      {val:fmtNum(totErPF),bold:true,color:[160,185,255]},
+      {val:fmtNum(totEmpESI),bold:true,color:[150,230,190]},
+      {val:fmtNum(totErESI),bold:true,color:[150,230,190]},
+      {val:fmtNum(totAll),bold:true,color:[255,210,120]},
     ]);
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:8.5,fontSize:7.5,totalsRow:true});
+    doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(120,135,155);doc.text("All amounts in the table below are in Rs.",mg,ry-1);
+    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9.5,fontSize:8,totalsRow:true});
     ry+=10;
 
     // Challan summary — 3 clean boxes
@@ -1283,7 +1283,7 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
     var W=297,H=210,mg=10;
     var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY REGISTER",MOS[m]+" "+String(y)+" - Payment of Wages Act",orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     doc.setFontSize(7);doc.setFont("helvetica","normal");doc.setTextColor(80,100,140);
-    doc.text("Statutory salary register. Maintain for minimum 3 years as per Payment of Wages Act, 1936.",mg,ry+4);
+    doc.text("Statutory salary register. Maintain for minimum 3 years as per Payment of Wages Act, 1936. All money columns are in Rs.",mg,ry+4);
     ry+=9;
 
     var cols=[
@@ -1333,16 +1333,16 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
         {val:(emp.dept||"").substring(0,8),color:[100,116,139]},
         {val:daysWork},
         {val:daysPaid},
-        {val:fmtIN(d.eb),color:[60,80,180]},
-        {val:fmtIN(d.hra)},
-        {val:fmtIN(d.allow)},
-        {val:fmtIN(d.gr),bold:true},
-        {val:d.pfE>0?fmtIN(d.pfE):"-",color:[70,100,200]},
-        {val:d.esiE>0?fmtIN(d.esiE):"-",color:[5,140,90]},
-        {val:d.pt>0?fmtIN(d.pt):"-",color:[200,110,0]},
-        {val:d.tds>0?fmtIN(d.tds):"-",color:[200,40,40]},
-        {val:fmtIN(totalDed),bold:true,color:[200,40,40]},
-        {val:fmtIN(d.net),bold:true,color:[5,140,90]},
+        {val:fmtNum(d.eb),color:[60,80,180]},
+        {val:fmtNum(d.hra)},
+        {val:fmtNum(d.allow)},
+        {val:fmtNum(d.gr),bold:true},
+        {val:d.pfE>0?fmtNum(d.pfE):"-",color:[70,100,200]},
+        {val:d.esiE>0?fmtNum(d.esiE):"-",color:[5,140,90]},
+        {val:d.pt>0?fmtNum(d.pt):"-",color:[200,110,0]},
+        {val:d.tds>0?fmtNum(d.tds):"-",color:[200,40,40]},
+        {val:fmtNum(totalDed),bold:true,color:[200,40,40]},
+        {val:fmtNum(d.net),bold:true,color:[5,140,90]},
         {val:""},
       ]);
     });
@@ -1353,20 +1353,20 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
       {val:""},{val:""},
       {val:totW,bold:true},
       {val:totD,bold:true},
-      {val:fmtIN(totB),bold:true,color:[160,185,255]},
-      {val:fmtIN(totH),color:[200,215,255]},
-      {val:fmtIN(totA),color:[200,215,255]},
-      {val:fmtIN(totG),bold:true},
-      {val:fmtIN(totPF),color:[160,185,255]},
-      {val:fmtIN(totESI),color:[150,230,190]},
-      {val:fmtIN(totPT),color:[255,200,120]},
-      {val:fmtIN(totTDS),color:[255,150,150]},
-      {val:fmtIN(totDed),bold:true,color:[255,100,100]},
-      {val:fmtIN(totNet),bold:true,color:[100,255,160]},
+      {val:fmtNum(totB),bold:true,color:[160,185,255]},
+      {val:fmtNum(totH),color:[200,215,255]},
+      {val:fmtNum(totA),color:[200,215,255]},
+      {val:fmtNum(totG),bold:true},
+      {val:fmtNum(totPF),color:[160,185,255]},
+      {val:fmtNum(totESI),color:[150,230,190]},
+      {val:fmtNum(totPT),color:[255,200,120]},
+      {val:fmtNum(totTDS),color:[255,150,150]},
+      {val:fmtNum(totDed),bold:true,color:[255,100,100]},
+      {val:fmtNum(totNet),bold:true,color:[100,255,160]},
       {val:""},
     ]);
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:8,fontSize:7,totalsRow:true});
+    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9.5,fontSize:7.5,totalsRow:true});
     ry+=8;
 
     // Certification
@@ -1457,6 +1457,8 @@ function downloadPDF(blob,filename){
   setTimeout(function(){URL.revokeObjectURL(url);},30000);
 }
 function fmtIN(n){var v=Math.round(Number(n||0));if(v<1000)return "Rs."+v;var s=String(v);var last3=s.slice(-3);var rest=s.slice(0,-3);var grouped=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return "Rs."+(grouped?grouped+","+last3:last3);}
+// Plain comma-grouped number, no currency prefix — used inside PDF table cells (the unit is stated once in the title/header instead).
+function fmtNum(n){var v=Math.round(Number(n||0));if(v<1000)return String(v);var s=String(v);var last3=s.slice(-3);var rest=s.slice(0,-3);var grouped=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return grouped?grouped+","+last3:last3;}
 
 // navBtn2 and helpers use module-level color vars (ACCENT, GRY etc) set by applyTheme
 var EMPS=[];
