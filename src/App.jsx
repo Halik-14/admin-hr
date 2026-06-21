@@ -724,7 +724,7 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
 }
 
 // ── HR Policy document PDF — same letterhead language as the other formal letters ──
-function makePolicyPDF(policyDef,fields,org,authPos2,authSign2){
+function makePolicyPDF(policyDef,fields,org,authPos2,authSign2,customTerms){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=20,ry=18;
@@ -751,6 +751,7 @@ function makePolicyPDF(policyDef,fields,org,authPos2,authSign2){
     doc.setFontSize(8.5);doc.setFont("helvetica","italic");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text("Effective Date: "+new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})+"   |   Applicable to: All Employees",W/2,ry,{align:"center"});ry+=11;
 
     var clauses=policyDef.build(fields,org);
+    if(customTerms&&customTerms.trim())clauses=clauses.concat([{h:(clauses.length+1)+". Additional Company-Specific Terms",b:customTerms.trim()}]);
     clauses.forEach(function(cl){
       if(ry>260){doc.addPage();ry=20;}
       doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(accent[0],accent[1],accent[2]);
@@ -791,6 +792,99 @@ function hexToRgbArr(hex){
   if(!hex)return null;
   var m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:null;
+}
+
+// ── Combined Employee Handbook — every created policy in one document, continuous flow ──
+function makeHandbookPDF(entries,org,authPos2,authSign2){
+  loadJsPDFGlobal(function(JsPDF){
+    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,H=297,mg=20;
+    var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
+
+    function letterhead(ry){
+      var logoW=0;
+      if(org.logo&&String(org.logo).indexOf("data:")===0){
+        try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-6,18,18,3,3,"F");doc.addImage(org.logo,"PNG",mg,ry-6,18,18,undefined,"FAST");logoW=22;}catch(e){}
+      }
+      doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
+      doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+      var addrShown=false;
+      if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg+logoW,ry+5.5);addrShown=true;}
+      var contactLine=orgContactLine(org);
+      if(contactLine)doc.text(contactLine,mg+logoW,ry+(addrShown?10:5.5));
+      doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
+      var ry2=ry+(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry2,W-mg,ry2);
+      return ry2+12;
+    }
+
+    // ── Cover / Table of Contents ──
+    var ry=letterhead(18);
+    doc.setFontSize(19);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("EMPLOYEE HANDBOOK",W/2,ry+10,{align:"center"});
+    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text(org.name||"Company",W/2,ry+18,{align:"center"});
+    ry+=32;
+    doc.setFontSize(9.5);doc.setFont("helvetica","bold");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text("CONTENTS",mg,ry);ry+=2;
+    doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,ry+1.5,W-mg,ry+1.5);ry+=9;
+    entries.forEach(function(en,i){
+      var accent=hexToRgbArr(en.def.color)||[15,23,42];
+      doc.setFillColor(accent[0],accent[1],accent[2]);doc.roundedRect(mg,ry-3.2,3,3,1,1,"F");
+      doc.setFontSize(10.5);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+      doc.text((i+1)+".  "+en.def.label,mg+6,ry);
+      ry+=8;
+    });
+    ry+=6;
+    doc.setFontSize(8.5);doc.setFont("helvetica","italic");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+    var coverNote=doc.splitTextToSize("This handbook brings together "+org.name+"'s current HR policies for easy reference. For statutory matters (such as the POSH policy, where included) we recommend periodic review with a legal professional.",W-mg*2);
+    doc.text(coverNote,mg,ry);
+
+    // ── Each policy, continuous flow (no forced page break between policies) ──
+    doc.addPage();ry=20; // cover/TOC gets its own page; policies then flow continuously from here
+    entries.forEach(function(en,idx){
+      var def=en.def,fields=en.fields,customTerms=en.customTerms;
+      var accent=hexToRgbArr(def.color)||[15,23,42];
+      // Only start a fresh page if the heading would otherwise be orphaned near the bottom
+      if(ry>250){doc.addPage();ry=20;} else if(idx>0){ry+=10;}
+      doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text((idx+1)+".  "+def.label.toUpperCase(),mg,ry);ry+=2;
+      doc.setDrawColor(accent[0],accent[1],accent[2]);doc.setLineWidth(0.9);doc.line(mg,ry+2,mg+50,ry+2);ry+=12;
+
+      var clauses=def.build(fields,org);
+      if(customTerms&&customTerms.trim())clauses=clauses.concat([{h:(clauses.length+1)+". Additional Company-Specific Terms",b:customTerms.trim()}]);
+      clauses.forEach(function(cl){
+        if(ry>260){doc.addPage();ry=20;}
+        doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(accent[0],accent[1],accent[2]);
+        doc.text(cl.h,mg,ry);ry+=5.5;
+        doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+        var lines=doc.splitTextToSize(cl.b,W-mg*2);
+        lines.forEach(function(line){
+          if(ry>270){doc.addPage();ry=20;}
+          doc.text(line,mg,ry);ry+=5.3;
+        });
+        ry+=4.5;
+      });
+    });
+
+    // ── One signature block at the very end of the handbook ──
+    if(ry>255){doc.addPage();ry=20;}
+    ry+=10;
+    doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);
+    doc.line(mg,ry,mg+62,ry);doc.line(W-mg-62,ry,W-mg,ry);
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+    doc.text(authSign2||org.name||"Authorised Signatory",mg,ry+5);doc.text("HR Department",W-mg-62,ry+5);
+    doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+    doc.text(authPos2||"Authorised Signatory",mg,ry+9);doc.text(org.name||"",W-mg-62,ry+9);
+
+    // Footer on every page
+    var pageCount=doc.internal.getNumberOfPages();
+    for(var p=1;p<=pageCount;p++){
+      doc.setPage(p);
+      doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,H-12,W-mg,H-12);
+      doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+      doc.text((org.name||"")+" - Employee Handbook",mg,H-6);
+      doc.text("Page "+p+" of "+pageCount,W-mg,H-6,{align:"right"});
+    }
+
+    downloadPDF(doc.output("blob"),"Employee-Handbook-"+(org.name||"Company").replace(/[^\w]+/g,"-")+".pdf");
+    showT("Employee Handbook downloaded");
+  },function(){showT("PDF error","err");});
 }
 
 
@@ -1590,7 +1684,7 @@ var POLICY_DEFS={
     }
   },
   attendance:{
-    label:"Attendance & Working Hours",icon:"schedule",color:"#7C3AED",
+    label:"Attendance & Working Hours",icon:"clock",color:"#7C3AED",
     blurb:"Working hours, grace period and how attendance is recorded.",
     fields:[
       {key:"workStart",label:"Working hours start at",type:"text",def:"9:30 AM"},
@@ -1611,7 +1705,7 @@ var POLICY_DEFS={
     }
   },
   conduct:{
-    label:"Code of Conduct",icon:"gavel",color:"#DC2626",
+    label:"Code of Conduct",icon:"verified",color:"#DC2626",
     blurb:"Expected workplace behaviour and disciplinary process.",
     fields:[
       {key:"dressCode",label:"Dress code",type:"text",def:"Neat, business-casual attire"},
@@ -1631,7 +1725,7 @@ var POLICY_DEFS={
     }
   },
   posh:{
-    label:"POSH / Anti-Harassment Policy",icon:"shield",color:"#BE185D",
+    label:"POSH / Anti-Harassment Policy",icon:"lock",color:"#BE185D",
     blurb:"Statutory policy against sexual harassment at the workplace.",
     fields:[
       {key:"icPresiding",label:"Internal Committee (IC) Presiding Officer name",type:"text",def:""},
@@ -1652,7 +1746,7 @@ var POLICY_DEFS={
     }
   },
   probation:{
-    label:"Probation & Confirmation",icon:"task_alt",color:"#0D9488",
+    label:"Probation & Confirmation",icon:"pending_actions",color:"#0D9488",
     blurb:"Probation duration and the path to confirmation.",
     fields:[
       {key:"probationMonths",label:"Probation period (months)",type:"number",def:3},
@@ -1709,7 +1803,7 @@ var POLICY_DEFS={
     }
   },
   wfh:{
-    label:"Work From Home Policy",icon:"home_work",color:"#2563EB",
+    label:"Work From Home Policy",icon:"cloud_upload",color:"#2563EB",
     blurb:"Eligibility, approval and expectations for remote work.",
     fields:[
       {key:"daysPerMonth",label:"WFH days allowed per month",type:"number",def:4},
@@ -3759,6 +3853,7 @@ export default function App(){
       var existing=policies[key];
       var defaults={};
       POLICY_DEFS[key].fields.forEach(function(f){defaults[f.key]=existing&&existing.fields&&existing.fields[f.key]!==undefined?existing.fields[f.key]:f.def;});
+      defaults._customTerms=existing&&existing.customTerms?existing.customTerms:"";
       setPolicyForm(defaults);
       setPolicySel(key);
     }
@@ -3767,12 +3862,18 @@ export default function App(){
       var def=POLICY_DEFS[key];
       var fields={};
       def.fields.forEach(function(f){fields[f.key]=policyForm[f.key]!==undefined&&policyForm[f.key]!==""?policyForm[f.key]:f.def;});
+      var customTerms=(policyForm._customTerms||"").trim();
       var updated=Object.assign({},policies,{});
-      updated[key]={fields:fields,updatedAt:new Date().toISOString()};
+      updated[key]={fields:fields,customTerms:customTerms,updatedAt:new Date().toISOString()};
       setPolicies(updated);
       lsSet("hr_policies",updated);
       showT("Policy saved");
-      if(generate)makePolicyPDF(def,fields,org,authPos,authSign);
+      if(generate)makePolicyPDF(def,fields,org,authPos,authSign,customTerms);
+    }
+    function downloadHandbook(){
+      var created=policyKeys.filter(function(k){return policies[k];});
+      if(created.length===0)return showT("Create at least one policy first","err");
+      makeHandbookPDF(created.map(function(k){return {def:POLICY_DEFS[k],fields:policies[k].fields,customTerms:policies[k].customTerms};}),org,authPos,authSign);
     }
 
     // ── Form view ──
@@ -3796,6 +3897,11 @@ export default function App(){
               ):h("input",{type:f.type==="number"?"number":"text",value:policyForm[f.key]!==undefined?policyForm[f.key]:f.def,onChange:function(e){setPolicyForm(Object.assign({},policyForm,{[f.key]:f.type==="number"?Number(e.target.value):e.target.value}));},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit"}})
             );
           }),
+          h("div",{style:{marginTop:4,marginBottom:12,paddingTop:12,borderTop:"1px dashed "+BDR}},
+            h("div",{style:{fontSize:11.5,color:NVY,fontWeight:600,marginBottom:3}},"Additional Company-Specific Terms"),
+            h("div",{style:{fontSize:10,color:GRY,marginBottom:6}},"Optional. Anything specific to your business that isn't covered above will be added as a final clause."),
+            h("textarea",{value:policyForm._customTerms||"",onChange:function(e){setPolicyForm(Object.assign({},policyForm,{_customTerms:e.target.value}));},rows:3,placeholder:"e.g. Field staff must carry their ID card at all times during client visits.",style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",resize:"vertical"}})
+          ),
           h("div",{style:{display:"flex",gap:8,marginTop:6}},
             h("button",{onClick:function(){savePolicy(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12.5,fontWeight:700,cursor:"pointer"}},"Save"),
             h("button",{onClick:function(){savePolicy(true);},style:{flex:1.4,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer"}},ic("download","#fff",15),"Save & Download PDF")
@@ -3833,6 +3939,7 @@ export default function App(){
           );
         })
       ),
+      policyKeys.some(function(k){return policies[k];})?h("button",{onClick:downloadHandbook,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#3B1F63",border:"none",borderRadius:12,padding:"13px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer",marginBottom:12}},ic("download","#fff",16),"Download All as Employee Handbook"):null,
       h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5,padding:"4px 4px 10px"}},
         "These documents follow standard Indian SME practice. For statutory policies (like POSH) or anything that will be legally binding, we recommend a quick review by a legal professional before circulating to your team."
       )
@@ -4028,7 +4135,10 @@ export default function App(){
         h("div",{style:{position:"absolute",right:-26,top:-26,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}),
         h("div",{style:{position:"absolute",right:36,bottom:-36,width:70,height:70,borderRadius:"50%",background:"rgba(255,255,255,.045)"}}),
         h("div",{style:{display:"flex",alignItems:"center",gap:12}},
-          h("div",{style:{width:42,height:42,borderRadius:12,background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("gavel","#fff",21)),
+          h("div",{style:{width:42,height:42,borderRadius:12,background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}},
+            ic("badge","#fff",22),
+            h("div",{style:{position:"absolute",right:-3,bottom:-3,width:18,height:18,borderRadius:"50%",background:"#F59E0B",border:"2px solid #3B1F63",display:"flex",alignItems:"center",justifyContent:"center"}},ic("edit","#3B1F63",9))
+          ),
           h("div",{style:{flex:1}},
             h("div",{style:{fontSize:14,fontWeight:700,color:"#fff",letterSpacing:-.2}},"HR Policies"),
             h("div",{style:{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2,lineHeight:1.4}},
