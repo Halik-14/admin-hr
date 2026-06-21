@@ -3460,17 +3460,26 @@ export default function App(){
             background:CARD,
             border:"1px solid "+BDR,
             borderRadius:9,
-            padding:"6px 8px",
+            padding:s.big?"6px 8px":"6px 8px 5px",
             boxShadow:themeMode==="light"?"0 1px 4px rgba(15,23,42,.04)":"0 1px 3px rgba(0,0,0,.15)",
             position:"relative",overflow:"hidden"
           }},
             h("div",{style:{position:"absolute",right:-8,top:-8,width:44,height:44,borderRadius:"50%",background:s.bg,opacity:.4}}),
-            h("div",{style:{display:"flex",alignItems:"center",gap:4,marginBottom:3}},
-              h("div",{style:{width:22,height:22,borderRadius:6,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(s.ico,s.ic,11)),
-              h("div",{style:{fontSize:8,fontWeight:700,color:GRY,letterSpacing:.4,lineHeight:1.2}},s.l.toUpperCase())
-            ),
-            !dashFresh?h("div",{style:{height:s.big?22:15,width:"60%",borderRadius:4,background:SFT,marginBottom:3,animation:"pulse 1.2s ease-in-out infinite"}}):h("div",{style:{fontSize:s.big?22:15,fontWeight:900,color:NVY,letterSpacing:-.5,lineHeight:1,marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.v),
-            h("div",{style:{fontSize:9,color:GRY,fontWeight:500}},s.s)
+            s.big?[
+              h("div",{key:"r",style:{display:"flex",alignItems:"center",gap:4,marginBottom:3}},
+                h("div",{style:{width:22,height:22,borderRadius:6,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(s.ico,s.ic,11)),
+                h("div",{style:{fontSize:8,fontWeight:700,color:GRY,letterSpacing:.4,lineHeight:1.2}},s.l.toUpperCase())
+              ),
+              !dashFresh?h("div",{key:"v",style:{height:22,width:"60%",borderRadius:4,background:SFT,marginBottom:3,animation:"pulse 1.2s ease-in-out infinite"}}):h("div",{key:"v",style:{fontSize:22,fontWeight:900,color:NVY,letterSpacing:-.5,lineHeight:1,marginBottom:3,marginLeft:5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.v),
+              h("div",{key:"s",style:{fontSize:9,color:GRY,fontWeight:500}},s.s)
+            ]:[
+              h("div",{key:"r",style:{display:"flex",alignItems:"center",gap:6,marginBottom:2}},
+                h("div",{style:{width:20,height:20,borderRadius:6,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(s.ico,s.ic,10)),
+                !dashFresh?h("div",{style:{height:14,width:"40%",borderRadius:4,background:SFT,animation:"pulse 1.2s ease-in-out infinite"}}):h("div",{style:{fontSize:15,fontWeight:900,color:NVY,letterSpacing:-.5,lineHeight:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},s.v)
+              ),
+              h("div",{key:"l",style:{fontSize:8,fontWeight:700,color:GRY,letterSpacing:.4,lineHeight:1.2,marginBottom:2}},s.l.toUpperCase()),
+              h("div",{key:"s",style:{fontSize:9,color:GRY,fontWeight:500}},s.s)
+            ]
           );
         })
       ),
