@@ -569,21 +569,25 @@ function makeOfferLetterPDF(emp,org,authPos2,authSign2){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,mg=22,ry=18;
     var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
-    // Letterhead — typography only, no solid color block
-    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
+    // Letterhead — logo (if set) + org name/address/contact
+    var logoW=0;
+    if(org.logo&&String(org.logo).indexOf("data:")===0){
+      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-9,16,16,2.5,2.5,"F");doc.addImage(org.logo,"PNG",mg,ry-9,16,16,undefined,"FAST");logoW=20;}catch(e){}
+    }
+    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
     var addrShown=false;
-    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);addrShown=true;}
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg+logoW,ry+5.5);addrShown=true;}
     var contactLine=orgContactLine(org);
-    if(contactLine)doc.text(contactLine,mg,ry+(addrShown?10:5.5));
+    if(contactLine)doc.text(contactLine,mg+logoW,ry+(addrShown?10:5.5));
     doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
     ry+=(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
     doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("APPOINTMENT LETTER",W/2,ry,{align:"center"});ry+=2;
     doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-16,ry+2,W/2+16,ry+2);ry+=14;
-    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=8;
-    doc.setFontSize(9.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+    doc.setFontSize(11);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=8;
+    doc.setFontSize(10.5);doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
     var openLines=doc.splitTextToSize("We are pleased to offer you the position of "+(emp.role||"Employee")+" at "+(org.name||"our organization")+". This letter confirms the terms of your employment.",W-mg*2);
-    doc.text(openLines,mg,ry);ry+=openLines.length*5+8;
+    doc.text(openLines,mg,ry);ry+=openLines.length*5.5+8;
     var rows2=[["Position",emp.role||"-"],["Department",emp.dept||"-"],["Date of Joining",emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-"],["Employee ID",emp.eid||"To be assigned"],["Monthly CTC",fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0))],["Annual CTC",fmtIN(Number(emp.fixedSalary||emp.monthlyCTC||0)*12)],["Employment Type","Full-Time, Permanent"],["Probation Period","3 months from date of joining"],["Leave Entitlement",emp.leaveEntitlement?emp.leaveEntitlement+" days paid leave per year":"As per company policy"]];
     doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("TERMS OF EMPLOYMENT",mg,ry);ry+=2;
     doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,ry+1.5,W-mg,ry+1.5);ry+=7;
@@ -604,27 +608,31 @@ function makeExperienceLetterPDF(emp,org,authPos2,authSign2){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,mg=22,ry=18;
     var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
-    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
+    var logoW=0;
+    if(org.logo&&String(org.logo).indexOf("data:")===0){
+      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-9,16,16,2.5,2.5,"F");doc.addImage(org.logo,"PNG",mg,ry-9,16,16,undefined,"FAST");logoW=20;}catch(e){}
+    }
+    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
     var addrShown=false;
-    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);addrShown=true;}
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg+logoW,ry+5.5);addrShown=true;}
     var contactLine=orgContactLine(org);
-    if(contactLine)doc.text(contactLine,mg,ry+(addrShown?10:5.5));
+    if(contactLine)doc.text(contactLine,mg+logoW,ry+(addrShown?10:5.5));
     doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
     ry+=(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
     doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("EXPERIENCE CERTIFICATE",W/2,ry,{align:"center"});ry+=2;
     doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-22,ry+2,W/2+22,ry+2);ry+=14;
-    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("To Whomsoever It May Concern,",mg,ry);ry+=10;
+    doc.setFontSize(11);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("To Whomsoever It May Concern,",mg,ry);ry+=10;
     var joined=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-";
     var relieved=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
     var body="This is to certify that "+emp.name+" (Employee ID: "+(emp.eid||"N/A")+") was employed with "+
       (org.name||"our organization")+" as "+( emp.role||"Employee")+
       (emp.dept?" in the "+emp.dept+" department":"")+
       " from "+joined+" to "+relieved+".";
-    doc.setFontSize(9.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
-    var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5+6;
+    doc.setFontSize(10.5);doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+    var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5.5+6;
     var body2="During the tenure, "+emp.name+" has shown dedication, professionalism and commitment to work. We found "+emp.name+" to be a sincere and hardworking individual. We wish "+(emp.name)+" all the best in future endeavours.";
-    var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5+22;
+    var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5.5+22;
     // Two signature blocks: Authorised Signatory (left) + HR Department (right)
     doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);
     doc.line(mg,ry,mg+62,ry);doc.line(W-mg-62,ry,W-mg,ry);
@@ -643,26 +651,30 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,mg=22,ry=18;
     var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
-    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg,ry);
+    var logoW=0;
+    if(org.logo&&String(org.logo).indexOf("data:")===0){
+      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-9,16,16,2.5,2.5,"F");doc.addImage(org.logo,"PNG",mg,ry-9,16,16,undefined,"FAST");logoW=20;}catch(e){}
+    }
+    doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
     var addrShown=false;
-    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg,ry+5.5);addrShown=true;}
+    if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg+logoW,ry+5.5);addrShown=true;}
     var contactLine=orgContactLine(org);
-    if(contactLine)doc.text(contactLine,mg,ry+(addrShown?10:5.5));
+    if(contactLine)doc.text(contactLine,mg+logoW,ry+(addrShown?10:5.5));
     doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
     ry+=(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
     doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("RELIEVING LETTER",W/2,ry,{align:"center"});ry+=2;
     doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-18,ry+2,W/2+18,ry+2);ry+=14;
-    doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=10;
+    doc.setFontSize(11);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=10;
     var relievedDate=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
     var joined=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-";
     var body="This is to confirm that your resignation has been accepted and you have been officially relieved from the position of "+
       (emp.role||"Employee")+(emp.dept?" - "+emp.dept+" Department":"")+
       " effective "+relievedDate+". You joined "+( org.name||"our organization")+" on "+joined+".";
-    doc.setFontSize(9.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
-    var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5+6;
+    doc.setFontSize(10.5);doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+    var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5.5+6;
     var body2="We confirm that you have completed all required handover procedures and have no dues outstanding with the organization. We appreciate your contributions and wish you success in your future endeavours.";
-    var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5+22;
+    var lines2=doc.splitTextToSize(body2,W-mg*2);doc.text(lines2,mg,ry);ry+=lines2.length*5.5+22;
     // Two signature blocks: Authorised Signatory (left) + HR Department (right)
     doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);
     doc.line(mg,ry,mg+62,ry);doc.line(W-mg-62,ry,W-mg,ry);
@@ -1290,8 +1302,9 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
     var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY REGISTER",MOS[m]+" "+String(y)+" - Payment of Wages Act",orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     doc.setFontSize(7);doc.setFont("helvetica","normal");doc.setTextColor(80,100,140);
     doc.text("Statutory salary register. Maintain for minimum 3 years as per Payment of Wages Act, 1936. All money columns are in Rs.",mg,ry+4);
-    doc.text("Bonus and Overtime are not part of fixed wages, so they are excluded here - see the Payroll Report for total compensation paid.",mg,ry+8);
-    ry+=13;
+    doc.setFontSize(6.3);doc.setFont("helvetica","italic");doc.setTextColor(140,150,165);
+    doc.text("Bonus and Overtime are excluded here (not part of fixed wages) - see the Payroll Report for total compensation paid.",mg,ry+8);
+    ry+=12;
 
     var cols=[
       {label:"#",align:"c"},
@@ -3648,8 +3661,9 @@ export default function App(){
           h("button",{onClick:function(){setTab("settings");setSettTab("tax");},style:{fontSize:11,color:NVY,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 8px",cursor:"pointer",fontWeight:600}},"Tax Slabs")
         ),
         (function(){var tot=actEmps.reduce(function(a,e){var ma=mAtt(e.id,curY,curM),inc=getInc(e.id,curY,curM),payWD=getWorkingDays(att,e.id,curY,curM),d=calcPay(getEffectiveEmp(e,curY,curM),ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,curY,curM),payWD,proRata(e,curY,curM).active,proRata(e,curY,curM).total);a.pf+=d.pfE+d.pfR;a.esi+=d.esiE+d.esiR;a.pt+=d.pt;a.td+=d.tds;return a;},{pf:0,esi:0,pt:0,td:0});
-          var eligCount=actEmps.filter(function(e){return calcGratuity(e).eligible;}).length;
-          var totalGrat=actEmps.reduce(function(a,e){return a+calcGratuity(e).amount;},0);
+          var nowD2=new Date();
+          var eligCount=actEmps.filter(function(e){return calcGratuity(getEffectiveEmp(e,nowD2.getFullYear(),nowD2.getMonth())).eligible;}).length;
+          var totalGrat=actEmps.reduce(function(a,e){return a+calcGratuity(getEffectiveEmp(e,nowD2.getFullYear(),nowD2.getMonth())).amount;},0);
           return[["PF (Emp+Er)",fmt(tot.pf),NVY],["ESI (Emp+Er)",fmt(tot.esi),TEL],["Prof. Tax",fmt(tot.pt),AMB],["TDS",fmt(tot.td),RED],["Gratuity Accrued",fmt(totalGrat)+(eligCount>0?" ("+eligCount+" eligible)":""),GRN]].map(function(item){return row(item[0],item[1],item[2]);});
         })()
       ),0),
@@ -4422,7 +4436,9 @@ null
         h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},"Step 3: Confirm"),
         [["Employee",offE.name],["Type",offData.type],["Reason",offData.reason],["Last Day",offData.resignDate||"-"],["Handover",offData.handover.join(", ")||"None"],["Note",offData.note||"-"]].map(function(i){return row(i[0],i[1]);}),
         (function(){
-          var g=calcGratuity(offE,offData.resignDate||todayStr);
+          var resD=offData.resignDate||todayStr;
+          var resDate=new Date(resD);
+          var g=calcGratuity(getEffectiveEmp(offE,resDate.getFullYear(),resDate.getMonth()),resD);
           return g.eligible?h("div",{style:{background:T.PILL_OK_BG,border:"1px solid "+GRN+"44",borderRadius:9,padding:"10px 12px",marginTop:10}},
             h("div",{style:{fontSize:12,fontWeight:700,color:GRN,marginBottom:4}},"Gratuity Payable"),
             h("div",{style:{fontSize:11,color:GRY}},g.years+"y "+g.months+"m service ("+g.roundedYears+" rounded years)"),
@@ -7771,18 +7787,26 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
     var totalMonths=Math.floor(ms/(1000*60*60*24*30.44));
     var years=Math.floor(totalMonths/12),months=totalMonths%12;
     var eligible=years>=5;
-    var basic=emp.salaryType==="fixed"?Number(emp.fixedSalary||emp.monthlyCTC||0):Number(emp.basic||0);
-    var gratuity=eligible?Math.round(basic*15*years/26):0;
+    // Gratuity must use the LAST DRAWN (i.e. current, revision-aware) basic salary — not whatever
+    // was on the employee record at hire time. getEffectiveEmp resolves any salary revision that
+    // applies as of this month, the same way the rest of the app (payroll, payslips) does.
+    var nowD=new Date();
+    var eEff=getEffectiveEmp(emp,nowD.getFullYear(),nowD.getMonth());
+    var basic=eEff.salaryType==="fixed"?Number(eEff.fixedSalary||eEff.monthlyCTC||0):Number(eEff.basic||0);
+    // Payment of Gratuity Act, 1972: a final part-year of 6 months or more rounds UP to a full year;
+    // less than 6 months is dropped. (e.g. 5 years 7 months -> 6 years; 5 years 4 months -> 5 years.)
+    var roundedYears=months>=6?years+1:years;
+    var gratuity=eligible?Math.round(basic*15*roundedYears/26):0;
     return h("div",null,
       h("div",{style:{display:"flex",gap:8,marginBottom:10}},
         h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"7px 8px",textAlign:"center"}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},years+"y "+months+"m"),h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"SERVICE")),
-        h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"7px 8px",textAlign:"center"}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},fmt(basic)),h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"BASIC")),
+        h("div",{style:{flex:1,background:SFT,borderRadius:8,padding:"7px 8px",textAlign:"center"}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},fmt(basic)),h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"BASIC (CURRENT)")),
         h("div",{style:{flex:1,background:eligible?"#8B5CF610":SFT,borderRadius:8,padding:"7px 8px",textAlign:"center",border:eligible?"1px solid #8B5CF625":"1px solid "+BDR}},h("div",{style:{fontSize:12,fontWeight:700,color:eligible?"#8B5CF6":GRY}},eligible?fmt(gratuity):"—"),h("div",{style:{fontSize:8,color:GRY,marginTop:1}},"GRATUITY"))
       ),
       !eligible?h("div",{style:{background:AMB+"10",borderRadius:10,padding:"8px 12px",border:"1px solid "+AMB+"33",fontSize:11,color:AMB}},
         "Eligible after 5 years. "+(5-years)+" year(s) remaining."
       ):h("div",{style:{background:"#8B5CF610",borderRadius:10,padding:"8px 12px",border:"1px solid #8B5CF633",fontSize:11,color:"#8B5CF6"}},
-        "Eligible - Basic x15x"+years+" yrs/26 = "+fmt(gratuity))
+        "Eligible - Basic x15x"+roundedYears+" yrs/26 = "+fmt(gratuity)+(roundedYears!==years?" (rounded up from "+years+"y "+months+"m)":""))
     );
   }
 
