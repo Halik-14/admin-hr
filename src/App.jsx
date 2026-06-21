@@ -713,7 +713,11 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     var c1x=mg,c2x=mg+cw2+2;
     colHead(c1x,ry,cw2,"EARNINGS",[15,23,42]);
     var er=ry+rh;
-    var earns=d.isFixed?[["Fixed Salary",fmtIN(d.eb||0)]]:[["Basic Salary",fmtIN(d.eb||0)],["HRA",fmtIN(d.hra||0)],["Allowances",fmtIN(d.allow||0)]];
+    // NOTE: use d.basic (full entitlement for the days employed this month) here, NOT d.eb (which is
+    // already reduced for absent/half/unpaid days). The attendance deduction is shown once, explicitly,
+    // in the DEDUCTIONS column below — showing it baked into Basic/Fixed Salary AND listed again as a
+    // deduction would silently subtract it twice from the reader's perspective.
+    var earns=d.isFixed?[["Fixed Salary (includes all allowances)",fmtIN(d.basic||0)]]:[["Basic Salary",fmtIN(d.basic||0)],["HRA",fmtIN(d.hra||0)],["Allowances",fmtIN(d.allow||0)]];
     if(d.shiftAllow>0)earns.push(["Shift Allowance",fmtIN(d.shiftAllow)]);
     if(d.inc>0)earns.push(["Incentive",fmtIN(d.inc)]);
     var bonusSum=0;
@@ -721,9 +725,11 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     var claimSum=Number(claimTotal||0);
     if(claimSum>0)earns.push(["Reimbursement",fmtIN(claimSum)]);
     earns.forEach(function(r,i){colRow(c1x,er+i*rh,cw2,r[0],r[1],null,i%2===0);});
-    var grossWithExtras=d.gr+bonusSum+claimSum;
+    // Gross Earnings here = full pre-deduction entitlement, so that Gross − Total Deductions (which
+    // includes the attendance deduction below) equals Net Take Home exactly, with nothing double-counted.
+    var grossFull=(d.basic||0)+(d.hra||0)+(d.allow||0)+(d.inc||0)+(d.shiftAllow||0)+bonusSum+claimSum;
     var gr_y=er+earns.length*rh;
-    colTotal(c1x,gr_y,cw2,"Gross Earnings",fmtIN(grossWithExtras),[232,248,240],[5,120,80]);
+    colTotal(c1x,gr_y,cw2,"Gross Earnings",fmtIN(grossFull),[232,248,240],[5,120,80]);
     colHead(c2x,ry,cw2,"DEDUCTIONS",[180,30,30]);
     var dr=ry+rh,deds=[];
     if(d.ad>0)deds.push(["Absent Deduction","-"+fmtIN(d.ad)]);
@@ -774,17 +780,17 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
       {label:"EMPLOYEE NAME",align:"l"},
       {label:"DEPT",align:"l"},
       {label:"GROSS",align:"r"},
-      {label:"DEDUCTIONS",align:"r"},
+      {label:"DEDUCT.",align:"r"},
       {label:"NET PAY",align:"r"},
-      {label:"EMPLOYER PF",align:"r"},
-      {label:"EMPLOYER ESI",align:"r"},
+      {label:"ER PF",align:"r"},
+      {label:"ER ESI",align:"r"},
       {label:"TOTAL CTC",align:"r"},
     ]:[
       {label:"EMPLOYEE NAME",align:"l"},
       {label:"DEPARTMENT",align:"l"},
-      {label:"GROSS EARNINGS",align:"r"},
+      {label:"GROSS EARNINGS (Rs.)",align:"r"},
       {label:"DEDUCTIONS",align:"r"},
-      {label:"NET PAY",align:"r"},
+      {label:"NET PAY (Rs.)",align:"r"},
     ];
 
     var cws=showEmployer?[46,22,18,20,20,18,18,22]:[52,34,34,30,38];
@@ -1160,13 +1166,13 @@ function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,
     var cols=[
       {label:"EMPLOYEE NAME",align:"l"},
       {label:"UAN",align:"l"},
-      {label:"GROSS",align:"r"},
+      {label:"GROSS (Rs.)",align:"r"},
       {label:"PF WAGES",align:"r"},
       {label:"EMP PF",align:"r"},
       {label:"ER PF",align:"r"},
       {label:"EMP ESI",align:"r"},
       {label:"ER ESI",align:"r"},
-      {label:"TOTAL",align:"r"},
+      {label:"TOTAL (Rs.)",align:"r"},
     ];
     var cws=[42,26,16,18,16,16,16,16,18];
     var cwSum=cws.reduce(function(a,b){return a+b;},0);
@@ -1284,7 +1290,8 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
     var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY REGISTER",MOS[m]+" "+String(y)+" - Payment of Wages Act",orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     doc.setFontSize(7);doc.setFont("helvetica","normal");doc.setTextColor(80,100,140);
     doc.text("Statutory salary register. Maintain for minimum 3 years as per Payment of Wages Act, 1936. All money columns are in Rs.",mg,ry+4);
-    ry+=9;
+    doc.text("Bonus and Overtime are not part of fixed wages, so they are excluded here - see the Payroll Report for total compensation paid.",mg,ry+8);
+    ry+=13;
 
     var cols=[
       {label:"#",align:"c"},
@@ -1296,13 +1303,13 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
       {label:"BASIC",align:"r"},
       {label:"HRA",align:"r"},
       {label:"ALLOW",align:"r"},
-      {label:"GROSS",align:"r"},
+      {label:"GROSS (Rs.)",align:"r"},
       {label:"PF",align:"r"},
       {label:"ESI",align:"r"},
       {label:"PT",align:"r"},
       {label:"TDS",align:"r"},
       {label:"TOTAL DED",align:"r"},
-      {label:"NET PAY",align:"r"},
+      {label:"NET PAY (Rs.)",align:"r"},
       {label:"SIGN",align:"c"},
     ];
     var cws=[7,28,16,15,13,11,18,15,15,20,15,14,13,14,17,21,13];
