@@ -1650,6 +1650,7 @@ export default function App(){
   var sOtMarkMode=st("hours"),otMarkMode=sOtMarkMode[0],setOtMarkMode=sOtMarkMode[1];
   var sAttStatsOpen=st(false),attStatsOpen=sAttStatsOpen[0],setAttStatsOpen=sAttStatsOpen[1];
   var sAttSortDept=st(true),attSortDept=sAttSortDept[0],setAttSortDept=sAttSortDept[1]; // default ON — group attendance list by department A-Z
+  var sPaySortDept=st(true),paySortDept=sPaySortDept[0],setPaySortDept=sPaySortDept[1]; // default ON — group payroll list by department A-Z
   var sBonuses=st([]),bonuses=sBonuses[0],setBonuses=sBonuses[1];
   var sShowBonusForm=st(false),showBonusForm=sShowBonusForm[0],setShowBonusForm=sShowBonusForm[1];
   var sBonusEmpId=st(""),bonusEmpId=sBonusEmpId[0],setBonusEmpId=sBonusEmpId[1];
@@ -4819,8 +4820,24 @@ null
           }));
         })()
       ):repV==="emp"?card(h("div",null,
-        h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:11}},"Individual Payslips"),
-        actEmps.map(function(e){
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Individual Payslips"),
+          h("button",{onClick:function(){setPaySortDept(!paySortDept);},style:{display:"flex",alignItems:"center",gap:4,background:paySortDept?ACCENT:SFT,border:"1px solid "+(paySortDept?ACCENT:BDR),borderRadius:20,padding:"4px 10px",color:paySortDept?ACCENT_FG:GRY,fontSize:10.5,fontWeight:700,cursor:"pointer"}},ic("groups",paySortDept?ACCENT_FG:GRY,12),"Dept A\u2013Z")
+        ),
+        (paySortDept?actEmps.slice().sort(function(a,b){return (a.dept||"No Department").toLowerCase().localeCompare((b.dept||"No Department").toLowerCase())||(a.name||"").localeCompare(b.name||"");}):actEmps).map(function(e,i,arr){
+          var deptHeader=null;
+          if(paySortDept){
+            var curDept=e.dept||"No Department";
+            var prevDept=i>0?(arr[i-1].dept||"No Department"):null;
+            if(curDept!==prevDept){
+              var deptCount=arr.filter(function(x){return (x.dept||"No Department")===curDept;}).length;
+              deptHeader=h("div",{key:"hdr-"+curDept,style:{display:"flex",alignItems:"center",gap:8,margin:i===0?"0 0 8px":"14px 0 8px"}},
+                h("div",{style:{fontSize:11,fontWeight:700,color:NVY,letterSpacing:.3}},curDept),
+                h("div",{style:{flex:1,height:1,background:BDR}}),
+                h("div",{style:{fontSize:10,color:GRY,fontWeight:600,background:SFT,borderRadius:10,padding:"2px 8px"}},deptCount)
+              );
+            }
+          }
           var isFixed=e.salaryType==="fixed"; // declare here so it's in scope for Details section
           var eEff=getEffectiveEmp(e,payY,payM); // salary-revision-aware employee for THIS month (display rows must use this, not raw e)
           var ma=mAtt(e.id,payY,payM),inc=getInc(e.id,payY,payM),wD=getWorkingDays(att,e.id,payY,payM),d=calcPay(eEff,ma.absent,ma.half,ma.unpaid,inc,getShiftAllow(e.id,payY,payM),wD,proRata(e,payY,payM).active,proRata(e,payY,payM).total),isO=editPayE&&editPayE.id===e.id;
@@ -4829,9 +4846,9 @@ null
           var totalDed=attDed+statDed;
           var extraPay=getExtraPay(e.id,payM,payY);
           var netWithExtra=d.net+extraPay;
-          return h("div",{key:e.id,style:{borderBottom:"1px solid "+BDR,paddingBottom:12,marginBottom:12}},
-            // Row 1: avatar + name + salary type + NET PAY only
-            h("div",{style:{display:"flex",alignItems:"center",gap:9,marginBottom:8}},
+          return h(React.Fragment,{key:e.id},deptHeader,h("div",{style:{borderBottom:i<arr.length-1?"1px solid "+BDR:"none",paddingBottom:12,marginBottom:12}},
+            // Row 1: avatar + name + salary type + NET PAY — tap anywhere to expand/collapse details
+            h("div",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{display:"flex",alignItems:"center",gap:9,marginBottom:isO?8:0,cursor:"pointer"}},
               av(e,38),
               h("div",{style:{flex:1}},
                 h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},e.name),
@@ -4841,19 +4858,21 @@ null
                   (function(){var prc=proRata(e,payY,payM);return prc.partial?h("div",{style:{fontSize:9,fontWeight:700,display:"inline-block",padding:"1px 6px",borderRadius:8,background:AMB+"1E",color:AMB}},"Prorated · "+prc.range.activeDays+"/"+prc.range.fullDays+"d"):null;})()
                 )
               ),
-              h("div",{style:{textAlign:"right",flexShrink:0}},
-                h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:1}},"TO PAY"),
-                h("div",{style:{fontSize:20,fontWeight:800,color:"#10B981"}},fmt(netWithExtra))
+              h("div",{style:{textAlign:"right",flexShrink:0,display:"flex",alignItems:"center",gap:6}},
+                h("div",null,
+                  h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:1}},"TO PAY"),
+                  h("div",{style:{fontSize:20,fontWeight:800,color:"#10B981"}},fmt(netWithExtra))
+                ),
+                h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center"}},ic(isO?"expand_less":"expand_more",GRY,18))
               )
             ),
-            h("div",{style:{display:"flex",gap:5,marginBottom:6}},
-              isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp"):null,
-              isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er"):null,
-              !isPaid?h("button",{onClick:needPaid,style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"):null,
-              h("button",{onClick:function(){if(!isPaid){showT("WhatsApp share is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for WhatsApp payslip sharing"),"_blank");return;}sharePayslip(e,d,payM,payY);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.wa:"lock",isPaid?"#25D366":GRY,13),"WhatsApp"),
-              h("button",{onClick:function(){setEditPayE(isO?null:e);setEditPayInc(String(getInc(e.id,payY,payM)));},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:isO?ACCENT:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:isO?ACCENT_FG:NVY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isO?"expand_less":"expand_more",isO?CARD:NVY,13),isO?"Hide":"Details")
-            ),
             isO?h("div",{style:{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:"12px",border:"1px solid "+BDR,marginTop:4}},
+              h("div",{style:{display:"flex",gap:5,marginBottom:12}},
+                isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp PDF"):null,
+                isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er PDF"):null,
+                !isPaid?h("button",{onClick:needPaid,style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"):null,
+                h("button",{onClick:function(){if(!isPaid){showT("WhatsApp share is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for WhatsApp payslip sharing"),"_blank");return;}sharePayslip(e,d,payM,payY);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.wa:"lock",isPaid?"#25D366":GRY,13),"WhatsApp")
+              ),
               lbl("INCENTIVE (Rs.)"),
               h("div",{style:{display:"flex",gap:6,marginBottom:12}},
                 h("input",{type:"number",value:editPayInc,onChange:function(ev){setEditPayInc(ev.target.value);},placeholder:"0",style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
@@ -4985,7 +5004,7 @@ null
                 );
               })()
             ):null
-          );
+          ));
         })
       ),0):repV==="annual"?renderAnnualStatement():h("div",null,
         card(h("div",null,
