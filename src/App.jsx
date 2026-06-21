@@ -393,7 +393,7 @@ function pdfFooter(doc,W,mg,H,orgName,orgEmail,appLogoSrc,authPos,authSign){
   doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
   doc.text(authSign||orgName||"",mg,sigY+16);
   doc.setFont("helvetica","normal");doc.setTextColor(100,115,135);
-  doc.text(authPos?"Authorised Signatory — "+authPos:"Authorised Signatory",mg,sigY+20);
+  doc.text(authPos?"Authorised Signatory - "+authPos:"Authorised Signatory",mg,sigY+20);
   doc.setDrawColor(180,195,215);doc.setLineWidth(0.3);doc.line(mg,H-12,W-mg,H-12);
   doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(100,115,135);
   doc.text(orgName||"",mg,H-6);
@@ -411,16 +411,38 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
   var cx=[mg];
   for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
   var cw=cws.reduce(function(a,b){return a+b;},0);
+  var padX=1.8;
+
+  // Truncates text with an ellipsis so it never bleeds into the next column.
+  // Must be called AFTER setFontSize/setFont for the cell, so the width measurement matches what's drawn.
+  function fitText(text,maxWidth){
+    text=String(text===null||text===undefined?"":text);
+    if(doc.getTextWidth(text)<=maxWidth)return text;
+    var t=text;
+    while(t.length>1&&doc.getTextWidth(t+"...")>maxWidth)t=t.slice(0,-1);
+    return t+"...";
+  }
+  // Draws the vertical grid lines for one row band (header or data), color depends on dark/light background.
+  function vLines(y,h,onDark){
+    doc.setDrawColor.apply(doc,onDark?[255,255,255]:[222,228,238]);
+    if(onDark)doc.setGState&&doc.setGState(new doc.GState({opacity:0.18}));
+    doc.setLineWidth(0.25);
+    for(var v=1;v<cx.length;v++)doc.line(cx[v],y,cx[v],y+h);
+    doc.line(mg,y,mg,y+h); // left border
+    doc.line(mg+cw,y,mg+cw,y+h); // right border
+    if(onDark)doc.setGState&&doc.setGState(new doc.GState({opacity:1}));
+  }
 
   // Header row
   doc.setFillColor(o.headerColor[0],o.headerColor[1],o.headerColor[2]);
   doc.rect(mg,ry,cw,o.rowH,"F");
   doc.setFontSize(o.fontSize-0.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
   cols.forEach(function(col,i){
-    var x=col.align==="r"?cx[i]+cws[i]-1.5:col.align==="c"?(cx[i]+cws[i]/2):cx[i]+1.5;
+    var x=col.align==="r"?cx[i]+cws[i]-padX:col.align==="c"?(cx[i]+cws[i]/2):cx[i]+padX;
     var align=col.align==="r"?"right":col.align==="c"?"center":"left";
-    doc.text(col.label,x,ry+o.rowH*0.65,{align:align});
+    doc.text(fitText(col.label,cws[i]-padX*2),x,ry+o.rowH*0.65,{align:align});
   });
+  vLines(ry,o.rowH,true);
   ry+=o.rowH;
 
   // Data rows
@@ -429,9 +451,9 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
     if(isTotals){
       doc.setFillColor(45,55,72);doc.rect(mg,ry,cw,o.rowH,"F");
     } else if(o.altRow&&ri%2===0){
-      doc.setFillColor(248,250,253);doc.rect(mg,ry,cw,o.rowH,"F");
+      doc.setFillColor(238,242,249);doc.rect(mg,ry,cw,o.rowH,"F"); // stronger banding so alternating rows are easy to tell apart
     }
-    doc.setDrawColor(220,228,240);
+    doc.setDrawColor(205,213,228);doc.setLineWidth(0.3);
     if(!isTotals)doc.line(mg,ry+o.rowH,mg+cw,ry+o.rowH);
 
     row.forEach(function(cell,i){
@@ -444,9 +466,10 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
       if(color)doc.setTextColor(color[0],color[1],color[2]);
       else doc.setTextColor(isTotals?255:15,isTotals?255:23,isTotals?255:42);
       var align=cols[i]&&cols[i].align==="r"?"right":cols[i]&&cols[i].align==="c"?"center":"left";
-      var x=align==="right"?cx[i]+cws[i]-1.5:align==="center"?(cx[i]+cws[i]/2):cx[i]+1.5;
-      doc.text(String(val===null||val===undefined?"":val),x,ry+o.rowH*0.65,{align:align});
+      var x=align==="right"?cx[i]+cws[i]-padX:align==="center"?(cx[i]+cws[i]/2):cx[i]+padX;
+      doc.text(fitText(val,cws[i]-padX*2),x,ry+o.rowH*0.65,{align:align});
     });
+    vLines(ry,o.rowH,isTotals);
     ry+=o.rowH;
     if(ry>270){doc.addPage();ry=14;}
   });
@@ -500,7 +523,7 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
     // ── Section 2: Salary Summary ──
     if(ry>240){doc.addPage();ry=14;}
     sectionTab("Salary Summary",BLUE);
-    doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text(data.periodLabel+" — "+data.staffCount+" employees",mg,ry+1);ry+=6;
+    doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text(data.periodLabel+" - "+data.staffCount+" employees",mg,ry+1);ry+=6;
     var statCols=[["Total Gross",data.salaryGross],["Total Net Pay",data.salaryNet],["PF (Employee+Employer)",data.salaryPF],["Total Staff",data.staffCount+" employees"]];
     var statW=(W-mg*2-3*4)/4;
     statCols.forEach(function(s,i){
@@ -534,7 +557,7 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
       ry=pdfTable(doc,ry,mg,claimCols,claimCws,claimRows,{rowH:7,fontSize:7.5,totalsRow:true,headerColor:NEUTRAL_HEAD});
       ry+=6;
       doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(120,135,155);
-      doc.text("Note: Staff claims are paid out as part of the Net Pay shown in Salary Summary above — they are not an additional outflow.",mg,ry);
+      doc.text("Note: Staff claims are paid out as part of the Net Pay shown in Salary Summary above - they are not an additional outflow.",mg,ry);
     }
 
     pdfFooter(doc,W,mg,doc.internal.pageSize.getHeight(),org.name,org.email,null,authPos2,authSign2);
@@ -594,7 +617,7 @@ function makeExperienceLetterPDF(emp,org,authPos2,authSign2){
     doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("EXPERIENCE CERTIFICATE",W/2,ry,{align:"center"});ry+=2;
     doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-22,ry+2,W/2+22,ry+2);ry+=14;
     doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("To Whomsoever It May Concern,",mg,ry);ry+=10;
-    var joined=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"—";
+    var joined=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-";
     var relieved=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
     var body="This is to certify that "+emp.name+" (Employee ID: "+(emp.eid||"N/A")+") was employed with "+
       (org.name||"our organization")+" as "+( emp.role||"Employee")+
@@ -634,9 +657,9 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
     doc.setDrawColor(NVYC[0],NVYC[1],NVYC[2]);doc.setLineWidth(0.8);doc.line(W/2-18,ry+2,W/2+18,ry+2);ry+=14;
     doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+emp.name+",",mg,ry);ry+=10;
     var relievedDate=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
-    var joined=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"—";
+    var joined=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-";
     var body="This is to confirm that your resignation has been accepted and you have been officially relieved from the position of "+
-      (emp.role||"Employee")+(emp.dept?" — "+emp.dept+" Department":"")+
+      (emp.role||"Employee")+(emp.dept?" - "+emp.dept+" Department":"")+
       " effective "+relievedDate+". You joined "+( org.name||"our organization")+" on "+joined+".";
     doc.setFontSize(9.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
     var lines=doc.splitTextToSize(body,W-mg*2);doc.text(lines,mg,ry);ry+=lines.length*5+6;
@@ -722,7 +745,7 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     var net_y=Math.max(gr_y,dt_y)+rh+5;
     doc.setDrawColor(180,195,215);doc.setLineWidth(0.5);doc.line(mg,net_y,mg+cw,net_y);net_y+=5;
     doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-    doc.text("NET TAKE HOME  —  "+MOS[m]+" "+y,mg+4,net_y+5);
+    doc.text("NET TAKE HOME  -  "+MOS[m]+" "+y,mg+4,net_y+5);
     doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(5,120,80);
     doc.text(fmtIN(d.net+bonusSum+claimSum),W-mg-4,net_y+6,{align:"right"});
     net_y+=14;doc.setDrawColor(180,195,215);doc.line(mg,net_y,mg+cw,net_y);
@@ -746,7 +769,7 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=12;
     var nd=new Date();
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,showEmployer?"PAYROLL REPORT (EMPLOYER)":"PAYROLL REPORT",MOS[m]+" "+String(y)+" — Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,showEmployer?"PAYROLL REPORT (EMPLOYER)":"PAYROLL REPORT",MOS[m]+" "+String(y)+" - Generated "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
 
     var cols=showEmployer?[
       {label:"EMPLOYEE NAME",align:"l"},
@@ -1258,7 +1281,7 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
     var W=297,H=210,mg=10;
-    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY REGISTER",MOS[m]+" "+String(y)+" — Payment of Wages Act",orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"SALARY REGISTER",MOS[m]+" "+String(y)+" - Payment of Wages Act",orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
     doc.setFontSize(7);doc.setFont("helvetica","normal");doc.setTextColor(80,100,140);
     doc.text("Statutory salary register. Maintain for minimum 3 years as per Payment of Wages Act, 1936.",mg,ry+4);
     ry+=9;
@@ -1266,9 +1289,9 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
     var cols=[
       {label:"#",align:"c"},
       {label:"EMPLOYEE NAME",align:"l"},
-      {label:"DESIGNATION",align:"l"},
+      {label:"ROLE",align:"l"},
       {label:"DEPT",align:"l"},
-      {label:"WORKED",align:"r"},
+      {label:"WORK",align:"r"},
       {label:"PAID",align:"r"},
       {label:"BASIC",align:"r"},
       {label:"HRA",align:"r"},
@@ -1282,7 +1305,7 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
       {label:"NET PAY",align:"r"},
       {label:"SIGN",align:"c"},
     ];
-    var cws=[7,30,22,15,11,11,18,15,15,20,15,13,11,13,17,21,13];
+    var cws=[7,28,16,15,13,11,18,15,15,20,15,14,13,14,17,21,13];
     // Verify: cws sum
     var cwSum=cws.reduce(function(a,b){return a+b;},0);
     var cw=W-mg*2;
@@ -4714,44 +4737,7 @@ null
             );
           })()
         );
-      })(),0),
-      // ── Salary breakdown card (hidden if not employed this period) ──
-      (proRata(sheetE,yr,mo).notYetJoined||proRata(sheetE,yr,mo).alreadyLeft)?null:card(h("div",null,
-        h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},MOS[mo]+" "+yr+" — Salary Breakdown"),
-        // Earnings section
-        h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"EARNINGS"),
-        [
-          ["Basic (Effective)",fmt(d.eb),NVY],
-          sheetE.salaryType==="fixed"?null:["HRA",fmt(sheetE.hra||0),NVY],
-          sheetE.salaryType==="fixed"?null:["Allowances",fmt(sheetE.allow||0),NVY],
-          d.inc>0?["Incentive",fmt(d.inc),"#059669"]:null,
-          d.shiftAllow>0?["Shift Allowance",fmt(d.shiftAllow),TEL]:null
-        ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1]));}),
-        h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:8}},h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},"Gross"),h("span",{style:{fontSize:12,fontWeight:800,color:GRN}},fmt(d.gr))),
-        // Deductions section
-        h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5,marginTop:4}},"DEDUCTIONS"),
-        [
-          d.ad>0?["Absent ("+ma.absent+" day"+(ma.absent>1?"s":"")+")","-"+fmt(d.ad),RED]:null,
-          d.hd>0?["Half Day ("+ma.half+" day"+(ma.half>1?"s":"")+")","-"+fmt(d.hd),AMB]:null,
-          d.ud>0?["Unpaid Leave ("+ma.unpaid+" day"+(ma.unpaid>1?"s":"")+")","-"+fmt(d.ud),RED]:null,
-          d.pfE>0?["PF Employee (12%)","-"+fmt(d.pfE),NVY]:null,
-          d.esiE>0?["ESI Employee (0.75%)","-"+fmt(d.esiE),TEL]:null,
-          d.pt>0?["Professional Tax","-"+fmt(d.pt),AMB]:null,
-          d.tds>0?["TDS","-"+fmt(d.tds),RED]:null,
-          d.hi>0?["Health Insurance","-"+fmt(d.hi),"#EC4899"]:null,
-          d.cd>0?["Custom Deductions","-"+fmt(d.cd),GRY]:null
-        ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:11,color:GRY}},item[0]),h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1]));}),
-        (d.ad+d.hd+d.ud+d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd)===0?h("div",{style:{fontSize:11,color:GRY,padding:"6px 0"}},"No deductions this month"):null,
-        // Net take home
-        h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:8,display:"flex",justifyContent:"space-between"}},
-          h("span",{style:{fontSize:11,color:GRY}},"Working days this month"),
-          h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},(d.wDays||26)+" days")
-        ),
-        h("div",{style:{background:"#0F172A",borderRadius:10,padding:"11px 14px",marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center"}},
-          h("div",{style:{fontSize:12,fontWeight:600,color:"rgba(255,255,255,.7)"}},"Net Take Home"),
-          h("div",{style:{fontSize:18,fontWeight:800,color:"#4ADE80"}},fmt(d.net))
-        )
-      ),0)
+      })(),0)
     );
   }
 
@@ -7861,7 +7847,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       try{
         var doc=new window.jspdf.jsPDF();
         doc.setFontSize(13);doc.setFont(undefined,"bold");doc.text(org.name||"Company",105,16,{align:"center"});
-        doc.setFontSize(10);doc.text("ANNUAL SALARY STATEMENT — FY "+fy+"-"+(fy+1),105,23,{align:"center"});
+        doc.setFontSize(10);doc.text("ANNUAL SALARY STATEMENT - FY "+fy+"-"+(fy+1),105,23,{align:"center"});
         doc.setDrawColor(180,195,215);doc.setLineWidth(0.3);doc.line(10,27,200,27);
         doc.setFontSize(9);doc.setFont(undefined,"normal");
         doc.text("Employee: "+emp.name,12,33);doc.text("ID: "+(emp.eid||"-"),80,33);
