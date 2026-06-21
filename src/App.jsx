@@ -422,52 +422,52 @@ function pdfTable(doc,ry,mg,cols,cws,rows,opts){
     while(t.length>1&&doc.getTextWidth(t+"...")>maxWidth)t=t.slice(0,-1);
     return t+"...";
   }
-  // Draws the vertical grid lines for one row band (header or data), color depends on dark/light background.
-  function vLines(y,h,onDark){
-    doc.setDrawColor.apply(doc,onDark?[255,255,255]:[222,228,238]);
-    if(onDark)doc.setGState&&doc.setGState(new doc.GState({opacity:0.18}));
+  // Draws the vertical grid lines for one row band.
+  function vLines(y,h){
+    doc.setDrawColor(222,228,238);
     doc.setLineWidth(0.25);
     for(var v=1;v<cx.length;v++)doc.line(cx[v],y,cx[v],y+h);
     doc.line(mg,y,mg,y+h); // left border
     doc.line(mg+cw,y,mg+cw,y+h); // right border
-    if(onDark)doc.setGState&&doc.setGState(new doc.GState({opacity:1}));
   }
 
-  // Header row
-  doc.setFillColor(o.headerColor[0],o.headerColor[1],o.headerColor[2]);
-  doc.rect(mg,ry,cw,o.rowH,"F");
-  doc.setFontSize(o.fontSize-0.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+  // Header row — no solid fill; bold colored text with a bold rule underneath to set it apart
+  doc.setFontSize(o.fontSize-0.5);doc.setFont("helvetica","bold");doc.setTextColor(o.headerColor[0],o.headerColor[1],o.headerColor[2]);
   cols.forEach(function(col,i){
     var x=cx[i]+cws[i]/2;
     doc.text(fitText(col.label,cws[i]-padX*2),x,ry+o.rowH*0.65,{align:"center"});
   });
-  vLines(ry,o.rowH,true);
+  vLines(ry,o.rowH);
+  doc.setDrawColor(o.headerColor[0],o.headerColor[1],o.headerColor[2]);doc.setLineWidth(0.7);
+  doc.line(mg,ry+o.rowH,mg+cw,ry+o.rowH);
   ry+=o.rowH;
 
   // Data rows
   rows.forEach(function(row,ri){
     var isTotals=ri===rows.length-1&&opts&&opts.totalsRow;
     if(isTotals){
-      doc.setFillColor(45,55,72);doc.rect(mg,ry,cw,o.rowH,"F");
+      // No fill — a bold rule above sets the totals row apart instead
+      doc.setDrawColor(o.headerColor[0],o.headerColor[1],o.headerColor[2]);doc.setLineWidth(0.7);
+      doc.line(mg,ry,mg+cw,ry);
     } else if(o.altRow&&ri%2===0){
       doc.setFillColor(238,242,249);doc.rect(mg,ry,cw,o.rowH,"F"); // stronger banding so alternating rows are easy to tell apart
     }
     doc.setDrawColor(205,213,228);doc.setLineWidth(0.3);
-    if(!isTotals)doc.line(mg,ry+o.rowH,mg+cw,ry+o.rowH);
+    doc.line(mg,ry+o.rowH,mg+cw,ry+o.rowH);
 
     row.forEach(function(cell,i){
       var val=cell&&cell.val!==undefined?cell.val:cell;
       var bold=cell&&cell.bold;
       var color=cell&&cell.color;
-      if(isTotals)color=color||[255,255,255];
+      if(isTotals)color=color||o.headerColor;
       doc.setFontSize(o.fontSize);
       doc.setFont("helvetica",bold||isTotals?"bold":"normal");
       if(color)doc.setTextColor(color[0],color[1],color[2]);
-      else doc.setTextColor(isTotals?255:15,isTotals?255:23,isTotals?255:42);
+      else doc.setTextColor(15,23,42);
       var x=cx[i]+cws[i]/2;
       doc.text(fitText(val,cws[i]-padX*2),x,ry+o.rowH*0.65,{align:"center"});
     });
-    vLines(ry,o.rowH,isTotals);
+    vLines(ry,o.rowH);
     ry+=o.rowH;
     if(ry>270){doc.addPage();ry=14;}
   });
@@ -482,25 +482,60 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
     var W=210,mg=14;
     var ry=pdfHeader(doc,W,mg,null,org.name,org.position,org.contactEmail||org.email,"EXPENSE & PAYROLL SUMMARY",data.periodLabel,org.address||"",org.logo||"",{phone:org.phone,website:org.website});
 
-    // Subtle section marker — small colored tick + heading, neutral grey rule (the only color cue per section)
+    // Subtle section marker — colored tag + heading + neutral rule
     function sectionTab(label,rgb){
       doc.setFillColor(rgb[0],rgb[1],rgb[2]);
-      doc.roundedRect(mg,ry-4.5,3,3,0.8,0.8,"F");
-      doc.setFontSize(10.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-      doc.text(label,mg+6,ry);
+      doc.roundedRect(mg,ry-4.7,3.4,3.4,1,1,"F");
+      doc.setFontSize(11);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text(label,mg+6.5,ry);
       doc.setDrawColor(225,230,238);doc.setLineWidth(0.4);
-      doc.line(mg,ry+2.5,W-mg,ry+2.5);
-      ry+=8;
+      doc.line(mg,ry+3,W-mg,ry+3);
+      ry+=9;
     }
 
-    var AMBER=[200,138,40],BLUE=[70,110,200],PURPLE=[140,100,200];
+    var AMBER=[200,138,40],BLUE=[70,110,200],PURPLE=[140,100,200],GRNc=[16,140,90];
     var NEUTRAL_HEAD=[71,85,105]; // same restrained slate used for headers across the app's other PDFs
+    var totalOutflow=(data.expTotal||0)+(data.salaryNet||0);
 
-    // ── Section 1: Company Expenses ──
+    // ── Executive Overview — the one band that answers "what did this period cost, total?" ──
+    doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(120,135,155);doc.text("OVERVIEW - "+data.periodLabel.toUpperCase(),mg,ry);ry+=5;
+    var ovItems=[["Company Expenses",data.expTotal,AMBER],["Payroll (Net Paid)",data.salaryNet,BLUE],["Total Outflow",totalOutflow,GRNc]];
+    var ovW=(W-mg*2-2*5)/3;
+    ovItems.forEach(function(it,i){
+      var x=mg+i*(ovW+5);
+      doc.setDrawColor(225,230,238);doc.setLineWidth(0.4);doc.roundedRect(x,ry,ovW,20,2,2);
+      doc.setFillColor(it[2][0],it[2][1],it[2][2]);doc.roundedRect(x,ry,2.2,20,1,1,"F");
+      doc.setFontSize(7);doc.setFont("helvetica","bold");doc.setTextColor(120,135,155);doc.text(it[0].toUpperCase(),x+6,ry+7.5);
+      doc.setFontSize(12.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(fmtIN(it[1]||0),x+6,ry+15.5);
+    });
+    ry+=27;
+
+    // ── Section 1: Company Expenses (table + category breakdown) ──
     sectionTab("Company Expenses",AMBER);
-    if(data.expenses.length===0){
+    if(!data.expenses||data.expenses.length===0){
       doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text("No company expenses recorded for this period.",mg,ry+2);ry+=10;
     } else {
+      // Category breakdown — horizontal bars, biggest category first (this data existed before but was never shown)
+      if(data.catList&&data.catList.length){
+        doc.setFontSize(8);doc.setFont("helvetica","bold");doc.setTextColor(100,116,139);doc.text("By Category",mg,ry);ry+=5;
+        var barColors=[AMBER,BLUE,PURPLE,GRNc,[200,90,60],[90,140,160]];
+        var maxCat=data.catList[0][1]||1;
+        var barX=mg+44,barAreaW=W-mg*2-86; // leaves clear space for the label (left) and amount/pct (right) so the bar never runs under the text
+        data.catList.slice(0,6).forEach(function(c,i){
+          var col=barColors[i%barColors.length];
+          var pct=data.expTotal>0?Math.round(c[1]*100/data.expTotal):0;
+          doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);
+          doc.text(String(c[0]).substring(0,20),mg,ry+3.2);
+          doc.setFillColor(238,242,248);doc.roundedRect(barX,ry,barAreaW,4.2,1,1,"F");
+          var bw=Math.max(2,barAreaW*(c[1]/maxCat));
+          doc.setFillColor(col[0],col[1],col[2]);doc.roundedRect(barX,ry,bw,4.2,1,1,"F");
+          doc.setFontSize(8);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+          doc.text(fmtNum(c[1])+"  ("+pct+"%)",W-mg,ry+3.2,{align:"right"});
+          ry+=7.5;
+        });
+        ry+=4;
+      }
+      doc.setFontSize(8);doc.setFont("helvetica","bold");doc.setTextColor(100,116,139);doc.text("All Transactions",mg,ry);ry+=4;
       var expCols=[{label:"DATE",align:"l"},{label:"CATEGORY",align:"l"},{label:"VENDOR",align:"l"},{label:"MODE",align:"l"},{label:"AMOUNT (Rs.)",align:"r"}];
       var expCws=[24,42,52,30,34];
       var expRows=data.expenses.map(function(e){
@@ -519,25 +554,25 @@ function makeExpenseSummaryPDF(data,org,authPos2,authSign2){
     }
 
     // ── Section 2: Salary Summary ──
-    if(ry>240){doc.addPage();ry=14;}
+    if(ry>235){doc.addPage();ry=14;}
     sectionTab("Salary Summary",BLUE);
     doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text(data.periodLabel+" - "+data.staffCount+" employees",mg,ry+1);ry+=6;
     var statCols=[["Total Gross",data.salaryGross],["Total Net Pay",data.salaryNet],["PF (Employee+Employer)",data.salaryPF],["Total Staff",data.staffCount+" employees"]];
     var statW=(W-mg*2-3*4)/4;
     statCols.forEach(function(s,i){
       var x=mg+i*(statW+4);
-      doc.setFillColor(BLUE[0],BLUE[1],BLUE[2]);doc.rect(x,ry,statW,0.9,"F");
-      doc.setDrawColor(225,230,238);doc.setLineWidth(0.35);doc.roundedRect(x,ry+0.9,statW,17,1.5,1.5);
-      doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.setTextColor(120,135,155);doc.text(s[0].toUpperCase(),x+3,ry+6.9);
+      doc.setDrawColor(225,230,238);doc.setLineWidth(0.4);doc.roundedRect(x,ry,statW,17.5,1.5,1.5);
+      doc.setFillColor(BLUE[0],BLUE[1],BLUE[2]);doc.roundedRect(x,ry,2,17.5,1,1,"F");
+      doc.setFontSize(6.5);doc.setFont("helvetica","bold");doc.setTextColor(120,135,155);doc.text(s[0].toUpperCase(),x+5,ry+7);
       doc.setFontSize(9.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-      doc.text(typeof s[1]==="number"?fmtIN(s[1]):String(s[1]),x+3,ry+13.9);
+      doc.text(typeof s[1]==="number"?fmtIN(s[1]):String(s[1]),x+5,ry+14);
     });
     ry+=27;
 
     // ── Section 3: Staff Claims ──
-    if(ry>240){doc.addPage();ry=14;}
+    if(ry>235){doc.addPage();ry=14;}
     sectionTab("Staff Claims",PURPLE);
-    if(data.claims.length===0){
+    if(!data.claims||data.claims.length===0){
       doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);doc.text("No staff claims recorded for this period.",mg,ry+2);ry+=10;
     } else {
       var claimCols=[{label:"EMPLOYEE",align:"l"},{label:"CATEGORY",align:"l"},{label:"PAYROLL MONTH",align:"l"},{label:"DESCRIPTION",align:"l"},{label:"AMOUNT (Rs.)",align:"r"}];
@@ -572,7 +607,7 @@ function makeOfferLetterPDF(emp,org,authPos2,authSign2){
     // Letterhead — logo (if set) + org name/address/contact
     var logoW=0;
     if(org.logo&&String(org.logo).indexOf("data:")===0){
-      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-9,16,16,2.5,2.5,"F");doc.addImage(org.logo,"PNG",mg,ry-9,16,16,undefined,"FAST");logoW=20;}catch(e){}
+      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-6,18,18,3,3,"F");doc.addImage(org.logo,"PNG",mg,ry-6,18,18,undefined,"FAST");logoW=22;}catch(e){}
     }
     doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
@@ -610,7 +645,7 @@ function makeExperienceLetterPDF(emp,org,authPos2,authSign2){
     var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
     var logoW=0;
     if(org.logo&&String(org.logo).indexOf("data:")===0){
-      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-9,16,16,2.5,2.5,"F");doc.addImage(org.logo,"PNG",mg,ry-9,16,16,undefined,"FAST");logoW=20;}catch(e){}
+      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-6,18,18,3,3,"F");doc.addImage(org.logo,"PNG",mg,ry-6,18,18,undefined,"FAST");logoW=22;}catch(e){}
     }
     doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
@@ -653,7 +688,7 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
     var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
     var logoW=0;
     if(org.logo&&String(org.logo).indexOf("data:")===0){
-      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-9,16,16,2.5,2.5,"F");doc.addImage(org.logo,"PNG",mg,ry-9,16,16,undefined,"FAST");logoW=20;}catch(e){}
+      try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-6,18,18,3,3,"F");doc.addImage(org.logo,"PNG",mg,ry-6,18,18,undefined,"FAST");logoW=22;}catch(e){}
     }
     doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
     doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
@@ -846,20 +881,20 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
       rows.push([
         {val:"TOTAL",bold:true},
         {val:""},
-        {val:fmtNum(tG),bold:true,color:[160,185,255]},
-        {val:fmtNum(tD),bold:true,color:[255,150,150]},
-        {val:fmtNum(tN),bold:true,color:[100,255,160]},
-        {val:fmtNum(tPR),color:[160,185,255]},
-        {val:fmtNum(tER),color:[150,230,190]},
-        {val:fmtNum(tG+tPR+tER),bold:true,color:[255,210,120]},
+        {val:fmtNum(tG),bold:true,color:[60,80,180]},
+        {val:fmtNum(tD),bold:true,color:[200,40,40]},
+        {val:fmtNum(tN),bold:true,color:[5,140,90]},
+        {val:fmtNum(tPR),color:[60,80,180]},
+        {val:fmtNum(tER),color:[5,140,90]},
+        {val:fmtNum(tG+tPR+tER),bold:true,color:[180,100,0]},
       ]);
     } else {
       rows.push([
         {val:"TOTAL",bold:true},
         {val:""},
-        {val:fmtNum(tG),bold:true,color:[160,185,255]},
-        {val:fmtNum(tD),bold:true,color:[255,150,150]},
-        {val:fmtNum(tN),bold:true,color:[100,255,160]},
+        {val:fmtNum(tG),bold:true,color:[60,80,180]},
+        {val:fmtNum(tD),bold:true,color:[200,40,40]},
+        {val:fmtNum(tN),bold:true,color:[5,140,90]},
       ]);
     }
 
@@ -1003,11 +1038,11 @@ function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddre
       {val:"TOTALS",bold:true},
       {val:""},
       {val:""},
-      {val:totP,bold:true,color:[150,220,180]},
-      {val:totA,bold:true,color:[255,150,150]},
-      {val:totH,bold:true,color:[255,200,120]},
-      {val:totL,bold:true,color:[200,170,255]},
-      {val:totHol,color:[200,215,255]},
+      {val:totP,bold:true,color:[5,140,90]},
+      {val:totA,bold:true,color:[200,40,40]},
+      {val:totH,bold:true,color:[180,100,0]},
+      {val:totL,bold:true,color:[120,80,200]},
+      {val:totHol,color:[60,80,180]},
       {val:""},
     ]);
 
@@ -1220,11 +1255,11 @@ function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,
       {val:""},
       {val:fmtNum(totGross),bold:true},
       {val:fmtNum(totPFW),bold:true},
-      {val:fmtNum(totEmpPF),bold:true,color:[160,185,255]},
-      {val:fmtNum(totErPF),bold:true,color:[160,185,255]},
-      {val:fmtNum(totEmpESI),bold:true,color:[150,230,190]},
-      {val:fmtNum(totErESI),bold:true,color:[150,230,190]},
-      {val:fmtNum(totAll),bold:true,color:[255,210,120]},
+      {val:fmtNum(totEmpPF),bold:true,color:[60,80,180]},
+      {val:fmtNum(totErPF),bold:true,color:[60,80,180]},
+      {val:fmtNum(totEmpESI),bold:true,color:[5,140,90]},
+      {val:fmtNum(totErESI),bold:true,color:[5,140,90]},
+      {val:fmtNum(totAll),bold:true,color:[180,100,0]},
     ]);
 
     doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(120,135,155);doc.text("All amounts in the table below are in Rs.",mg,ry-1);
@@ -1373,16 +1408,16 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
       {val:""},{val:""},
       {val:totW,bold:true},
       {val:totD,bold:true},
-      {val:fmtNum(totB),bold:true,color:[160,185,255]},
-      {val:fmtNum(totH),color:[200,215,255]},
-      {val:fmtNum(totA),color:[200,215,255]},
+      {val:fmtNum(totB),bold:true,color:[60,80,180]},
+      {val:fmtNum(totH),color:[60,80,180]},
+      {val:fmtNum(totA),color:[60,80,180]},
       {val:fmtNum(totG),bold:true},
-      {val:fmtNum(totPF),color:[160,185,255]},
-      {val:fmtNum(totESI),color:[150,230,190]},
-      {val:fmtNum(totPT),color:[255,200,120]},
-      {val:fmtNum(totTDS),color:[255,150,150]},
-      {val:fmtNum(totDed),bold:true,color:[255,100,100]},
-      {val:fmtNum(totNet),bold:true,color:[100,255,160]},
+      {val:fmtNum(totPF),color:[60,80,180]},
+      {val:fmtNum(totESI),color:[5,140,90]},
+      {val:fmtNum(totPT),color:[180,100,0]},
+      {val:fmtNum(totTDS),color:[200,40,40]},
+      {val:fmtNum(totDed),bold:true,color:[200,40,40]},
+      {val:fmtNum(totNet),bold:true,color:[5,140,90]},
       {val:""},
     ]);
 
@@ -6551,6 +6586,7 @@ null
         catLabels:cats,
         modeLabels:modes,
         expTotal:total,
+        catList:catList,
         salaryGross:salaryTotal,
         salaryNet:netTotal,
         salaryPF:pfTotal,
@@ -7811,26 +7847,72 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
   }
 
   function generateWarningPDF(warn,emp){
-    try{
-      var doc=new window.jspdf.jsPDF();
-      doc.setFontSize(14);doc.setFont(undefined,"bold");
-      doc.text(org.name||"Company",105,20,{align:"center"});
-      doc.setFontSize(11);doc.text("WARNING LETTER",105,28,{align:"center"});
-      doc.setFontSize(9);doc.setFont(undefined,"normal");
-      doc.setDrawColor(180,195,215);doc.setLineWidth(0.4);doc.line(10,32,200,32);
-      doc.text("Date: "+new Date().toLocaleDateString("en-IN"),12,40);
-      doc.text("To: "+emp.name,12,47);
-      doc.text("ID: "+(emp.eid||"-"),80,40);
-      doc.text("Dept: "+(emp.dept||"-"),80,47);
-      doc.setFont(undefined,"bold");doc.text("Subject: "+((warn.warningType||"Written").charAt(0).toUpperCase()+(warn.warningType||"Written").slice(1))+" Warning Letter",12,56);
-      doc.setFont(undefined,"normal");doc.line(10,59,200,59);
-            var body="This letter formally warns you regarding the following. Incident Date: "+warn.incidentDate+". Incident: "+warn.incident+". Action required: "+(warn.actionRequired||"Immediate improvement")+". This is a formal "+(warn.warningType||"written")+" warning.";
-      var lines=doc.splitTextToSize(body,175);
-      doc.text(lines,12,67);
-      var y2=67+lines.length*5+15;
-          doc.save("Warning-"+emp.name.replace(/\s/g,"-")+"-"+warn.incidentDate+".pdf");
-      showT("Warning PDF downloaded");
-    }catch(e){showT("PDF error","err");}
+    loadJsPDFGlobal(function(JsPDF){
+      var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+      var W=210,mg=22,ry=18;
+      var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
+      var wType=(warn.warningType||"written");
+      var wTypeLabel=wType.charAt(0).toUpperCase()+wType.slice(1);
+      var sevColor=wType==="verbal"?[180,130,20]:wType==="final"?[180,30,30]:[200,90,20]; // amber / red / orange by severity
+
+      // Letterhead — logo (if set) + org name/address/contact, matching Offer/Experience/Relieving letters
+      var logoW=0;
+      if(org.logo&&String(org.logo).indexOf("data:")===0){
+        try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-6,18,18,3,3,"F");doc.addImage(org.logo,"PNG",mg,ry-6,18,18,undefined,"FAST");logoW=22;}catch(e){}
+      }
+      doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
+      doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+      var addrShown=false;
+      if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg+logoW,ry+5.5);addrShown=true;}
+      var contactLine=orgContactLine(org);
+      if(contactLine)doc.text(contactLine,mg+logoW,ry+(addrShown?10:5.5));
+      doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
+      ry+=(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
+
+      // Title + severity tag
+      doc.setFontSize(14);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(wTypeLabel.toUpperCase()+" WARNING LETTER",W/2,ry,{align:"center"});ry+=2;
+      doc.setDrawColor(sevColor[0],sevColor[1],sevColor[2]);doc.setLineWidth(0.8);doc.line(W/2-26,ry+2,W/2+26,ry+2);ry+=13;
+
+      doc.setFontSize(11);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("Dear "+(emp.name||"Employee")+",",mg,ry);ry+=9;
+
+      var incidentDateFmt=warn.incidentDate?new Date(warn.incidentDate+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}):"-";
+      var openBody="This letter serves as a formal "+wType+" warning concerning an incident on "+incidentDateFmt+" that does not meet the standards of conduct expected at "+(org.name||"our organization")+".";
+      doc.setFontSize(10.5);doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+      var openLines=doc.splitTextToSize(openBody,W-mg*2);doc.text(openLines,mg,ry);ry+=openLines.length*5.5+8;
+
+      // Employee / incident details box, matching the "TERMS OF EMPLOYMENT" table style used elsewhere
+      var rows2=[["Employee",emp.name||"-"],["Employee ID",emp.eid||"-"],["Department",emp.dept||"-"],["Warning Type",wTypeLabel],["Incident Date",incidentDateFmt],["Date Issued",new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})]];
+      doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text("DETAILS",mg,ry);ry+=2;
+      doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,ry+1.5,W-mg,ry+1.5);ry+=7;
+      rows2.forEach(function(row){doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.setFontSize(8.5);doc.text(row[0],mg,ry+3.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(String(row[1]),mg+85,ry+3.5);doc.setDrawColor(235,239,245);doc.setLineWidth(0.3);doc.line(mg,ry+6.5,W-mg,ry+6.5);ry+=7;});
+      ry+=8;
+
+      doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(sevColor[0],sevColor[1],sevColor[2]);doc.text("DESCRIPTION OF INCIDENT",mg,ry);ry+=5;
+      doc.setFontSize(10.5);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+      var incLines=doc.splitTextToSize(warn.incident||"-",W-mg*2);doc.text(incLines,mg,ry);ry+=incLines.length*5.5+8;
+
+      doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(sevColor[0],sevColor[1],sevColor[2]);doc.text("ACTION REQUIRED",mg,ry);ry+=5;
+      doc.setFontSize(10.5);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+      var actLines=doc.splitTextToSize(warn.actionRequired||"Immediate improvement in conduct is expected.",W-mg*2);doc.text(actLines,mg,ry);ry+=actLines.length*5.5+8;
+
+      var closeBody="Please treat this matter with the seriousness it deserves. Failure to show the required improvement may result in further disciplinary action, up to and including termination of employment, in line with company policy.";
+      var closeLines=doc.splitTextToSize(closeBody,W-mg*2);doc.text(closeLines,mg,ry);ry+=closeLines.length*5.5+18;
+
+      // Signature blocks: Authorised Signatory (left) + Employee Acknowledgement (right)
+      var sigY=Math.max(ry,228);
+      doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);
+      doc.line(mg,sigY,mg+62,sigY);doc.line(W-mg-62,sigY,W-mg,sigY);
+      doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+      doc.text(authSign||"Authorised Signatory",mg,sigY+5);doc.text(emp.name||"Employee",W-mg-62,sigY+5);
+      doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+      doc.text(authPos||"Authorised Signatory",mg,sigY+9);doc.text("Employee Acknowledgement",W-mg-62,sigY+9);
+
+      doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,283,W-mg,283);
+      doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text((org.name||""),mg,288);doc.text("Generated by Admin HR",W-mg,288,{align:"right"});
+
+      downloadPDF(doc.output("blob"),"Warning-"+(emp.name||"Employee").replace(/\s/g,"-")+"-"+(warn.incidentDate||"")+".pdf");
+      showT("Warning letter downloaded");
+    },function(){showT("PDF error","err");});
   }
 
   function renderWarningSection(emp){
