@@ -723,6 +723,76 @@ function makeRelievingLetterPDF(emp,org,authPos2,authSign2){
   },function(){showT("PDF error","err");});
 }
 
+// ── HR Policy document PDF — same letterhead language as the other formal letters ──
+function makePolicyPDF(policyDef,fields,org,authPos2,authSign2){
+  loadJsPDFGlobal(function(JsPDF){
+    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,H=297,mg=20,ry=18;
+    var NVYC=[15,23,42],MUT=[100,116,139],RULE=[210,218,230];
+    var accent=hexToRgbArr(policyDef.color)||[15,23,42];
+
+    function letterhead(){
+      var logoW=0;
+      if(org.logo&&String(org.logo).indexOf("data:")===0){
+        try{doc.setFillColor(255,255,255);doc.roundedRect(mg,ry-6,18,18,3,3,"F");doc.addImage(org.logo,"PNG",mg,ry-6,18,18,undefined,"FAST");logoW=22;}catch(e){}
+      }
+      doc.setFontSize(16);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(org.name||"Company",mg+logoW,ry);
+      doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+      var addrShown=false;
+      if(org.address){var addrL=org.address.split("\n")[0];doc.text(addrL,mg+logoW,ry+5.5);addrShown=true;}
+      var contactLine=orgContactLine(org);
+      if(contactLine)doc.text(contactLine,mg+logoW,ry+(addrShown?10:5.5));
+      doc.setFontSize(9);doc.text(new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"}),W-mg,ry,{align:"right"});
+      ry+=(addrShown&&contactLine?15.5:(addrShown||contactLine?11:6));doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.6);doc.line(mg,ry,W-mg,ry);ry+=12;
+    }
+    letterhead();
+    doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);doc.text(policyDef.label.toUpperCase(),W/2,ry,{align:"center"});ry+=2;
+    doc.setDrawColor(accent[0],accent[1],accent[2]);doc.setLineWidth(0.9);doc.line(W/2-28,ry+2,W/2+28,ry+2);ry+=8;
+    doc.setFontSize(8.5);doc.setFont("helvetica","italic");doc.setTextColor(MUT[0],MUT[1],MUT[2]);doc.text("Effective Date: "+new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})+"   |   Applicable to: All Employees",W/2,ry,{align:"center"});ry+=11;
+
+    var clauses=policyDef.build(fields,org);
+    clauses.forEach(function(cl){
+      if(ry>260){doc.addPage();ry=20;}
+      doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(accent[0],accent[1],accent[2]);
+      doc.text(cl.h,mg,ry);ry+=5.5;
+      doc.setFontSize(10);doc.setFont("helvetica","normal");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+      var lines=doc.splitTextToSize(cl.b,W-mg*2);
+      lines.forEach(function(line){
+        if(ry>270){doc.addPage();ry=20;}
+        doc.text(line,mg,ry);ry+=5.3;
+      });
+      ry+=4.5;
+    });
+
+    if(ry>258){doc.addPage();ry=20;}
+    ry+=8;
+    doc.setDrawColor(180,188,202);doc.setLineWidth(0.4);
+    doc.line(mg,ry,mg+62,ry);doc.line(W-mg-62,ry,W-mg,ry);
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(NVYC[0],NVYC[1],NVYC[2]);
+    doc.text(authSign2||org.name||"Authorised Signatory",mg,ry+5);doc.text("HR Department",W-mg-62,ry+5);
+    doc.setFont("helvetica","normal");doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+    doc.text(authPos2||"Authorised Signatory",mg,ry+9);doc.text(org.name||"",W-mg-62,ry+9);
+
+    // Footer on every page
+    var pageCount=doc.internal.getNumberOfPages();
+    for(var p=1;p<=pageCount;p++){
+      doc.setPage(p);
+      doc.setDrawColor(RULE[0],RULE[1],RULE[2]);doc.setLineWidth(0.4);doc.line(mg,H-12,W-mg,H-12);
+      doc.setFontSize(7.5);doc.setTextColor(MUT[0],MUT[1],MUT[2]);
+      doc.text((org.name||"")+" - "+policyDef.label,mg,H-6);
+      doc.text("Page "+p+" of "+pageCount,W-mg,H-6,{align:"right"});
+    }
+
+    downloadPDF(doc.output("blob"),policyDef.label.replace(/[^\w]+/g,"-")+"-"+(org.name||"Company").replace(/[^\w]+/g,"-")+".pdf");
+    showT(policyDef.label+" downloaded");
+  },function(){showT("PDF error","err");});
+}
+function hexToRgbArr(hex){
+  if(!hex)return null;
+  var m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:null;
+}
+
 
 function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,onDoc,bonusList,claimTotal,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
@@ -1371,7 +1441,7 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
     var rows=[];
     var totW=0,totD=0,totB=0,totH=0,totA=0,totG=0,totPF=0,totESI=0,totPT=0,totTDS=0,totDed=0,totNet=0;
 
-    emps.filter(function(e){return e.status==="active";}).forEach(function(emp,ei){
+    emps.filter(function(e){return e.status==="active";}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"");}).forEach(function(emp,ei){
       var mp=payFn(emp,y,m),d=mp.d,ma=mp.ma;
       // Days Worked = physically present (excludes leave, includes holiday if worked)
       var daysWork=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.holiday||0));
@@ -1487,6 +1557,177 @@ function calcGratuity(emp,asOfDate){
   return{eligible:years>=5,years:years,months:remMonths,totalMonths:totalMonths,roundedYears:roundedYears,amount:amount};
 }
 var SHIFT_TYPES=["General","Morning","Afternoon","Evening","Night","Rotational"];
+
+// ── HR Policy templates ──────────────────────────────────────────────────────
+// Each policy: a short list of fields the owner fills in, and a "build" function
+// that turns those fields (+ org info) into clause paragraphs for the PDF.
+// Written to reflect standard, sensible Indian SME practice — NOT a substitute
+// for legal review, especially for POSH (statutory) and Termination (notice/severance
+// rules can vary by state Shops & Establishments Act).
+var POLICY_DEFS={
+  leave:{
+    label:"Leave Policy",icon:"event_available",color:"#0EA5E9",
+    blurb:"Casual, sick & earned leave entitlement and how to apply.",
+    fields:[
+      {key:"casualLeave",label:"Casual Leave (days/year)",type:"number",def:12},
+      {key:"sickLeave",label:"Sick Leave (days/year)",type:"number",def:6},
+      {key:"earnedLeave",label:"Earned/Privilege Leave (days/year)",type:"number",def:15},
+      {key:"carryForward",label:"Unused leave can be carried to next year",type:"select",options:["Yes","No"],def:"Yes"},
+      {key:"maxCarryForward",label:"Maximum days that can be carried forward",type:"number",def:15},
+      {key:"noticeDays",label:"Advance notice needed for planned leave (days)",type:"number",def:3},
+      {key:"weeklyOff",label:"Weekly off day(s)",type:"text",def:"Sunday"},
+    ],
+    build:function(f,org){
+      var orgName=org.name||"the Company";
+      return [
+        {h:"1. Purpose",b:"This policy sets out the leave entitlement available to employees of "+orgName+" and the process for applying for and approving leave. It applies to all confirmed and probationary employees unless stated otherwise."},
+        {h:"2. Leave Entitlement",b:"Employees are entitled to "+f.casualLeave+" days of Casual Leave, "+f.sickLeave+" days of Sick Leave, and "+f.earnedLeave+" days of Earned/Privilege Leave per calendar year, credited on a pro-rata basis for employees joining mid-year. The weekly off is "+f.weeklyOff+"."},
+        {h:"3. Applying for Leave",b:"Planned leave (Casual or Earned) must be applied for at least "+f.noticeDays+" day(s) in advance and is subject to approval by the reporting manager, considering business needs and team availability. Sick Leave may be informed on the day of absence and, where the absence exceeds 2 consecutive days, a medical certificate may be requested."},
+        {h:"4. Carry Forward",b:f.carryForward==="Yes"?"Unused leave at the end of the calendar year may be carried forward to the following year, subject to a maximum of "+f.maxCarryForward+" days. Leave beyond this limit will lapse and is not encashed unless required by applicable state law.":"Unused leave at the end of the calendar year will lapse and is not carried forward or encashed, except where required by applicable state law."},
+        {h:"5. Unauthorised Absence",b:"Absence from work without prior approval and without satisfactory explanation will be treated as unauthorised leave and may be marked as Loss of Pay (LOP). Repeated unauthorised absence may lead to disciplinary action as per the Code of Conduct."},
+        {h:"6. Public Holidays",b:"In addition to the leave entitlement above, employees are eligible for public holidays as per the holiday calendar published annually by "+orgName+", in line with applicable national and state holidays."},
+      ];
+    }
+  },
+  attendance:{
+    label:"Attendance & Working Hours",icon:"schedule",color:"#7C3AED",
+    blurb:"Working hours, grace period and how attendance is recorded.",
+    fields:[
+      {key:"workStart",label:"Working hours start at",type:"text",def:"9:30 AM"},
+      {key:"workEnd",label:"Working hours end at",type:"text",def:"6:30 PM"},
+      {key:"graceMinutes",label:"Grace period for late arrival (minutes)",type:"number",def:10},
+      {key:"halfDayHours",label:"Minimum hours present to avoid Half Day marking",type:"number",def:4},
+      {key:"markingMethod",label:"How attendance is recorded",type:"text",def:"Biometric / manual register"},
+    ],
+    build:function(f,org){
+      var orgName=org.name||"the Company";
+      return [
+        {h:"1. Purpose",b:"This policy defines standard working hours and the process for recording attendance at "+orgName+", to ensure fairness and consistency for all employees."},
+        {h:"2. Working Hours",b:"Standard working hours are from "+f.workStart+" to "+f.workEnd+", with a break as advised by the reporting manager. A grace period of "+f.graceMinutes+" minutes is allowed for late arrival; arrivals beyond this may be marked late at management's discretion."},
+        {h:"3. Half Day & Absence",b:"An employee present for fewer than "+f.halfDayHours+" hours in a day will ordinarily be marked Half Day. Employees who do not report for work and have not informed their manager will be marked absent for that day."},
+        {h:"4. Recording Attendance",b:"Attendance is recorded via "+f.markingMethod+". Employees are responsible for ensuring their attendance is correctly marked each working day; discrepancies should be reported to HR within 3 working days."},
+        {h:"5. Repeated Late Coming",b:"Frequent late arrival or early departure without approval may affect performance review outcomes and, if persistent, may lead to disciplinary action as per the Code of Conduct."},
+      ];
+    }
+  },
+  conduct:{
+    label:"Code of Conduct",icon:"gavel",color:"#DC2626",
+    blurb:"Expected workplace behaviour and disciplinary process.",
+    fields:[
+      {key:"dressCode",label:"Dress code",type:"text",def:"Neat, business-casual attire"},
+      {key:"deviceUse",label:"Personal phone/device use during work",type:"text",def:"Limited to breaks, except for urgent matters"},
+    ],
+    build:function(f,org){
+      var orgName=org.name||"the Company";
+      return [
+        {h:"1. Purpose",b:"This Code of Conduct sets the standard of professional behaviour expected from every employee of "+orgName+", to maintain a respectful, safe and productive workplace."},
+        {h:"2. Professional Behaviour",b:"Employees are expected to act with honesty, courtesy and professionalism towards colleagues, customers and vendors at all times, and to perform their duties with diligence and care."},
+        {h:"3. Respect & Non-Discrimination",b:orgName+" does not tolerate discrimination, harassment, or unfair treatment of any employee on the basis of gender, religion, caste, disability, or any other protected characteristic. Concerns should be raised with HR or the reporting manager."},
+        {h:"4. Confidentiality",b:"Employees must not disclose confidential business information, customer data, or trade information to any third party, during or after their employment, except as required in the course of their duties."},
+        {h:"5. Dress Code & Workplace Conduct",b:"Employees are expected to maintain "+f.dressCode+" during working hours. Use of personal phones/devices is expected to be "+f.deviceUse+"."},
+        {h:"6. Conflict of Interest",b:"Employees must avoid situations where personal interest conflicts with the interest of "+orgName+", including accepting gifts or favours from vendors/customers that could influence business decisions."},
+        {h:"7. Disciplinary Process",b:"Breach of this Code may result in disciplinary action proportionate to the conduct concerned — typically progressing through a verbal warning, written warning, final warning, and, for serious or repeated misconduct, termination of employment."},
+      ];
+    }
+  },
+  posh:{
+    label:"POSH / Anti-Harassment Policy",icon:"shield",color:"#BE185D",
+    blurb:"Statutory policy against sexual harassment at the workplace.",
+    fields:[
+      {key:"icPresiding",label:"Internal Committee (IC) Presiding Officer name",type:"text",def:""},
+      {key:"icMembers",label:"Other IC members (names, comma separated)",type:"text",def:""},
+      {key:"complaintContact",label:"Complaint contact (email or phone)",type:"text",def:""},
+    ],
+    build:function(f,org){
+      var orgName=org.name||"the Company";
+      return [
+        {h:"1. Statement of Commitment",b:orgName+" is committed to providing a safe workplace, free from sexual harassment, for all employees, in accordance with the Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013 (\"the POSH Act\"). This policy applies to all employees, regardless of gender, and to all visitors and contractors on Company premises."},
+        {h:"2. What Constitutes Sexual Harassment",b:"Sexual harassment includes any unwelcome act or behaviour, whether directly or by implication, such as physical contact or advances, a demand or request for sexual favours, sexually coloured remarks, showing pornography, or any other unwelcome physical, verbal or non-verbal conduct of a sexual nature, as defined under the POSH Act."},
+        {h:"3. Internal Committee (IC)",b:"As required under the POSH Act, "+orgName+" has constituted an Internal Committee to receive and inquire into complaints."+(f.icPresiding?" Presiding Officer: "+f.icPresiding+".":" An employer with 10 or more employees is legally required to constitute an IC with a senior woman employee as Presiding Officer and at least one external member from an NGO or with relevant legal knowledge; please confirm this composition before finalising.")+(f.icMembers?" Other Members: "+f.icMembers+".":"")},
+        {h:"4. Filing a Complaint",b:"Any employee who experiences or witnesses sexual harassment at the workplace may file a written complaint with the Internal Committee within 3 months of the incident (extendable by the IC for reasons recorded in writing)."+(f.complaintContact?" Complaints may be addressed to: "+f.complaintContact+".":"")},
+        {h:"5. Inquiry Process & Confidentiality",b:"The IC will complete its inquiry within 90 days of the complaint, maintaining strict confidentiality of the identities of the complainant, respondent and witnesses throughout the process, as mandated under the Act."},
+        {h:"6. Protection Against Retaliation",b:orgName+" strictly prohibits retaliation against any employee who, in good faith, files a complaint or participates in an inquiry under this policy. Any act of retaliation will itself be treated as misconduct."},
+        {h:"Legal Note",b:"This is a statutory policy. Businesses with 10 or more employees are legally required to constitute an Internal Committee and file an annual report. We strongly recommend having this document, and your IC composition, reviewed by a legal professional to ensure full compliance with the POSH Act."},
+      ];
+    }
+  },
+  probation:{
+    label:"Probation & Confirmation",icon:"task_alt",color:"#0D9488",
+    blurb:"Probation duration and the path to confirmation.",
+    fields:[
+      {key:"probationMonths",label:"Probation period (months)",type:"number",def:3},
+      {key:"extendable",label:"Probation can be extended if needed",type:"select",options:["Yes","No"],def:"Yes"},
+      {key:"noticeProbation",label:"Notice period during probation (days)",type:"number",def:7},
+    ],
+    build:function(f,org){
+      var orgName=org.name||"the Company";
+      return [
+        {h:"1. Purpose",b:"This policy explains the probation period applicable to new employees joining "+orgName+", and the process leading to confirmation of employment."},
+        {h:"2. Probation Period",b:"Every new employee will be on probation for "+f.probationMonths+" month(s) from their date of joining, during which their performance, conduct and fit for the role will be assessed."},
+        {h:"3. Extension of Probation",b:f.extendable==="Yes"?"Where performance has not been fully satisfactory, "+orgName+" may, at its discretion, extend the probation period by a further period to allow additional time for improvement, with reasons communicated to the employee in writing.":"The probation period is not ordinarily extended; a confirmation or separation decision will be made at the end of the stated probation period."},
+        {h:"4. Confirmation",b:"On satisfactory completion of probation, the employee will receive a written confirmation letter. Confirmed employees become eligible for benefits applicable to permanent staff as per company policy."},
+        {h:"5. Notice Period During Probation",b:"During probation, either party may end the employment by providing "+f.noticeProbation+" day(s) written notice, or pay in lieu thereof, shorter than the notice period applicable to confirmed employees."},
+      ];
+    }
+  },
+  termination:{
+    label:"Termination & Notice Period",icon:"logout",color:"#92400E",
+    blurb:"Resignation, termination, notice period and full & final settlement.",
+    fields:[
+      {key:"noticeDays",label:"Notice period for confirmed employees (days)",type:"number",def:30},
+      {key:"fnfDays",label:"Full & Final settlement completed within (days)",type:"number",def:45},
+    ],
+    build:function(f,org){
+      var orgName=org.name||"the Company";
+      return [
+        {h:"1. Resignation",b:"An employee wishing to resign must submit written resignation to their reporting manager and HR, serving a notice period of "+f.noticeDays+" days, or as mutually agreed in writing. "+orgName+" may, at its discretion, relieve the employee earlier or require pay in lieu of the unserved notice period."},
+        {h:"2. Termination by the Company",b:"Employment may be terminated by "+orgName+" by providing equivalent notice or pay in lieu, except in cases of proven misconduct, where employment may be terminated with immediate effect following due process."},
+        {h:"3. Full & Final Settlement",b:"On separation, all dues — including pending salary, leave encashment (where applicable) and any other amounts payable — will be settled within "+f.fnfDays+" days of the last working day, subject to completion of exit formalities and clearance."},
+        {h:"4. Return of Company Property",b:"The employee must return all company property — including ID card, laptop, access devices and documents — before their last working day. Pending dues may be adjusted against the value of any property not returned."},
+        {h:"5. Exit Formalities",b:"An exit interview and handover of pending work/responsibilities to a designated colleague is expected before the last working day, to ensure a smooth transition."},
+      ];
+    }
+  },
+  reimbursement:{
+    label:"Reimbursement & Expense Policy",icon:"receipt_long",color:"#16A34A",
+    blurb:"Eligible expenses, bill submission and approval process.",
+    fields:[
+      {key:"submitDays",label:"Bills must be submitted within (days of expense)",type:"number",def:30},
+      {key:"approver",label:"Who approves claims",type:"text",def:"Reporting Manager"},
+      {key:"payoutCycle",label:"Reimbursement is paid out",type:"text",def:"with the next payroll cycle"},
+    ],
+    build:function(f,org){
+      var orgName=org.name||"the Company";
+      return [
+        {h:"1. Purpose",b:"This policy explains which business expenses are eligible for reimbursement at "+orgName+", and the process for claiming them."},
+        {h:"2. Eligible Expenses",b:"Reasonable, pre-approved business expenses — such as local travel, client meeting expenses, and approved purchases made on behalf of the Company — are eligible for reimbursement, supported by valid bills/receipts."},
+        {h:"3. Submitting a Claim",b:"Original bills/receipts, along with a brief description of the business purpose, must be submitted within "+f.submitDays+" days of incurring the expense. Claims submitted after this window may not be processed."},
+        {h:"4. Approval",b:"All claims require approval from the "+f.approver+" before processing. "+orgName+" reserves the right to query or decline any claim that is not adequately supported or does not appear to be a legitimate business expense."},
+        {h:"5. Payment",b:"Approved claims are reimbursed "+f.payoutCycle+", through the same payment method as regular salary unless otherwise specified."},
+        {h:"6. Non-Reimbursable Items",b:"Personal expenses, fines/penalties, and any expense not connected to official Company business are not eligible for reimbursement under this policy."},
+      ];
+    }
+  },
+  wfh:{
+    label:"Work From Home Policy",icon:"home_work",color:"#2563EB",
+    blurb:"Eligibility, approval and expectations for remote work.",
+    fields:[
+      {key:"daysPerMonth",label:"WFH days allowed per month",type:"number",def:4},
+      {key:"eligibility",label:"Who is eligible",type:"text",def:"Confirmed employees, role-dependent"},
+      {key:"coreHours",label:"Core availability hours expected",type:"text",def:"10:00 AM - 5:00 PM"},
+    ],
+    build:function(f,org){
+      var orgName=org.name||"the Company";
+      return [
+        {h:"1. Purpose",b:"This policy sets the framework for working from home (WFH) at "+orgName+", balancing flexibility for employees with business and operational needs."},
+        {h:"2. Eligibility",b:"WFH is available to "+f.eligibility+", subject to the nature of the role and approval from the reporting manager. Roles requiring physical presence (e.g. production, on-site support) may not be eligible."},
+        {h:"3. Frequency & Approval",b:"Employees may avail up to "+f.daysPerMonth+" WFH day(s) per month, requested in advance and approved by their reporting manager based on workload and team coverage."},
+        {h:"4. Availability & Expectations",b:"While working from home, employees are expected to be reachable and responsive during core hours of "+f.coreHours+", and to maintain the same standard of output and responsiveness as when working from office."},
+        {h:"5. Equipment & Data Security",b:"Employees are responsible for safeguarding any company data, devices and login credentials used while working remotely, and must not access company systems over unsecured public networks."},
+      ];
+    }
+  }
+};
 
 function lsGet(key,def){try{var v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
 function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
@@ -1905,6 +2146,10 @@ export default function App(){
   var sRemTxt=st(""),remTxt=sRemTxt[0],setRemTxt=sRemTxt[1];
   var sRemDate=st(""),remDate=sRemDate[0],setRemDate=sRemDate[1];
   var sRemOpen=st(false),remOpen=sRemOpen[0],setRemOpen=sRemOpen[1];
+  var sPolicies=st(function(){return lsGet("hr_policies",{});}),policies=sPolicies[0],setPolicies=sPolicies[1];
+  var sShowPolicyHub=st(false),showPolicyHub=sShowPolicyHub[0],setShowPolicyHub=sShowPolicyHub[1];
+  var sPolicySel=st(null),policySel=sPolicySel[0],setPolicySel=sPolicySel[1]; // which policy type's form is open, null=list view
+  var sPolicyForm=st({}),policyForm=sPolicyForm[0],setPolicyForm=sPolicyForm[1]; // working copy of the field values for the open form
   var sPayFilt=st("all"),payFilt=sPayFilt[0],setPayFilt=sPayFilt[1];
   var sPayDept=st(""),payDept=sPayDept[0],setPayDept=sPayDept[1];
   var sSHIFTS=st(function(){return lsGet("hr_shifts",{});}),shifts=sSHIFTS[0],setShifts=sSHIFTS[1];
@@ -3507,7 +3752,95 @@ export default function App(){
     showT("Admin HR Pro feature. Contact us to upgrade.","err");
   }
 
+  function renderPolicyHub(){
+    var policyKeys=Object.keys(POLICY_DEFS);
+
+    function openPolicy(key){
+      var existing=policies[key];
+      var defaults={};
+      POLICY_DEFS[key].fields.forEach(function(f){defaults[f.key]=existing&&existing.fields&&existing.fields[f.key]!==undefined?existing.fields[f.key]:f.def;});
+      setPolicyForm(defaults);
+      setPolicySel(key);
+    }
+    function savePolicy(generate){
+      var key=policySel;
+      var def=POLICY_DEFS[key];
+      var fields={};
+      def.fields.forEach(function(f){fields[f.key]=policyForm[f.key]!==undefined&&policyForm[f.key]!==""?policyForm[f.key]:f.def;});
+      var updated=Object.assign({},policies,{});
+      updated[key]={fields:fields,updatedAt:new Date().toISOString()};
+      setPolicies(updated);
+      lsSet("hr_policies",updated);
+      showT("Policy saved");
+      if(generate)makePolicyPDF(def,fields,org,authPos,authSign);
+    }
+
+    // ── Form view ──
+    if(policySel){
+      var def=POLICY_DEFS[policySel];
+      return h("div",{className:"fd"},
+        h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},
+          h("button",{onClick:function(){setPolicySel(null);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("arrow_back",NVY,17)),
+          h("div",null,
+            h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},def.label),
+            h("div",{style:{fontSize:11,color:GRY}},def.blurb)
+          )
+        ),
+        card(h("div",null,
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:10}},"FILL IN THE DETAILS"),
+          def.fields.map(function(f){
+            return h("div",{key:f.key,style:{marginBottom:12}},
+              h("div",{style:{fontSize:11.5,color:NVY,fontWeight:600,marginBottom:5}},f.label),
+              f.type==="select"?h("select",{value:policyForm[f.key]!==undefined?policyForm[f.key]:f.def,onChange:function(e){setPolicyForm(Object.assign({},policyForm,{[f.key]:e.target.value}));},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit"}},
+                f.options.map(function(o){return h("option",{key:o,value:o},o);})
+              ):h("input",{type:f.type==="number"?"number":"text",value:policyForm[f.key]!==undefined?policyForm[f.key]:f.def,onChange:function(e){setPolicyForm(Object.assign({},policyForm,{[f.key]:f.type==="number"?Number(e.target.value):e.target.value}));},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit"}})
+            );
+          }),
+          h("div",{style:{display:"flex",gap:8,marginTop:6}},
+            h("button",{onClick:function(){savePolicy(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12.5,fontWeight:700,cursor:"pointer"}},"Save"),
+            h("button",{onClick:function(){savePolicy(true);},style:{flex:1.4,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer"}},ic("download","#fff",15),"Save & Download PDF")
+          )
+        )),
+        policyKeys.indexOf(policySel)===2?h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"35",borderRadius:10,padding:"10px 12px",fontSize:11,color:AMB,marginTop:2}},
+          ic("info",AMB,13),"  This is a statutory policy. We recommend having a legal professional review your Internal Committee composition before circulating this document."
+        ):null
+      );
+    }
+
+    // ── List view ──
+    return h("div",{className:"fd"},
+      h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:4}},
+        h("button",{onClick:function(){setShowPolicyHub(false);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("arrow_back",NVY,17)),
+        h("div",null,
+          h("div",{style:{fontSize:16,fontWeight:700,color:NVY}},"HR Policies"),
+          h("div",{style:{fontSize:11,color:GRY}},"Create or update your company's HR policy documents")
+        )
+      ),
+      h("div",{style:{margin:"14px 0"}},
+        policyKeys.map(function(key){
+          var def=POLICY_DEFS[key];
+          var created=policies[key];
+          return h("div",{key:key,onClick:function(){openPolicy(key);},style:{display:"flex",alignItems:"center",gap:12,background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"12px 14px",marginBottom:9,cursor:"pointer",boxShadow:T.SHADOW}},
+            h("div",{style:{width:40,height:40,borderRadius:11,background:def.color+"16",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(def.icon,def.color,20)),
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},def.label),
+              h("div",{style:{fontSize:10.5,color:GRY,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},def.blurb)
+            ),
+            h("div",{style:{textAlign:"right",flexShrink:0}},
+              created?h("div",{style:{fontSize:9,fontWeight:700,color:GRN,background:GRN+"14",borderRadius:8,padding:"3px 8px",marginBottom:2}},"CREATED"):h("div",{style:{fontSize:9,fontWeight:700,color:GRY,background:SFT,borderRadius:8,padding:"3px 8px",marginBottom:2}},"NOT CREATED"),
+              created?h("div",{style:{fontSize:9,color:GRY}},new Date(created.updatedAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})):null
+            )
+          );
+        })
+      ),
+      h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5,padding:"4px 4px 10px"}},
+        "These documents follow standard Indian SME practice. For statutory policies (like POSH) or anything that will be legally binding, we recommend a quick review by a legal professional before circulating to your team."
+      )
+    );
+  }
+
   function renderDashboard(){
+    if(showPolicyHub)return renderPolicyHub();
 
     function expiryCountdown(){
       if(!org.expires_on||!isPaid)return null;
@@ -3690,6 +4023,22 @@ export default function App(){
           ):null
         )
       ):null,
+      // ── HR Policy promo card — same visual language as the greeting box ──
+      h("div",{onClick:function(){setShowPolicyHub(true);},style:{background:"#3B1F63",borderRadius:18,padding:"16px 18px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:T.SHADOW_LG,cursor:"pointer"}},
+        h("div",{style:{position:"absolute",right:-26,top:-26,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}),
+        h("div",{style:{position:"absolute",right:36,bottom:-36,width:70,height:70,borderRadius:"50%",background:"rgba(255,255,255,.045)"}}),
+        h("div",{style:{display:"flex",alignItems:"center",gap:12}},
+          h("div",{style:{width:42,height:42,borderRadius:12,background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("gavel","#fff",21)),
+          h("div",{style:{flex:1}},
+            h("div",{style:{fontSize:14,fontWeight:700,color:"#fff",letterSpacing:-.2}},"HR Policies"),
+            h("div",{style:{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2,lineHeight:1.4}},
+              Object.keys(policies||{}).length>0?"Want to update your company policies?":"Want to create your company's HR policies?"
+            )
+          ),
+          h("div",{style:{width:28,height:28,borderRadius:"50%",background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("chevron_right","#fff",16))
+        ),
+        Object.keys(policies||{}).length>0?h("div",{style:{marginTop:10,fontSize:10,color:"rgba(255,255,255,.6)",position:"relative"}},Object.keys(policies).length+" of "+Object.keys(POLICY_DEFS).length+" policies created"):null
+      ),
       card(h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Statutory Summary"),
