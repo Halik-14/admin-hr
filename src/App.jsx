@@ -5188,9 +5188,8 @@ null
         )
       ),
       attView==="report"?renderAttendanceReport():attView==="holidays"?renderHolidayCalendar():h("div",null,
-        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
-          h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},MOS[attM]+" "+attY),
-          h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
+        h("div",{style:{display:"flex",justifyContent:"flex-end",alignItems:"center",marginBottom:6}},
+          h("div",{style:{fontSize:12,color:GRY,fontWeight:600}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short",year:"numeric"}))
         ),
         h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
           chipSelect(attY,function(v){var y=Number(v);setAttY(y);if(y===curY&&attM>curM)setAttM(curM);},pastYears().reverse(),{question:"Choose the year",btnLabel:"Okay",triggerStyle:{width:"auto",flex:"0 0 auto"},wrapStyle:{marginBottom:0}}),
@@ -5232,8 +5231,8 @@ null
       isPaid?dlBtn("Download Attendance Report",function(){makeAttSummaryPDF(actEmps,att,attM,attY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);}):h("button",{onClick:needPaid,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:GRY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:10}},ic("lock",CARD,16),"Download Attendance Report — Paid Plan"),
       card(h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},new Date(attY,attM,1).toLocaleDateString("en-IN",{month:"long",year:"numeric"})),
-          h("button",{onClick:function(){setAttSortDept(!attSortDept);},style:{display:"flex",alignItems:"center",gap:4,background:attSortDept?ACCENT:SFT,border:"1px solid "+(attSortDept?ACCENT:BDR),borderRadius:20,padding:"4px 10px",color:attSortDept?ACCENT_FG:GRY,fontSize:10.5,fontWeight:700,cursor:"pointer"}},ic("groups",attSortDept?ACCENT_FG:GRY,12),"Dept A\u2013Z")
+          h("button",{onClick:function(){setAttSortDept(!attSortDept);},style:{display:"flex",alignItems:"center",gap:4,background:attSortDept?ACCENT:SFT,border:"1px solid "+(attSortDept?ACCENT:BDR),borderRadius:20,padding:"4px 10px",color:attSortDept?ACCENT_FG:GRY,fontSize:10.5,fontWeight:700,cursor:"pointer"}},ic("groups",attSortDept?ACCENT_FG:GRY,12),"Dept A\u2013Z"),
+          h("div",{style:{fontSize:11,color:GRY,fontWeight:600}},String(today.getDate()).padStart(2,"0")+"."+String(today.getMonth()+1).padStart(2,"0")+"."+today.getFullYear()+" \u2022 "+today.toLocaleDateString("en-IN",{weekday:"short"}))
         ),
         (attSortDept?actEmps.slice().sort(function(a,b){return (a.dept||"No Department").toLowerCase().localeCompare((b.dept||"No Department").toLowerCase())||(a.name||"").localeCompare(b.name||"");}):actEmps).map(function(e,i,arr){
           var deptHeader=null;
@@ -7404,7 +7403,7 @@ null
         ),
         showClaimForm?h("div",{style:{background:SFT,borderRadius:12,border:"1px solid "+BDR,padding:12,marginBottom:12}},
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-            h("div",{style:{flex:1}},lbl("EMPLOYEE"),chipSelect(claimEmp,function(v){setClaimEmp(v);},actEmps.map(function(e){return {v:String(e.id),l:e.name};}),{question:"Choose the employee",btnLabel:"Okay",placeholder:"Select employee"})),
+            h("div",{style:{flex:1}},lbl("EMPLOYEE"),chipSelect(claimEmp,function(v){setClaimEmp(v);},actEmps.map(function(e){return {v:String(e.id),l:e.name+(e.eid?" ("+e.eid+")":"")};}),{question:"Choose the employee",btnLabel:"Okay",placeholder:"Select employee"})),
             h("div",{style:{flex:1}},lbl("CATEGORY"),chipSelect(claimCat,function(v){setClaimCat(v);},[["travel","Travel"],["food","Food & Meals"],["medical","Medical"],["accommodation","Accommodation"],["stationery","Stationery"],["other","Other"]].map(function(c){return {v:c[0],l:c[1]};}),{question:"Choose the claim category"}))
           ),
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
