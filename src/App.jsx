@@ -156,7 +156,8 @@ var SVG_ICONS={
 "monitoring":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\"/><path d=\"m19 9-5 5-4-4-3 3\"/>",
 "wallet":"<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>",
 "badge":"<path d=\"M3 11h.01\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><circle cx=\"12\" cy=\"10\" r=\"2\"/><path d=\"M8 18a4 4 0 0 1 8 0\"/>",
-"monetization_on":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 18V6\"/>"
+"monetization_on":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 18V6\"/>",
+"contract_edit":"<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h6\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M8 13h4\"/><path d=\"M8 17h2\"/><path d=\"m20.4 14.5-5.9 5.9-3 .7.7-3 5.9-5.9a1.5 1.5 0 0 1 2.3 2.3Z\"/>"
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
@@ -1662,6 +1663,8 @@ var POLICY_DEFS={
   leave:{
     label:"Leave Policy",icon:"event_available",color:"#0EA5E9",
     blurb:"Casual, sick & earned leave entitlement and how to apply.",
+    customPlaceholder:"e.g. Female employees are entitled to an additional 2 days of leave for medical reasons.",
+    learnMore:"Sets out how many paid days off employees get each year and how to request them. Having this in writing avoids disputes about how many leaves someone has left or whether unused leave carries over.",
     fields:[
       {key:"casualLeave",label:"Casual Leave (days/year)",type:"number",def:12},
       {key:"sickLeave",label:"Sick Leave (days/year)",type:"number",def:6},
@@ -1686,6 +1689,8 @@ var POLICY_DEFS={
   attendance:{
     label:"Attendance & Working Hours",icon:"clock",color:"#7C3AED",
     blurb:"Working hours, grace period and how attendance is recorded.",
+    customPlaceholder:"e.g. Field staff are exempt from biometric marking and must report their location every morning via WhatsApp.",
+    learnMore:"Defines working hours and how lateness or absence is tracked. Useful for setting clear expectations, and as a reference if attendance becomes a recurring issue with someone.",
     fields:[
       {key:"workStart",label:"Working hours start at",type:"text",def:"9:30 AM"},
       {key:"workEnd",label:"Working hours end at",type:"text",def:"6:30 PM"},
@@ -1707,6 +1712,8 @@ var POLICY_DEFS={
   conduct:{
     label:"Code of Conduct",icon:"verified",color:"#DC2626",
     blurb:"Expected workplace behaviour and disciplinary process.",
+    customPlaceholder:"e.g. Employees visiting client sites must wear their company ID card at all times.",
+    learnMore:"Lays out expected behaviour at work and what happens if it is not followed. This is usually the document you point to when taking disciplinary action, so it protects you if a dismissal is ever challenged.",
     fields:[
       {key:"dressCode",label:"Dress code",type:"text",def:"Neat, business-casual attire"},
       {key:"deviceUse",label:"Personal phone/device use during work",type:"text",def:"Limited to breaks, except for urgent matters"},
@@ -1727,6 +1734,8 @@ var POLICY_DEFS={
   posh:{
     label:"POSH / Anti-Harassment Policy",icon:"lock",color:"#BE185D",
     blurb:"Statutory policy against sexual harassment at the workplace.",
+    customPlaceholder:"e.g. Complaints may also be raised anonymously via the suggestion box at reception.",
+    learnMore:"A legal requirement in India for any business with 10 or more employees. It explains how harassment complaints are handled and who the Internal Committee is. Skipping this is not just a policy gap, it is a compliance risk.",
     fields:[
       {key:"icPresiding",label:"Internal Committee (IC) Presiding Officer name",type:"text",def:""},
       {key:"icMembers",label:"Other IC members (names, comma separated)",type:"text",def:""},
@@ -1748,6 +1757,8 @@ var POLICY_DEFS={
   probation:{
     label:"Probation & Confirmation",icon:"pending_actions",color:"#0D9488",
     blurb:"Probation duration and the path to confirmation.",
+    customPlaceholder:"e.g. Sales roles carry an extended 6-month probation period due to seasonal performance cycles.",
+    learnMore:"Explains the trial period for new hires before they are confirmed permanent, and what happens if performance is not up to mark. Helps you exit a bad hire cleanly within the probation window.",
     fields:[
       {key:"probationMonths",label:"Probation period (months)",type:"number",def:3},
       {key:"extendable",label:"Probation can be extended if needed",type:"select",options:["Yes","No"],def:"Yes"},
@@ -1767,6 +1778,8 @@ var POLICY_DEFS={
   termination:{
     label:"Termination & Notice Period",icon:"logout",color:"#92400E",
     blurb:"Resignation, termination, notice period and full & final settlement.",
+    customPlaceholder:"e.g. Field staff must complete equipment handover within 3 days of their last working day.",
+    learnMore:"Covers notice periods, resignation process, and final settlement timelines for both sides. Reduces back-and-forth disputes when someone leaves the company.",
     fields:[
       {key:"noticeDays",label:"Notice period for confirmed employees (days)",type:"number",def:30},
       {key:"fnfDays",label:"Full & Final settlement completed within (days)",type:"number",def:45},
@@ -1785,6 +1798,8 @@ var POLICY_DEFS={
   reimbursement:{
     label:"Reimbursement & Expense Policy",icon:"receipt_long",color:"#16A34A",
     blurb:"Eligible expenses, bill submission and approval process.",
+    customPlaceholder:"e.g. Fuel reimbursement for two-wheelers is capped at Rs.2,000 per month.",
+    learnMore:"Sets rules for what business expenses get reimbursed and how to claim them. Keeps expense claims consistent and avoids awkward case-by-case negotiations.",
     fields:[
       {key:"submitDays",label:"Bills must be submitted within (days of expense)",type:"number",def:30},
       {key:"approver",label:"Who approves claims",type:"text",def:"Reporting Manager"},
@@ -1805,6 +1820,8 @@ var POLICY_DEFS={
   wfh:{
     label:"Work From Home Policy",icon:"cloud_upload",color:"#2563EB",
     blurb:"Eligibility, approval and expectations for remote work.",
+    customPlaceholder:"e.g. WFH is not available during an employee's first 3 months of employment.",
+    learnMore:"If you allow remote work even occasionally, this sets expectations around availability and data security. Optional if your business is fully on-site.",
     fields:[
       {key:"daysPerMonth",label:"WFH days allowed per month",type:"number",def:4},
       {key:"eligibility",label:"Who is eligible",type:"text",def:"Confirmed employees, role-dependent"},
@@ -2244,6 +2261,7 @@ export default function App(){
   var sShowPolicyHub=st(false),showPolicyHub=sShowPolicyHub[0],setShowPolicyHub=sShowPolicyHub[1];
   var sPolicySel=st(null),policySel=sPolicySel[0],setPolicySel=sPolicySel[1]; // which policy type's form is open, null=list view
   var sPolicyForm=st({}),policyForm=sPolicyForm[0],setPolicyForm=sPolicyForm[1]; // working copy of the field values for the open form
+  var sPolicyInfoOpen=st(null),policyInfoOpen=sPolicyInfoOpen[0],setPolicyInfoOpen=sPolicyInfoOpen[1]; // which policy's "Learn more" is expanded in the list
   var sPayFilt=st("all"),payFilt=sPayFilt[0],setPayFilt=sPayFilt[1];
   var sPayDept=st(""),payDept=sPayDept[0],setPayDept=sPayDept[1];
   var sSHIFTS=st(function(){return lsGet("hr_shifts",{});}),shifts=sSHIFTS[0],setShifts=sSHIFTS[1];
@@ -3286,7 +3304,7 @@ export default function App(){
        features:["Everything in Free","All PDF downloads","Loans & advance","Warning letters","PF/ESI reports","Offer letter PDF","Annual statement","Holiday calendar","Leave balance","WhatsApp sharing"],
        locked:[],glow:"rgba(99,102,241,.25)",card:"#0F172A"},
       {n:"Business",monthly:"₹999/mo",yearly:"₹9,999/yr",sub:"Up to 50 employees",tag:"Best Value",
-       features:["Everything in Pro","Up to 50 employees","Priority WhatsApp support","Multi-dept reports","Advanced compliance PDFs"],
+       features:["Everything in Pro","Up to 50 employees","HR Policy Builder & Handbook","Priority WhatsApp support","Multi-dept reports","Advanced compliance PDFs"],
        locked:[],glow:"rgba(139,92,246,.25)",card:"#1a1040"},
     ];
     var cur=plans[pSlide];
@@ -3850,6 +3868,11 @@ export default function App(){
     var policyKeys=Object.keys(POLICY_DEFS);
 
     function openPolicy(key){
+      if(!isPaid){
+        showT("HR Policies is a Business plan feature","info");
+        window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Business plan for the HR Policy tool"),"_blank");
+        return;
+      }
       var existing=policies[key];
       var defaults={};
       POLICY_DEFS[key].fields.forEach(function(f){defaults[f.key]=existing&&existing.fields&&existing.fields[f.key]!==undefined?existing.fields[f.key]:f.def;});
@@ -3871,6 +3894,11 @@ export default function App(){
       if(generate)makePolicyPDF(def,fields,org,authPos,authSign,customTerms);
     }
     function downloadHandbook(){
+      if(!isPaid){
+        showT("HR Policies is a Business plan feature","info");
+        window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Business plan for the HR Policy tool"),"_blank");
+        return;
+      }
       var created=policyKeys.filter(function(k){return policies[k];});
       if(created.length===0)return showT("Create at least one policy first","err");
       makeHandbookPDF(created.map(function(k){return {def:POLICY_DEFS[k],fields:policies[k].fields,customTerms:policies[k].customTerms};}),org,authPos,authSign);
@@ -3900,7 +3928,7 @@ export default function App(){
           h("div",{style:{marginTop:4,marginBottom:12,paddingTop:12,borderTop:"1px dashed "+BDR}},
             h("div",{style:{fontSize:11.5,color:NVY,fontWeight:600,marginBottom:3}},"Additional Company-Specific Terms"),
             h("div",{style:{fontSize:10,color:GRY,marginBottom:6}},"Optional. Anything specific to your business that isn't covered above will be added as a final clause."),
-            h("textarea",{value:policyForm._customTerms||"",onChange:function(e){setPolicyForm(Object.assign({},policyForm,{_customTerms:e.target.value}));},rows:3,placeholder:"e.g. Field staff must carry their ID card at all times during client visits.",style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",resize:"vertical"}})
+            h("textarea",{value:policyForm._customTerms||"",onChange:function(e){setPolicyForm(Object.assign({},policyForm,{_customTerms:e.target.value}));},rows:3,placeholder:def.customPlaceholder||"e.g. A specific rule your business follows that isn't covered above.",style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",resize:"vertical"}})
           ),
           h("div",{style:{display:"flex",gap:8,marginTop:6}},
             h("button",{onClick:function(){savePolicy(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12.5,fontWeight:700,cursor:"pointer"}},"Save"),
@@ -3926,16 +3954,25 @@ export default function App(){
         policyKeys.map(function(key){
           var def=POLICY_DEFS[key];
           var created=policies[key];
-          return h("div",{key:key,onClick:function(){openPolicy(key);},style:{display:"flex",alignItems:"center",gap:12,background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"12px 14px",marginBottom:9,cursor:"pointer",boxShadow:T.SHADOW}},
-            h("div",{style:{width:40,height:40,borderRadius:11,background:def.color+"16",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(def.icon,def.color,20)),
-            h("div",{style:{flex:1,minWidth:0}},
-              h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},def.label),
-              h("div",{style:{fontSize:10.5,color:GRY,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},def.blurb)
+          var infoOpen=policyInfoOpen===key;
+          return h("div",{key:key,style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,marginBottom:9,boxShadow:T.SHADOW,overflow:"hidden"}},
+            h("div",{onClick:function(){openPolicy(key);},style:{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",cursor:"pointer"}},
+              h("div",{style:{width:40,height:40,borderRadius:11,background:def.color+"16",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(def.icon,def.color,20)),
+              h("div",{style:{flex:1,minWidth:0}},
+                h("div",{style:{display:"flex",alignItems:"center",gap:5}},
+                  h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},def.label),
+                  h("button",{onClick:function(e){e.stopPropagation();setPolicyInfoOpen(infoOpen?null:key);},style:{background:"none",border:"none",padding:0,cursor:"pointer",display:"flex",alignItems:"center",flexShrink:0}},ic("info",infoOpen?ACCENT:GRY,14))
+                ),
+                h("div",{style:{fontSize:10.5,color:GRY,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},def.blurb)
+              ),
+              h("div",{style:{textAlign:"right",flexShrink:0}},
+                created?h("div",{style:{fontSize:9,fontWeight:700,color:GRN,background:GRN+"14",borderRadius:8,padding:"3px 8px",marginBottom:2}},"CREATED"):h("div",{style:{fontSize:9,fontWeight:700,color:GRY,background:SFT,borderRadius:8,padding:"3px 8px",marginBottom:2}},"NOT CREATED"),
+                created?h("div",{style:{fontSize:9,color:GRY}},new Date(created.updatedAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})):null
+              )
             ),
-            h("div",{style:{textAlign:"right",flexShrink:0}},
-              created?h("div",{style:{fontSize:9,fontWeight:700,color:GRN,background:GRN+"14",borderRadius:8,padding:"3px 8px",marginBottom:2}},"CREATED"):h("div",{style:{fontSize:9,fontWeight:700,color:GRY,background:SFT,borderRadius:8,padding:"3px 8px",marginBottom:2}},"NOT CREATED"),
-              created?h("div",{style:{fontSize:9,color:GRY}},new Date(created.updatedAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})):null
-            )
+            infoOpen?h("div",{style:{padding:"0 14px 12px 14px",background:SFT}},
+              h("div",{style:{fontSize:11,color:NVY,lineHeight:1.55,paddingTop:10,borderTop:"1px dashed "+BDR}},def.learnMore)
+            ):null
           );
         })
       ),
@@ -4135,17 +4172,16 @@ export default function App(){
         h("div",{style:{position:"absolute",right:-26,top:-26,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}),
         h("div",{style:{position:"absolute",right:36,bottom:-36,width:70,height:70,borderRadius:"50%",background:"rgba(255,255,255,.045)"}}),
         h("div",{style:{display:"flex",alignItems:"center",gap:12}},
-          h("div",{style:{width:42,height:42,borderRadius:12,background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}},
-            ic("badge","#fff",22),
-            h("div",{style:{position:"absolute",right:-3,bottom:-3,width:18,height:18,borderRadius:"50%",background:"#F59E0B",border:"2px solid #3B1F63",display:"flex",alignItems:"center",justifyContent:"center"}},ic("edit","#3B1F63",9))
+          h("div",{style:{width:42,height:42,borderRadius:12,background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+            ic("contract_edit","#fff",22)
           ),
           h("div",{style:{flex:1}},
             h("div",{style:{fontSize:14,fontWeight:700,color:"#fff",letterSpacing:-.2}},"HR Policies"),
             h("div",{style:{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2,lineHeight:1.4}},
-              Object.keys(policies||{}).length>0?"Want to update your company policies?":"Want to create your company's HR policies?"
+              isPaid?(Object.keys(policies||{}).length>0?"Want to update your company policies?":"Want to create your company's HR policies?"):"Create professional policy documents - Business plan"
             )
           ),
-          h("div",{style:{width:28,height:28,borderRadius:"50%",background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("chevron_right","#fff",16))
+          h("div",{style:{width:28,height:28,borderRadius:"50%",background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(isPaid?"chevron_right":"lock","#fff",isPaid?16:14))
         ),
         Object.keys(policies||{}).length>0?h("div",{style:{marginTop:10,fontSize:10,color:"rgba(255,255,255,.6)",position:"relative"}},Object.keys(policies).length+" of "+Object.keys(POLICY_DEFS).length+" policies created"):null
       ),
