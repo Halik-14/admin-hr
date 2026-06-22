@@ -2009,41 +2009,62 @@ function ChipSelect(props){
   var value=props.value,onChange=props.onChange,opts=props.opts,opts2=props.opts2||{};
   var allowCustom=!!opts2.allowCustom;
   var sOpen=useState(false),open=sOpen[0],setOpen=sOpen[1];
+  var sPending=useState(value),pending=sPending[0],setPending=sPending[1]; // working choice until Save is tapped
   var rawVals=opts.map(function(o){return o&&typeof o==="object"&&o.v!==undefined?o.v:o;});
   var isCustom=allowCustom&&(value===CHIP_CUSTOM_SENTINEL||(!!value&&rawVals.indexOf(value)===-1));
   var idx=rawVals.indexOf(value);
   var selectedLabel=isCustom?(value===CHIP_CUSTOM_SENTINEL?"":value):(idx===-1?"":(function(){var o=opts[idx];return o&&typeof o==="object"&&o.l!==undefined?o.l:o;})());
+  function openPopup(){setPending(value);setOpen(true);}
+  function commit(){onChange(pending);setOpen(false);}
+  var pendingIsCustom=allowCustom&&(pending===CHIP_CUSTOM_SENTINEL||(!!pending&&rawVals.indexOf(pending)===-1));
   return h("div",{style:Object.assign({marginBottom:10},props.wrapStyle||{})},
-    h("button",{type:"button",onClick:function(){setOpen(true);},
+    h("button",{type:"button",onClick:openPopup,
       style:Object.assign({width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,
         background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 13px",fontSize:13,
         color:selectedLabel?NVY:GRY,cursor:"pointer",fontFamily:"inherit",textAlign:"left",boxSizing:"border-box"},props.triggerStyle||{})},
       h("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},selectedLabel||opts2.placeholder||"Select..."),
       ic("expand_more",GRY,16)
     ),
-    isCustom?h("input",{type:"text",value:value===CHIP_CUSTOM_SENTINEL?"":value,
-      onChange:function(e){onChange(e.target.value===""?CHIP_CUSTOM_SENTINEL:e.target.value);},
-      placeholder:opts2.customPlaceholder||"Type your own...",autoFocus:true,
-      style:{width:"100%",background:CARD,border:"1.5px solid "+ACCENT,borderRadius:8,padding:"9px 10px",marginTop:8,
-        fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}):null,
-    open?h("div",{onClick:function(){setOpen(false);},style:{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"}},
-      h("div",{onClick:function(e){e.stopPropagation();},style:{background:CARD,borderRadius:"18px 18px 0 0",width:"100%",maxWidth:430,maxHeight:"70vh",overflowY:"auto",paddingBottom:10,boxShadow:"0 -8px 30px rgba(0,0,0,.3)"}},
-        h("div",{style:{width:36,height:4,borderRadius:4,background:BDR,margin:"10px auto 6px"}}),
-        opts.map(function(o){
-          var ov=o&&typeof o==="object"&&o.v!==undefined?o.v:o;
-          var ol=o&&typeof o==="object"&&o.l!==undefined?o.l:o;
-          var on=value===ov;
-          return h("div",{key:String(ov),onClick:function(){onChange(ov);setOpen(false);},
-            style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 18px",cursor:"pointer",background:on?ACCENT_SOFT:"transparent"}},
-            h("span",{style:{fontSize:14,color:on?ACCENT:NVY,fontWeight:on?700:500}},ol),
-            on?ic("check",ACCENT,17):null
-          );
-        }),
-        allowCustom?h("div",{onClick:function(){onChange(isCustom?(value===CHIP_CUSTOM_SENTINEL?"":value):CHIP_CUSTOM_SENTINEL);setOpen(false);},
-          style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 18px",cursor:"pointer",borderTop:"1px solid "+BDR,background:isCustom?ACCENT_SOFT:"transparent"}},
-          h("span",{style:{fontSize:14,color:isCustom?ACCENT:NVY,fontWeight:isCustom?700:500}},"Other (type your own)"),
-          isCustom?ic("check",ACCENT,17):null
-        ):null
+    open?h("div",{onClick:function(){setOpen(false);},style:{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:20}},
+      h("div",{onClick:function(e){e.stopPropagation();},style:{background:CARD,borderRadius:16,width:"100%",maxWidth:380,maxHeight:"80vh",display:"flex",flexDirection:"column",border:"2px solid "+ACCENT,boxShadow:"0 12px 40px rgba(0,0,0,.35)",overflow:"hidden"}},
+        // Header — the question for this specific field
+        h("div",{style:{padding:"16px 18px 12px",borderBottom:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}},
+          h("div",{style:{fontSize:14.5,fontWeight:700,color:NVY}},opts2.question||"Select an option"),
+          h("button",{type:"button",onClick:function(){setOpen(false);},style:{background:"none",border:"none",padding:4,cursor:"pointer",display:"flex"}},ic("close",GRY,18))
+        ),
+        // Scrollable option list
+        h("div",{style:{overflowY:"auto",flex:1,padding:"6px 0"}},
+          opts.map(function(o){
+            var ov=o&&typeof o==="object"&&o.v!==undefined?o.v:o;
+            var ol=o&&typeof o==="object"&&o.l!==undefined?o.l:o;
+            var on=pending===ov;
+            return h("div",{key:String(ov),onClick:function(){setPending(ov);},
+              style:{display:"flex",alignItems:"center",gap:11,padding:"12px 18px",cursor:"pointer",background:on?ACCENT_SOFT:"transparent"}},
+              h("div",{style:{width:18,height:18,borderRadius:"50%",border:"2px solid "+(on?ACCENT:BDR),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+                on?h("div",{style:{width:9,height:9,borderRadius:"50%",background:ACCENT}}):null
+              ),
+              h("span",{style:{fontSize:14,color:on?ACCENT:NVY,fontWeight:on?700:500}},ol)
+            );
+          }),
+          allowCustom?h("div",{onClick:function(){setPending(pendingIsCustom?(pending===CHIP_CUSTOM_SENTINEL?"":pending):CHIP_CUSTOM_SENTINEL);},
+            style:{display:"flex",alignItems:"center",gap:11,padding:"12px 18px",cursor:"pointer",background:pendingIsCustom?ACCENT_SOFT:"transparent"}},
+            h("div",{style:{width:18,height:18,borderRadius:"50%",border:"2px solid "+(pendingIsCustom?ACCENT:BDR),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+              pendingIsCustom?h("div",{style:{width:9,height:9,borderRadius:"50%",background:ACCENT}}):null
+            ),
+            h("span",{style:{fontSize:14,color:pendingIsCustom?ACCENT:NVY,fontWeight:pendingIsCustom?700:500}},"Other (type your own)")
+          ):null,
+          pendingIsCustom?h("input",{type:"text",value:pending===CHIP_CUSTOM_SENTINEL?"":pending,
+            onChange:function(e){setPending(e.target.value===""?CHIP_CUSTOM_SENTINEL:e.target.value);},
+            placeholder:opts2.customPlaceholder||"Type your own...",autoFocus:true,
+            style:{width:"calc(100% - 36px)",margin:"4px 18px 8px",background:SFT,border:"1.5px solid "+ACCENT,borderRadius:8,padding:"9px 10px",
+              fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box",display:"block"}}):null
+        ),
+        // Footer — Save / OK commits the pending choice
+        h("div",{style:{padding:"12px 18px",borderTop:"1px solid "+BDR,flexShrink:0}},
+          h("button",{type:"button",onClick:commit,disabled:pendingIsCustom&&pending===CHIP_CUSTOM_SENTINEL,
+            style:{width:"100%",background:ACCENT,border:"none",borderRadius:10,padding:"11px",color:ACCENT_FG,fontSize:13.5,fontWeight:700,
+              cursor:"pointer",opacity:(pendingIsCustom&&pending===CHIP_CUSTOM_SENTINEL)?.5:1}},"Save")
+        )
       )
     ):null
   );
@@ -3329,7 +3350,7 @@ export default function App(){
     if(!suName.trim())return setAuthErr("Enter your full name");
     if(!suOrg.trim())return setAuthErr("Enter organization name");
     if(!suType||suType===CHIP_CUSTOM_SENTINEL)return setAuthErr("Select organization type");
-    if(!suPos.trim())return setAuthErr("Enter your role/position");
+    if(!suPos.trim()||suPos===CHIP_CUSTOM_SENTINEL)return setAuthErr("Enter your role/position");
     if(!suEmpRange)return setAuthErr("Select employee count range");
     if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
     if(!suAgreed)return setAuthErr("Please confirm the email warning");
@@ -3429,10 +3450,10 @@ export default function App(){
         borderRadius:10,padding:"11px 13px",fontSize:13,color:T.AUTH_TEXT,outline:"none",
         fontFamily:"inherit",marginBottom:err?4:10,boxSizing:"border-box"}});
   };
-  var sel=function(val,onChange,opts,placeholder,err,allowCustom){
+  var sel=function(val,onChange,opts,placeholder,err,allowCustom,question){
     return h("div",{style:{marginBottom:err?4:0}},
       !val?h("div",{style:{fontSize:11,color:err?RED:T.AUTH_LABEL,marginBottom:6}},placeholder):null,
-      chipSelect(val,function(v){onChange({target:{value:v}});},opts,{allowCustom:allowCustom,customPlaceholder:"Type your own..."})
+      chipSelect(val,function(v){onChange({target:{value:v}});},opts,{allowCustom:allowCustom,customPlaceholder:"Type your own...",question:question||placeholder})
     );
   };
   var authLbl=function(txt){return h("div",{style:{fontSize:10,fontWeight:700,color:T.AUTH_LABEL,letterSpacing:1,marginBottom:4}},txt);};
@@ -3664,11 +3685,11 @@ export default function App(){
     authLbl("ORGANIZATION TYPE"),
     sel(suType,function(e){setSuType(e.target.value);setAuthErr("");},
       ["IT / Software","Retail","Manufacturing","Healthcare","Education","Finance","Construction","Logistics","Hospitality"],
-      "Select type",null,true),
+      "Select type",null,true,"Choose your organization type"),
     authLbl("YOUR ROLE / POSITION"),
     sel(suPos,function(e){setSuPos(e.target.value);setAuthErr("");},
-      ["Business Owner","HR Manager","HR Executive","Director","CEO / MD","Finance Manager","Admin Manager","Other"],
-      "Select your role"),
+      ["Business Owner","HR Manager","HR Executive","Director","CEO / MD","Finance Manager","Admin Manager"],
+      "Select your role",null,true,"Choose your role"),
     authLbl("TEAM SIZE"),
     sel(suEmpRange,function(e){setSuEmpRange(e.target.value);setAuthErr("");},
       ["1 - 10","11 - 50","51 - 200","201 - 500","500+"],
@@ -3742,11 +3763,11 @@ export default function App(){
     authLbl("ORGANIZATION TYPE"),
     sel(suType,function(e){setSuType(e.target.value);setAuthErr("");},
       ["IT / Software","Retail","Manufacturing","Healthcare","Education","Finance","Construction","Logistics","Hospitality"],
-      "Select type",null,true),
+      "Select type",null,true,"Choose your organization type"),
     authLbl("YOUR ROLE"),
     sel(suPos,function(e){setSuPos(e.target.value);setAuthErr("");},
-      ["Business Owner","HR Manager","HR Executive","Director","CEO / MD","Finance Manager","Admin Manager","Other"],
-      "Select your role"),
+      ["Business Owner","HR Manager","HR Executive","Director","CEO / MD","Finance Manager","Admin Manager"],
+      "Select your role",null,true,"Choose your role"),
     authLbl("TEAM SIZE"),
     sel(suEmpRange,function(e){setSuEmpRange(e.target.value);setAuthErr("");},
       ["1 - 10","11 - 50","51 - 200","201 - 500","500+"],
@@ -3755,7 +3776,7 @@ export default function App(){
     authBtn(authLoading?"Saving...":"Get Started",function(){
       if(!suOrg.trim())return setAuthErr("Enter organization name");
       if(!suType||suType===CHIP_CUSTOM_SENTINEL)return setAuthErr("Select organization type");
-      if(!suPos)return setAuthErr("Select your role");
+      if(!suPos||suPos===CHIP_CUSTOM_SENTINEL)return setAuthErr("Select your role");
       if(!suEmpRange)return setAuthErr("Select team size");
       var em=gUser&&gUser.email?gUser.email:"";
       setAuthLoading(true);
@@ -5048,9 +5069,9 @@ null
         lbl("UAN NUMBER"),edInp("uan","text","UAN for PF filing"),
         lbl("AADHAR NUMBER"),edInp("aadhar","text","12-digit Aadhar"),
         lbl("ROLE / DESIGNATION"),
-        chipSelect(editE.role||"",function(v){setField("role",v);},getRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role..."}),
+        chipSelect(editE.role||"",function(v){setField("role",v);},getRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role...",question:"Choose the role"}),
         lbl("DEPARTMENT"),
-        chipSelect(eDept||"",function(v){setEDept(v);},getDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department..."})
+        chipSelect(eDept||"",function(v){setEDept(v);},getDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department...",question:"Choose the department"})
       )),
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Salary"),
@@ -6701,7 +6722,7 @@ null
         empShowLeave?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
           h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14,display:"flex",alignItems:"center",gap:8}},ic("edit_calendar",ACCENT,16),"Apply for Leave"),
           lbl("LEAVE TYPE"),
-          chipSelect(empLeaveType,function(v){setEmpLeaveType(v);},Object.keys(LEAVE_TYPES).map(function(lt){return {v:lt,l:LEAVE_TYPES[lt].name};})),
+          chipSelect(empLeaveType,function(v){setEmpLeaveType(v);},Object.keys(LEAVE_TYPES).map(function(lt){return {v:lt,l:LEAVE_TYPES[lt].name};}),{question:"Choose the leave type"}),
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
             h("div",{style:{flex:1}},lbl("FROM"),h("input",{type:"date",value:empLeaveFrom,onChange:function(e){setEmpLeaveFrom(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
             h("div",{style:{flex:1}},lbl("TO"),h("input",{type:"date",value:empLeaveTo,onChange:function(e){setEmpLeaveTo(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}))
@@ -7070,7 +7091,7 @@ null
       showNewTask?card(h("div",null,
         h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"New Task"),
         lbl("ASSIGN TO"),
-        chipSelect(taskAssignType,function(v){setTaskAssignType(v);setTaskAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};})),
+        chipSelect(taskAssignType,function(v){setTaskAssignType(v);setTaskAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}),{question:"Assign this task to"}),
         taskAssignType==="individual"?h("select",{value:taskAssignTarget,onChange:function(e){setTaskAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
           [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
         ):taskAssignType==="department"?h("select",{value:taskAssignTarget,onChange:function(e){setTaskAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
@@ -7083,7 +7104,7 @@ null
         lbl("DESCRIPTION (OPTIONAL)"),
         h("textarea",{value:taskDesc,onChange:function(e){setTaskDesc(e.target.value);},placeholder:"Task details...",style:{width:"100%",height:60,marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"none"}}),
         h("div",{style:{display:"flex",gap:8,marginBottom:12}},
-          h("div",{style:{flex:1}},lbl("PRIORITY"),chipSelect(taskPriority,function(v){setTaskPriority(v);},["high","medium","low"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}))),
+          h("div",{style:{flex:1}},lbl("PRIORITY"),chipSelect(taskPriority,function(v){setTaskPriority(v);},["high","medium","low"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}),{question:"Choose the priority"})),
           h("div",{style:{flex:1}},lbl("DEADLINE"),h("input",{type:"date",value:taskDeadline,onChange:function(e){setTaskDeadline(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}))
         ),
         h("div",{style:{display:"flex",gap:8}},
@@ -7137,7 +7158,7 @@ null
       showKpiForm?card(h("div",null,
         h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"New KPI"),
         lbl("ASSIGN TYPE"),
-        chipSelect(kpiAssignType,function(v){setKpiAssignType(v);setKpiAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};})),
+        chipSelect(kpiAssignType,function(v){setKpiAssignType(v);setKpiAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}),{question:"Assign this KPI to"}),
         kpiAssignType==="individual"?h("select",{value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
           [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
         ):null,
@@ -7145,7 +7166,7 @@ null
         h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Sales target",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
           h("div",{style:{flex:1}},lbl("TARGET VALUE"),h("input",{type:"number",value:kpiTarget,onChange:function(e){setKpiTarget(e.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
-          h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."]))
+          h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."],{question:"Choose the KPI unit"}))
         ),
         lbl("WEIGHTAGE (%)"),
         h("input",{type:"number",value:kpiWeight,onChange:function(e){setKpiWeight(e.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
@@ -7313,11 +7334,11 @@ null
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
             h("div",{style:{flex:1}},
               lbl("CATEGORY"),
-              chipSelect(coExpCat,function(v){setCoExpCat(v);},Object.entries(cats).map(function(c){return {v:c[0],l:c[1]};}))
+              chipSelect(coExpCat,function(v){setCoExpCat(v);},Object.entries(cats).map(function(c){return {v:c[0],l:c[1]};}),{question:"Choose the expense category"})
             ),
             h("div",{style:{flex:1}},
               lbl("PAYMENT MODE"),
-              chipSelect(coExpMode,function(v){setCoExpMode(v);},Object.entries(modes).map(function(m){return {v:m[0],l:m[1]};}))
+              chipSelect(coExpMode,function(v){setCoExpMode(v);},Object.entries(modes).map(function(m){return {v:m[0],l:m[1]};}),{question:"Choose the payment mode"})
             )
           ),
           coExpCat==="custom"?h("div",{style:{marginBottom:8}},
@@ -7394,7 +7415,7 @@ null
         showClaimForm?h("div",{style:{background:SFT,borderRadius:12,border:"1px solid "+BDR,padding:12,marginBottom:12}},
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
             h("div",{style:{flex:1}},lbl("EMPLOYEE"),h("select",{value:claimEmp,onChange:function(e){setClaimEmp(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},h("option",{value:""},"Select employee"),actEmps.map(function(e){return h("option",{key:e.id,value:String(e.id)},e.name);}))),
-            h("div",{style:{flex:1}},lbl("CATEGORY"),chipSelect(claimCat,function(v){setClaimCat(v);},[["travel","Travel"],["food","Food & Meals"],["medical","Medical"],["accommodation","Accommodation"],["stationery","Stationery"],["other","Other"]].map(function(c){return {v:c[0],l:c[1]};})))
+            h("div",{style:{flex:1}},lbl("CATEGORY"),chipSelect(claimCat,function(v){setClaimCat(v);},[["travel","Travel"],["food","Food & Meals"],["medical","Medical"],["accommodation","Accommodation"],["stationery","Stationery"],["other","Other"]].map(function(c){return {v:c[0],l:c[1]};}),{question:"Choose the claim category"}))
           ),
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
             h("div",{style:{flex:1}},lbl("AMOUNT (RS.)"),h("input",{type:"number",value:claimAmt,onChange:function(e){setClaimAmt(e.target.value);},placeholder:"e.g. 500",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
@@ -7590,7 +7611,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             h("input",{type:"text",value:kpiName,onChange:function(ev){setKpiName(ev.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
             h("div",{style:{display:"flex",gap:8,marginBottom:8}},
               h("div",{style:{flex:1}},lbl("TARGET"),h("input",{type:"number",value:kpiTarget,onChange:function(ev){setKpiTarget(ev.target.value);},placeholder:"100",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
-              h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."]))
+              h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."],{question:"Choose the KPI unit"}))
             ),
             lbl("WEIGHTAGE (%)"),
             h("input",{type:"number",value:kpiWeight,onChange:function(ev){setKpiWeight(ev.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
@@ -7604,7 +7625,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       showKpiForm&&!kpiAssignTarget?h("div",{style:{background:CARD,borderRadius:14,padding:16,boxShadow:"0 4px 16px rgba(0,0,0,0.08)",marginTop:8}},
         h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14}},"Add KPI"),
         lbl("ASSIGN TYPE"),
-        chipSelect(kpiAssignType,function(v){setKpiAssignType(v);setKpiAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};})),
+        chipSelect(kpiAssignType,function(v){setKpiAssignType(v);setKpiAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}),{question:"Assign this KPI to"}),
         kpiAssignType==="individual"?h("select",{value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
           [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
         ):null,
@@ -7612,7 +7633,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
           h("div",{style:{flex:1}},lbl("TARGET"),h("input",{type:"number",value:kpiTarget,onChange:function(e){setKpiTarget(e.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
-          h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."]))
+          h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."],{question:"Choose the KPI unit"}))
         ),
         lbl("WEIGHTAGE (%)"),
         h("input",{type:"number",value:kpiWeight,onChange:function(e){setKpiWeight(e.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
@@ -7638,9 +7659,9 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         step===2?h("div",null,
           lbl("EMPLOYEE ID"),h("input",{value:fEid,onChange:function(e){setFEid(e.target.value);},placeholder:"e.g. EMP006",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
           lbl("ROLE / DESIGNATION *"),
-          chipSelect(fRole,function(v){setFRole(v);},getRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role..."}),
+          chipSelect(fRole,function(v){setFRole(v);},getRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role...",question:"Choose the role"}),
           lbl("DEPARTMENT"),
-          chipSelect(dept,function(v){setDept(v);},getDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department..."}),
+          chipSelect(dept,function(v){setDept(v);},getDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department...",question:"Choose the department"}),
           lbl("SALARY TYPE"),
           h("div",{style:{display:"flex",background:SFT,borderRadius:11,padding:3,marginBottom:10,gap:3}},
             h("button",{onClick:function(){setFSalType("split");},style:{flex:1,background:fSalType==="split"?CARD:"transparent",border:fSalType==="split"?"1px solid "+BDR:"none",borderRadius:8,padding:"8px",color:fSalType==="split"?NVY:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},"\uD83C\uDFE6 Split (Basic+HRA+Allow)"),
@@ -7895,7 +7916,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           ),
           h("div",{style:{flex:1}},
             lbl("CATEGORY"),
-            chipSelect(expCat,function(v){setExpCat(v);},Object.entries(cats).map(function(c){return {v:c[0],l:c[1]};}))
+            chipSelect(expCat,function(v){setExpCat(v);},Object.entries(cats).map(function(c){return {v:c[0],l:c[1]};}),{question:"Choose the expense category"})
           )
         ),
         lbl("DESCRIPTION (OPTIONAL)"),
@@ -8349,7 +8370,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         ),
         /* Type */
         lbl("TYPE"),
-        h("div",{style:{marginBottom:8}},chipSelect(loanType,function(v){setLoanType(v);},Object.entries(loanKind==="loan"?LTYPES:ATYPES).map(function(t){return {v:t[0],l:t[1]};}))),
+        h("div",{style:{marginBottom:8}},chipSelect(loanType,function(v){setLoanType(v);},Object.entries(loanKind==="loan"?LTYPES:ATYPES).map(function(t){return {v:t[0],l:t[1]};}),{question:"Choose the type"})),
         /* Amount + Date */
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
           h("div",{style:{flex:1}},lbl("AMOUNT"),
@@ -8586,7 +8607,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       showWarnForm?h("div",{style:{background:SFT,borderRadius:12,padding:12,border:"1px solid "+BDR,marginBottom:10}},
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
           h("div",{style:{flex:1}},lbl("INCIDENT DATE"),h("input",{type:"date",value:warnDate,onChange:function(e){setWarnDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"8px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
-          h("div",{style:{flex:1}},lbl("TYPE"),chipSelect(warnType,function(v){setWarnType(v);},[{v:"verbal",l:"Verbal"},{v:"written",l:"Written"},{v:"final",l:"Final"}]))
+          h("div",{style:{flex:1}},lbl("TYPE"),chipSelect(warnType,function(v){setWarnType(v);},[{v:"verbal",l:"Verbal"},{v:"written",l:"Written"},{v:"final",l:"Final"}],{question:"Choose the warning type"}))
         ),
         lbl("INCIDENT DESCRIPTION"),
         h("textarea",{value:warnIncident,onChange:function(e){setWarnIncident(e.target.value);},placeholder:"Describe the incident...",rows:3,style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"vertical",marginBottom:8,boxSizing:"border-box"}}),
