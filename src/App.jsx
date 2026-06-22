@@ -63,7 +63,7 @@ var ATC={present:GRN,absent:RED,half:AMB,paid:PUR,unpaid:IND,holiday:SKY,unmarke
 var ATL={present:"Present",absent:"Absent",half:"Half Day",paid:"Paid Leave",unpaid:"Unpaid Leave",holiday:"Holiday",unmarked:"Not Marked"};
 var ATO=["present","absent","half","paid","unpaid","holiday","unmarked"];
 var HO=["ID Card","Laptop","Access Card","Office Keys","Company Phone","Uniform","Documents","Other"];
-function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}@keyframes hrIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.25)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(255,255,255,.08)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
+function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}@keyframes hrIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.25)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(255,255,255,.08)}}@keyframes shineSweep{0%{transform:translateX(-120%) skewX(-18deg)}100%{transform:translateX(220%) skewX(-18deg)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
 var SVG_ICONS={
 "emoji_add":"<path d=\"M21 12a9 9 0 1 1-9-9c.9 0 1.77.13 2.59.37\"/><path d=\"M16 5h6\"/><path d=\"M19 2v6\"/><path d=\"M9 9h.01\"/><path d=\"M15 9h.01\"/><path d=\"M8.5 14a4 4 0 0 0 7 0\"/>",
 "book":"<path d=\"M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20\"/>",
@@ -158,7 +158,10 @@ var SVG_ICONS={
 "badge":"<path d=\"M3 11h.01\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><circle cx=\"12\" cy=\"10\" r=\"2\"/><path d=\"M8 18a4 4 0 0 1 8 0\"/>",
 "monetization_on":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 18V6\"/>",
 "contract_edit":"<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h6\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M8 13h4\"/><path d=\"M8 17h2\"/><path d=\"m20.4 14.5-5.9 5.9-3 .7.7-3 5.9-5.9a1.5 1.5 0 0 1 2.3 2.3Z\"/>",
-"home":"<path d=\"m3 9.5 9-7 9 7\"/><path d=\"M19 9.5V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9.5\"/><path d=\"M9 21v-8h6v8\"/>"
+"home":"<path d=\"m3 9.5 9-7 9 7\"/><path d=\"M19 9.5V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9.5\"/><path d=\"M9 21v-8h6v8\"/>",
+"sunrise":"<path d=\"M12 3v5\"/><path d=\"m5.6 8.6 1.4 1.4\"/><path d=\"m18.4 8.6-1.4 1.4\"/><path d=\"M7.5 19a4.5 4.5 0 0 1 9 0\"/><path d=\"M2 19h20\"/>",
+"sunmid":"<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 3v2\"/><path d=\"M12 19v2\"/><path d=\"M3 12h2\"/><path d=\"M19 12h2\"/><path d=\"m5.6 5.6 1.4 1.4\"/><path d=\"m17 17 1.4 1.4\"/><path d=\"m18.4 5.6-1.4 1.4\"/><path d=\"m7 17-1.4 1.4\"/>",
+"moonstars":"<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/><path d=\"M19 4v2\"/><path d=\"M18 5h2\"/><path d=\"M16 14.5v1.7\"/><path d=\"M15.2 15.3h1.6\"/>"
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
@@ -4215,6 +4218,8 @@ export default function App(){
       {l:"Net Payable",v:fmt(tNet),ico:"account_balance_wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions",big:true},
     ];
     var hr=now.getHours(),greet=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
+    var greetIco=hr<12?"sunrise":hr<17?"sunmid":"moonstars";
+    var greetTint=hr<12?"#FB923C":hr<17?"#FBBF24":"#A5B4FC"; // warm sunrise / golden midday / soft indigo night
     // Pre-compute reminder urgency
     var activeRems=reminders.filter(function(r){return !r.done;});
     var doneRems=reminders.filter(function(r){return r.done;});
@@ -4227,9 +4232,10 @@ export default function App(){
         h("div",{style:{position:"absolute",right:-30,top:-30,width:120,height:120,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.05)":"rgba(0,0,0,.10)"}}),
         h("div",{style:{position:"absolute",right:30,bottom:-40,width:80,height:80,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.04)":"rgba(0,0,0,.08)"}}),
         h("div",{style:{position:"absolute",top:14,right:16,fontSize:11,fontWeight:600,color:CARD,opacity:.75,letterSpacing:.5,fontVariantNumeric:"tabular-nums"}},timeStr),
-        h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginBottom:3,fontWeight:500}},now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})),
-        h("div",{style:{fontSize:22,fontWeight:600,color:CARD,letterSpacing:-.3}},greet),
-        h("div",{style:{fontSize:11,color:CARD,opacity:.7,marginTop:3,fontWeight:500}},org.position+" \u2022 "+org.name)
+        h("div",{style:{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",width:48,height:48,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.09)":"rgba(0,0,0,.07)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"inset 0 0 0 1px "+greetTint+"35"}},ic(greetIco,greetTint,25)),
+        h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginBottom:3,fontWeight:500,maxWidth:"75%"}},now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})),
+        h("div",{style:{fontSize:22,fontWeight:600,color:CARD,letterSpacing:-.3,maxWidth:"75%"}},greet),
+        h("div",{style:{fontSize:11,color:CARD,opacity:.7,marginTop:3,fontWeight:500,maxWidth:"75%"}},org.position+" \u2022 "+org.name)
       ),
       expiryCountdown(),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
@@ -4238,11 +4244,11 @@ export default function App(){
             background:CARD,
             border:"1px solid "+BDR,
             borderRadius:9,
-            padding:s.big?"6px 8px":"6px 8px 5px",
+            padding:s.big?"6px 8px":(s.nav?"6px 32px 5px 8px":"6px 8px 5px"),
             boxShadow:themeMode==="light"?"0 1px 4px rgba(15,23,42,.04)":"0 1px 3px rgba(0,0,0,.15)",
             position:"relative",overflow:"hidden"
           }},
-            s.nav?h("button",{onClick:function(){setTab(s.nav.tab);},style:{position:"absolute",top:6,right:6,width:20,height:20,borderRadius:6,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:0}},ic(s.nav.icon,GRY,11)):null,
+            s.nav?h("button",{onClick:function(){setTab(s.nav.tab);},style:{position:"absolute",top:"50%",right:6,transform:"translateY(-50%)",width:26,height:26,borderRadius:8,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:0}},ic(s.nav.icon,GRY,15)):null,
             s.big?[
               h("div",{key:"r",style:{display:"flex",alignItems:"center",gap:4,marginBottom:3}},
                 h("div",{style:{width:22,height:22,borderRadius:6,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(s.ico,s.ic,11)),
@@ -4261,17 +4267,18 @@ export default function App(){
           );
         })
       ),
-      h("div",{onClick:function(){setShowPolicyHub(true);},style:{background:"#3B1F63",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 18px rgba(0,0,0,.4)",position:"relative",overflow:"hidden"}},
-        h("div",{style:{width:44,height:44,borderRadius:13,background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,animation:"hrIconPulse 2.4s ease-in-out infinite"}},
-          ic("contract_edit","#fff",22)
+      h("div",{onClick:function(){setShowPolicyHub(true);},style:{background:NVY,borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 18px rgba(0,0,0,.35)",position:"relative",overflow:"hidden",border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.12)":"rgba(0,0,0,.12)")}},
+        h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,"+(themeMode==="light"?"rgba(255,255,255,.18)":"rgba(0,0,0,.10)")+",transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
+        h("div",{style:{width:44,height:44,borderRadius:13,background:themeMode==="light"?"rgba(255,255,255,.14)":"rgba(0,0,0,.08)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,animation:"hrIconPulse 2.4s ease-in-out infinite",position:"relative"}},
+          ic("contract_edit",CARD,22)
         ),
-        h("div",{style:{flex:1,textAlign:"left"}},
-          h("div",{style:{fontSize:14,fontWeight:700,color:"#fff"}},"HR Policies"),
-          h("div",{style:{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:2}},
+        h("div",{style:{flex:1,textAlign:"left",position:"relative"}},
+          h("div",{style:{fontSize:14,fontWeight:700,color:CARD}},"HR Policies"),
+          h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginTop:2}},
             isPaid?(Object.keys(policies||{}).length>0?"Want to update your company policies?":"Want to create your company's HR policies?"):"Create professional policy documents - Business plan"
           )
         ),
-        ic(isPaid?ICONS.chev:"lock","rgba(255,255,255,.7)",isPaid?20:18)
+        h("div",{style:{position:"relative"}},ic(isPaid?ICONS.chev:"lock",CARD,isPaid?20:18))
       ),
       showRemSection?h("div",{style:{marginBottom:12}},
         bRemind.length>0?h("div",{style:{borderRadius:12,padding:12,marginBottom:8,border:"1.5px solid #FCD34D",animation:bdayUrgent?"blinkBorder 1.2s ease-in-out infinite":"none",background:T.PILL_WARN_SOFT}},
