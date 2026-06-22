@@ -157,7 +157,8 @@ var SVG_ICONS={
 "wallet":"<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>",
 "badge":"<path d=\"M3 11h.01\"/><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/><circle cx=\"12\" cy=\"10\" r=\"2\"/><path d=\"M8 18a4 4 0 0 1 8 0\"/>",
 "monetization_on":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 18V6\"/>",
-"contract_edit":"<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h6\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M8 13h4\"/><path d=\"M8 17h2\"/><path d=\"m20.4 14.5-5.9 5.9-3 .7.7-3 5.9-5.9a1.5 1.5 0 0 1 2.3 2.3Z\"/>"
+"contract_edit":"<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h6\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M8 13h4\"/><path d=\"M8 17h2\"/><path d=\"m20.4 14.5-5.9 5.9-3 .7.7-3 5.9-5.9a1.5 1.5 0 0 1 2.3 2.3Z\"/>",
+"home":"<path d=\"m3 9.5 9-7 9 7\"/><path d=\"M19 9.5V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9.5\"/><path d=\"M9 21v-8h6v8\"/>"
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
@@ -1604,6 +1605,124 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
   },function(){alert("PDF library failed to load.");});
 }
 
+// ── Department-wise Payroll Register — same depth as the Salary Register, grouped by department ──
+function makeDeptPayrollPDF(deptGroups,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
+  // deptGroups: array of {dept, emps} — only the departments currently visible on screen
+  loadJsPDFGlobal(function(JsPDF){
+    var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    var W=297,H=210,mg=10;
+    var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"DEPARTMENT-WISE PAYROLL REGISTER",MOS[m]+" "+String(y),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
+    doc.setFontSize(7);doc.setFont("helvetica","normal");doc.setTextColor(80,100,140);
+    doc.text("Detailed payroll, grouped by department. All money columns are in Rs. Bonus and Overtime are excluded (see Payroll Report for total compensation).",mg,ry+4);
+    ry+=11;
+
+    var cols=[
+      {label:"#",align:"c"},
+      {label:"EMPLOYEE NAME",align:"l"},
+      {label:"ROLE",align:"l"},
+      {label:"WORK",align:"r"},
+      {label:"PAID",align:"r"},
+      {label:"BASIC",align:"r"},
+      {label:"HRA",align:"r"},
+      {label:"ALLOW",align:"r"},
+      {label:"GROSS (Rs.)",align:"r"},
+      {label:"PF",align:"r"},
+      {label:"ESI",align:"r"},
+      {label:"PT",align:"r"},
+      {label:"TDS",align:"r"},
+      {label:"TOTAL DED",align:"r"},
+      {label:"ER PF",align:"r"},
+      {label:"ER ESI",align:"r"},
+      {label:"NET PAY (Rs.)",align:"r"},
+    ];
+    var cws=[7,30,17,12,11,17,14,14,19,14,13,12,13,16,14,14,20];
+    var cwSum=cws.reduce(function(a,b){return a+b;},0);
+    var cw=W-mg*2;
+    var scale=cw/cwSum;
+    cws=cws.map(function(w){return Math.round(w*scale*10)/10;});
+
+    var grandG=0,grandDed=0,grandN=0,grandCTC=0;
+
+    deptGroups.forEach(function(grp,gi){
+      if(ry>250){doc.addPage();ry=14;} else if(gi>0){ry+=8;}
+      doc.setFontSize(11);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text(grp.dept,mg,ry);
+      var deptNameW=doc.getTextWidth(grp.dept);
+      doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(120,135,155);
+      doc.text("("+grp.emps.length+" employee"+(grp.emps.length===1?"":"s")+")",mg+deptNameW+5,ry);
+      ry+=2;
+      doc.setDrawColor(180,138,40);doc.setLineWidth(0.8);doc.line(mg,ry+2,mg+40,ry+2);
+      ry+=9;
+
+      var rows=[];
+      var totW=0,totD=0,totG=0,totH=0,totA=0,totPF=0,totESI=0,totPT=0,totTDS=0,totDed=0,totErPF=0,totErESI=0,totNet=0;
+      grp.emps.slice().sort(function(a,b){return (a.name||"").localeCompare(b.name||"");}).forEach(function(emp,ei){
+        var mp=payFn(emp,y,m),d=mp.d,ma=mp.ma;
+        var daysWork=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.holiday||0));
+        var daysPaid=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.paid||0)+(ma.holiday||0));
+        var totalDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd+d.ad+d.hd+d.ud;
+        totW+=daysWork;totD+=daysPaid;totG+=d.gr;totH+=d.hra;totA+=d.allow;
+        totPF+=d.pfE;totESI+=d.esiE;totPT+=d.pt;totTDS+=d.tds;totDed+=totalDed;
+        totErPF+=d.pfR;totErESI+=d.esiR;totNet+=d.net;
+        rows.push([
+          {val:ei+1,color:[120,130,145]},
+          {val:(emp.name||"").substring(0,20),bold:true},
+          {val:(emp.role||"").substring(0,15),color:[100,116,139]},
+          {val:daysWork},
+          {val:daysPaid},
+          {val:fmtNum(d.eb),color:[60,80,180]},
+          {val:fmtNum(d.hra)},
+          {val:fmtNum(d.allow)},
+          {val:fmtNum(d.gr),bold:true},
+          {val:d.pfE>0?fmtNum(d.pfE):"-",color:[70,100,200]},
+          {val:d.esiE>0?fmtNum(d.esiE):"-",color:[5,140,90]},
+          {val:d.pt>0?fmtNum(d.pt):"-",color:[200,110,0]},
+          {val:d.tds>0?fmtNum(d.tds):"-",color:[200,40,40]},
+          {val:fmtNum(totalDed),bold:true,color:[200,40,40]},
+          {val:d.pfR>0?fmtNum(d.pfR):"-",color:[100,116,139]},
+          {val:d.esiR>0?fmtNum(d.esiR):"-",color:[100,116,139]},
+          {val:fmtNum(d.net),bold:true,color:[5,140,90]},
+        ]);
+      });
+      rows.push([
+        {val:""},{val:grp.dept.toUpperCase()+" TOTAL",bold:true},{val:""},
+        {val:totW,bold:true},{val:totD,bold:true},
+        {val:fmtNum(totG-totH-totA),bold:true,color:[60,80,180]},
+        {val:fmtNum(totH),color:[60,80,180]},
+        {val:fmtNum(totA),color:[60,80,180]},
+        {val:fmtNum(totG),bold:true},
+        {val:fmtNum(totPF),color:[60,80,180]},
+        {val:fmtNum(totESI),color:[5,140,90]},
+        {val:fmtNum(totPT),color:[180,100,0]},
+        {val:fmtNum(totTDS),color:[200,40,40]},
+        {val:fmtNum(totDed),bold:true,color:[200,40,40]},
+        {val:fmtNum(totErPF),color:[100,116,139]},
+        {val:fmtNum(totErESI),color:[100,116,139]},
+        {val:fmtNum(totNet),bold:true,color:[5,140,90]},
+      ]);
+      grandG+=totG;grandDed+=totDed;grandN+=totNet;grandCTC+=totG+totErPF+totErESI;
+      ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:8.5,fontSize:7.3,totalsRow:true,headerColor:[71,85,105]});
+    });
+
+    // ── Grand summary across all included departments ──
+    if(ry>225){doc.addPage();ry=20;}
+    ry+=8;
+    doc.setFontSize(9.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text("GRAND TOTAL - ALL DEPARTMENTS SHOWN",mg,ry);ry+=2;
+    doc.setDrawColor(210,218,230);doc.setLineWidth(0.4);doc.line(mg,ry+2,W-mg,ry+2);ry+=9;
+    var boxW=(cw-12)/4;
+    [["Gross",grandG],["Total Deductions",grandDed],["Net Pay",grandN],["Total CTC (incl. Employer PF/ESI)",grandCTC]].forEach(function(b,i){
+      var x=mg+i*(boxW+4);
+      doc.setDrawColor(225,230,238);doc.setLineWidth(0.4);doc.roundedRect(x,ry,boxW,17,1.5,1.5);
+      doc.setFontSize(7);doc.setFont("helvetica","bold");doc.setTextColor(120,135,155);doc.text(b[0].toUpperCase(),x+5,ry+7);
+      doc.setFontSize(10.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text(fmtIN(b[1]),x+5,ry+13.5);
+    });
+
+    pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
+    downloadPDF(doc.output("blob"),"Department-Payroll-"+MOS[m]+"-"+String(y)+".pdf");
+  },function(){alert("PDF library failed to load.");});
+}
+
+
 
 function makePayrollCSV(emps,m,y,payFn){
   var header=["Name","Dept","Gross","Absent Ded","Half Ded","Unpaid Ded","PF Emp","ESI Emp","Prof Tax","TDS","Health Ins","Custom","Net Pay","Er PF","Er ESI","Total CTC"];
@@ -1818,7 +1937,7 @@ var POLICY_DEFS={
     }
   },
   wfh:{
-    label:"Work From Home Policy",icon:"cloud_upload",color:"#2563EB",
+    label:"Work From Home Policy",icon:"home",color:"#2563EB",
     blurb:"Eligibility, approval and expectations for remote work.",
     customPlaceholder:"e.g. WFH is not available during an employee's first 3 months of employment.",
     learnMore:"If you allow remote work even occasionally, this sets expectations around availability and data security. Optional if your business is fully on-site.",
@@ -3868,11 +3987,6 @@ export default function App(){
     var policyKeys=Object.keys(POLICY_DEFS);
 
     function openPolicy(key){
-      if(!isPaid){
-        showT("HR Policies is a Business plan feature","info");
-        window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Business plan for the HR Policy tool"),"_blank");
-        return;
-      }
       var existing=policies[key];
       var defaults={};
       POLICY_DEFS[key].fields.forEach(function(f){defaults[f.key]=existing&&existing.fields&&existing.fields[f.key]!==undefined?existing.fields[f.key]:f.def;});
@@ -3881,6 +3995,11 @@ export default function App(){
       setPolicySel(key);
     }
     function savePolicy(generate){
+      if(generate&&!isPaid){
+        showT("HR Policies downloads are a Business plan feature","info");
+        window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Business plan for the HR Policy tool"),"_blank");
+        return;
+      }
       var key=policySel;
       var def=POLICY_DEFS[key];
       var fields={};
@@ -3895,7 +4014,7 @@ export default function App(){
     }
     function downloadHandbook(){
       if(!isPaid){
-        showT("HR Policies is a Business plan feature","info");
+        showT("HR Policies downloads are a Business plan feature","info");
         window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Business plan for the HR Policy tool"),"_blank");
         return;
       }
@@ -3932,7 +4051,7 @@ export default function App(){
           ),
           h("div",{style:{display:"flex",gap:8,marginTop:6}},
             h("button",{onClick:function(){savePolicy(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12.5,fontWeight:700,cursor:"pointer"}},"Save"),
-            h("button",{onClick:function(){savePolicy(true);},style:{flex:1.4,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer"}},ic("download","#fff",15),"Save & Download PDF")
+            h("button",{onClick:function(){savePolicy(true);},style:{flex:1.4,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer"}},ic(isPaid?"download":"lock","#fff",15),isPaid?"Save & Download PDF":"Save & Download (Business plan)")
           )
         )),
         policyKeys.indexOf(policySel)===2?h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"35",borderRadius:10,padding:"10px 12px",fontSize:11,color:AMB,marginTop:2}},
@@ -3976,7 +4095,7 @@ export default function App(){
           );
         })
       ),
-      policyKeys.some(function(k){return policies[k];})?h("button",{onClick:downloadHandbook,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#3B1F63",border:"none",borderRadius:12,padding:"13px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer",marginBottom:12}},ic("download","#fff",16),"Download All as Employee Handbook"):null,
+      policyKeys.some(function(k){return policies[k];})?h("button",{onClick:downloadHandbook,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:"#3B1F63",border:"none",borderRadius:12,padding:"13px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer",marginBottom:12}},ic(isPaid?"download":"lock","#fff",16),isPaid?"Download All as Employee Handbook":"Download Handbook (Business plan)"):null,
       h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5,padding:"4px 4px 10px"}},
         "These documents follow standard Indian SME practice. For statutory policies (like POSH) or anything that will be legally binding, we recommend a quick review by a legal professional before circulating to your team."
       )
@@ -5375,7 +5494,14 @@ null
           h("select",{value:payDept,onChange:function(e){setPayDept(e.target.value);},style:{flex:1,marginBottom:0,fontSize:12,padding:"8px 10px"}},
             h("option",{value:""},"All Departments"),
             getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}).map(function(d){return h("option",{key:d,value:d},d);})
-          )
+          ),
+          h("button",{onClick:function(){
+            if(!isPaid){showT("PDF download is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for PDF downloads"),"_blank");return;}
+            var deptListPdf=payDept?[payDept]:getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
+            var deptGroups=deptListPdf.map(function(d){return {dept:d,emps:actEmps.filter(function(e){return e.dept===d;})};}).filter(function(g){return g.emps.length>0;});
+            if(deptGroups.length===0)return showT("No employees to include","err");
+            makeDeptPayrollPDF(deptGroups,payM,payY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);
+          },style:{flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:isPaid?NVY:SFT,border:"1px solid "+(isPaid?NVY:BDR),borderRadius:9,padding:"9px 12px",color:isPaid?"#fff":GRY,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic(isPaid?"download":"lock",isPaid?"#fff":GRY,14),"PDF")
         ),
         (function(){
           var deptList=payDept?[payDept]:getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
