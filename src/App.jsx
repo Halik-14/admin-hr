@@ -178,6 +178,36 @@ function ic(name,color,size){
   }
   return h("svg",{viewBox:"0 0 24 24",width:s,height:s,style:{display:"inline-block",verticalAlign:"middle",flexShrink:0},fill:"none",stroke:color||"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round",dangerouslySetInnerHTML:{__html:markup}});
 }
+// A colourful, gradient-filled sun/moon for the dashboard greeting card. ic() always renders
+// stroke-only single-colour icons, so this bypasses it entirely with hand-built, multi-colour SVG —
+// verified by rendering each design standalone before wiring it in, same as every other custom icon here.
+function greetIconSVG(hr){
+  var isMorning=hr<12,isDay=hr<17;
+  if(isDay){
+    var c1=isMorning?"#FDBA74":"#FDE047",c2=isMorning?"#F97316":"#F59E0B";
+    var rays=[0,45,90,135,180,225,270,315].map(function(a){
+      var rad=a*Math.PI/180,x1=24+Math.cos(rad)*15,y1=24+Math.sin(rad)*15,x2=24+Math.cos(rad)*20,y2=24+Math.sin(rad)*20;
+      return h("line",{key:a,x1:x1,y1:y1,x2:x2,y2:y2,stroke:c2,strokeWidth:2.5,strokeLinecap:"round"});
+    });
+    return h("svg",{viewBox:"0 0 48 48",width:46,height:46,style:{display:"block"}},
+      h("defs",null,h("radialGradient",{id:"sunGradDash",cx:"50%",cy:"50%",r:"50%"},
+        h("stop",{offset:"0%",stopColor:"#FFF7D6"}),h("stop",{offset:"45%",stopColor:c1}),h("stop",{offset:"100%",stopColor:c2})
+      )),
+      h("circle",{cx:24,cy:24,r:20,fill:c1,opacity:.18}),
+      rays,
+      h("circle",{cx:24,cy:24,r:11,fill:"url(#sunGradDash)"})
+    );
+  }
+  return h("svg",{viewBox:"0 0 48 48",width:46,height:46,style:{display:"block"}},
+    h("defs",null,h("linearGradient",{id:"moonGradDash",x1:"0%",y1:"0%",x2:"100%",y2:"100%"},
+      h("stop",{offset:"0%",stopColor:"#E0E7FF"}),h("stop",{offset:"50%",stopColor:"#A78BFA"}),h("stop",{offset:"100%",stopColor:"#6D28D9"})
+    )),
+    h("circle",{cx:20,cy:24,r:18,fill:"#7C3AED",opacity:.15}),
+    h("path",{fill:"url(#moonGradDash)",d:"M24 6a12 12 0 0 0 18 18 18 18 0 1 1-18-18Z"}),
+    h("g",{fill:"#FDE68A"},h("circle",{cx:38,cy:12,r:1.6}),h("circle",{cx:34,cy:22,r:1.1}),h("circle",{cx:41,cy:24,r:1.3})),
+    h("g",{stroke:"#FDE68A",strokeWidth:1,strokeLinecap:"round"},h("line",{x1:38,y1:9.5,x2:38,y2:14.5}),h("line",{x1:35.5,y1:12,x2:40.5,y2:12}))
+  );
+}
 
 function calcTax(annual){
   var sl=[{a:0,b:400000,r:0},{a:400000,b:800000,r:.05},{a:800000,b:1200000,r:.10},{a:1200000,b:1600000,r:.15},{a:1600000,b:2000000,r:.20},{a:2000000,b:2400000,r:.25},{a:2400000,b:Infinity,r:.30}];
@@ -4218,8 +4248,6 @@ export default function App(){
       {l:"Net Payable",v:fmt(tNet),ico:"account_balance_wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions",big:true},
     ];
     var hr=now.getHours(),greet=hr<12?"Good Morning":hr<17?"Good Afternoon":"Good Evening";
-    var greetIco=hr<12?"sunrise":hr<17?"sunmid":"moonstars";
-    var greetTint=hr<12?"#FB923C":hr<17?"#FBBF24":"#A5B4FC"; // warm sunrise / golden midday / soft indigo night
     // Pre-compute reminder urgency
     var activeRems=reminders.filter(function(r){return !r.done;});
     var doneRems=reminders.filter(function(r){return r.done;});
@@ -4229,10 +4257,8 @@ export default function App(){
     return h("div",{className:"fd"},
       !onboardDone?renderOnboarding():null,
       h("div",{style:{background:NVY,borderRadius:18,padding:"18px 18px 20px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:T.SHADOW_LG}},
-        h("div",{style:{position:"absolute",right:-30,top:-30,width:120,height:120,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.05)":"rgba(0,0,0,.10)"}}),
-        h("div",{style:{position:"absolute",right:30,bottom:-40,width:80,height:80,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.04)":"rgba(0,0,0,.08)"}}),
         h("div",{style:{position:"absolute",top:14,right:16,fontSize:11,fontWeight:600,color:CARD,opacity:.75,letterSpacing:.5,fontVariantNumeric:"tabular-nums"}},timeStr),
-        h("div",{style:{position:"absolute",right:18,top:"50%",transform:"translateY(-50%)",width:48,height:48,borderRadius:"50%",background:themeMode==="light"?"rgba(255,255,255,.09)":"rgba(0,0,0,.07)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"inset 0 0 0 1px "+greetTint+"35"}},ic(greetIco,greetTint,25)),
+        h("div",{style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)"}},greetIconSVG(hr)),
         h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginBottom:3,fontWeight:500,maxWidth:"75%"}},now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})),
         h("div",{style:{fontSize:22,fontWeight:600,color:CARD,letterSpacing:-.3,maxWidth:"75%"}},greet),
         h("div",{style:{fontSize:11,color:CARD,opacity:.7,marginTop:3,fontWeight:500,maxWidth:"75%"}},org.position+" \u2022 "+org.name)
