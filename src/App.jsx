@@ -2063,14 +2063,14 @@ function ChipSelect(props){
         h("div",{style:{padding:"12px 18px",borderTop:"1px solid "+BDR,flexShrink:0}},
           h("button",{type:"button",onClick:commit,disabled:pendingIsCustom&&pending===CHIP_CUSTOM_SENTINEL,
             style:{width:"100%",background:ACCENT,border:"none",borderRadius:10,padding:"11px",color:ACCENT_FG,fontSize:13.5,fontWeight:700,
-              cursor:"pointer",opacity:(pendingIsCustom&&pending===CHIP_CUSTOM_SENTINEL)?.5:1}},"Save")
+              cursor:"pointer",opacity:(pendingIsCustom&&pending===CHIP_CUSTOM_SENTINEL)?.5:1}},opts2.btnLabel||"Save")
         )
       )
     ):null
   );
 }
 // Thin wrapper so every existing call site (chipSelect(value,onChange,opts,opts2)) keeps working unchanged.
-function chipSelect(value,onChange,opts,opts2){return h(ChipSelect,{value:value,onChange:onChange,opts:opts,opts2:opts2});}
+function chipSelect(value,onChange,opts,opts2){opts2=opts2||{};return h(ChipSelect,{value:value,onChange:onChange,opts:opts,opts2:opts2,triggerStyle:opts2.triggerStyle,wrapStyle:opts2.wrapStyle});}
 // chipSelectScroll's narrow inline use-case now just becomes the same popup with a slimmer trigger.
 function chipSelectScroll(value,onChange,opts,style){return h(ChipSelect,{value:value,onChange:onChange,opts:opts,opts2:{},triggerStyle:style});}
 function dlBtn(label,onClick){return h("button",{onClick:onClick,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:NVY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:10}},ic(ICONS.dl,CARD,16),label);}
@@ -5193,9 +5193,7 @@ null
           h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
         ),
         h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
-          h("select",{value:attY,onChange:function(e){var y=Number(e.target.value);setAttY(y);if(y===curY&&attM>curM)setAttM(curM);},style:{flex:0,width:"auto",marginBottom:0,padding:"7px 10px",fontSize:12,background:CARD,color:NVY,border:"1px solid "+BDR,borderRadius:8,outline:"none",fontFamily:"inherit"}},
-            pastYears().reverse().map(function(y){return h("option",{key:y,value:y},y);})
-          ),
+          chipSelect(attY,function(v){var y=Number(v);setAttY(y);if(y===curY&&attM>curM)setAttM(curM);},pastYears().reverse(),{question:"Choose the year",btnLabel:"Okay",triggerStyle:{width:"auto",flex:"0 0 auto"},wrapStyle:{marginBottom:0}}),
           h("div",{style:{display:"flex",gap:5,flex:1,overflowX:"auto"}},
             pastMonths(attY).map(function(m2){return h("button",{key:m2,onClick:function(){setAttM(m2);},style:{flexShrink:0,background:attM===m2?ACCENT:CARD,border:"1px solid "+(attM===m2?ACCENT:BDR),borderRadius:15,padding:"4px 10px",color:attM===m2?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},MOS[m2]);})
           )
@@ -5501,9 +5499,7 @@ null
     var filtDed=filtGross-filtNet;
     return h("div",{className:"fd"},
       h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
-        h("select",{value:payY,onChange:function(e){var y=Number(e.target.value);setPayY(y);if(y===curY&&payM>curM)setPayM(curM);},style:{flex:0,width:"auto",marginBottom:0,padding:"7px 10px",fontSize:12,background:CARD,color:NVY,border:"1px solid "+BDR,borderRadius:8,outline:"none",fontFamily:"inherit"}},
-          pastYears().reverse().map(function(y){return h("option",{key:y,value:y},y);})
-        ),
+        chipSelect(payY,function(v){var y=Number(v);setPayY(y);if(y===curY&&payM>curM)setPayM(curM);},pastYears().reverse(),{question:"Choose the year",btnLabel:"Okay",triggerStyle:{width:"auto",flex:"0 0 auto"},wrapStyle:{marginBottom:0}}),
         h("div",{style:{display:"flex",gap:5,flex:1,overflowX:"auto"}},
           pastMonths(payY).map(function(m2){return h("button",{key:m2,onClick:function(){setPayM(m2);},style:{flexShrink:0,background:payM===m2?ACCENT:CARD,border:"1px solid "+(payM===m2?ACCENT:BDR),borderRadius:15,padding:"4px 10px",color:payM===m2?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},MOS[m2]);})
         )
@@ -5559,10 +5555,7 @@ null
       ),
       repV==="dept"?h("div",null,
         h("div",{style:{display:"flex",gap:7,marginBottom:11,alignItems:"center"}},
-          h("select",{value:payDept,onChange:function(e){setPayDept(e.target.value);},style:{flex:1,marginBottom:0,fontSize:12,padding:"8px 10px"}},
-            h("option",{value:""},"All Departments"),
-            getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}).map(function(d){return h("option",{key:d,value:d},d);})
-          ),
+          chipSelect(payDept,function(v){setPayDept(v);},[{v:"",l:"All Departments"}].concat(getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}).map(function(d){return {v:d,l:d};})),{question:"Choose the department",btnLabel:"Okay",wrapStyle:{flex:1,marginBottom:0}}),
           h("button",{onClick:function(){
             if(!isPaid){showT("PDF download is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for PDF downloads"),"_blank");return;}
             var deptListPdf=payDept?[payDept]:getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
