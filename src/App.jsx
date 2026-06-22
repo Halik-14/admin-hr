@@ -7293,11 +7293,8 @@ null
             h("button",{onClick:function(){setCoExpView("month");},style:{background:coExpView==="month"?CARD:"transparent",border:coExpView==="month"?"1px solid "+BDR:"none",borderRadius:7,padding:"5px 10px",fontSize:10,fontWeight:coExpView==="month"?700:500,color:coExpView==="month"?NVY:GRY,cursor:"pointer"}},"Month"),
             h("button",{onClick:function(){setCoExpView("year");},style:{background:coExpView==="year"?CARD:"transparent",border:coExpView==="year"?"1px solid "+BDR:"none",borderRadius:7,padding:"5px 10px",fontSize:10,fontWeight:coExpView==="year"?700:500,color:coExpView==="year"?NVY:GRY,cursor:"pointer"}},"Year")
           ),
-          coExpView==="month"?h("select",{value:coExpM,onChange:function(e){setCoExpM(Number(e.target.value));},style:{background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"5px 8px",fontSize:10,color:NVY,outline:"none",fontFamily:"inherit"}},
-            MOS2.map(function(m,i){return h("option",{key:i,value:i},m);})):null,
-          h("select",{value:coExpY,onChange:function(e){setCoExpY(Number(e.target.value));},style:{background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"5px 8px",fontSize:10,color:NVY,outline:"none",fontFamily:"inherit"}},
-            [now2.getFullYear(),now2.getFullYear()-1,now2.getFullYear()-2].map(function(y){return h("option",{key:y,value:y},y);})
-          )
+          coExpView==="month"?chipSelect(coExpM,function(v){setCoExpM(Number(v));},MOS2.map(function(m,i){return {v:i,l:m};}),{question:"Choose the month",btnLabel:"Okay",triggerStyle:{width:"auto",flex:"0 0 auto",padding:"5px 8px",fontSize:10},wrapStyle:{marginBottom:0}}):null,
+          chipSelect(coExpY,function(v){setCoExpY(Number(v));},[now2.getFullYear(),now2.getFullYear()-1,now2.getFullYear()-2],{question:"Choose the year",btnLabel:"Okay",triggerStyle:{width:"auto",flex:"0 0 auto",padding:"5px 8px",fontSize:10},wrapStyle:{marginBottom:0}})
         ),
         /* Total tile */
         h("div",{style:{background:"#242323",borderRadius:12,padding:"12px 14px",marginBottom:10,display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:"0 4px 18px rgba(0,0,0,.35)",border:"1px solid rgba(255,255,255,.06)"}},
@@ -7407,12 +7404,23 @@ null
         ),
         showClaimForm?h("div",{style:{background:SFT,borderRadius:12,border:"1px solid "+BDR,padding:12,marginBottom:12}},
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-            h("div",{style:{flex:1}},lbl("EMPLOYEE"),h("select",{value:claimEmp,onChange:function(e){setClaimEmp(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},h("option",{value:""},"Select employee"),actEmps.map(function(e){return h("option",{key:e.id,value:String(e.id)},e.name);}))),
+            h("div",{style:{flex:1}},lbl("EMPLOYEE"),chipSelect(claimEmp,function(v){setClaimEmp(v);},actEmps.map(function(e){return {v:String(e.id),l:e.name};}),{question:"Choose the employee",btnLabel:"Okay",placeholder:"Select employee"})),
             h("div",{style:{flex:1}},lbl("CATEGORY"),chipSelect(claimCat,function(v){setClaimCat(v);},[["travel","Travel"],["food","Food & Meals"],["medical","Medical"],["accommodation","Accommodation"],["stationery","Stationery"],["other","Other"]].map(function(c){return {v:c[0],l:c[1]};}),{question:"Choose the claim category"}))
           ),
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
             h("div",{style:{flex:1}},lbl("AMOUNT (RS.)"),h("input",{type:"number",value:claimAmt,onChange:function(e){setClaimAmt(e.target.value);},placeholder:"e.g. 500",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
-            h("div",{style:{flex:1}},lbl("CREDIT TO SALARY MONTH"),h("input",{type:"month",value:claimDate,onChange:function(e){setClaimDate(e.target.value);},style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+            h("div",{style:{flex:1}},lbl("CREDIT TO SALARY MONTH"),
+              (function(){
+                var parts=claimDate?claimDate.split("-"):["",""];
+                var cdY=parts[0]?Number(parts[0]):now2.getFullYear();
+                var cdM=parts[1]?Number(parts[1])-1:now2.getMonth();
+                function setClaimYM(y,m){setClaimDate(y+"-"+String(m+1).padStart(2,"0"));}
+                return h("div",{style:{display:"flex",gap:6}},
+                  chipSelect(cdM,function(v){setClaimYM(cdY,Number(v));},MOS2.map(function(m,i){return {v:i,l:m};}),{question:"Choose the month",btnLabel:"Okay",wrapStyle:{flex:1,marginBottom:0}}),
+                  chipSelect(cdY,function(v){setClaimYM(Number(v),cdM);},[now2.getFullYear()-1,now2.getFullYear(),now2.getFullYear()+1],{question:"Choose the year",btnLabel:"Okay",wrapStyle:{flex:1,marginBottom:0}})
+                );
+              })()
+            )
           ),
           lbl("DESCRIPTION (OPTIONAL)"),
           h("input",{type:"text",value:claimDesc,onChange:function(e){setClaimDesc(e.target.value);},placeholder:"e.g. Client visit travel",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
@@ -8678,13 +8686,9 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       h("div",{style:{background:ACCENT+"08",borderRadius:10,padding:"9px 12px",marginBottom:12,fontSize:11,color:GRY,border:"1px solid "+ACCENT+"22"}},
         "Not a Form 16. Use as salary reference for income tax filing (ITR)."),
       lbl("SELECT EMPLOYEE"),
-      h("select",{value:annEmpId,onChange:function(e){setAnnEmpId(e.target.value);},style:{width:"100%",marginBottom:10,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},
-        h("option",{value:""},"-- Choose Employee --"),
-        emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:String(e.id)},e.name+(e.eid?" ("+e.eid+")":""));})
-      ),
+      h("div",{style:{marginBottom:10}},chipSelect(annEmpId,function(v){setAnnEmpId(v);},emps.filter(function(e){return e.status==="active";}).map(function(e){return {v:String(e.id),l:e.name+(e.eid?" ("+e.eid+")":"")};}),{question:"Choose the employee",btnLabel:"Okay",placeholder:"-- Choose Employee --"})),
       lbl("FINANCIAL YEAR"),
-      h("select",{value:String(annFY),onChange:function(e){setAnnFY(Number(e.target.value));},style:{width:"100%",marginBottom:14,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}},
-        [curFY,curFY-1,curFY-2].map(function(fy){return h("option",{key:fy,value:String(fy)},"FY "+fy+"-"+(fy+1)+" (Apr "+fy+" - Mar "+(fy+1)+")");})),
+      h("div",{style:{marginBottom:14}},chipSelect(annFY,function(v){setAnnFY(Number(v));},[curFY,curFY-1,curFY-2].map(function(fy){return {v:fy,l:"FY "+fy+"-"+(fy+1)+" (Apr "+fy+" - Mar "+(fy+1)+")"};}),{question:"Choose the financial year",btnLabel:"Okay"})),
       h("button",{onClick:function(){
         if(!annEmpId)return showT("Select an employee","err");
         var emp=emps.find(function(e){return String(e.id)===annEmpId;});
