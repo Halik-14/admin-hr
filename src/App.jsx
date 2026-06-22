@@ -63,7 +63,7 @@ var ATC={present:GRN,absent:RED,half:AMB,paid:PUR,unpaid:IND,holiday:SKY,unmarke
 var ATL={present:"Present",absent:"Absent",half:"Half Day",paid:"Paid Leave",unpaid:"Unpaid Leave",holiday:"Holiday",unmarked:"Not Marked"};
 var ATO=["present","absent","half","paid","unpaid","holiday","unmarked"];
 var HO=["ID Card","Laptop","Access Card","Office Keys","Company Phone","Uniform","Documents","Other"];
-function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
+function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}@keyframes hrIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.25)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(255,255,255,.08)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
 var SVG_ICONS={
 "emoji_add":"<path d=\"M21 12a9 9 0 1 1-9-9c.9 0 1.77.13 2.59.37\"/><path d=\"M16 5h6\"/><path d=\"M19 2v6\"/><path d=\"M9 9h.01\"/><path d=\"M15 9h.01\"/><path d=\"M8.5 14a4 4 0 0 0 7 0\"/>",
 "book":"<path d=\"M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20\"/>",
@@ -4209,8 +4209,8 @@ export default function App(){
     var presentCount=actEmps.filter(function(e){return getTAtt(e.id)==="present";}).length;
     var absentCount=actEmps.filter(function(e){return getTAtt(e.id)==="absent";}).length;
     var statCards=[
-      {l:"Total Team",v:actEmps.length,ico:"groups",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active",big:false},
-      {l:"Present Today",v:presentCount,ico:"event_available",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today",big:false},
+      {l:"Total Team",v:actEmps.length,ico:"groups",bg:"#EEF2FF",ic:"#4F46E5",s:trmEmps.length>0?trmEmps.length+" offboarded":"All active",big:false,nav:{tab:"employees",icon:"manage_accounts"}},
+      {l:"Present Today",v:presentCount,ico:"event_available",bg:"#ECFDF5",ic:"#059669",s:absentCount+" absent today",big:false,nav:{tab:"attendance",icon:"fact_check"}},
       {l:"Gross Payroll",v:fmt(tGross),ico:"business_center",bg:"#FFFBEB",ic:"#D97706",s:MOS[curM]+" "+curY,big:true},
       {l:"Net Payable",v:fmt(tNet),ico:"account_balance_wallet",bg:"#F0F9FF",ic:"#0284C7",s:"after deductions",big:true},
     ];
@@ -4242,7 +4242,7 @@ export default function App(){
             boxShadow:themeMode==="light"?"0 1px 4px rgba(15,23,42,.04)":"0 1px 3px rgba(0,0,0,.15)",
             position:"relative",overflow:"hidden"
           }},
-            h("div",{style:{position:"absolute",right:-8,top:-8,width:44,height:44,borderRadius:"50%",background:s.bg,opacity:.4}}),
+            s.nav?h("button",{onClick:function(){setTab(s.nav.tab);},style:{position:"absolute",top:6,right:6,width:20,height:20,borderRadius:6,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:0}},ic(s.nav.icon,GRY,11)):null,
             s.big?[
               h("div",{key:"r",style:{display:"flex",alignItems:"center",gap:4,marginBottom:3}},
                 h("div",{style:{width:22,height:22,borderRadius:6,background:s.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(s.ico,s.ic,11)),
@@ -4261,13 +4261,17 @@ export default function App(){
           );
         })
       ),
-      h("button",{onClick:function(){setTab("attendance");},style:{width:"100%",background:"#242323",border:"1px solid rgba(255,255,255,.06)",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 18px rgba(0,0,0,.4)"}},
-        h("div",{style:{width:44,height:44,borderRadius:13,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(ICONS.cal,"#fff",22)),
-        h("div",{style:{flex:1,textAlign:"left"}},
-          h("div",{style:{fontSize:14,fontWeight:700,color:"#fff"}},"Mark Today's Attendance"),
-          h("div",{style:{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:2}},actEmps.filter(function(e){return getTAtt(e.id)==="unmarked";}).length+" employees not yet marked")
+      h("div",{onClick:function(){setShowPolicyHub(true);},style:{background:"#3B1F63",borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 18px rgba(0,0,0,.4)",position:"relative",overflow:"hidden"}},
+        h("div",{style:{width:44,height:44,borderRadius:13,background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,animation:"hrIconPulse 2.4s ease-in-out infinite"}},
+          ic("contract_edit","#fff",22)
         ),
-        ic(ICONS.chev,"rgba(255,255,255,.7)",20)
+        h("div",{style:{flex:1,textAlign:"left"}},
+          h("div",{style:{fontSize:14,fontWeight:700,color:"#fff"}},"HR Policies"),
+          h("div",{style:{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:2}},
+            isPaid?(Object.keys(policies||{}).length>0?"Want to update your company policies?":"Want to create your company's HR policies?"):"Create professional policy documents - Business plan"
+          )
+        ),
+        ic(isPaid?ICONS.chev:"lock","rgba(255,255,255,.7)",isPaid?20:18)
       ),
       showRemSection?h("div",{style:{marginBottom:12}},
         bRemind.length>0?h("div",{style:{borderRadius:12,padding:12,marginBottom:8,border:"1.5px solid #FCD34D",animation:bdayUrgent?"blinkBorder 1.2s ease-in-out infinite":"none",background:T.PILL_WARN_SOFT}},
@@ -4360,24 +4364,6 @@ export default function App(){
           ):null
         )
       ):null,
-      // ── HR Policy promo card — same visual language as the greeting box ──
-      h("div",{onClick:function(){setShowPolicyHub(true);},style:{background:"#3B1F63",borderRadius:18,padding:"16px 18px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:T.SHADOW_LG,cursor:"pointer"}},
-        h("div",{style:{position:"absolute",right:-26,top:-26,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}),
-        h("div",{style:{position:"absolute",right:36,bottom:-36,width:70,height:70,borderRadius:"50%",background:"rgba(255,255,255,.045)"}}),
-        h("div",{style:{display:"flex",alignItems:"center",gap:12}},
-          h("div",{style:{width:42,height:42,borderRadius:12,background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-            ic("contract_edit","#fff",22)
-          ),
-          h("div",{style:{flex:1}},
-            h("div",{style:{fontSize:14,fontWeight:700,color:"#fff",letterSpacing:-.2}},"HR Policies"),
-            h("div",{style:{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2,lineHeight:1.4}},
-              isPaid?(Object.keys(policies||{}).length>0?"Want to update your company policies?":"Want to create your company's HR policies?"):"Create professional policy documents - Business plan"
-            )
-          ),
-          h("div",{style:{width:28,height:28,borderRadius:"50%",background:"rgba(255,255,255,.14)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(isPaid?"chevron_right":"lock","#fff",isPaid?16:14))
-        ),
-        Object.keys(policies||{}).length>0?h("div",{style:{marginTop:10,fontSize:10,color:"rgba(255,255,255,.6)",position:"relative"}},Object.keys(policies).length+" of "+Object.keys(POLICY_DEFS).length+" policies created"):null
-      ),
       card(h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:9}},
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Statutory Summary"),
@@ -5188,9 +5174,6 @@ null
         )
       ),
       attView==="report"?renderAttendanceReport():attView==="holidays"?renderHolidayCalendar():h("div",null,
-        h("div",{style:{display:"flex",justifyContent:"flex-end",alignItems:"center",marginBottom:6}},
-          h("div",{style:{fontSize:12,color:GRY,fontWeight:600}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short",year:"numeric"}))
-        ),
         h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
           chipSelect(attY,function(v){var y=Number(v);setAttY(y);if(y===curY&&attM>curM)setAttM(curM);},pastYears().reverse(),{question:"Choose the year",btnLabel:"Okay",triggerStyle:{width:"auto",flex:"0 0 auto"},wrapStyle:{marginBottom:0}}),
           h("div",{style:{display:"flex",gap:5,flex:1,overflowX:"auto"}},
