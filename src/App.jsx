@@ -1998,51 +1998,60 @@ function navBtn2(id,label,ico,tab,setTab,setSelE,setEditE,setSheetE,setOffE,setE
 function card(children,mb){return h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:16,marginBottom:mb===undefined?12:mb,boxShadow:T.SHADOW}},children);}
 function lbl(t){return h("div",{style:{fontSize:11,color:GRY,marginBottom:4,fontWeight:600,letterSpacing:.4}},t);}
 function row(l,v,vc){return h("div",{key:l,style:{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},l),h("span",{style:{fontSize:12,fontWeight:600,color:vc||NVY}},v));}
-// Compact variant of chipSelect for narrow/inline contexts (month/year pickers etc.) —
-// single-line, horizontally scrollable instead of wrapping, so it fits in a tight flex slot.
-function chipSelectScroll(value,onChange,opts,style){
-  return h("div",{style:Object.assign({display:"flex",gap:5,overflowX:"auto",WebkitOverflowScrolling:"touch",scrollbarWidth:"none"},style||{})},
-    opts.map(function(o){
-      var ov=o&&o.v!==undefined?o.v:o,ol=o&&o.l!==undefined?o.l:o;
-      var on=String(value)===String(ov);
-      return h("button",{key:String(ov),type:"button",onClick:function(){onChange(ov);},
-        style:{flexShrink:0,background:on?ACCENT:SFT,border:"1.5px solid "+(on?ACCENT:BDR),borderRadius:18,
-          padding:"7px 12px",fontSize:12,fontWeight:600,color:on?ACCENT_FG:NVY,cursor:"pointer",whiteSpace:"nowrap"}},ol);
-    })
-  );
-}
 // Sentinel marking "Other was tapped but nothing typed yet" — lets the custom text box
 // appear immediately on tap, without needing a separate piece of state per field.
 var CHIP_CUSTOM_SENTINEL="\u0000CUSTOM\u0000";
-// A tappable chip/pill row replacing a native <select>. If opts2.allowCustom is true, an
-// "Other" chip appears at the end; tapping it reveals a text box so the person can type
-// a value that isn't in the preset list (the typed value becomes the actual stored value).
-function chipSelect(value,onChange,opts,opts2){
-  opts2=opts2||{};
+// The real popup component: a field-style trigger button that, when tapped, opens a
+// bottom-sheet listing every option (icon-free rows, checkmark on the selected one) —
+// same overlay/sheet pattern already used elsewhere in this app (dim backdrop, rounded
+// top corners, slides up from the bottom), just colored with our own accent, not borrowed.
+function ChipSelect(props){
+  var value=props.value,onChange=props.onChange,opts=props.opts,opts2=props.opts2||{};
   var allowCustom=!!opts2.allowCustom;
+  var sOpen=useState(false),open=sOpen[0],setOpen=sOpen[1];
   var rawVals=opts.map(function(o){return o&&typeof o==="object"&&o.v!==undefined?o.v:o;});
   var isCustom=allowCustom&&(value===CHIP_CUSTOM_SENTINEL||(!!value&&rawVals.indexOf(value)===-1));
-  return h("div",{style:{marginBottom:10}},
-    h("div",{style:{display:"flex",flexWrap:"wrap",gap:7,marginBottom:isCustom?8:0}},
-      opts.map(function(o){
-        var ov=o&&typeof o==="object"&&o.v!==undefined?o.v:o;
-        var ol=o&&typeof o==="object"&&o.l!==undefined?o.l:o;
-        var on=value===ov;
-        return h("button",{key:String(ov),type:"button",onClick:function(){onChange(ov);},
-          style:{background:on?ACCENT:SFT,border:"1.5px solid "+(on?ACCENT:BDR),borderRadius:18,
-            padding:"7px 13px",fontSize:12,fontWeight:600,color:on?ACCENT_FG:NVY,cursor:"pointer"}},ol);
-      }),
-      allowCustom?h("button",{type:"button",onClick:function(){onChange(isCustom?(value===CHIP_CUSTOM_SENTINEL?"":value):CHIP_CUSTOM_SENTINEL);},
-        style:{background:isCustom?ACCENT:SFT,border:"1.5px solid "+(isCustom?ACCENT:BDR),borderRadius:18,
-          padding:"7px 13px",fontSize:12,fontWeight:600,color:isCustom?ACCENT_FG:NVY,cursor:"pointer"}},"Other"):null
+  var idx=rawVals.indexOf(value);
+  var selectedLabel=isCustom?(value===CHIP_CUSTOM_SENTINEL?"":value):(idx===-1?"":(function(){var o=opts[idx];return o&&typeof o==="object"&&o.l!==undefined?o.l:o;})());
+  return h("div",{style:Object.assign({marginBottom:10},props.wrapStyle||{})},
+    h("button",{type:"button",onClick:function(){setOpen(true);},
+      style:Object.assign({width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,
+        background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 13px",fontSize:13,
+        color:selectedLabel?NVY:GRY,cursor:"pointer",fontFamily:"inherit",textAlign:"left",boxSizing:"border-box"},props.triggerStyle||{})},
+      h("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},selectedLabel||opts2.placeholder||"Select..."),
+      ic("expand_more",GRY,16)
     ),
     isCustom?h("input",{type:"text",value:value===CHIP_CUSTOM_SENTINEL?"":value,
       onChange:function(e){onChange(e.target.value===""?CHIP_CUSTOM_SENTINEL:e.target.value);},
       placeholder:opts2.customPlaceholder||"Type your own...",autoFocus:true,
-      style:{width:"100%",background:CARD,border:"1.5px solid "+ACCENT,borderRadius:8,padding:"9px 10px",
-        fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}):null
+      style:{width:"100%",background:CARD,border:"1.5px solid "+ACCENT,borderRadius:8,padding:"9px 10px",marginTop:8,
+        fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}):null,
+    open?h("div",{onClick:function(){setOpen(false);},style:{position:"fixed",inset:0,background:"rgba(0,0,0,.55)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"}},
+      h("div",{onClick:function(e){e.stopPropagation();},style:{background:CARD,borderRadius:"18px 18px 0 0",width:"100%",maxWidth:430,maxHeight:"70vh",overflowY:"auto",paddingBottom:10,boxShadow:"0 -8px 30px rgba(0,0,0,.3)"}},
+        h("div",{style:{width:36,height:4,borderRadius:4,background:BDR,margin:"10px auto 6px"}}),
+        opts.map(function(o){
+          var ov=o&&typeof o==="object"&&o.v!==undefined?o.v:o;
+          var ol=o&&typeof o==="object"&&o.l!==undefined?o.l:o;
+          var on=value===ov;
+          return h("div",{key:String(ov),onClick:function(){onChange(ov);setOpen(false);},
+            style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 18px",cursor:"pointer",background:on?ACCENT_SOFT:"transparent"}},
+            h("span",{style:{fontSize:14,color:on?ACCENT:NVY,fontWeight:on?700:500}},ol),
+            on?ic("check",ACCENT,17):null
+          );
+        }),
+        allowCustom?h("div",{onClick:function(){onChange(isCustom?(value===CHIP_CUSTOM_SENTINEL?"":value):CHIP_CUSTOM_SENTINEL);setOpen(false);},
+          style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"13px 18px",cursor:"pointer",borderTop:"1px solid "+BDR,background:isCustom?ACCENT_SOFT:"transparent"}},
+          h("span",{style:{fontSize:14,color:isCustom?ACCENT:NVY,fontWeight:isCustom?700:500}},"Other (type your own)"),
+          isCustom?ic("check",ACCENT,17):null
+        ):null
+      )
+    ):null
   );
 }
+// Thin wrapper so every existing call site (chipSelect(value,onChange,opts,opts2)) keeps working unchanged.
+function chipSelect(value,onChange,opts,opts2){return h(ChipSelect,{value:value,onChange:onChange,opts:opts,opts2:opts2});}
+// chipSelectScroll's narrow inline use-case now just becomes the same popup with a slimmer trigger.
+function chipSelectScroll(value,onChange,opts,style){return h(ChipSelect,{value:value,onChange:onChange,opts:opts,opts2:{},triggerStyle:style});}
 function dlBtn(label,onClick){return h("button",{onClick:onClick,style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,width:"100%",background:NVY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:10}},ic(ICONS.dl,CARD,16),label);}
 function dlPair(label,onPDF,onCSV,mb){
   return h("div",{style:{marginBottom:mb===undefined?10:mb}},
