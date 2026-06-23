@@ -2528,6 +2528,7 @@ export default function App(){
   var sPolicyInfoOpen=st(null),policyInfoOpen=sPolicyInfoOpen[0],setPolicyInfoOpen=sPolicyInfoOpen[1]; // which policy's "Learn more" is expanded in the list
   var sPayFilt=st("all"),payFilt=sPayFilt[0],setPayFilt=sPayFilt[1];
   var sPayDept=st(""),payDept=sPayDept[0],setPayDept=sPayDept[1];
+  var sTdsInfoOpen=st(null),tdsInfoOpen=sTdsInfoOpen[0],setTdsInfoOpen=sTdsInfoOpen[1]; // which employee's TDS calculation breakdown is expanded
   var sSHIFTS=st(function(){return lsGet("hr_shifts",{});}),shifts=sSHIFTS[0],setShifts=sSHIFTS[1];
   var sShiftTab=st("list"),shiftTab=sShiftTab[0],setShiftTab=sShiftTab[1];
   var sShiftOpen=st(false),shiftOpen=sShiftOpen[0],setShiftOpen=sShiftOpen[1];
@@ -3400,12 +3401,13 @@ export default function App(){
     // since the payment itself isn't recurring). Reimbursement claims are excluded — they're an
     // expense repayment, not salary income, so they're not taxable.
     var taxableExtra=bonusTotal+otTotal;
+    var incrTds=0,baseTds=d.tds;
     if(!notActive&&eEff.tds!==false&&taxableExtra>0){
       var baseAnnual=d.gr*12;
-      var incrTds=Math.round(calcTaxAnnual(baseAnnual+taxableExtra,eEff.taxRegime)-calcTaxAnnual(baseAnnual,eEff.taxRegime));
+      incrTds=Math.round(calcTaxAnnual(baseAnnual+taxableExtra,eEff.taxRegime)-calcTaxAnnual(baseAnnual,eEff.taxRegime));
       if(incrTds>0){
         d=Object.assign({},d,{tds:d.tds+incrTds,net:Math.max(0,d.net-incrTds)});
-      }
+      } else incrTds=0;
     }
     var extraPay=bonusTotal+claimTotal+otTotal;
     var attDed=d.ad+d.hd+d.ud;
@@ -3414,7 +3416,45 @@ export default function App(){
     var netFinal=Math.max(0,d.net+extraPay-loanDed); // the ONE true take-home figure — use this everywhere "net pay" is shown
     return {emp:emp,eEff:eEff,ma:ma,inc:inc,wD:wD,shiftAllow:shiftAllow,pr:pr,d:d,isActive:!notActive,
       bonusTotal:bonusTotal,claimTotal:claimTotal,otTotal:otTotal,loanDed:loanDed,extraPay:extraPay,
-      attDed:attDed,statDed:statDed,totalDed:totalDed,netFinal:netFinal};
+      attDed:attDed,statDed:statDed,totalDed:totalDed,netFinal:netFinal,incrTds:incrTds,baseTds:baseTds};
+  }
+  // Renders the "how was this TDS worked out" breakdown — tap the TDS line, this shows the
+  // actual annual estimate, regime, slab tax, rebate and cess that produced the monthly figure,
+  // plus the bonus/OT incremental tax for that month if any. Shared by every screen that shows TDS.
+  function tdsCalcRows(mp){
+    var regime=mp.eEff.taxRegime==="old"?"old":"new";
+    var annualGross=mp.d.gr*12;
+    var stdDed=regime==="old"?50000:75000;
+    var taxableIncome=Math.max(0,annualGross-stdDed);
+    var annualTaxBase=calcTaxAnnual(annualGross,regime);
+    var rows=[
+      ["Tax Regime",regime==="old"?"Old Regime":"New Regime (Default)"],
+      ["Annualised Gross Salary",fmt(annualGross)],
+      ["Standard Deduction",fmt(stdDed)],
+      ["Net Taxable Income",fmt(taxableIncome)],
+      ["Annual Tax (incl. 4% cess)",fmt(Math.round(annualTaxBase))],
+      ["Monthly TDS (Base Salary)",fmt(mp.baseTds)]
+    ];
+    if(mp.incrTds>0){
+      rows.push(["Bonus + Overtime This Month",fmt(mp.bonusTotal+mp.otTotal)]);
+      rows.push(["Additional Tax on Bonus/OT",fmt(mp.incrTds)]);
+    }
+    rows.push(["Total TDS This Month",fmt(mp.d.tds)]);
+    return rows;
+  }
+  function renderTdsBreakdown(mp){
+    var rows=tdsCalcRows(mp);
+    return h("div",{style:{background:"rgba(0,0,0,.03)",borderRadius:9,padding:"9px 11px",marginTop:4,marginBottom:4,border:"1px solid "+BDR}},
+      h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:6}},"HOW THIS TDS WAS CALCULATED"),
+      rows.map(function(r,i){
+        var isLast=i===rows.length-1;
+        return h("div",{key:r[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderTop:i===0?"none":"1px solid "+BDR+"44"}},
+          h("span",{style:{fontSize:10,color:isLast?NVY:GRY,fontWeight:isLast?700:500}},r[0]),
+          h("span",{style:{fontSize:10,fontWeight:isLast?800:600,color:isLast?RED:NVY}},r[1])
+        );
+      }),
+      mp.eEff.taxRegime==="old"?h("div",{style:{fontSize:9,color:GRY,marginTop:6,lineHeight:1.4}},"Old regime estimate uses the standard deduction and slabs only - it does not account for HRA exemption, 80C or other deductions."):null
+    );
   }
   var darkGrad="linear-gradient(155deg,#0F172A 0%,#1E1B4B 55%,#312E81 100%)";
 
@@ -5681,7 +5721,13 @@ null
                         d2.pfE>0?["PF (Emp 12%)","-"+fmt(d2.pfE),NVY]:null,
                         d2.esiE>0?["ESI (Emp 0.75%)","-"+fmt(d2.esiE),TEL]:null,
                         d2.pt>0?["Prof. Tax","-"+fmt(d2.pt),AMB]:null,
-                        d2.tds>0?["TDS","-"+fmt(d2.tds),RED]:null,
+                      ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},item[0]),h("span",{style:{fontSize:10.5,fontWeight:600,color:item[2]}},item[1]));}),
+                      d2.tds>0?h("div",{onClick:function(){setTdsInfoOpen(tdsInfoOpen===("dept_"+e.id)?null:"dept_"+e.id);},style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderBottom:"1px solid "+BDR+"44",cursor:"pointer"}},
+                        h("span",{style:{fontSize:10.5,color:GRY,display:"flex",alignItems:"center",gap:3}},"TDS",ic(tdsInfoOpen===("dept_"+e.id)?"expand_less":"expand_more",GRY,12)),
+                        h("span",{style:{fontSize:10.5,fontWeight:600,color:RED}},"-"+fmt(d2.tds))
+                      ):null,
+                      d2.tds>0&&tdsInfoOpen===("dept_"+e.id)?renderTdsBreakdown(mp):null,
+                      [
                         d2.hi>0?["Health Ins.","-"+fmt(d2.hi),"#EC4899"]:null,
                         d2.cd>0?["Other","-"+fmt(d2.cd),GRY]:null,
                       ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},item[0]),h("span",{style:{fontSize:10.5,fontWeight:600,color:item[2]}},item[1]));}),
@@ -5813,7 +5859,18 @@ null
                   d.pfE>0?["PF (Emp 12%)","-"+fmt(d.pfE),NVY]:null,
                   d.esiE>0?["ESI (Emp 0.75%)","-"+fmt(d.esiE),TEL]:null,
                   d.pt>0?["Prof. Tax","-"+fmt(d.pt),AMB]:null,
-                  d.tds>0?["TDS","-"+fmt(d.tds),RED]:null,
+                ].filter(Boolean).map(function(item){
+                  return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},
+                    h("span",{style:{fontSize:11,color:GRY}},item[0]),
+                    h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1])
+                  );
+                }),
+                d.tds>0?h("div",{onClick:function(){setTdsInfoOpen(tdsInfoOpen===("emp_"+e.id)?null:"emp_"+e.id);},style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid "+BDR+"44",cursor:"pointer"}},
+                  h("span",{style:{fontSize:11,color:GRY,display:"flex",alignItems:"center",gap:3}},"TDS",ic(tdsInfoOpen===("emp_"+e.id)?"expand_less":"expand_more",GRY,13)),
+                  h("span",{style:{fontSize:11,fontWeight:600,color:RED}},"-"+fmt(d.tds))
+                ):null,
+                d.tds>0&&tdsInfoOpen===("emp_"+e.id)?renderTdsBreakdown(mp):null,
+                [
                   d.hi>0?["Health Ins.","-"+fmt(d.hi),"#EC4899"]:null,
                   d.cd>0?["Other","-"+fmt(d.cd),GRY]:null,
                 ].filter(Boolean).map(function(item){
