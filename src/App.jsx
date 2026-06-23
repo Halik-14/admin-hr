@@ -184,52 +184,72 @@ function ic(name,color,size){
 function greetIconSVG(hr,min){
   var t=hr*60+(min||0);
   var state=t<330?"sleep":t<540?"sunrise":t<1080?"hot":"evening"; // 12-5:30am / 5:30-9am / 9am-6pm / 6pm-12am
-  var SIZE=58; // a touch bigger ("zoom in") than the original 46
+  var SIZE=58;
   if(state==="sunrise"||state==="hot"){
     var sr=state==="sunrise";
-    var c1=sr?"#FDBA74":"#FDE047",c2=sr?"#F97316":"#F59E0B",rOuter=sr?20:21,rRay1=sr?15:16,rRay2=sr?20:21.5,rCore=sr?11:12.5,gid=sr?"sunGradDashA":"sunGradDashB";
+    var stops=sr?["#FFFEF0","#FDE047","#F97316","#EA580C"]:["#FFFEF0","#FDE047","#F59E0B","#EA580C"];
+    var glowC=sr?"#FB923C":"#FDE047",rayC="#F59E0B",gid=sr?"sunGradDashA":"sunGradDashB";
+    var rOuter=sr?21:22,rMid=sr?16.5:18,rInner=sr?13:14.5,rCore=sr?11.5:12.5,rayLen1=sr?15:16.5,rayLen2=sr?20:22,rayW=sr?2.6:3;
     var rays=[0,45,90,135,180,225,270,315].map(function(a){
-      var rad=a*Math.PI/180,x1=24+Math.cos(rad)*rRay1,y1=24+Math.sin(rad)*rRay1,x2=24+Math.cos(rad)*rRay2,y2=24+Math.sin(rad)*rRay2;
-      return h("line",{key:a,x1:x1,y1:y1,x2:x2,y2:y2,stroke:c2,strokeWidth:sr?2.5:3,strokeLinecap:"round"});
+      var rad=a*Math.PI/180,x1=24+Math.cos(rad)*rayLen1,y1=24+Math.sin(rad)*rayLen1,x2=24+Math.cos(rad)*rayLen2,y2=24+Math.sin(rad)*rayLen2;
+      return h("line",{key:a,x1:x1,y1:y1,x2:x2,y2:y2,stroke:rayC,strokeWidth:rayW,strokeLinecap:"round"});
     });
     return h("div",{style:{animation:"iconFloat 4s ease-in-out infinite"}},
       h("svg",{viewBox:"0 0 48 48",width:SIZE,height:SIZE,style:{display:"block"}},
         h("defs",null,h("radialGradient",{id:gid,cx:"50%",cy:"50%",r:"50%"},
-          h("stop",{offset:"0%",stopColor:"#FFFBEB"}),h("stop",{offset:sr?"45%":"40%",stopColor:c1}),h("stop",{offset:"100%",stopColor:c2})
+          h("stop",{offset:"0%",stopColor:stops[0]}),h("stop",{offset:sr?"35%":"30%",stopColor:stops[1]}),h("stop",{offset:sr?"75%":"70%",stopColor:stops[2]}),h("stop",{offset:"100%",stopColor:stops[3]})
         )),
-        h("circle",{cx:24,cy:24,r:rOuter,fill:c1,opacity:sr?.18:.22}),
+        h("circle",{cx:24,cy:24,r:rOuter,fill:glowC,opacity:.10}),
+        h("circle",{cx:24,cy:24,r:rMid,fill:glowC,opacity:.14}),
+        h("circle",{cx:24,cy:24,r:rInner,fill:"#FDBA74",opacity:.18}),
         h("g",{style:{animation:"iconSpin 18s linear infinite",transformOrigin:"24px 24px"}},rays),
-        h("circle",{cx:24,cy:24,r:rCore,fill:"url(#"+gid+")"})
+        h("circle",{cx:24,cy:24,r:rCore,fill:"url(#"+gid+")"}),
+        h("circle",{cx:20,cy:20,r:sr?3:3.2,fill:"#FFFFFF",opacity:sr?.35:.4})
       )
     );
   }
-  // Moon — evening (no zzz) or sleep (with drifting Zzz)
   var isSleep=state==="sleep";
   return h("div",{style:{animation:"iconFloat 4s ease-in-out infinite",position:"relative"}},
     h("svg",{viewBox:"0 0 48 48",width:SIZE,height:SIZE,style:{display:"block"}},
-      h("defs",null,h("linearGradient",{id:"moonGradDash",x1:"0%",y1:"0%",x2:"100%",y2:"100%"},
-        h("stop",{offset:"0%",stopColor:"#E0E7FF"}),h("stop",{offset:"50%",stopColor:"#A78BFA"}),h("stop",{offset:"100%",stopColor:"#6D28D9"})
+      h("defs",null,h("linearGradient",{id:"moonGradDash",x1:"10%",y1:"0%",x2:"90%",y2:"100%"},
+        h("stop",{offset:"0%",stopColor:"#F0EBFF"}),h("stop",{offset:"40%",stopColor:"#C4B5FD"}),h("stop",{offset:"75%",stopColor:"#8B5CF6"}),h("stop",{offset:"100%",stopColor:"#6D28D9"})
       )),
-      h("circle",{cx:20,cy:24,r:18,fill:"#7C3AED",opacity:.15}),
-      h("path",{fill:"url(#moonGradDash)",d:"M24 6a12 12 0 0 0 18 18 18 18 0 1 1-18-18Z"}),
-      !isSleep?h("g",{fill:"#FDE68A"},h("circle",{cx:38,cy:12,r:1.6}),h("circle",{cx:34,cy:22,r:1.1}),h("circle",{cx:41,cy:24,r:1.3})):null,
-      !isSleep?h("g",{stroke:"#FDE68A",strokeWidth:1,strokeLinecap:"round"},h("line",{x1:38,y1:9.5,x2:38,y2:14.5}),h("line",{x1:35.5,y1:12,x2:40.5,y2:12})):null,
+      h("circle",{cx:18,cy:isSleep?26:24,r:21,fill:"#8B5CF6",opacity:.09}),
+      h("circle",{cx:18,cy:isSleep?26:24,r:17,fill:"#8B5CF6",opacity:.13}),
+      h("path",{fill:"url(#moonGradDash)",d:"M24 6a12 12 0 0 0 18 18 18 18 0 1 1-18-18Z",transform:isSleep?"translate(-4,2)":undefined}),
+      h("circle",{cx:isSleep?10:14,cy:isSleep?19:17,r:2.4,fill:"#FFFFFF",opacity:.3}),
+      !isSleep?h("g",{fill:"#FDE68A"},h("circle",{cx:38,cy:12,r:1.7}),h("circle",{cx:34,cy:22,r:1.1}),h("circle",{cx:41,cy:25,r:1.3})):null,
+      !isSleep?h("g",{stroke:"#FDE68A",strokeWidth:1.1,strokeLinecap:"round"},h("line",{x1:38,y1:9,x2:38,y2:15}),h("line",{x1:35,y1:12,x2:41,y2:12})):null,
       isSleep?h("g",{fontFamily:"sans-serif",fontWeight:700,fill:"#FDE68A"},
-        h("text",{x:30,y:14,fontSize:7,style:{animation:"zzzFloat 2.6s ease-in-out infinite"}},"z"),
-        h("text",{x:35,y:9,fontSize:5.5,opacity:.75,style:{animation:"zzzFloat 2.6s ease-in-out infinite .4s"}},"z"),
-        h("text",{x:38.5,y:6,fontSize:4,opacity:.55,style:{animation:"zzzFloat 2.6s ease-in-out infinite .8s"}},"z")
+        h("text",{x:29,y:15,fontSize:8,style:{animation:"zzzFloat 2.6s ease-in-out infinite"}},"z"),
+        h("text",{x:35,y:9.5,fontSize:6,opacity:.75,style:{animation:"zzzFloat 2.6s ease-in-out infinite .4s"}},"z"),
+        h("text",{x:39,y:6,fontSize:4.3,opacity:.55,style:{animation:"zzzFloat 2.6s ease-in-out infinite .8s"}},"z")
       ):null
     )
   );
 }
 
 
-function calcTax(annual){
-  var sl=[{a:0,b:400000,r:0},{a:400000,b:800000,r:.05},{a:800000,b:1200000,r:.10},{a:1200000,b:1600000,r:.15},{a:1600000,b:2000000,r:.20},{a:2000000,b:2400000,r:.25},{a:2400000,b:Infinity,r:.30}];
-  var t=Math.max(0,annual-75000),x=0;
+// Returns the RAW ANNUAL tax (with 4% cess applied, before dividing into months) for a given
+// annual taxable salary and regime. This is the figure both the monthly TDS estimate and the
+// one-time bonus/OT incremental-tax calculation are built from — keeping one source of truth
+// instead of two slightly different copies of the slab logic.
+function calcTaxAnnual(annual,regime){
+  var isOld=regime==="old";
+  var stdDed=isOld?50000:75000;
+  var sl=isOld?
+    [{a:0,b:250000,r:0},{a:250000,b:500000,r:.05},{a:500000,b:1000000,r:.20},{a:1000000,b:Infinity,r:.30}]:
+    [{a:0,b:400000,r:0},{a:400000,b:800000,r:.05},{a:800000,b:1200000,r:.10},{a:1200000,b:1600000,r:.15},{a:1600000,b:2000000,r:.20},{a:2000000,b:2400000,r:.25},{a:2400000,b:Infinity,r:.30}];
+  var t=Math.max(0,annual-stdDed),x=0;
   for(var i=0;i<sl.length;i++){var s=sl[i];if(t>s.a)x+=(Math.min(t,s.b)-s.a)*s.r;}
-  if(t<=1200000)x=Math.max(0,x-Math.min(x,60000));
-  return Math.round((x>0?x*1.04:0)/12);
+  // Rebate u/s 87A: Old regime - full rebate (up to Rs.12,500) if taxable income <= Rs.5L.
+  // New regime - full rebate (up to Rs.60,000) if taxable income <= Rs.12L (current slab structure).
+  if(isOld){if(t<=500000)x=Math.max(0,x-Math.min(x,12500));}
+  else{if(t<=1200000)x=Math.max(0,x-Math.min(x,60000));}
+  return x>0?x*1.04:0; // 4% Health & Education cess
+}
+function calcTax(annual,regime){
+  return Math.round(calcTaxAnnual(annual,regime)/12);
 }
 function brkSal(ctc){var basic=Math.round(ctc*.5),hra=Math.round(ctc*.2);return{basic:basic,hra:hra,allow:ctc-basic-hra};}
 function calcEMI(principal,annualRate,tenureMonths){
@@ -284,7 +304,7 @@ function calcPay(e,absent,half,unpaid,inc,shiftAllow,workingDays,prorataActive,p
   var pfE=Math.round(pfB*.12),pfR=Math.round(pfB*.12);
   // ESI: on gross if <=21000
   var esiE=(e.esi&&gr<=21000)?Math.round(gr*.0075):0,esiR=(e.esi&&gr<=21000)?Math.round(gr*.0325):0;
-  var pt2=e.pt?(gr>=15000?200:0):0,tds=e.tds!==false?calcTax(gr*12):0,hi=e.hi||0;
+  var pt2=e.pt?(gr>=15000?200:0):0,tds=e.tds!==false?calcTax(gr*12,e.taxRegime):0,hi=e.hi||0;
   var cd=(e.customs||[]).reduce(function(a,c){return a+(Number(c.amt)||0);},0);
   return{gr:Math.round(gr),eb:Math.round(eb),ad:Math.round(ad),hd:Math.round(hd),ud:Math.round(ud),pfE:pfE,pfR:pfR,esiE:esiE,esiR:esiR,pt:pt2,tds:tds,hi:hi,cd:cd,net:Math.round(gr-pfE-esiE-pt2-tds-hi-cd),loanDed:0,pfMode:e.pfMode||"capped",inc:inc,shiftAllow:shiftAllow,wDays:wDays,isFixed:isFixed,basicBase:Math.round(basicBase),basic:Math.round(basicBase),hra:Math.round(hraVal),allow:Math.round(allowVal),pd:Math.round(pd),prorate:prorate};
 }
@@ -2460,6 +2480,7 @@ export default function App(){
   var sESI=st(false),esi=sESI[0],setEsi=sESI[1];
   var sPT=st(true),pt=sPT[0],setPt=sPT[1];
   var sTDS=st(true),tds=sTDS[0],setTds=sTDS[1];
+  var sTaxRegime=st("new"),taxRegime=sTaxRegime[0],setTaxRegime=sTaxRegime[1];
   var sCU=st([]),customs=sCU[0],setCustoms=sCU[1];
   var sED=st(""),eDept=sED[0],setEDept=sED[1];
   var sEPF=st(true),ePf=sEPF[0],setEPf=sEPF[1];
@@ -2467,6 +2488,7 @@ export default function App(){
   var sEES=st(false),eEsi=sEES[0],setEEsi=sEES[1];
   var sEPT=st(true),ePt=sEPT[0],setEPt=sEPT[1];
   var sETD=st(true),eTds=sETD[0],setETds=sETD[1];
+  var sETaxRegime=st("new"),eTaxRegime=sETaxRegime[0],setETaxRegime=sETaxRegime[1];
   var sGU=st(function(){return lsGet("hr_guser",null);}),gUser=sGU[0],setGUser=sGU[1];
   var sAEM=st(lsGet("hr_last_email","")),authEmail=sAEM[0],setAuthEmail=sAEM[1];
   var sAPW=st(""),authPwd=sAPW[0],setAuthPwd=sAPW[1];
@@ -2965,7 +2987,7 @@ export default function App(){
       hra:isFixed?0:bd.hra,
       allow:isFixed?0:bd.allow,
       joined:fJoin||todayStr,pan:fPan,uan:fUan,aadhar:fAadhar,leaveEntitlement:Number(fLeave)||12,
-      pf:pf,pfMode:pfMode,esi:esi,pt:pt,tds:tds,hi:Number(fHi)||0,customs:customs,
+      pf:pf,pfMode:pfMode,esi:esi,pt:pt,tds:tds,taxRegime:taxRegime,hi:Number(fHi)||0,customs:customs,
       av:name.split(" ").map(function(w){return w[0];}).join("").slice(0,2).toUpperCase(),
       col:COLS[emps.length%COLS.length],status:"active"};
     setEmps(function(p){return p.concat([emp]);});
@@ -2982,6 +3004,7 @@ export default function App(){
     setEEsi(emp.esi);
     setEPt(emp.pt);
     setETds(emp.tds!==false);
+    setETaxRegime(emp.taxRegime||"new");
   }
   function saveEdit(){
     var ctc=Number(editE.monthlyCTC)||0;if(!ctc)return showT("CTC required","err");
@@ -2990,7 +3013,7 @@ export default function App(){
     var deptClean=(eDept===CHIP_CUSTOM_SENTINEL?"":eDept)||(editE.dept===CHIP_CUSTOM_SENTINEL?"":editE.dept)||"";
     var updated=Object.assign({},editE,{leaveEntitlement:Number(editE.leaveEntitlement)||0,
       monthlyCTC:ctc,basic:bd.basic,hra:bd.hra,allow:bd.allow,
-      hi:Number(editE.hi)||0,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds,
+      hi:Number(editE.hi)||0,pf:ePf,pfMode:ePfM,esi:eEsi,pt:ePt,tds:eTds,taxRegime:eTaxRegime,
       role:roleClean,dept:deptClean
     });
     var newEmps=emps.map(function(e){return e.id===editE.id?updated:e;});
@@ -3371,6 +3394,19 @@ export default function App(){
     var claimTotal=(claims||[]).filter(function(c){return c.employeeId===String(emp.id)&&c.status==="approved"&&c.month===m&&c.year===y;}).reduce(function(s,c){return s+(c.amount||0);},0);
     var otTotal=getOTAmount(emp.id,m,y);
     var loanDed=(loans||[]).filter(function(l){return (l.employeeId===String(emp.id)||l.employee_id===String(emp.id))&&l.status==="active";}).reduce(function(s,l){return s+(l.emi||l.monthlyDeduction||0);},0);
+    // Bonus and Overtime ARE taxable salary income under Sec.17(1) of the Income Tax Act, even
+    // though they're correctly excluded from PF/ESI wages. Tax them at the employee's marginal
+    // slab rate, withheld entirely in the month they're actually paid (not spread over the year,
+    // since the payment itself isn't recurring). Reimbursement claims are excluded — they're an
+    // expense repayment, not salary income, so they're not taxable.
+    var taxableExtra=bonusTotal+otTotal;
+    if(!notActive&&eEff.tds!==false&&taxableExtra>0){
+      var baseAnnual=d.gr*12;
+      var incrTds=Math.round(calcTaxAnnual(baseAnnual+taxableExtra,eEff.taxRegime)-calcTaxAnnual(baseAnnual,eEff.taxRegime));
+      if(incrTds>0){
+        d=Object.assign({},d,{tds:d.tds+incrTds,net:Math.max(0,d.net-incrTds)});
+      }
+    }
     var extraPay=bonusTotal+claimTotal+otTotal;
     var attDed=d.ad+d.hd+d.ud;
     var statDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd;
@@ -5150,7 +5186,12 @@ null
         ):null,
         togEl("ESI","0.75% if gross up to Rs.21K",eEsi,setEEsi),
         togEl("Professional Tax","Rs.200/mo if above Rs.15K",ePt,setEPt),
-        togEl("TDS","FY 2025-26 new regime",eTds,setETds)
+        togEl("TDS","FY 2025-26 new regime",eTds,setETds),
+        eTds?h("div",{style:{padding:"8px 0 0"}},
+          lbl("TAX REGIME"),
+          chipSelect(eTaxRegime,function(v){setETaxRegime(v);},[{v:"new",l:"New (Default)"},{v:"old",l:"Old Regime"}],{question:"Choose the tax regime"}),
+          h("div",{style:{fontSize:9.5,color:GRY,lineHeight:1.4,marginTop:-2}},"Old regime here applies the standard Rs.50,000 deduction and slab rates only - it does not model HRA exemption, 80C or other deductions. For an employee with significant old-regime deductions, treat this as an estimate and verify with a tax professional.")
+        ):null
       ),0),
       h("div",{style:{height:10}}),
       h("button",{onClick:saveEdit,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:7,background:GRN,border:"none",borderRadius:12,padding:"13px",color:CARD,fontSize:14,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,CARD,18),"Save Changes")
@@ -7717,6 +7758,11 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           togEl("ESI","0.75% emp if gross up to Rs.21K",esi,setEsi),
           togEl("Professional Tax","Rs.200/mo if above Rs.15K",pt,setPt),
           togEl("TDS","FY 2025-26 new regime",tds,setTds),
+          tds?h("div",{style:{padding:"8px 0 0"}},
+            lbl("TAX REGIME"),
+            chipSelect(taxRegime,function(v){setTaxRegime(v);},[{v:"new",l:"New (Default)"},{v:"old",l:"Old Regime"}],{question:"Choose the tax regime"}),
+            h("div",{style:{fontSize:9.5,color:GRY,lineHeight:1.4,marginTop:-2}},"Old regime here applies the standard Rs.50,000 deduction and slab rates only - it does not model HRA exemption, 80C or other deductions. For an employee with significant old-regime deductions, treat this as an estimate and verify with a tax professional.")
+          ):null,
           h("div",{style:{marginTop:11}},lbl("ANNUAL PAID LEAVE ENTITLEMENT (days)"),h("input",{type:"number",value:fLeave||"",onChange:function(e){setFLeave(e.target.value);},placeholder:"Default: 12 days",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
           lbl("HEALTH INSURANCE (Rs./mo)"),h("input",{type:"number",value:fHi,onChange:function(e){setFHi(e.target.value);},placeholder:"e.g. 500",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}})),
           h("div",null,
