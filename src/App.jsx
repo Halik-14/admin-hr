@@ -3423,37 +3423,68 @@ export default function App(){
   // plus the bonus/OT incremental tax for that month if any. Shared by every screen that shows TDS.
   function tdsCalcRows(mp){
     var regime=mp.eEff.taxRegime==="old"?"old":"new";
-    var annualGross=mp.d.gr*12;
+    var grossThisMonth=mp.d.gr+mp.bonusTotal+mp.otTotal; // what the employee actually earns this month, including variable pay
+    var annualBaseSalary=mp.d.gr*12; // recurring salary only — the figure the annual tax estimate is built on
     var stdDed=regime==="old"?50000:75000;
-    var taxableIncome=Math.max(0,annualGross-stdDed);
-    var annualTaxBase=calcTaxAnnual(annualGross,regime);
+    var taxableIncome=Math.max(0,annualBaseSalary-stdDed);
+    var annualTaxBase=calcTaxAnnual(annualBaseSalary,regime);
     var rows=[
-      ["Tax Regime",regime==="old"?"Old Regime":"New Regime (Default)"],
-      ["Annualised Gross Salary",fmt(annualGross)],
-      ["Standard Deduction",fmt(stdDed)],
-      ["Net Taxable Income",fmt(taxableIncome)],
-      ["Annual Tax (incl. 4% cess)",fmt(Math.round(annualTaxBase))],
-      ["Monthly TDS (Base Salary)",fmt(mp.baseTds)]
+      ["Gross Earnings This Month","income",fmt(grossThisMonth)],
+      ["Tax Regime","info",regime==="old"?"Old Regime":"New Regime (Default)"],
+      ["Taxable Salary (Annualised Base)","tax",fmt(annualBaseSalary)],
+      ["Standard Deduction","tax",fmt(stdDed)],
+      ["Net Taxable Income","tax",fmt(taxableIncome)],
+      ["Annual Tax (incl. 4% cess)","tax",fmt(Math.round(annualTaxBase))],
+      ["Monthly TDS (Base Salary)","tax",fmt(mp.baseTds)]
     ];
     if(mp.incrTds>0){
-      rows.push(["Bonus + Overtime This Month",fmt(mp.bonusTotal+mp.otTotal)]);
-      rows.push(["Additional Tax on Bonus/OT",fmt(mp.incrTds)]);
+      rows.push(["Bonus + Overtime Paid This Month","extra",fmt(mp.bonusTotal+mp.otTotal)]);
+      rows.push(["Additional Tax on That Amount","extra",fmt(mp.incrTds)]);
     }
-    rows.push(["Total TDS This Month",fmt(mp.d.tds)]);
+    rows.push(["Total TDS This Month","total",fmt(mp.d.tds)]);
     return rows;
   }
   function renderTdsBreakdown(mp){
     var rows=tdsCalcRows(mp);
     return h("div",{style:{background:"rgba(0,0,0,.03)",borderRadius:9,padding:"9px 11px",marginTop:4,marginBottom:4,border:"1px solid "+BDR}},
-      h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:6}},"HOW THIS TDS WAS CALCULATED"),
+      h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:5}},"HOW THIS TDS WAS CALCULATED"),
+      h("div",{style:{fontSize:9.5,color:GRY,lineHeight:1.4,marginBottom:7,fontStyle:"italic"}},
+        "Rule: TDS is estimated on this employee's annualised recurring salary. Any bonus or overtime paid this month is taxed separately, at the same marginal rate, and withheld in full in this month only - it is not added into the annualised salary above."
+      ),
       rows.map(function(r,i){
-        var isLast=i===rows.length-1;
+        var isTotal=r[1]==="total",isExtra=r[1]==="extra";
         return h("div",{key:r[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderTop:i===0?"none":"1px solid "+BDR+"44"}},
-          h("span",{style:{fontSize:10,color:isLast?NVY:GRY,fontWeight:isLast?700:500}},r[0]),
-          h("span",{style:{fontSize:10,fontWeight:isLast?800:600,color:isLast?RED:NVY}},r[1])
+          h("span",{style:{fontSize:10,color:isTotal?NVY:isExtra?AMB:GRY,fontWeight:isTotal?700:isExtra?600:500}},r[0]),
+          h("span",{style:{fontSize:10,fontWeight:isTotal?800:600,color:isTotal?RED:isExtra?AMB:NVY}},r[2])
         );
       }),
-      mp.eEff.taxRegime==="old"?h("div",{style:{fontSize:9,color:GRY,marginTop:6,lineHeight:1.4}},"Old regime estimate uses the standard deduction and slabs only - it does not account for HRA exemption, 80C or other deductions."):null
+      h("div",{style:{fontSize:9,color:GRY,marginTop:7,lineHeight:1.4,borderTop:"1px dashed "+BDR,paddingTop:6}},
+        "PF and ESI are calculated separately and shown above in this same Deductions section - they are not part of this TDS estimate."
+      ),
+      mp.eEff.taxRegime==="old"?h("div",{style:{fontSize:9,color:GRY,marginTop:5,lineHeight:1.4}},"Old regime estimate uses the standard deduction and slabs only - it does not account for HRA exemption, 80C or other deductions."):null
+    );
+  }
+  function renderAttDedBreakdown(mp){
+    var ma=mp.ma,d=mp.d;
+    var rows=[];
+    if(ma.absent>0)rows.push(["Absent days",ma.absent+" day"+(ma.absent>1?"s":"")+" \u00d7 "+fmt(d.pd)+"/day",fmt(d.ad)]);
+    if(ma.half>0)rows.push(["Half days",ma.half+" day"+(ma.half>1?"s":"")+" \u00d7 "+fmt(Math.round(d.pd/2))+"/day",fmt(d.hd)]);
+    if(ma.unpaid>0)rows.push(["Unpaid leave",ma.unpaid+" day"+(ma.unpaid>1?"s":"")+" \u00d7 "+fmt(d.pd)+"/day",fmt(d.ud)]);
+    return h("div",{style:{background:"rgba(0,0,0,.03)",borderRadius:9,padding:"9px 11px",marginTop:4,marginBottom:4,border:"1px solid "+BDR}},
+      h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:5}},"HOW THIS DEDUCTION WAS CALCULATED"),
+      h("div",{style:{fontSize:9.5,color:GRY,lineHeight:1.4,marginBottom:7,fontStyle:"italic"}},
+        "Per-day rate = Basic (and HRA/Allowance for split salary) \u00f7 "+(d.wDays||26)+" working days this month."
+      ),
+      rows.map(function(r,i){
+        return h("div",{key:r[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderTop:i===0?"none":"1px solid "+BDR+"44"}},
+          h("span",{style:{fontSize:10,color:GRY}},r[0]+" - "+r[1]),
+          h("span",{style:{fontSize:10,fontWeight:700,color:AMB}},"-"+r[2])
+        );
+      }),
+      h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderTop:"1px solid "+BDR}},
+        h("span",{style:{fontSize:10,fontWeight:700,color:NVY}},"Total Attendance Deduction"),
+        h("span",{style:{fontSize:10,fontWeight:800,color:AMB}},"-"+fmt(mp.attDed))
+      )
     );
   }
   var darkGrad="linear-gradient(155deg,#0F172A 0%,#1E1B4B 55%,#312E81 100%)";
@@ -5712,8 +5743,9 @@ null
                       d2.isFixed?null:["Allowances",fmt(d2.allow),NVY],
                       d2.inc>0?["Incentive",fmt(d2.inc),"#059669"]:null,
                       d2.shiftAllow>0?["Shift Allow.",fmt(d2.shiftAllow),TEL]:null,
-                      mp.attDed>0?["Absent/Half","-"+fmt(mp.attDed),AMB]:null,
                     ].filter(Boolean).map(function(item){return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"3px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:10.5,color:GRY}},item[0]),h("span",{style:{fontSize:10.5,fontWeight:600,color:item[2]}},item[1]));}),
+                    mp.attDed>0?h("div",{onClick:function(){setTdsInfoOpen(tdsInfoOpen===("deptatt_"+e.id)?null:"deptatt_"+e.id);},style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"3px 0",borderBottom:"1px solid "+BDR+"44",cursor:"pointer"}},h("span",{style:{fontSize:10.5,color:GRY,display:"flex",alignItems:"center",gap:3}},"Absent/Half",ic(tdsInfoOpen===("deptatt_"+e.id)?"expand_less":"expand_more",GRY,12)),h("span",{style:{fontSize:10.5,fontWeight:600,color:AMB}},"-"+fmt(mp.attDed))):null,
+                    mp.attDed>0&&tdsInfoOpen===("deptatt_"+e.id)?renderAttDedBreakdown(mp):null,
                     h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",marginBottom:6}},h("span",{style:{fontSize:10.5,fontWeight:600,color:NVY}},"Effective Gross"),h("span",{style:{fontSize:10.5,fontWeight:800,color:NVY}},fmt(d2.gr))),
                     mp.statDed>0?h("div",null,
                       h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4}},"DEDUCTIONS"),
@@ -5841,13 +5873,17 @@ null
                 isFixed?null:["Allowances",fmt(eEff.allow||0),NVY],
                 d.inc>0?["Incentive",fmt(d.inc),"#059669"]:null,
                 d.shiftAllow>0?["Shift Allow.",fmt(d.shiftAllow),TEL]:null,
-                attDed>0?["Absent/Half","-"+fmt(attDed),AMB]:null,
               ].filter(Boolean).map(function(item){
                 return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},
                   h("span",{style:{fontSize:11,color:GRY}},item[0]),
                   h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1])
                 );
               }),
+              attDed>0?h("div",{onClick:function(){setTdsInfoOpen(tdsInfoOpen===("att_"+e.id)?null:"att_"+e.id);},style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid "+BDR+"44",cursor:"pointer"}},
+                h("span",{style:{fontSize:11,color:GRY,display:"flex",alignItems:"center",gap:3}},"Absent/Half",ic(tdsInfoOpen===("att_"+e.id)?"expand_less":"expand_more",GRY,13)),
+                h("span",{style:{fontSize:11,fontWeight:600,color:AMB}},"-"+fmt(attDed))
+              ):null,
+              attDed>0&&tdsInfoOpen===("att_"+e.id)?renderAttDedBreakdown(mp):null,
               h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:8}},
                 h("span",{style:{fontSize:11,fontWeight:600,color:NVY}},"Effective Gross"),
                 h("span",{style:{fontSize:11,fontWeight:800,color:NVY}},fmt(d.gr))
