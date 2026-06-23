@@ -63,7 +63,7 @@ var ATC={present:GRN,absent:RED,half:AMB,paid:PUR,unpaid:IND,holiday:SKY,unmarke
 var ATL={present:"Present",absent:"Absent",half:"Half Day",paid:"Paid Leave",unpaid:"Unpaid Leave",holiday:"Holiday",unmarked:"Not Marked"};
 var ATO=["present","absent","half","paid","unpaid","holiday","unmarked"];
 var HO=["ID Card","Laptop","Access Card","Office Keys","Company Phone","Uniform","Documents","Other"];
-function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}@keyframes hrIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.25)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(255,255,255,.08)}}@keyframes shineSweep{0%{transform:translateX(-120%) skewX(-18deg)}100%{transform:translateX(220%) skewX(-18deg)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
+function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}@keyframes hrIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.25)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(255,255,255,.08)}}@keyframes shineSweep{0%{transform:translateX(-120%) skewX(-18deg)}100%{transform:translateX(220%) skewX(-18deg)}}@keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}@keyframes iconSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes zzzFloat{0%{opacity:0;transform:translateY(2px)}30%{opacity:1;transform:translateY(0)}70%{opacity:1;transform:translateY(-3px)}100%{opacity:0;transform:translateY(-7px)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
 var SVG_ICONS={
 "emoji_add":"<path d=\"M21 12a9 9 0 1 1-9-9c.9 0 1.77.13 2.59.37\"/><path d=\"M16 5h6\"/><path d=\"M19 2v6\"/><path d=\"M9 9h.01\"/><path d=\"M15 9h.01\"/><path d=\"M8.5 14a4 4 0 0 0 7 0\"/>",
 "book":"<path d=\"M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20\"/>",
@@ -181,33 +181,48 @@ function ic(name,color,size){
 // A colourful, gradient-filled sun/moon for the dashboard greeting card. ic() always renders
 // stroke-only single-colour icons, so this bypasses it entirely with hand-built, multi-colour SVG —
 // verified by rendering each design standalone before wiring it in, same as every other custom icon here.
-function greetIconSVG(hr){
-  var isMorning=hr<12,isDay=hr<17;
-  if(isDay){
-    var c1=isMorning?"#FDBA74":"#FDE047",c2=isMorning?"#F97316":"#F59E0B";
+function greetIconSVG(hr,min){
+  var t=hr*60+(min||0);
+  var state=t<330?"sleep":t<540?"sunrise":t<1080?"hot":"evening"; // 12-5:30am / 5:30-9am / 9am-6pm / 6pm-12am
+  var SIZE=58; // a touch bigger ("zoom in") than the original 46
+  if(state==="sunrise"||state==="hot"){
+    var sr=state==="sunrise";
+    var c1=sr?"#FDBA74":"#FDE047",c2=sr?"#F97316":"#F59E0B",rOuter=sr?20:21,rRay1=sr?15:16,rRay2=sr?20:21.5,rCore=sr?11:12.5,gid=sr?"sunGradDashA":"sunGradDashB";
     var rays=[0,45,90,135,180,225,270,315].map(function(a){
-      var rad=a*Math.PI/180,x1=24+Math.cos(rad)*15,y1=24+Math.sin(rad)*15,x2=24+Math.cos(rad)*20,y2=24+Math.sin(rad)*20;
-      return h("line",{key:a,x1:x1,y1:y1,x2:x2,y2:y2,stroke:c2,strokeWidth:2.5,strokeLinecap:"round"});
+      var rad=a*Math.PI/180,x1=24+Math.cos(rad)*rRay1,y1=24+Math.sin(rad)*rRay1,x2=24+Math.cos(rad)*rRay2,y2=24+Math.sin(rad)*rRay2;
+      return h("line",{key:a,x1:x1,y1:y1,x2:x2,y2:y2,stroke:c2,strokeWidth:sr?2.5:3,strokeLinecap:"round"});
     });
-    return h("svg",{viewBox:"0 0 48 48",width:46,height:46,style:{display:"block"}},
-      h("defs",null,h("radialGradient",{id:"sunGradDash",cx:"50%",cy:"50%",r:"50%"},
-        h("stop",{offset:"0%",stopColor:"#FFF7D6"}),h("stop",{offset:"45%",stopColor:c1}),h("stop",{offset:"100%",stopColor:c2})
-      )),
-      h("circle",{cx:24,cy:24,r:20,fill:c1,opacity:.18}),
-      rays,
-      h("circle",{cx:24,cy:24,r:11,fill:"url(#sunGradDash)"})
+    return h("div",{style:{animation:"iconFloat 4s ease-in-out infinite"}},
+      h("svg",{viewBox:"0 0 48 48",width:SIZE,height:SIZE,style:{display:"block"}},
+        h("defs",null,h("radialGradient",{id:gid,cx:"50%",cy:"50%",r:"50%"},
+          h("stop",{offset:"0%",stopColor:"#FFFBEB"}),h("stop",{offset:sr?"45%":"40%",stopColor:c1}),h("stop",{offset:"100%",stopColor:c2})
+        )),
+        h("circle",{cx:24,cy:24,r:rOuter,fill:c1,opacity:sr?.18:.22}),
+        h("g",{style:{animation:"iconSpin 18s linear infinite",transformOrigin:"24px 24px"}},rays),
+        h("circle",{cx:24,cy:24,r:rCore,fill:"url(#"+gid+")"})
+      )
     );
   }
-  return h("svg",{viewBox:"0 0 48 48",width:46,height:46,style:{display:"block"}},
-    h("defs",null,h("linearGradient",{id:"moonGradDash",x1:"0%",y1:"0%",x2:"100%",y2:"100%"},
-      h("stop",{offset:"0%",stopColor:"#E0E7FF"}),h("stop",{offset:"50%",stopColor:"#A78BFA"}),h("stop",{offset:"100%",stopColor:"#6D28D9"})
-    )),
-    h("circle",{cx:20,cy:24,r:18,fill:"#7C3AED",opacity:.15}),
-    h("path",{fill:"url(#moonGradDash)",d:"M24 6a12 12 0 0 0 18 18 18 18 0 1 1-18-18Z"}),
-    h("g",{fill:"#FDE68A"},h("circle",{cx:38,cy:12,r:1.6}),h("circle",{cx:34,cy:22,r:1.1}),h("circle",{cx:41,cy:24,r:1.3})),
-    h("g",{stroke:"#FDE68A",strokeWidth:1,strokeLinecap:"round"},h("line",{x1:38,y1:9.5,x2:38,y2:14.5}),h("line",{x1:35.5,y1:12,x2:40.5,y2:12}))
+  // Moon — evening (no zzz) or sleep (with drifting Zzz)
+  var isSleep=state==="sleep";
+  return h("div",{style:{animation:"iconFloat 4s ease-in-out infinite",position:"relative"}},
+    h("svg",{viewBox:"0 0 48 48",width:SIZE,height:SIZE,style:{display:"block"}},
+      h("defs",null,h("linearGradient",{id:"moonGradDash",x1:"0%",y1:"0%",x2:"100%",y2:"100%"},
+        h("stop",{offset:"0%",stopColor:"#E0E7FF"}),h("stop",{offset:"50%",stopColor:"#A78BFA"}),h("stop",{offset:"100%",stopColor:"#6D28D9"})
+      )),
+      h("circle",{cx:20,cy:24,r:18,fill:"#7C3AED",opacity:.15}),
+      h("path",{fill:"url(#moonGradDash)",d:"M24 6a12 12 0 0 0 18 18 18 18 0 1 1-18-18Z"}),
+      !isSleep?h("g",{fill:"#FDE68A"},h("circle",{cx:38,cy:12,r:1.6}),h("circle",{cx:34,cy:22,r:1.1}),h("circle",{cx:41,cy:24,r:1.3})):null,
+      !isSleep?h("g",{stroke:"#FDE68A",strokeWidth:1,strokeLinecap:"round"},h("line",{x1:38,y1:9.5,x2:38,y2:14.5}),h("line",{x1:35.5,y1:12,x2:40.5,y2:12})):null,
+      isSleep?h("g",{fontFamily:"sans-serif",fontWeight:700,fill:"#FDE68A"},
+        h("text",{x:30,y:14,fontSize:7,style:{animation:"zzzFloat 2.6s ease-in-out infinite"}},"z"),
+        h("text",{x:35,y:9,fontSize:5.5,opacity:.75,style:{animation:"zzzFloat 2.6s ease-in-out infinite .4s"}},"z"),
+        h("text",{x:38.5,y:6,fontSize:4,opacity:.55,style:{animation:"zzzFloat 2.6s ease-in-out infinite .8s"}},"z")
+      ):null
+    )
   );
 }
+
 
 function calcTax(annual){
   var sl=[{a:0,b:400000,r:0},{a:400000,b:800000,r:.05},{a:800000,b:1200000,r:.10},{a:1200000,b:1600000,r:.15},{a:1600000,b:2000000,r:.20},{a:2000000,b:2400000,r:.25},{a:2400000,b:Infinity,r:.30}];
@@ -4257,9 +4272,11 @@ export default function App(){
     return h("div",{className:"fd"},
       !onboardDone?renderOnboarding():null,
       h("div",{style:{background:NVY,borderRadius:18,padding:"18px 18px 20px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:T.SHADOW_LG}},
-        h("div",{style:{position:"absolute",top:14,right:16,fontSize:11,fontWeight:600,color:CARD,opacity:.75,letterSpacing:.5,fontVariantNumeric:"tabular-nums"}},timeStr),
-        h("div",{style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)"}},greetIconSVG(hr)),
-        h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginBottom:3,fontWeight:500,maxWidth:"75%"}},now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})),
+        h("div",{style:{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)"}},greetIconSVG(hr,now.getMinutes())),
+        h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginBottom:3,fontWeight:500,maxWidth:"75%",display:"flex",gap:6,alignItems:"baseline"}},
+          h("span",null,now.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})),
+          h("span",{style:{opacity:.7,fontVariantNumeric:"tabular-nums"}},timeStr)
+        ),
         h("div",{style:{fontSize:22,fontWeight:600,color:CARD,letterSpacing:-.3,maxWidth:"75%"}},greet),
         h("div",{style:{fontSize:11,color:CARD,opacity:.7,marginTop:3,fontWeight:500,maxWidth:"75%"}},org.position+" \u2022 "+org.name)
       ),
