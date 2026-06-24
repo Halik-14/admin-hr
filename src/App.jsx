@@ -5947,8 +5947,8 @@ null
                 }
                 return h("div",{style:{marginBottom:8}},
                   h("div",{style:{display:"flex",gap:6,marginBottom:showIncForm||(showBonusForm&&bonusPayM===payM&&bonusPayY===payY)?6:0}},
-                    miniBox("#059669","trending_up","INCENTIVE",d.inc>0?fmt(d.inc):"",function(){setEditPayInc(d.inc>0?String(d.inc):"");setShowIncForm(!showIncForm);}),
-                    miniBox(AMB,"star","BONUS/ONE-TIME",bonusSum2>0?fmt(bonusSum2)+(empBonuses2.length>1?" ("+empBonuses2.length+")":""):"",function(){setShowBonusForm(!(showBonusForm&&bonusPayM===payM&&bonusPayY===payY));setBonusPayM(payM);setBonusPayY(payY);setBonusAmt("");setBonusNote("");})
+                    miniBox("#059669","trending_up","INCENTIVE",d.inc>0?fmt(d.inc):"",function(){var open=!showIncForm;setShowIncForm(open);if(open){setShowBonusForm(false);setBonusPayM(-1);setBonusPayY(-1);}setEditPayInc(d.inc>0?String(d.inc):"");}),
+                    miniBox(AMB,"star","BONUS/ONE-TIME",bonusSum2>0?fmt(bonusSum2)+(empBonuses2.length>1?" ("+empBonuses2.length+")":""):"",function(){var open=!(showBonusForm&&bonusPayM===payM&&bonusPayY===payY);if(open){setShowIncForm(false);setBonusPayM(payM);setBonusPayY(payY);}else{setBonusPayM(-1);setBonusPayY(-1);}setShowBonusForm(open);setBonusAmt("");setBonusNote("");})
                   ),
                   // ── Incentive form — same structure/sizing as Bonus form below ──
                   showIncForm?h("div",{style:{background:"#05966910",border:"1px solid #05966935",borderRadius:8,padding:8,marginBottom:6}},
@@ -8693,7 +8693,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           var p=Number(loanAmt),n=Number(loanMon);
           var r=loanKind==="loan"?Number(loanInterest||0):0;
           var emi=calcEMI(p,r,n);
-          var endDate=(function(){if(!loanDate)return "";var parts=loanDate.split("-");var d=new Date(Number(parts[0]),Number(parts[1])-1+n-1,1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}());
+          var endDate=(function(){if(!loanDate)return "";var parts=loanDate.split("-");var d=new Date(Number(parts[0]),Number(parts[1])-1+n-1,1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-01";}());
           var rec={
             id:Date.now(),employerEmail:gUser.email,
             employeeId:empId,employee_id:empId,employeeName:emp.name,
@@ -8713,10 +8713,10 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             employee_id:empId,employee_name:emp.name,
             amount:p,kind:loanKind,loan_type:rec.loanType,advance_type:rec.advanceType,
             interest_rate:r,tenure:n,emi:emi,
-            start_date:loanDate,end_date:endDate,
+            start_date:loanDate||null,end_date:endDate||null,
             paid_installments:0,total_paid:0,
             monthly_deduction:emi,paid_amount:0,
-            status:"active",date:loanDate,purpose:loanPurpose
+            status:"active",date:loanDate||null,purpose:loanPurpose
           }).then(function(r){if(r&&r.error){showT("Could not save to server: "+r.error.message,"err");setLoans(function(p2){return (p2||[]).filter(function(x){return x.id!==rec.id;});});}});
           setLoanAmt("");setLoanMon("");setLoanInterest("");setLoanDate("");setLoanPurpose("");setShowLoanForm(false);
           showT((loanKind==="loan"?"Loan":"Advance")+" added — EMI: "+fmt(emi)+"/mo");
