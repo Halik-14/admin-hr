@@ -2459,14 +2459,19 @@ export default function App(){
   var sShowInviteCode=st(false),showInviteCode=sShowInviteCode[0],setShowInviteCode=sShowInviteCode[1];
   var sInviteEmpId=st(null),inviteEmpId=sInviteEmpId[0],setInviteEmpId=sInviteEmpId[1]; // employee record being invited
   var sKpis=st([]),kpis=sKpis[0],setKpis=sKpis[1];
-  var sKpiScores=st([]),kpiScores=sKpiScores[0],setKpiScores=sKpiScores[1];
+  var sKpiUpdates=st([]),kpiUpdates=sKpiUpdates[0],setKpiUpdates=sKpiUpdates[1]; // review/update history entries
   var sShowKpiForm=st(false),showKpiForm=sShowKpiForm[0],setShowKpiForm=sShowKpiForm[1];
   var sKpiName=st(""),kpiName=sKpiName[0],setKpiName=sKpiName[1];
   var sKpiTarget=st(""),kpiTarget=sKpiTarget[0],setKpiTarget=sKpiTarget[1];
-  var sKpiUnit=st("%"),kpiUnit=sKpiUnit[0],setKpiUnit=sKpiUnit[1];
-  var sKpiWeight=st("100"),kpiWeight=sKpiWeight[0],setKpiWeight=sKpiWeight[1];
+  var sKpiUnit=st("Tasks"),kpiUnit=sKpiUnit[0],setKpiUnit=sKpiUnit[1];
+  var sKpiStartDate=st(""),kpiStartDate=sKpiStartDate[0],setKpiStartDate=sKpiStartDate[1];
+  var sKpiDueDate=st(""),kpiDueDate=sKpiDueDate[0],setKpiDueDate=sKpiDueDate[1];
   var sKpiAssignType=st("individual"),kpiAssignType=sKpiAssignType[0],setKpiAssignType=sKpiAssignType[1];
   var sKpiAssignTarget=st(""),kpiAssignTarget=sKpiAssignTarget[0],setKpiAssignTarget=sKpiAssignTarget[1];
+  var sKpiExpandId=st(null),kpiExpandId=sKpiExpandId[0],setKpiExpandId=sKpiExpandId[1]; // which KPI's full details are expanded
+  var sKpiUpdateOpenId=st(null),kpiUpdateOpenId=sKpiUpdateOpenId[0],setKpiUpdateOpenId=sKpiUpdateOpenId[1]; // which KPI's "update progress" form is open
+  var sKpiProgressInput=st(""),kpiProgressInput=sKpiProgressInput[0],setKpiProgressInput=sKpiProgressInput[1];
+  var sKpiRemarkInput=st(""),kpiRemarkInput=sKpiRemarkInput[0],setKpiRemarkInput=sKpiRemarkInput[1];
   var sTaskTab=st("all"),taskTab=sTaskTab[0],setTaskTab=sTaskTab[1];
   var sLeaveTab=st("pending"),leaveTab=sLeaveTab[0],setLeaveTab=sLeaveTab[1];
   var sAttTab=st("mark"),attTab=sAttTab[0],setAttTab=sAttTab[1];
@@ -2792,7 +2797,7 @@ export default function App(){
     if(_lastLoadedEmail.current===em)return;
     _lastLoadedEmail.current=em;
     var safe=function(t,c,v){try{return _sb.from(t).select("*").eq(c,v).then(function(r){if(r&&r.error){console.error("Load failed for "+t+":",r.error);return null;}return r.data||[];}).catch(function(e){console.error("Load failed for "+t+":",e);return null;});}catch(e){return Promise.resolve(null);}};
-    Promise.all([safe("loans","employer_email",em),safe("expenses","employer_email",em),safe("warnings","employer_email",em),safe("holidays","employer_email",em),safe("company_expenses","employer_email",em),safe("salary_revisions","employer_email",em),safe("bonuses","employer_email",em),safe("staff_claims","employer_email",em),safe("overtime","employer_email",em)]).then(function(res){
+    Promise.all([safe("loans","employer_email",em),safe("expenses","employer_email",em),safe("warnings","employer_email",em),safe("holidays","employer_email",em),safe("company_expenses","employer_email",em),safe("salary_revisions","employer_email",em),safe("bonuses","employer_email",em),safe("staff_claims","employer_email",em),safe("overtime","employer_email",em),safe("kpis","employer_email",em),safe("kpi_updates","employer_email",em)]).then(function(res){
       // null means the fetch itself failed (network/server error) — keep whatever's already in
       // state rather than overwriting real data with an empty list just because of a blip.
       try{if(res[0]!==null)setLoans((res[0]||[]).map(function(l){return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,employee_id:l.employee_id,employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,kind:l.kind||"loan",loanType:l.loan_type||"personal",advanceType:l.advance_type||"salary",interestRate:Number(l.interest_rate||0),tenure:Number(l.tenure||0),emi:Number(l.emi||0),startDate:l.start_date||l.date,endDate:l.end_date,paidInstallments:Number(l.paid_installments||0),totalPaid:Number(l.total_paid||0),closedDate:l.closed_date,monthlyDeduction:l.monthly_deduction,monthly_deduction:l.monthly_deduction,paidAmount:l.paid_amount,paid_amount:l.paid_amount,status:l.status,createdAt:l.created_at};}));}catch(e){}
@@ -2804,6 +2809,8 @@ export default function App(){
       try{if(res[4]!==null)setCoExp((res[4]||[]).map(function(e){return{id:e.id,date:e.date,category:e.category,customCategory:e.custom_category,amount:Number(e.amount),vendor:e.vendor,description:e.description,paymentMode:e.payment_mode,month:e.month,year:e.year};}));}catch(e){}
       try{if(res[3]!==null)setHolidays2((res[3]||[]).map(function(h2){return{id:h2.id,name:h2.name,date:h2.date};}));}catch(e){}
       try{if(res[2]!==null)setWarnings((res[2]||[]).map(function(w){return {id:w.id,employerEmail:w.employer_email,employeeId:w.employee_id,employee_id:w.employee_id,employeeName:w.employee_name,incidentDate:w.incident_date,incident:w.incident,actionRequired:w.action_required,warningType:w.warning_type,acknowledged:w.acknowledged,createdAt:w.created_at};}));}catch(e){}
+      try{if(res[9]!==null)setKpis((res[9]||[]).map(function(k){return {id:k.id,employerEmail:k.employer_email,assignType:k.assign_type,assignTarget:k.assign_target,title:k.title,name:k.title,targetValue:Number(k.target_value||0),target:Number(k.target_value||0),currentProgress:Number(k.current_progress||0),unit:k.unit,startDate:k.start_date,dueDate:k.due_date,status:k.status,followUpRemarks:k.follow_up_remarks||"",createdAt:k.created_at};}));}catch(e){}
+      try{if(res[10]!==null)setKpiUpdates((res[10]||[]).map(function(u){return {id:u.id,kpiId:u.kpi_id,progress:Number(u.progress||0),remark:u.remark||"",createdAt:u.created_at};}));}catch(e){}
     }).catch(function(){});
   },[gUser&&gUser.email]);
 
@@ -4239,13 +4246,23 @@ export default function App(){
 
   // ── Pro: KPI functions ──────────────────────────────────────────────────
   function saveKpi(){
-    if(!kpiName.trim())return showT("Enter KPI name","err");
+    if(!kpiName.trim())return showT("Enter KPI title","err");
     if(!kpiTarget)return showT("Enter target value","err");
     if(!kpiAssignTarget)return showT("Select assignment target","err");
-    var kpi={id:Date.now(),employerEmail:gUser.email,assignType:kpiAssignType,assignTarget:kpiAssignTarget,name:kpiName.trim(),target:Number(kpiTarget),unit:kpiUnit,weightage:Number(kpiWeight)||100,createdAt:new Date().toISOString()};
+    var kpi={id:String(Date.now()),employerEmail:gUser.email,assignType:kpiAssignType,assignTarget:kpiAssignTarget,
+      title:kpiName.trim(),name:kpiName.trim(),targetValue:Number(kpiTarget),target:Number(kpiTarget),
+      currentProgress:0,unit:kpiUnit,startDate:kpiStartDate||todayStr,dueDate:kpiDueDate||"",
+      status:"not_started",followUpRemarks:"",createdAt:new Date().toISOString()};
     setKpis(function(p){return p.concat([kpi]);});
-    setKpiName("");setKpiTarget("");setKpiUnit("%");setKpiWeight("100");setKpiAssignTarget("");setShowKpiForm(false);
-    showT("KPI saved!");
+    _sb.from("kpis").insert({
+      id:kpi.id,employer_email:gUser.email,assign_type:kpi.assignType,assign_target:kpi.assignTarget,
+      title:kpi.title,target_value:kpi.targetValue,current_progress:0,unit:kpi.unit,
+      start_date:kpi.startDate||null,due_date:kpi.dueDate||null,status:kpi.status,follow_up_remarks:""
+    }).then(function(r){
+      if(r&&r.error){showT("Could not save KPI: "+r.error.message,"err");setKpis(function(p){return p.filter(function(x){return x.id!==kpi.id;});});}
+    });
+    setKpiName("");setKpiTarget("");setKpiUnit("Tasks");setKpiStartDate("");setKpiDueDate("");setKpiAssignTarget("");setShowKpiForm(false);
+    showT("KPI created!");
   }
 
   function getEmpKpis(empEmail,empDept,empRole){
@@ -4258,26 +4275,45 @@ export default function App(){
     });
   }
 
-  function getKpiScore(kpiId,empEmail){
-    return kpiScores.find(function(s){return s.kpiId===kpiId&&s.employeeEmail===empEmail&&s.month===curM&&s.year===curY;});
+  // Status is derived automatically from progress vs target vs due date — never set by hand,
+  // so it can never silently go stale the way a manually-picked status field would.
+  function computeKpiStatus(k){
+    var prog=Number(k.currentProgress||0),target=Number(k.targetValue||k.target||0);
+    if(target>0&&prog>=target)return "achieved";
+    if(k.dueDate&&k.dueDate<todayStr&&prog<target)return "missed";
+    if(prog>0)return "in_progress";
+    return "not_started";
   }
-
-  function calcOverallGrade(empEmail,empDept,empRole){
-    var empKpis=getEmpKpis(empEmail,empDept,empRole);
-    if(!empKpis.length)return null;
-    var totalWeight=0,weightedScore=0;
-    empKpis.forEach(function(k){
-      var score=getKpiScore(k.id,empEmail);
-      if(score){
-        var pct=score.finalPct||0;
-        weightedScore+=pct*k.weightage;
-        totalWeight+=k.weightage;
-      }
+  var KPI_STATUS_META={
+    not_started:{label:"Not Started",color:GRY,bg:T.PILL_NEUTRAL_BG||SFT},
+    in_progress:{label:"In Progress",color:TEL,bg:T.PILL_INFO_BG||TEL+"15"},
+    achieved:{label:"Achieved",color:GRN,bg:T.PILL_OK_BG},
+    missed:{label:"Missed",color:RED,bg:T.PILL_DANGER_BG}
+  };
+  function getKpiHistory(kpiId){
+    return (kpiUpdates||[]).filter(function(u){return u.kpiId===kpiId;}).sort(function(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);});
+  }
+  // Logs a new progress entry (kept in full history) and updates the KPI's running progress/status.
+  function addKpiUpdate(kpi,newProgress,remark){
+    var upd={id:String(Date.now()),kpiId:kpi.id,progress:Number(newProgress)||0,remark:remark||"",createdAt:new Date().toISOString()};
+    setKpiUpdates(function(p){return [upd].concat(p||[]);});
+    var updatedKpi=Object.assign({},kpi,{currentProgress:upd.progress,followUpRemarks:remark||kpi.followUpRemarks});
+    updatedKpi.status=computeKpiStatus(updatedKpi);
+    setKpis(function(p){return p.map(function(k){return k.id===kpi.id?updatedKpi:k;});});
+    _sb.from("kpi_updates").insert({id:upd.id,kpi_id:kpi.id,employer_email:gUser.email,progress:upd.progress,remark:upd.remark}).then(function(r){
+      if(r&&r.error)showT("Could not save update: "+r.error.message,"err");
     });
-    if(!totalWeight)return null;
-    var overall=Math.round(weightedScore/totalWeight);
-    var grade=overall>=90?"Excellent":overall>=70?"Good":overall>=50?"Average":"Poor";
-    return {pct:overall,grade:grade};
+    _sb.from("kpis").update({current_progress:updatedKpi.currentProgress,status:updatedKpi.status,follow_up_remarks:updatedKpi.followUpRemarks,updated_at:new Date().toISOString()}).eq("id",kpi.id).then(function(r){
+      if(r&&r.error)showT("Could not save KPI progress: "+r.error.message,"err");
+    });
+    showT("Progress updated!");
+  }
+  function deleteKpi(kpiId){
+    setKpis(function(p){return p.filter(function(k){return k.id!==kpiId;});});
+    setKpiUpdates(function(p){return (p||[]).filter(function(u){return u.kpiId!==kpiId;});});
+    _sb.from("kpis").delete().eq("id",kpiId).then(function(){});
+    _sb.from("kpi_updates").delete().eq("kpi_id",kpiId).then(function(){});
+    showT("KPI deleted");
   }
 
   function needsPro(){
@@ -7369,6 +7405,72 @@ null
   }
 
   // ── Pro: KPI screen ─────────────────────────────────────────────────────
+  function renderKpiCard(k){
+    var status=computeKpiStatus(k);
+    var meta=KPI_STATUS_META[status];
+    var target=Number(k.targetValue||k.target||0);
+    var prog=Number(k.currentProgress||0);
+    var pct=target>0?Math.min(100,Math.round(prog*100/target)):0;
+    var expanded=kpiExpandId===k.id;
+    var updating=kpiUpdateOpenId===k.id;
+    var history=getKpiHistory(k.id);
+    return h("div",{key:k.id,style:{background:CARD,border:"1px solid "+BDR,borderRadius:12,padding:"11px 12px",marginBottom:8}},
+      h("div",{onClick:function(){setKpiExpandId(expanded?null:k.id);},style:{cursor:"pointer"}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},
+          h("div",{style:{flex:1,minWidth:0}},
+            h("div",{style:{fontSize:12.5,fontWeight:700,color:NVY}},k.title||k.name),
+            h("div",{style:{fontSize:10,color:GRY,marginTop:1}},k.assignType==="individual"?"Individual":k.assignType==="department"?"Dept: "+k.assignTarget:"Role: "+k.assignTarget)
+          ),
+          h("div",{style:{display:"flex",alignItems:"center",gap:6,flexShrink:0}},
+            h("div",{style:{fontSize:9,fontWeight:700,padding:"3px 9px",borderRadius:20,background:meta.bg,color:meta.color}},meta.label),
+            ic(expanded?"expand_less":"expand_more",GRY,16)
+          )
+        ),
+        h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
+          h("div",{style:{fontSize:10.5,color:GRY}},prog+" / "+target+" "+k.unit),
+          h("div",{style:{fontSize:10.5,fontWeight:700,color:meta.color}},pct+"%")
+        ),
+        h("div",{style:{height:6,background:SFT,borderRadius:3,overflow:"hidden"}},
+          h("div",{style:{height:"100%",background:meta.color,borderRadius:3,width:pct+"%",transition:"width .3s"}})
+        )
+      ),
+      expanded?h("div",{style:{borderTop:"1px solid "+BDR,marginTop:10,paddingTop:10}},
+        h("div",{style:{display:"flex",gap:14,marginBottom:8,flexWrap:"wrap"}},
+          h("div",null,h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:.3}},"START DATE"),h("div",{style:{fontSize:11,color:NVY,fontWeight:600,marginTop:2}},k.startDate||"-")),
+          h("div",null,h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:.3}},"DUE DATE"),h("div",{style:{fontSize:11,color:NVY,fontWeight:600,marginTop:2}},k.dueDate||"-")),
+          h("div",null,h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:.3}},"UNIT"),h("div",{style:{fontSize:11,color:NVY,fontWeight:600,marginTop:2}},k.unit))
+        ),
+        k.followUpRemarks?h("div",{style:{background:SFT,borderRadius:8,padding:"8px 10px",marginBottom:8,fontSize:11,color:GRY}},h("b",{style:{color:NVY}},"Latest remark: "),k.followUpRemarks):null,
+        // ── Update progress ──
+        updating?h("div",{style:{background:TEL+"0D",border:"1px solid "+TEL+"35",borderRadius:9,padding:10,marginBottom:10}},
+          h("div",{style:{fontSize:10,fontWeight:700,color:TEL,marginBottom:6,letterSpacing:.3}},"LOG PROGRESS UPDATE"),
+          h("input",{type:"number",value:kpiProgressInput,onChange:function(ev){setKpiProgressInput(ev.target.value);},placeholder:"Current progress ("+k.unit+")",autoFocus:true,style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"8px 9px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}),
+          h("input",{type:"text",value:kpiRemarkInput,onChange:function(ev){setKpiRemarkInput(ev.target.value);},placeholder:"Follow-up remark (optional)",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"8px 9px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}),
+          h("div",{style:{display:"flex",gap:6}},
+            h("button",{onClick:function(){
+              if(kpiProgressInput===""||isNaN(Number(kpiProgressInput)))return showT("Enter a progress value","err");
+              addKpiUpdate(k,kpiProgressInput,kpiRemarkInput);
+              setKpiUpdateOpenId(null);setKpiProgressInput("");setKpiRemarkInput("");
+            },style:{flex:2,background:NVY,border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Update"),
+            h("button",{onClick:function(){setKpiUpdateOpenId(null);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"8px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
+          )
+        ):h("button",{onClick:function(){setKpiUpdateOpenId(k.id);setKpiProgressInput(String(prog));setKpiRemarkInput("");},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:TEL+"12",border:"1px solid "+TEL+"33",borderRadius:8,padding:"7px",fontSize:11,fontWeight:700,color:TEL,cursor:"pointer",marginBottom:8}},ic("edit",TEL,12),"Update Progress"),
+        // ── Review/update history ──
+        history.length>0?h("div",{style:{marginBottom:8}},
+          h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.3,marginBottom:5}},"UPDATE HISTORY"),
+          history.map(function(u){
+            return h("div",{key:u.id,style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"5px 0",borderBottom:"1px solid "+BDR+"44"}},
+              h("div",{style:{flex:1}},
+                h("div",{style:{fontSize:10.5,fontWeight:600,color:NVY}},u.progress+" "+k.unit+(u.remark?" - "+u.remark:"")),
+                h("div",{style:{fontSize:9,color:GRY,marginTop:1}},new Date(u.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+" "+new Date(u.createdAt).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}))
+              )
+            );
+          })
+        ):h("div",{style:{fontSize:10.5,color:GRY,marginBottom:8}},"No updates logged yet."),
+        h("button",{onClick:function(){if(window.confirm("Delete this KPI permanently?"))deleteKpi(k.id);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:T.PILL_DANGER_BG,border:"1px solid "+RED,borderRadius:8,padding:"7px",color:RED,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,12),"Delete KPI")
+      ):null
+    );
+  }
   function renderKPI(){
     if(!isPaid)return null;
     var actEmpsKpi=emps.filter(function(e){return e.status==="active";});
@@ -7376,50 +7478,35 @@ null
       h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"KPI & Performance — "+MOS[curM]+" "+curY),
       actEmpsKpi.map(function(e){
         var empKpis=getEmpKpis(e.email||e.name,e.dept,e.role);
-        var grade=calcOverallGrade(e.email||e.name,e.dept,e.role);
-        return h("div",{key:e.id,style:{background:CARD,border:"1px solid "+BDR,borderRadius:12,padding:"11px 12px",marginBottom:8}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:empKpis.length>0?8:0}},
+        return h("div",{key:e.id,style:{marginBottom:10}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:8}},
             av(e,32),
             h("div",{style:{flex:1}},
               h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
               h("div",{style:{fontSize:10,color:GRY}},e.role||e.dept||"")
             ),
-            grade?h("div",{style:{fontSize:10,fontWeight:700,padding:"3px 9px",borderRadius:20,background:grade.grade==="Excellent"?"#D1FAE5":grade.grade==="Good"?"#DBEAFE":grade.grade==="Average"?"#FEF3C7":"#FEE2E2",color:grade.grade==="Excellent"?"#065F46":grade.grade==="Good"?"#1E40AF":grade.grade==="Average"?"#92400E":"#991B1B"}},grade.grade+" "+grade.pct+"%"):
-            h("div",{style:{fontSize:10,color:GRY}},"No KPIs set")
+            h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"none",color:TEL,fontSize:11,fontWeight:600,cursor:"pointer",padding:0}},"+ Add KPI")
           ),
-          empKpis.length>0?h("div",{style:{borderTop:"1px solid "+BDR,paddingTop:8}},
-            empKpis.slice(0,3).map(function(k){
-              var score=getKpiScore(k.id,e.email||e.name);
-              var pct=score?score.finalPct:0;
-              return h("div",{key:k.id,style:{marginBottom:6}},
-                h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:2}},
-                  h("div",{style:{fontSize:10,color:NVY}},k.name),
-                  h("div",{style:{fontSize:10,fontWeight:600,color:pct>=90?"#10B981":pct>=70?TEL:pct>=50?AMB:RED}},score?pct+"%":"Not scored")
-                ),
-                h("div",{style:{height:5,background:SFT,borderRadius:3,overflow:"hidden"}},
-                  h("div",{style:{height:"100%",background:pct>=90?"#10B981":pct>=70?TEL:pct>=50?AMB:RED,borderRadius:3,width:pct+"%"}})
-                )
-              );
-            }),
-            h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{marginTop:6,background:"none",border:"none",color:TEL,fontSize:11,fontWeight:600,cursor:"pointer",padding:0}},"+ Add KPI")
-          ):h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"none",color:TEL,fontSize:11,fontWeight:600,cursor:"pointer",padding:0}},"+ Set KPI targets")
+          empKpis.length>0?empKpis.map(function(k){return renderKpiCard(k);}):h("div",{style:{fontSize:10.5,color:GRY,paddingLeft:42,marginBottom:4}},"No KPIs set")
         );
       }),
       showKpiForm?card(h("div",null,
         h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"New KPI"),
-        lbl("ASSIGN TYPE"),
+        lbl("ASSIGN TO"),
         chipSelect(kpiAssignType,function(v){setKpiAssignType(v);setKpiAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}),{question:"Assign this KPI to"}),
-        kpiAssignType==="individual"?h("select",{value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
-          [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
-        ):null,
-        lbl("KPI NAME"),
-        h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Sales target",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        kpiAssignType==="individual"?chipSelect(kpiAssignTarget,function(v){setKpiAssignTarget(v);},emps.filter(function(e){return e.status==="active";}).map(function(e){return {v:e.email||e.name,l:e.name};}),{question:"Choose the employee",placeholder:"Select employee"}):null,
+        kpiAssignType==="department"?chipSelect(kpiAssignTarget,function(v){setKpiAssignTarget(v);},getDepts(org.type),{question:"Choose the department",placeholder:"Select department"}):null,
+        kpiAssignType==="role"?h("input",{type:"text",value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},placeholder:"e.g. Sales Executive",style:{width:"100%",marginBottom:10,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}):null,
+        lbl("KPI TITLE"),
+        h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Monthly Sales Target",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}),
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-          h("div",{style:{flex:1}},lbl("TARGET VALUE"),h("input",{type:"number",value:kpiTarget,onChange:function(e){setKpiTarget(e.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
-          h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."],{question:"Choose the KPI unit"}))
+          h("div",{style:{flex:1}},lbl("TARGET VALUE"),h("input",{type:"number",value:kpiTarget,onChange:function(e){setKpiTarget(e.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["Tasks","Sales","Calls","Attendance %","%","Number","Rs."],{question:"Choose the KPI unit",allowCustom:true,customPlaceholder:"Type your own unit..."}))
         ),
-        lbl("WEIGHTAGE (%)"),
-        h("input",{type:"number",value:kpiWeight,onChange:function(e){setKpiWeight(e.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+          h("div",{style:{flex:1}},lbl("START DATE"),h("input",{type:"date",value:kpiStartDate,onChange:function(e){setKpiStartDate(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          h("div",{style:{flex:1}},lbl("DUE DATE"),h("input",{type:"date",value:kpiDueDate,onChange:function(e){setKpiDueDate(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+        ),
         h("div",{style:{display:"flex",gap:8}},
           h("button",{onClick:saveKpi,style:{flex:2,background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Save KPI"),
           h("button",{onClick:function(){setShowKpiForm(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"10px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
@@ -7833,68 +7920,34 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       ),
       emps.filter(function(e){return e.status==="active";}).map(function(e){
         var empKpiList=getEmpKpis(e.email||e.name,e.dept,e.role);
-        var grade=calcOverallGrade(e.email||e.name,e.dept,e.role);
-        var gradeColor=grade?(grade.grade==="Excellent"?"#10B981":grade.grade==="Good"?"#4F46E5":grade.grade==="Average"?AMB:RED):GRY;
-        return h("div",{key:e.id,style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:empKpiList.length>0?10:0}},
+        return h("div",{key:e.id,style:{marginBottom:10}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:8}},
             av(e,36),
             h("div",{style:{flex:1}},
               h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},e.name),
               h("div",{style:{fontSize:10,color:GRY,marginTop:1}},e.role||e.dept||"")
-            ),
-            grade?h("div",{style:{textAlign:"right"}},
-              h("div",{style:{fontSize:20,fontWeight:800,color:gradeColor}},grade.pct+"%"),
-              h("div",{style:{fontSize:9,fontWeight:700,color:gradeColor}},grade.grade)
-            ):h("div",{style:{fontSize:10,color:GRY,fontStyle:"italic"}},"No KPIs set")
-          ),
-          empKpiList.length>0?h("div",{style:{borderTop:"1px solid "+BDR,paddingTop:10}},
-            empKpiList.map(function(k){
-              var score=getKpiScore(k.id,e.email||e.name);
-              var pct=score?score.finalPct:0;
-              var barColor=pct>=90?"#10B981":pct>=70?"#4F46E5":pct>=50?AMB:RED;
-              return h("div",{key:k.id,style:{marginBottom:8}},
-                h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
-                  h("div",{style:{fontSize:11,color:NVY}},k.name+" ("+k.target+k.unit+")"),
-                  h("div",{style:{fontSize:11,fontWeight:700,color:score?barColor:GRY}},score?pct+"%":"Not scored")
-                ),
-                h("div",{style:{height:6,background:SFT,borderRadius:3,overflow:"hidden"}},
-                  h("div",{style:{height:"100%",background:barColor,borderRadius:3,width:(score?pct:0)+"%"}})
-                )
-              );
-            }),
-            h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{marginTop:6,background:"none",border:"none",color:ACCENT,fontSize:11,fontWeight:600,cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:3}},ic("add",ACCENT,12),"Add KPI")
-          ):h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"1px dashed "+BDR,borderRadius:9,padding:"7px",width:"100%",color:GRY,fontSize:11,cursor:"pointer"}},"+ Set KPI targets"),
-          showKpiForm&&kpiAssignTarget===(e.email||e.name)?h("div",{style:{background:SFT,borderRadius:12,padding:14,marginTop:8,border:"1px solid "+BDR}},
-            lbl("KPI NAME"),
-            h("input",{type:"text",value:kpiName,onChange:function(ev){setKpiName(ev.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-            h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-              h("div",{style:{flex:1}},lbl("TARGET"),h("input",{type:"number",value:kpiTarget,onChange:function(ev){setKpiTarget(ev.target.value);},placeholder:"100",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
-              h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."],{question:"Choose the KPI unit"}))
-            ),
-            lbl("WEIGHTAGE (%)"),
-            h("input",{type:"number",value:kpiWeight,onChange:function(ev){setKpiWeight(ev.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
-            h("div",{style:{display:"flex",gap:8}},
-              h("button",{onClick:saveKpi,style:{flex:2,background:"#D97706",border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Save KPI"),
-              h("button",{onClick:function(){setShowKpiForm(false);},style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
             )
-          ):null
+          ),
+          empKpiList.length>0?empKpiList.map(function(k){return renderKpiCard(k);}):h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"1px dashed "+BDR,borderRadius:9,padding:"7px",width:"100%",color:GRY,fontSize:11,cursor:"pointer"}},"+ Set KPI targets")
         );
       }),
-      showKpiForm&&!kpiAssignTarget?h("div",{style:{background:CARD,borderRadius:14,padding:16,boxShadow:"0 4px 16px rgba(0,0,0,0.08)",marginTop:8}},
+      showKpiForm?h("div",{style:{background:CARD,borderRadius:14,padding:16,boxShadow:"0 4px 16px rgba(0,0,0,0.08)",marginTop:8}},
         h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14}},"Add KPI"),
-        lbl("ASSIGN TYPE"),
+        lbl("ASSIGN TO"),
         chipSelect(kpiAssignType,function(v){setKpiAssignType(v);setKpiAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}),{question:"Assign this KPI to"}),
-        kpiAssignType==="individual"?h("select",{value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
-          [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
-        ):null,
-        lbl("KPI NAME"),
-        h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        kpiAssignType==="individual"?chipSelect(kpiAssignTarget,function(v){setKpiAssignTarget(v);},emps.filter(function(e){return e.status==="active";}).map(function(e){return {v:e.email||e.name,l:e.name};}),{question:"Choose the employee",placeholder:"Select employee"}):null,
+        kpiAssignType==="department"?chipSelect(kpiAssignTarget,function(v){setKpiAssignTarget(v);},getDepts(org.type),{question:"Choose the department",placeholder:"Select department"}):null,
+        kpiAssignType==="role"?h("input",{type:"text",value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},placeholder:"e.g. Sales Executive",style:{width:"100%",marginBottom:10,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}):null,
+        lbl("KPI TITLE"),
+        h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}),
         h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-          h("div",{style:{flex:1}},lbl("TARGET"),h("input",{type:"number",value:kpiTarget,onChange:function(e){setKpiTarget(e.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}})),
-          h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["%","Number","Rs."],{question:"Choose the KPI unit"}))
+          h("div",{style:{flex:1}},lbl("TARGET"),h("input",{type:"number",value:kpiTarget,onChange:function(e){setKpiTarget(e.target.value);},placeholder:"100",style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          h("div",{style:{flex:1}},lbl("UNIT"),chipSelect(kpiUnit,function(v){setKpiUnit(v);},["Tasks","Sales","Calls","Attendance %","%","Number","Rs."],{question:"Choose the KPI unit",allowCustom:true,customPlaceholder:"Type your own unit..."}))
         ),
-        lbl("WEIGHTAGE (%)"),
-        h("input",{type:"number",value:kpiWeight,onChange:function(e){setKpiWeight(e.target.value);},placeholder:"100",style:{width:"100%",marginBottom:12,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
+        h("div",{style:{display:"flex",gap:8,marginBottom:12}},
+          h("div",{style:{flex:1}},lbl("START DATE"),h("input",{type:"date",value:kpiStartDate,onChange:function(e){setKpiStartDate(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          h("div",{style:{flex:1}},lbl("DUE DATE"),h("input",{type:"date",value:kpiDueDate,onChange:function(e){setKpiDueDate(e.target.value);},style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+        ),
         h("div",{style:{display:"flex",gap:8}},
           h("button",{onClick:saveKpi,style:{flex:2,background:"#D97706",border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12,fontWeight:700,cursor:"pointer"}},"Save KPI"),
           h("button",{onClick:function(){setShowKpiForm(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
