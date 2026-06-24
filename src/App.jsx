@@ -2405,6 +2405,7 @@ export default function App(){
   var sOE=st(null),offE=sOE[0],setOffE=sOE[1];
   var sOS=st(1),offStep=sOS[0],setOffStep=sOS[1];
   var sOD=st({reason:"",type:"resigned",handover:[],note:"",resignDate:""}),offData=sOD[0],setOffData=sOD[1];
+  var sOffExpand=st(null),offExpandId=sOffExpand[0],setOffExpandId=sOffExpand[1]; // which offboarded employee's full details are expanded
   var sNW=st(new Date()),now=sNW[0],setNow=sNW[1];
   var sBR=st([]),bRemind=sBR[0],setBRemind=sBR[1];
   var sSB=st([]),skipB=sSB[0],setSkipB=sSB[1];
@@ -2609,7 +2610,7 @@ export default function App(){
         var totalPaid=Math.round(newPaid*l.emi);
         var ns=newPaid>=l.tenure?"closed":"active";
         var closedDate=ns==="closed"?new Date().toISOString().split("T")[0]:null;
-        _sb.from("loans").update({paid_installments:newPaid,total_paid:totalPaid,status:ns,closed_date:closedDate}).eq("id",String(l.id)).then(function(){});
+        _sb.from("loans").update({paid_installments:newPaid,total_paid:totalPaid,status:ns,closed_date:closedDate}).eq("id",String(l.id)).then(function(r){if(r&&r.error)showT("Loan update failed to save: "+r.error.message,"err");});
         return Object.assign({},l,{paidInstallments:newPaid,totalPaid:totalPaid,status:ns,closedDate:closedDate});
       }
       return l;
@@ -2790,23 +2791,32 @@ export default function App(){
     var em=gUser.email;
     if(_lastLoadedEmail.current===em)return;
     _lastLoadedEmail.current=em;
-    var safe=function(t,c,v){try{return _sb.from(t).select("*").eq(c,v).then(function(r){return r.data||[];}).catch(function(){return[];});}catch(e){return Promise.resolve([]);}};
+    var safe=function(t,c,v){try{return _sb.from(t).select("*").eq(c,v).then(function(r){if(r&&r.error){console.error("Load failed for "+t+":",r.error);return null;}return r.data||[];}).catch(function(e){console.error("Load failed for "+t+":",e);return null;});}catch(e){return Promise.resolve(null);}};
     Promise.all([safe("loans","employer_email",em),safe("expenses","employer_email",em),safe("warnings","employer_email",em),safe("holidays","employer_email",em),safe("company_expenses","employer_email",em),safe("salary_revisions","employer_email",em),safe("bonuses","employer_email",em),safe("staff_claims","employer_email",em),safe("overtime","employer_email",em)]).then(function(res){
-      try{setLoans((res[0]||[]).map(function(l){return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,employee_id:l.employee_id,employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,kind:l.kind||"loan",loanType:l.loan_type||"personal",advanceType:l.advance_type||"salary",interestRate:Number(l.interest_rate||0),tenure:Number(l.tenure||0),emi:Number(l.emi||0),startDate:l.start_date||l.date,endDate:l.end_date,paidInstallments:Number(l.paid_installments||0),totalPaid:Number(l.total_paid||0),closedDate:l.closed_date,monthlyDeduction:l.monthly_deduction,monthly_deduction:l.monthly_deduction,paidAmount:l.paid_amount,paid_amount:l.paid_amount,status:l.status,createdAt:l.created_at};}));}catch(e){}
-      try{setExpenses((res[1]||[]).map(function(ex){return {id:ex.id,employerEmail:ex.employer_email,employeeId:ex.employee_id,employeeName:ex.employee_name,title:ex.title,amount:ex.amount,category:ex.category,description:ex.description,status:ex.status,month:ex.month,year:ex.year,createdAt:ex.created_at};}));}catch(e){}
-      try{setClaims((res[7]||[]).map(function(c){return{id:c.id,employeeId:c.employee_id,employeeName:c.employee_name,category:c.category,amount:Number(c.amount),date:c.date,description:c.description,status:c.status||"approved",month:Number(c.month),year:Number(c.year)};}));}catch(e){}
-      try{setBonuses((res[6]||[]).map(function(b){return{id:b.id,employeeId:b.employee_id,employeeName:b.employee_name,amount:Number(b.amount),type:b.type,note:b.note,date:b.date,payMonth:b.pay_month!=null?Number(b.pay_month):-1,payYear:b.pay_year!=null?Number(b.pay_year):-1};}));}catch(e){}
-      try{setOvertime((res[8]||[]).map(function(o){return{id:o.id,employeeId:o.employee_id,employeeName:o.employee_name,month:Number(o.month),year:Number(o.year),day:o.day!=null?Number(o.day):null,mode:o.ot_mode||"amount",hours:Number(o.ot_hours||0),rate:Number(o.ot_rate||0),amount:Number(o.ot_amount||0),note:o.note};}));}catch(e){}
-      try{setSalRevisions((res[5]||[]).map(function(r){return{id:r.id,employeeId:r.employee_id,employeeName:r.employee_name,effectiveDate:r.effective_date,oldCtc:Number(r.old_ctc),newCtc:Number(r.new_ctc),reason:r.reason};}));}catch(e){}
-      try{setCoExp((res[4]||[]).map(function(e){return{id:e.id,date:e.date,category:e.category,customCategory:e.custom_category,amount:Number(e.amount),vendor:e.vendor,description:e.description,paymentMode:e.payment_mode,month:e.month,year:e.year};}));}catch(e){}
-      try{setHolidays2((res[3]||[]).map(function(h2){return{id:h2.id,name:h2.name,date:h2.date};}));}catch(e){}
-      try{setWarnings((res[2]||[]).map(function(w){return {id:w.id,employerEmail:w.employer_email,employeeId:w.employee_id,employee_id:w.employee_id,employeeName:w.employee_name,incidentDate:w.incident_date,incident:w.incident,actionRequired:w.action_required,warningType:w.warning_type,acknowledged:w.acknowledged,createdAt:w.created_at};}));}catch(e){}
+      // null means the fetch itself failed (network/server error) — keep whatever's already in
+      // state rather than overwriting real data with an empty list just because of a blip.
+      try{if(res[0]!==null)setLoans((res[0]||[]).map(function(l){return {id:l.id,employerEmail:l.employer_email,employeeId:l.employee_id,employee_id:l.employee_id,employeeName:l.employee_name,amount:l.amount,purpose:l.purpose,date:l.date,kind:l.kind||"loan",loanType:l.loan_type||"personal",advanceType:l.advance_type||"salary",interestRate:Number(l.interest_rate||0),tenure:Number(l.tenure||0),emi:Number(l.emi||0),startDate:l.start_date||l.date,endDate:l.end_date,paidInstallments:Number(l.paid_installments||0),totalPaid:Number(l.total_paid||0),closedDate:l.closed_date,monthlyDeduction:l.monthly_deduction,monthly_deduction:l.monthly_deduction,paidAmount:l.paid_amount,paid_amount:l.paid_amount,status:l.status,createdAt:l.created_at};}));}catch(e){}
+      try{if(res[1]!==null)setExpenses((res[1]||[]).map(function(ex){return {id:ex.id,employerEmail:ex.employer_email,employeeId:ex.employee_id,employeeName:ex.employee_name,title:ex.title,amount:ex.amount,category:ex.category,description:ex.description,status:ex.status,month:ex.month,year:ex.year,createdAt:ex.created_at};}));}catch(e){}
+      try{if(res[7]!==null)setClaims((res[7]||[]).map(function(c){return{id:c.id,employeeId:c.employee_id,employeeName:c.employee_name,category:c.category,amount:Number(c.amount),date:c.date,description:c.description,status:c.status||"approved",month:Number(c.month),year:Number(c.year)};}));}catch(e){}
+      try{if(res[6]!==null)setBonuses((res[6]||[]).map(function(b){return{id:b.id,employeeId:b.employee_id,employeeName:b.employee_name,amount:Number(b.amount),type:b.type,note:b.note,date:b.date,payMonth:b.pay_month!=null?Number(b.pay_month):-1,payYear:b.pay_year!=null?Number(b.pay_year):-1};}));}catch(e){}
+      try{if(res[8]!==null)setOvertime((res[8]||[]).map(function(o){return{id:o.id,employeeId:o.employee_id,employeeName:o.employee_name,month:Number(o.month),year:Number(o.year),day:o.day!=null?Number(o.day):null,mode:o.ot_mode||"amount",hours:Number(o.ot_hours||0),rate:Number(o.ot_rate||0),amount:Number(o.ot_amount||0),note:o.note};}));}catch(e){}
+      try{if(res[5]!==null)setSalRevisions((res[5]||[]).map(function(r){return{id:r.id,employeeId:r.employee_id,employeeName:r.employee_name,effectiveDate:r.effective_date,oldCtc:Number(r.old_ctc),newCtc:Number(r.new_ctc),reason:r.reason};}));}catch(e){}
+      try{if(res[4]!==null)setCoExp((res[4]||[]).map(function(e){return{id:e.id,date:e.date,category:e.category,customCategory:e.custom_category,amount:Number(e.amount),vendor:e.vendor,description:e.description,paymentMode:e.payment_mode,month:e.month,year:e.year};}));}catch(e){}
+      try{if(res[3]!==null)setHolidays2((res[3]||[]).map(function(h2){return{id:h2.id,name:h2.name,date:h2.date};}));}catch(e){}
+      try{if(res[2]!==null)setWarnings((res[2]||[]).map(function(w){return {id:w.id,employerEmail:w.employer_email,employeeId:w.employee_id,employee_id:w.employee_id,employeeName:w.employee_name,incidentDate:w.incident_date,incident:w.incident,actionRequired:w.action_required,warningType:w.warning_type,acknowledged:w.acknowledged,createdAt:w.created_at};}));}catch(e){}
     }).catch(function(){});
   },[gUser&&gUser.email]);
 
   se(function(){
     lsSet("hr_org",org); // cache org for offline/fast-load — safe to do on every change
   },[org]);
+  // Whenever the employee list loads/changes, settle anyone whose scheduled last working date
+  // has now passed — moves them from "still active, offboard pending" to actually offboarded.
+  // Self-limiting: settleOffboards only calls setEmps when something genuinely needs settling,
+  // so this can't loop.
+  se(function(){
+    if(emps&&emps.length>0)settleOffboards();
+  },[emps.length]);
   // Hydrate the editable Settings form fields from org ONLY once per login (not on every org change),
   // so a background org refresh (e.g. after saving, or a Supabase round-trip) can never clobber an
   // in-progress edit — this was the root cause of the logo (and occasionally address/phone) disappearing.
@@ -3049,13 +3059,24 @@ export default function App(){
   }
   function confirmOff(){
     if(!offData.reason)return showT("Enter reason","err");
-    var newEmps=emps.map(function(e){return e.id===offE.id?Object.assign({},e,{status:offData.type,terminatedOn:todayStr,resignDate:offData.resignDate,terminationData:Object.assign({},offData)}):e;});
+    var isFuture=offData.resignDate&&offData.resignDate>todayStr; // last working date hasn't happened yet
+    var newEmps=emps.map(function(e){
+      if(e.id!==offE.id)return e;
+      if(isFuture){
+        // Stay active until the last working date actually passes — settleOffboards() flips
+        // this automatically once today >= resignDate, so the employee keeps appearing
+        // normally in Attendance/Payroll/Team until their real last day.
+        return Object.assign({},e,{pendingOffboard:Object.assign({},offData)});
+      }
+      return Object.assign({},e,{status:offData.type,terminatedOn:todayStr,resignDate:offData.resignDate,terminationData:Object.assign({},offData),pendingOffboard:null});
+    });
     var em=gUser&&gUser.email?gUser.email:lsGet("hr_last_email","");
     setEmps(newEmps);
     lsSet("hr_emps_"+(em||""),newEmps);
     setOffE(null);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});setSelE(null);
-    showT("Offboarded. Employee app access will end in 10 days.");
+    showT(isFuture?"Scheduled — will offboard automatically on "+offData.resignDate:"Offboarded. Employee app access will end in 10 days.");
     syncToSupabase(newEmps,att,incentives,shifts,reminders,notices,revisions,em);
+    if(isFuture)return; // don't touch employee app access yet — they're still genuinely employed
     // Find employee app account by email and update to terminated_employee
     var offEmp=newEmps.find(function(e){return e.id===offE.id;});
     if(offEmp&&offEmp.email){
@@ -3067,6 +3088,41 @@ export default function App(){
         if(!r.error)console.log("Employee app access set to terminate in 10 days");
       });
     }
+  }
+  // Runs once per load: settles anyone whose scheduled last working date has now passed,
+  // flipping them from "still active, offboarding pending" to actually offboarded.
+  function settleOffboards(){
+    var changed=false;
+    var newEmps=emps.map(function(e){
+      if(e.pendingOffboard&&e.pendingOffboard.resignDate&&e.pendingOffboard.resignDate<=todayStr){
+        changed=true;
+        return Object.assign({},e,{status:e.pendingOffboard.type,terminatedOn:e.pendingOffboard.resignDate,resignDate:e.pendingOffboard.resignDate,terminationData:Object.assign({},e.pendingOffboard),pendingOffboard:null});
+      }
+      return e;
+    });
+    if(!changed)return;
+    var em=gUser&&gUser.email?gUser.email:lsGet("hr_last_email","");
+    setEmps(newEmps);
+    lsSet("hr_emps_"+(em||""),newEmps);
+    syncToSupabase(newEmps,att,incentives,shifts,reminders,notices,revisions,em);
+    newEmps.filter(function(e,i){return e.status!==emps[i].status;}).forEach(function(offEmp){
+      if(offEmp.email){
+        _sb.from("user_plans").update({role:"terminated_employee",terminated_at:todayStr}).eq("employer_email",em).eq("email",offEmp.email).then(function(){});
+      }
+    });
+  }
+  // Brings a previously-offboarded employee back to active status — clears the termination record.
+  function rejoinEmp(empId){
+    var newEmps=emps.map(function(e){return e.id===empId?Object.assign({},e,{status:"active",terminatedOn:null,resignDate:null,terminationData:null,pendingOffboard:null}):e;});
+    var em=gUser&&gUser.email?gUser.email:lsGet("hr_last_email","");
+    setEmps(newEmps);
+    lsSet("hr_emps_"+(em||""),newEmps);
+    syncToSupabase(newEmps,att,incentives,shifts,reminders,notices,revisions,em);
+    var rejoinedEmp=newEmps.find(function(e){return e.id===empId;});
+    if(rejoinedEmp&&rejoinedEmp.email){
+      _sb.from("user_plans").update({role:"employee",terminated_at:null}).eq("employer_email",em).eq("email",rejoinedEmp.email).then(function(){});
+    }
+    showT(rejoinedEmp.name+" rejoined — active again");
   }
   function handleEmailChange(){
     var newEm=newEmailVal.trim().toLowerCase();
@@ -4660,17 +4716,52 @@ null
           ));
         })
       ):h("div",null,
+        // ── Scheduled to leave — still active, will auto-offboard on their last working date ──
+        (function(){
+          var pending=emps.filter(function(e){return e.status==="active"&&e.pendingOffboard&&e.pendingOffboard.resignDate;});
+          if(pending.length===0)return null;
+          return h("div",{style:{marginBottom:14}},
+            h("div",{style:{fontSize:11,fontWeight:700,color:AMB,marginBottom:8}},pending.length+" scheduled to leave (still active until their last day)"),
+            pending.map(function(e){
+              return h("div",{key:e.id,style:{background:AMB+"0D",border:"1px solid "+AMB+"35",borderRadius:13,padding:"12px 13px",marginBottom:8}},
+                h("div",{style:{display:"flex",gap:10,alignItems:"center"}},
+                  av(e),
+                  h("div",{style:{flex:1}},
+                    h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},e.name),
+                    h("div",{style:{fontSize:11,color:GRY}},e.role+" | "+e.dept),
+                    h("div",{style:{fontSize:10,color:AMB,marginTop:1}},"Last working day: "+e.pendingOffboard.resignDate)
+                  ),
+                  h("div",{style:{fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:14,background:T.PILL_WARN_BG,color:AMB}},"Active")
+                )
+              );
+            })
+          );
+        })(),
         h("div",{style:{fontSize:11,color:GRY,marginBottom:8}},trmEmps.length+" offboarded"),
         trmEmps.length===0?h("div",{style:{textAlign:"center",padding:28,color:GRY,fontSize:13}},"No offboarded employees"):null,
         trmEmps.map(function(e){
+          var expanded=offExpandId===e.id;
           return h("div",{key:e.id,style:{background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:"12px 13px",marginBottom:8}},
-            h("div",{style:{display:"flex",gap:10,alignItems:"center",marginBottom:7}},
+            h("div",{onClick:function(){setOffExpandId(expanded?null:e.id);},style:{display:"flex",gap:10,alignItems:"center",marginBottom:7,cursor:"pointer"}},
               av(e),
               h("div",{style:{flex:1}},h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},e.name),h("div",{style:{fontSize:11,color:GRY}},e.role+" | "+e.dept),h("div",{style:{fontSize:10,color:RED,marginTop:1}},(e.status==="resigned"?"Resigned":"Terminated")+" - "+e.terminatedOn),e.resignDate?h("div",{style:{fontSize:10,color:GRY}},"Last day: "+e.resignDate):null),
-              h("div",{style:{fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:14,background:e.status==="resigned"?T.PILL_WARN_BG:T.PILL_DANGER_BG,color:e.status==="resigned"?AMB:RED}},e.status)
+              h("div",{style:{fontSize:9,fontWeight:700,padding:"3px 8px",borderRadius:14,background:e.status==="resigned"?T.PILL_WARN_BG:T.PILL_DANGER_BG,color:e.status==="resigned"?AMB:RED}},e.status),
+              ic(expanded?"expand_less":"expand_more",GRY,18)
             ),
-            e.terminationData?h("div",{style:{background:SFT,borderRadius:8,padding:"7px 10px",marginBottom:8,fontSize:11,color:GRY}},h("div",null,h("b",null,"Reason: "),e.terminationData.reason),e.terminationData.note?h("div",null,h("b",null,"Note: "),e.terminationData.note):null,e.terminationData.handover&&e.terminationData.handover.length>0?h("div",null,h("b",null,"Handover: "),e.terminationData.handover.join(", ")):null):null,
-            h("button",{onClick:function(){if(window.confirm("Delete permanently?"))removeEmp(e.id);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:T.PILL_DANGER_BG,border:"1px solid "+RED,borderRadius:8,padding:"7px",color:RED,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Delete Record")
+            expanded?h("div",{style:{background:SFT,borderRadius:8,padding:"10px 11px",marginBottom:8,fontSize:11,color:GRY,lineHeight:1.6}},
+              h("div",null,h("b",{style:{color:NVY}},"Employee ID: "),e.eid||"-"),
+              h("div",null,h("b",{style:{color:NVY}},"Joined: "),e.joined||"-"),
+              h("div",null,h("b",{style:{color:NVY}},"Monthly CTC: "),fmt(e.monthlyCTC||0)),
+              e.terminationData?h("div",null,h("b",{style:{color:NVY}},"Reason: "),e.terminationData.reason):null,
+              e.terminationData&&e.terminationData.note?h("div",null,h("b",{style:{color:NVY}},"Note: "),e.terminationData.note):null,
+              e.terminationData&&e.terminationData.handover&&e.terminationData.handover.length>0?h("div",null,h("b",{style:{color:NVY}},"Handover: "),e.terminationData.handover.join(", ")):null,
+              e.mob?h("div",null,h("b",{style:{color:NVY}},"Mobile: "),e.mob):null,
+              e.email?h("div",null,h("b",{style:{color:NVY}},"Email: "),e.email):null
+            ):null,
+            h("div",{style:{display:"flex",gap:6}},
+              h("button",{onClick:function(){if(window.confirm(e.name+" will be marked active again and removed from the offboarded list. Continue?"))rejoinEmp(e.id);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:T.PILL_OK_BG,border:"1px solid "+GRN,borderRadius:8,padding:"7px",color:GRN,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("refresh",GRN,13),"Rejoin"),
+              h("button",{onClick:function(){if(window.confirm("Delete permanently?"))removeEmp(e.id);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:T.PILL_DANGER_BG,border:"1px solid "+RED,borderRadius:8,padding:"7px",color:RED,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Delete")
+            )
           );
         })
       )
@@ -8412,7 +8503,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       setLoans(function(p){return (p||[]).map(function(r){
         return r.id===l.id?Object.assign({},r,{status:"cancelled",closedDate:new Date().toISOString().split("T")[0]}):r;
       });});
-      _sb.from("loans").update({status:"cancelled",closed_date:new Date().toISOString().split("T")[0]}).eq("id",String(l.id)).then(function(){});
+      _sb.from("loans").update({status:"cancelled",closed_date:new Date().toISOString().split("T")[0]}).eq("id",String(l.id)).then(function(r){if(r&&r.error)showT("Cancel failed to save: "+r.error.message,"err");});
       showT("Record cancelled and moved to history");
     }
 
@@ -8422,7 +8513,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       setLoans(function(p){return (p||[]).map(function(r){
         return r.id===l.id?Object.assign({},r,{status:"settled",closedDate:today}):r;
       });});
-      _sb.from("loans").update({status:"settled",closed_date:today}).eq("id",String(l.id)).then(function(){});
+      _sb.from("loans").update({status:"settled",closed_date:today}).eq("id",String(l.id)).then(function(r){if(r&&r.error)showT("Settle failed to save: "+r.error.message,"err");});
       showT("Marked as settled");
     }
 
@@ -8626,7 +8717,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             paid_installments:0,total_paid:0,
             monthly_deduction:emi,paid_amount:0,
             status:"active",date:loanDate,purpose:loanPurpose
-          }).then(function(){});
+          }).then(function(r){if(r&&r.error){showT("Could not save to server: "+r.error.message,"err");setLoans(function(p2){return (p2||[]).filter(function(x){return x.id!==rec.id;});});}});
           setLoanAmt("");setLoanMon("");setLoanInterest("");setLoanDate("");setLoanPurpose("");setShowLoanForm(false);
           showT((loanKind==="loan"?"Loan":"Advance")+" added — EMI: "+fmt(emi)+"/mo");
         },style:{width:"100%",background:NVY,border:"none",borderRadius:9,padding:"11px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},
