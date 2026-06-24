@@ -472,6 +472,90 @@ function pdfFooter(doc,W,mg,H,orgName,orgEmail,appLogoSrc,authPos,authSign){
 
 
 // ── Shared PDF table helper ──────────────────────────────────────
+// ── Shared grouped-employee table ──────────────────────────────────────────
+// Used by every bulk report (PF/ESI, Salary Register, Employee Records, Attendance
+// Summary monthly/yearly, Payroll Report) so they all follow one convention: employees
+// grouped under a department title (not a repeated department column), departments and
+// employees both alphabetical, and an identity cell showing Name (bold) with Role - ID
+// underneath — same pattern used by the Dept Payroll and Detailed Attendance reports.
+function drawGroupedEmployeeTable(doc,mg,cw,H,ry,headerCols,headerCws,empRows,opts){
+  opts=opts||{};
+  var identityW=opts.identityW||50;
+  var rowH=opts.rowH||13;
+  var fontSize=opts.fontSize||8;
+  var headerColor=opts.headerColor||[26,35,73];
+  var dataCw=headerCws.reduce(function(a,b){return a+b;},0);
+  var scale=(cw-identityW)/dataCw;
+  var cws=headerCws.map(function(w){return w*scale;});
+  var cx=[mg+identityW];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
+
+  function drawHeader(){
+    doc.setFillColor(headerColor[0],headerColor[1],headerColor[2]);doc.rect(mg,ry,cw,9,"F");
+    doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+    doc.text("EMPLOYEE",mg+3,ry+6);
+    headerCols.forEach(function(c,i){
+      var tx=c.align==="r"?cx[i]+cws[i]-3:cx[i]+3;
+      doc.text(c.label,tx,ry+6,{align:c.align==="r"?"right":"left"});
+    });
+    ry+=9;
+  }
+  drawHeader();
+
+  var depts={};
+  empRows.forEach(function(r){var dp=r.emp.dept||"Unassigned";(depts[dp]=depts[dp]||[]).push(r);});
+  var deptNames=Object.keys(depts).sort(function(a,b){return a.localeCompare(b);});
+
+  deptNames.forEach(function(deptName){
+    if(ry>H-20){doc.addPage();ry=14;drawHeader();}
+    doc.setFillColor(238,242,250);doc.rect(mg,ry,cw,7,"F");
+    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(26,35,73);
+    doc.text(deptName,mg+3,ry+5);
+    ry+=7;
+    var deptRows=depts[deptName].slice().sort(function(a,b){return (a.emp.name||"").localeCompare(b.emp.name||"");});
+    deptRows.forEach(function(r,ei){
+      if(ry+rowH>H-18){doc.addPage();ry=14;drawHeader();}
+      if(ei%2===0){doc.setFillColor(248,250,253);doc.rect(mg,ry,cw,rowH,"F");}
+      doc.setDrawColor(225,230,240);doc.setLineWidth(.2);doc.line(mg,ry+rowH,mg+cw,ry+rowH);
+      doc.line(mg+identityW,ry,mg+identityW,ry+rowH);
+      // Identity cell — name bold, role - ID underneath
+      doc.setFontSize(8.3);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text((r.emp.name||"").substring(0,26),mg+3,ry+rowH/2-1);
+      doc.setFontSize(6.3);doc.setFont("helvetica","normal");doc.setTextColor(71,85,105);
+      var sub=(r.emp.role||"-")+(r.emp.eid?" - "+r.emp.eid:"");
+      doc.text(sub.substring(0,40),mg+3,ry+rowH/2+3.5);
+      // Data cells
+      r.cells.forEach(function(cell,i){
+        var val=cell&&cell.val!==undefined?cell.val:cell;
+        var bold=cell&&cell.bold;
+        var color=cell&&cell.color;
+        doc.setFontSize(fontSize);doc.setFont("helvetica",bold?"bold":"normal");
+        if(color)doc.setTextColor(color[0],color[1],color[2]);else doc.setTextColor(15,23,42);
+        var align=headerCols[i]&&headerCols[i].align==="r"?"right":"left";
+        var tx=align==="right"?cx[i]+cws[i]-3:cx[i]+3;
+        doc.text(String(val),tx,ry+rowH/2+1.3,{align:align});
+      });
+      ry+=rowH;
+    });
+  });
+
+  if(opts.totalsCells){
+    if(ry+rowH>H-18){doc.addPage();ry=14;drawHeader();}
+    doc.setDrawColor(headerColor[0],headerColor[1],headerColor[2]);doc.setLineWidth(.6);doc.line(mg,ry,mg+cw,ry);
+    doc.setFontSize(8.3);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+    doc.text("TOTAL",mg+3,ry+rowH/2+1.3);
+    opts.totalsCells.forEach(function(cell,i){
+      var val=cell&&cell.val!==undefined?cell.val:cell;
+      var color=cell&&cell.color;
+      doc.setFontSize(fontSize);doc.setFont("helvetica","bold");
+      if(color)doc.setTextColor(color[0],color[1],color[2]);else doc.setTextColor(15,23,42);
+      var align=headerCols[i]&&headerCols[i].align==="r"?"right":"left";
+      var tx=align==="right"?cx[i]+cws[i]-3:cx[i]+3;
+      doc.text(String(val),tx,ry+rowH/2+1.3,{align:align});
+    });
+    ry+=rowH;
+  }
+  return ry;
+}
 function pdfTable(doc,ry,mg,cols,cws,rows,opts){
   // cols: array of {label,align:"l"/"r"/"c"}
   // cws: column widths array (must sum to cw)
@@ -1083,8 +1167,6 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
     doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(71,85,105);doc.text("All amounts in Rs.",mg,ry-1);
 
     var cols=showEmployer?[
-      {label:"EMPLOYEE NAME",align:"l"},
-      {label:"DEPT",align:"l"},
       {label:"GROSS",align:"r"},
       {label:"DEDUCT.",align:"r"},
       {label:"NET PAY",align:"r"},
@@ -1092,21 +1174,14 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
       {label:"ER ESI",align:"r"},
       {label:"TOTAL CTC",align:"r"},
     ]:[
-      {label:"EMPLOYEE NAME",align:"l"},
-      {label:"DEPARTMENT",align:"l"},
       {label:"GROSS EARNINGS (Rs.)",align:"r"},
       {label:"DEDUCTIONS",align:"r"},
       {label:"NET PAY (Rs.)",align:"r"},
     ];
 
-    var cws=showEmployer?[46,22,18,20,20,18,18,22]:[52,34,34,30,38];
-    // Scale to fit exactly
-    var cw=W-mg*2;
-    var cwSum=cws.reduce(function(a,b){return a+b;},0);
-    var scale=cw/cwSum;
-    cws=cws.map(function(w){return Math.round(w*scale*100)/100;});
+    var cws=showEmployer?[18,20,20,18,18,22]:[34,30,38];
 
-    var rows=[];
+    var empRows=[];
     var tG=0,tN=0,tD=0,tPR=0,tER=0;
 
     emps.forEach(function(emp){
@@ -1114,50 +1189,37 @@ function makePayrollPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,showEmplo
       var ded=d.gr-d.net;
       tG+=d.gr;tN+=d.net;tD+=ded;tPR+=d.pfR;tER+=d.esiR;
       if(showEmployer){
-        rows.push([
-          {val:(emp.name||"").substring(0,24),bold:true},
-          {val:(emp.dept||"-").substring(0,11),color:[71,85,105]},
+        empRows.push({emp:emp,cells:[
           {val:fmtNum(d.gr),color:[60,80,180]},
           {val:fmtNum(ded),color:[200,40,40]},
           {val:fmtNum(d.net),bold:true,color:[5,140,90]},
           {val:fmtNum(d.pfR),color:[80,100,200]},
           {val:fmtNum(d.esiR),color:[5,140,90]},
           {val:fmtNum(d.gr+d.pfR+d.esiR),bold:true,color:[160,100,0]},
-        ]);
+        ]});
       } else {
-        rows.push([
-          {val:(emp.name||"").substring(0,28),bold:true},
-          {val:(emp.dept||"-").substring(0,16),color:[71,85,105]},
+        empRows.push({emp:emp,cells:[
           {val:fmtNum(d.gr),color:[60,80,180]},
           {val:fmtNum(ded),color:[200,40,40]},
           {val:fmtNum(d.net),bold:true,color:[5,140,90]},
-        ]);
+        ]});
       }
     });
 
-    // Totals row
-    if(showEmployer){
-      rows.push([
-        {val:"TOTAL",bold:true},
-        {val:""},
-        {val:fmtNum(tG),bold:true,color:[60,80,180]},
-        {val:fmtNum(tD),bold:true,color:[200,40,40]},
-        {val:fmtNum(tN),bold:true,color:[5,140,90]},
-        {val:fmtNum(tPR),color:[60,80,180]},
-        {val:fmtNum(tER),color:[5,140,90]},
-        {val:fmtNum(tG+tPR+tER),bold:true,color:[180,100,0]},
-      ]);
-    } else {
-      rows.push([
-        {val:"TOTAL",bold:true},
-        {val:""},
-        {val:fmtNum(tG),bold:true,color:[60,80,180]},
-        {val:fmtNum(tD),bold:true,color:[200,40,40]},
-        {val:fmtNum(tN),bold:true,color:[5,140,90]},
-      ]);
-    }
+    var totalsCells=showEmployer?[
+      {val:fmtNum(tG),color:[60,80,180]},
+      {val:fmtNum(tD),color:[200,40,40]},
+      {val:fmtNum(tN),color:[5,140,90]},
+      {val:fmtNum(tPR),color:[60,80,180]},
+      {val:fmtNum(tER),color:[5,140,90]},
+      {val:fmtNum(tG+tPR+tER),color:[180,100,0]},
+    ]:[
+      {val:fmtNum(tG),color:[60,80,180]},
+      {val:fmtNum(tD),color:[200,40,40]},
+      {val:fmtNum(tN),color:[5,140,90]},
+    ];
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:10,fontSize:8.5,totalsRow:true});
+    ry=drawGroupedEmployeeTable(doc,mg,W-mg*2,H,ry,cols,cws,empRows,{totalsCells:totalsCells});
     ry+=8;
 
     // Summary line
@@ -1395,8 +1457,6 @@ function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddre
     ry+=10;
 
     var cols=[
-      {label:"EMPLOYEE NAME",align:"l"},
-      {label:"DEPT",align:"l"},
       {label:"WORKING DAYS",align:"r"},
       {label:"PRESENT",align:"r"},
       {label:"ABSENT",align:"r"},
@@ -1405,9 +1465,9 @@ function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddre
       {label:"HOLIDAY",align:"r"},
       {label:"ATT %",align:"r"},
     ];
-    var cws=[46,22,22,18,16,16,16,16,14];
+    var cws=[22,18,16,16,16,16,14];
 
-    var rows=[];
+    var empRows=[];
     var totP=0,totA=0,totH=0,totL=0,totHol=0;
 
     emps.filter(function(e){return e.status==="active";}).forEach(function(emp){
@@ -1421,12 +1481,9 @@ function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddre
         else if(v==="paid"||v==="unpaid")l++;
         else if(v==="holiday")hol++;
       }
-      var marked=p+a+hd+l;
       var rate=workingDays>0?Math.round((p+hd*0.5+l)*100/workingDays):0;
       totP+=p;totA+=a;totH+=hd;totL+=l;totHol+=hol;
-      rows.push([
-        {val:(emp.name||"").substring(0,22),bold:true},
-        {val:(emp.dept||"-").substring(0,10),color:[71,85,105]},
+      empRows.push({emp:emp,cells:[
         {val:workingDays},
         {val:p,color:[5,140,90]},
         {val:a>0?a:"-",color:a>0?[200,40,40]:[120,130,145]},
@@ -1434,22 +1491,20 @@ function makeAttSummaryPDF(emps,att,m,y,orgName,orgEmail,orgPos,logoSrc,orgAddre
         {val:l>0?l:"-",color:l>0?[120,80,200]:[120,130,145]},
         {val:hol>0?hol:"-",color:[95,105,120]},
         {val:rate+"%",bold:true,color:rate>=95?[5,140,90]:rate>=80?[200,110,0]:[200,40,40]},
-      ]);
+      ]});
     });
 
-    rows.push([
-      {val:"TOTALS",bold:true},
+    var totalsCells=[
       {val:""},
-      {val:""},
-      {val:totP,bold:true,color:[5,140,90]},
-      {val:totA,bold:true,color:[200,40,40]},
-      {val:totH,bold:true,color:[180,100,0]},
-      {val:totL,bold:true,color:[120,80,200]},
+      {val:totP,color:[5,140,90]},
+      {val:totA,color:[200,40,40]},
+      {val:totH,color:[180,100,0]},
+      {val:totL,color:[120,80,200]},
       {val:totHol,color:[60,80,180]},
       {val:""},
-    ]);
+    ];
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:10,fontSize:8.5,totalsRow:true});
+    ry=drawGroupedEmployeeTable(doc,mg,W-mg*2,H,ry,cols,cws,empRows,{totalsCells:totalsCells});
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     downloadPDF(doc.output("blob"),"Attendance-Summary-"+MOS[m]+"-"+String(y)+".pdf");
   },function(){alert("PDF library failed to load.");});
@@ -1466,22 +1521,19 @@ function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAdd
     var months=[3,4,5,6,7,8,9,10,11,0,1,2];
     var years=months.map(function(m){return m<3?y+1:y;});
 
-    var cols=[{label:"EMPLOYEE",align:"l"},{label:"DEPT",align:"l"}];
+    var cols=[];
     monthCols.forEach(function(mn){cols.push({label:mn,align:"r"});});
     cols.push({label:"TOTAL P",align:"r"});
     cols.push({label:"TOTAL A",align:"r"});
     cols.push({label:"RATE",align:"r"});
 
-    var baseCws=[36,16];
+    var baseCws=[];
     months.forEach(function(){baseCws.push(14);});
     baseCws.push(14);baseCws.push(14);baseCws.push(14);
-    var cw=W-mg*2;
-    var scale=cw/baseCws.reduce(function(a,b){return a+b;},0);
-    var cws=baseCws.map(function(w){return Math.round(w*scale*10)/10;});
 
-    var rows=[];
+    var empRows=[];
     emps.filter(function(e){return e.status==="active";}).forEach(function(emp){
-      var row=[{val:(emp.name||"").substring(0,18),bold:true},{val:(emp.dept||"-").substring(0,8),color:[71,85,105]}];
+      var cells=[];
       var totP=0,totA=0,totWork=0;
       months.forEach(function(m,mi){
         var yr=years[mi];
@@ -1494,16 +1546,16 @@ function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAdd
           else if(v==="absent")a++;
         }
         totP+=p;totA+=a;totWork+=daysInMo;
-        row.push({val:p>0?String(p):"-",color:p>0?[5,140,90]:[150,160,175]});
+        cells.push({val:p>0?String(p):"-",color:p>0?[5,140,90]:[150,160,175]});
       });
       var rate=totWork>0?Math.round(totP*100/totWork):0;
-      row.push({val:totP,bold:true,color:[5,140,90]});
-      row.push({val:totA>0?totA:"-",color:totA>0?[200,40,40]:[120,130,145]});
-      row.push({val:rate+"%",bold:true,color:rate>=90?[5,140,90]:rate>=75?[200,110,0]:[200,40,40]});
-      rows.push(row);
+      cells.push({val:totP,bold:true,color:[5,140,90]});
+      cells.push({val:totA>0?totA:"-",color:totA>0?[200,40,40]:[120,130,145]});
+      cells.push({val:rate+"%",bold:true,color:rate>=90?[5,140,90]:rate>=75?[200,110,0]:[200,40,40]});
+      empRows.push({emp:emp,cells:cells});
     });
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9,fontSize:7.5});
+    ry=drawGroupedEmployeeTable(doc,mg,W-mg*2,H,ry,cols,baseCws,empRows,{rowH:11,fontSize:7,identityW:42});
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     downloadPDF(doc.output("blob"),"Annual-Attendance-"+String(y)+"-"+(String(y+1)).slice(2)+".pdf");
   },function(){alert("PDF library failed to load.");});
@@ -1513,37 +1565,19 @@ function makeAttSummaryYearPDF(emps,att,y,orgName,orgEmail,orgPos,logoSrc,orgAdd
 function makeEmpPDF(emps,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
-    var W=297,H=210,mg=14,cw=W-mg*2,rh=9;
+    var W=297,H=210,mg=14,cw=W-mg*2;
     var nd=new Date();
     var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"EMPLOYEE RECORDS",emps.length+" Employees | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
-    var cols=["EMPLOYEE NAME","EMP ID","ROLE / DESIGNATION","DEPARTMENT","MOBILE","MONTHLY CTC","STATUS"];
-    var cws=[50,22,45,32,28,30,22];
-    var cx=[mg];for(var i=0;i<cws.length-1;i++)cx.push(cx[i]+cws[i]);
-    doc.setFillColor(30,42,60);doc.rect(mg,ry,cw,rh,"F");
-    doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
-    cols.forEach(function(col,i){doc.text(col,cx[i]+3,ry+6);});
-    ry+=rh;
-    emps.forEach(function(emp,ei){
-      if(ei%2===0){doc.setFillColor(247,249,252);doc.rect(mg,ry,cw,rh,"F");}
-      doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-      doc.text((emp.name||"").substring(0,20),cx[0]+3,ry+6);
-      doc.setFont("helvetica","normal");doc.setTextColor(71,85,105);
-      doc.text(emp.eid||"",cx[1]+3,ry+6);
-      doc.text((emp.role||"").substring(0,22),cx[2]+3,ry+6);
-      doc.text((emp.dept||"").substring(0,16),cx[3]+3,ry+6);
-      doc.text(emp.mob||"",cx[4]+3,ry+6);
-      doc.setTextColor(5,140,90);doc.setFont("helvetica","bold");
-      doc.text(fmtIN(emp.monthlyCTC),cx[5]+cws[5]-3,ry+6,{align:"right"});
-      var sc=emp.status==="active"?[5,140,90]:[200,40,40];
-      doc.setFillColor(sc[0],sc[1],sc[2]);
-      doc.setGState(new doc.GState({opacity:0.12}));
-      doc.roundedRect(cx[6]+1,ry+1.5,cws[6]-2,rh-3,1.5,1.5,"F");
-      doc.setGState(new doc.GState({opacity:1}));
-      doc.setTextColor(sc[0],sc[1],sc[2]);
-      doc.text(emp.status==="active"?"Active":"Offboarded",cx[6]+cws[6]/2,ry+6,{align:"center"});
-      ry+=rh;
-      if(ry>H-16){doc.addPage();ry=14;}
+    var cols=[{label:"MOBILE",align:"l"},{label:"MONTHLY CTC",align:"r"},{label:"STATUS",align:"r"}];
+    var cws=[40,40,30];
+    var empRows=emps.map(function(emp){
+      return {emp:emp,cells:[
+        {val:emp.mob||"-"},
+        {val:fmtIN(emp.monthlyCTC),bold:true,color:[5,140,90]},
+        {val:emp.status==="active"?"Active":"Offboarded",bold:true,color:emp.status==="active"?[5,140,90]:[200,40,40]},
+      ]};
     });
+    ry=drawGroupedEmployeeTable(doc,mg,cw,H,ry,cols,cws,empRows,{identityW:58});
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     downloadPDF(doc.output("blob"),"Employees-"+nd.getFullYear()+".pdf");
   },function(){alert("PDF library failed to load. Check internet connection.");});
@@ -1614,7 +1648,6 @@ function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,
     }
 
     var cols=[
-      {label:"EMPLOYEE NAME",align:"l"},
       {label:"UAN",align:"l"},
       {label:"GROSS (Rs.)",align:"r"},
       {label:"PF WAGES",align:"r"},
@@ -1624,13 +1657,9 @@ function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,
       {label:"ER ESI",align:"r"},
       {label:"TOTAL (Rs.)",align:"r"},
     ];
-    var cws=[42,26,16,18,16,16,16,16,18];
-    var cwSum=cws.reduce(function(a,b){return a+b;},0);
-    var cwAvail=W-mg*2;
-    var scale=cwAvail/cwSum;
-    cws=cws.map(function(w){return Math.round(w*scale*10)/10;});
+    var cws=[26,16,18,16,16,16,16,18];
 
-    var rows=[];
+    var empRows=[];
     var totGross=0,totPFW=0,totEmpPF=0,totErPF=0,totEmpESI=0,totErESI=0,totAll=0;
 
     eligible.forEach(function(emp){
@@ -1639,8 +1668,7 @@ function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,
       var total=d.pfE+d.pfR+(d.esiE||0)+(d.esiR||0);
       totGross+=d.gr;totPFW+=pfWage;totEmpPF+=d.pfE;totErPF+=d.pfR;
       totEmpESI+=d.esiE||0;totErESI+=d.esiR||0;totAll+=total;
-      rows.push([
-        {val:(emp.name||"").substring(0,20),bold:true},
+      empRows.push({emp:emp,cells:[
         {val:emp.uan||"-",color:[95,105,120]},
         {val:fmtNum(d.gr)},
         {val:fmtNum(pfWage),color:[60,80,180]},
@@ -1649,24 +1677,22 @@ function makePFESIPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,orgAddress,
         {val:fmtNum(d.esiE||0),color:[5,140,90]},
         {val:fmtNum(d.esiR||0),color:[5,140,90]},
         {val:fmtNum(total),bold:true,color:[180,100,0]},
-      ]);
+      ]});
     });
 
-    // Totals row
-    rows.push([
-      {val:"TOTALS",bold:true},
+    var totalsCells=[
       {val:""},
-      {val:fmtNum(totGross),bold:true},
-      {val:fmtNum(totPFW),bold:true},
-      {val:fmtNum(totEmpPF),bold:true,color:[60,80,180]},
-      {val:fmtNum(totErPF),bold:true,color:[60,80,180]},
-      {val:fmtNum(totEmpESI),bold:true,color:[5,140,90]},
-      {val:fmtNum(totErESI),bold:true,color:[5,140,90]},
-      {val:fmtNum(totAll),bold:true,color:[180,100,0]},
-    ]);
+      {val:fmtNum(totGross)},
+      {val:fmtNum(totPFW)},
+      {val:fmtNum(totEmpPF),color:[60,80,180]},
+      {val:fmtNum(totErPF),color:[60,80,180]},
+      {val:fmtNum(totEmpESI),color:[5,140,90]},
+      {val:fmtNum(totErESI),color:[5,140,90]},
+      {val:fmtNum(totAll),color:[180,100,0]},
+    ];
 
     doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(71,85,105);doc.text("All amounts in the table below are in Rs.",mg,ry-1);
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9.5,fontSize:8,totalsRow:true});
+    ry=drawGroupedEmployeeTable(doc,mg,cw,H,ry,cols,cws,empRows,{totalsCells:totalsCells});
     ry+=10;
 
     // Challan summary — 3 clean boxes
@@ -1745,10 +1771,6 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
     ry+=12;
 
     var cols=[
-      {label:"#",align:"c"},
-      {label:"EMPLOYEE NAME",align:"l"},
-      {label:"ROLE",align:"l"},
-      {label:"DEPT",align:"l"},
       {label:"WORK",align:"r"},
       {label:"PAID",align:"r"},
       {label:"BASIC",align:"r"},
@@ -1763,18 +1785,12 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
       {label:"NET PAY (Rs.)",align:"r"},
       {label:"SIGN",align:"c"},
     ];
-    var cws=[7,28,16,15,13,11,18,15,15,20,15,14,13,14,17,21,13];
-    // Verify: cws sum
-    var cwSum=cws.reduce(function(a,b){return a+b;},0);
-    var cw=W-mg*2;
-    // Scale cws to fit exactly
-    var scale=cw/cwSum;
-    cws=cws.map(function(w){return Math.round(w*scale*10)/10;});
+    var cws=[13,11,18,15,15,20,15,14,13,14,17,21,13];
 
-    var rows=[];
+    var empRows=[];
     var totW=0,totD=0,totB=0,totH=0,totA=0,totG=0,totPF=0,totESI=0,totPT=0,totTDS=0,totDed=0,totNet=0;
 
-    emps.filter(function(e){return e.status==="active";}).sort(function(a,b){return (a.name||"").localeCompare(b.name||"");}).forEach(function(emp,ei){
+    emps.filter(function(e){return e.status==="active";}).forEach(function(emp){
       var mp=payFn(emp,y,m),d=mp.d,ma=mp.ma;
       // Days Worked = physically present (excludes leave, includes holiday if worked)
       var daysWork=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.holiday||0));
@@ -1784,11 +1800,7 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
       totW+=daysWork;totD+=daysPaid;totB+=d.eb;totH+=d.hra;
       totA+=d.allow;totG+=d.gr;totPF+=d.pfE;totESI+=d.esiE;
       totPT+=d.pt;totTDS+=d.tds;totDed+=totalDed;totNet+=d.net;
-      rows.push([
-        {val:ei+1,color:[95,105,120]},
-        {val:(emp.name||"").substring(0,18),bold:true},
-        {val:(emp.role||"").substring(0,14),color:[71,85,105]},
-        {val:(emp.dept||"").substring(0,8),color:[71,85,105]},
+      empRows.push({emp:emp,cells:[
         {val:daysWork},
         {val:daysPaid},
         {val:fmtNum(d.eb),color:[60,80,180]},
@@ -1802,29 +1814,26 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
         {val:fmtNum(totalDed),bold:true,color:[200,40,40]},
         {val:fmtNum(d.net),bold:true,color:[5,140,90]},
         {val:""},
-      ]);
+      ]});
     });
 
-    rows.push([
-      {val:""},
-      {val:"TOTALS",bold:true},
-      {val:""},{val:""},
-      {val:totW,bold:true},
-      {val:totD,bold:true},
-      {val:fmtNum(totB),bold:true,color:[60,80,180]},
+    var totalsCells=[
+      {val:totW},
+      {val:totD},
+      {val:fmtNum(totB),color:[60,80,180]},
       {val:fmtNum(totH),color:[60,80,180]},
       {val:fmtNum(totA),color:[60,80,180]},
-      {val:fmtNum(totG),bold:true},
+      {val:fmtNum(totG)},
       {val:fmtNum(totPF),color:[60,80,180]},
       {val:fmtNum(totESI),color:[5,140,90]},
       {val:fmtNum(totPT),color:[180,100,0]},
       {val:fmtNum(totTDS),color:[200,40,40]},
-      {val:fmtNum(totDed),bold:true,color:[200,40,40]},
-      {val:fmtNum(totNet),bold:true,color:[5,140,90]},
+      {val:fmtNum(totDed),color:[200,40,40]},
+      {val:fmtNum(totNet),color:[5,140,90]},
       {val:""},
-    ]);
+    ];
 
-    ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:9.5,fontSize:7.5,totalsRow:true});
+    ry=drawGroupedEmployeeTable(doc,mg,W-mg*2,H,ry,cols,cws,empRows,{rowH:11,fontSize:7,totalsCells:totalsCells});
     ry+=8;
 
     // Certification
