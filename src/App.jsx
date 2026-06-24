@@ -1241,24 +1241,136 @@ function drawAttDayTable(doc,W,mg,cw,H,ry,recs){
 // Detailed Attendance Report — every active employee, day-by-day, continuous flow.
 // Same per-day table as the single-employee PDF, just without the count-chips section
 // at the top (per the requested layout) and looped across the whole team.
+// Detailed Attendance Report — a month grid (one column per day) for every active employee,
+// grouped under department section titles (not a repeated department column), departments and
+// employees both alphabetical — same grouping convention as the Salary Register / Dept Payroll
+// reports elsewhere in the app. Reuses the same attendance % formula as the Summary PDF.
 function makeAttDetailedPDF(emps,att,y,m,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,authPos,authSign,orgPhone,orgWebsite){
   loadJsPDFGlobal(function(JsPDF){
-    var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-    var W=210,H=297,mg=16,cw=W-mg*2;
+    var doc=new JsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    var W=297,H=210,mg=10,cw=W-mg*2;
+    var daysInMonth=new Date(y,m+1,0).getDate();
+    var STATUS_META=[["present","P",[5,150,105]],["absent","A",[220,38,38]],["paid","PL",[124,58,237]],["unpaid","UL",[79,70,229]],["half","HD",[217,119,6]],["holiday","H",[14,165,233]]];
+    var STATUS_BY_KEY={};STATUS_META.forEach(function(s){STATUS_BY_KEY[s[0]]=s;});
+    // Working days = calendar days minus days the whole active team is marked holiday — same definition the Summary PDF uses.
+    var holidaysCount=0;
+    for(var dd=1;dd<=daysInMonth;dd++){
+      var ds=y+"-"+String(m+1).padStart(2,"0")+"-"+String(dd).padStart(2,"0");
+      if(emps.every(function(e){return att[ds+"_"+e.id]==="holiday";}))holidaysCount++;
+    }
+    var workingDays=daysInMonth-holidaysCount;
+
     var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"DETAILED ATTENDANCE REPORT",MOS[m]+" "+y,orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
-    var pfx=y+"-"+String(m+1).padStart(2,"0");
-    emps.forEach(function(emp,idx){
-      var recs={};
-      Object.entries(att).forEach(function(kv){if(kv[0].endsWith("_"+emp.id)&&kv[0].startsWith(pfx))recs[kv[0].split("_")[0]]=kv[1];});
-      if(idx>0){doc.addPage();ry=16;} // one employee per page keeps a multi-employee detailed report readable
-      doc.setFontSize(11.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-      doc.text(emp.name||"",mg,ry+5);
-      doc.setFontSize(8.5);doc.setFont("helvetica","normal");doc.setTextColor(71,85,105);
-      doc.text((emp.role||"")+(emp.dept?" - "+emp.dept:""),mg,ry+10);
-      ry+=15;
-      ry=drawAttDayTable(doc,W,mg,cw,H,ry,recs);
+
+    // ── Legend ──
+    doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(15,23,42);
+    var legendX=mg;
+    STATUS_META.forEach(function(s){
+      doc.setFillColor(s[2][0],s[2][1],s[2][2]);doc.setGState(new doc.GState({opacity:.18}));
+      doc.roundedRect(legendX,ry-3.2,4,4,1,1,"F");doc.setGState(new doc.GState({opacity:1}));
+      doc.setDrawColor(s[2][0],s[2][1],s[2][2]);doc.setLineWidth(.3);doc.roundedRect(legendX,ry-3.2,4,4,1,1,"S");
+      var label={present:"Present (P)",absent:"Absent (A)",paid:"Paid Leave (PL)",unpaid:"Unpaid Leave (UL)",half:"Half Day (HD)",holiday:"Holiday (H)"}[s[0]];
+      doc.text(label,legendX+5.5,ry);
+      legendX+=5.5+doc.getTextWidth(label)+7;
     });
-    pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
+    ry+=7;
+    doc.setDrawColor(210,218,230);doc.setLineWidth(.3);doc.line(mg,ry,mg+cw,ry);ry+=5;
+
+    // ── Column layout ──
+    var empColW=44;
+    var totColW=9.2,totColsN=6,totColsW=totColW*totColsN;
+    var dayColW=(cw-empColW-totColsW)/daysInMonth;
+    var headerH=9,rowH=10.5,deptRowH=7;
+    var dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+    function drawGridHeader(){
+      doc.setFillColor(26,35,73);doc.rect(mg,ry,cw,headerH,"F");
+      doc.setFontSize(7);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+      doc.text("EMPLOYEE",mg+3,ry+headerH/2+1.2);
+      for(var dd=1;dd<=daysInMonth;dd++){
+        var dx=mg+empColW+(dd-1)*dayColW;
+        var wd=new Date(y,m,dd).getDay();
+        doc.setFontSize(6.2);doc.setFont("helvetica","bold");
+        doc.text(String(dd),dx+dayColW/2,ry+4,{align:"center"});
+        doc.setFontSize(4.6);doc.setFont("helvetica","normal");
+        doc.text(dayNames[wd],dx+dayColW/2,ry+7.3,{align:"center"});
+      }
+      var totLabels=["P","A","PL","UL","HD","H"];
+      totLabels.forEach(function(lb,i){
+        doc.setFontSize(7);doc.setFont("helvetica","bold");
+        doc.text(lb,mg+empColW+daysInMonth*dayColW+i*totColW+totColW/2,ry+headerH/2+1.2,{align:"center"});
+      });
+      ry+=headerH;
+    }
+    drawGridHeader();
+
+    // ── Group by department (alphabetical), employees alphabetical within ──
+    var depts={};
+    emps.forEach(function(e){var dp=e.dept||"Unassigned";(depts[dp]=depts[dp]||[]).push(e);});
+    var deptNames=Object.keys(depts).sort(function(a,b){return a.localeCompare(b);});
+
+    deptNames.forEach(function(deptName){
+      if(ry>H-20){doc.addPage();ry=14;drawGridHeader();}
+      // Department title row — once per department, not a repeated per-employee column
+      doc.setFillColor(238,242,250);doc.rect(mg,ry,cw,deptRowH,"F");
+      doc.setFontSize(8);doc.setFont("helvetica","bold");doc.setTextColor(26,35,73);
+      doc.text(deptName,mg+3,ry+deptRowH/1.5);
+      ry+=deptRowH;
+
+      var deptEmps=depts[deptName].slice().sort(function(a,b){return (a.name||"").localeCompare(b.name||"");});
+      deptEmps.forEach(function(emp,ei){
+        if(ry+rowH>H-18){doc.addPage();ry=14;drawGridHeader();}
+        var counts={present:0,absent:0,paid:0,unpaid:0,half:0,holiday:0};
+        var cellStatus=[];
+        for(var d2=1;d2<=daysInMonth;d2++){
+          var ds2=y+"-"+String(m+1).padStart(2,"0")+"-"+String(d2).padStart(2,"0");
+          var v=att[ds2+"_"+emp.id]||"";
+          if(counts[v]!==undefined)counts[v]++;
+          cellStatus.push(v);
+        }
+        var pct=workingDays>0?Math.round((counts.present+counts.half*0.5+counts.paid)*100/workingDays):0;
+        if(ei%2===0){doc.setFillColor(248,250,253);doc.rect(mg,ry,cw,rowH,"F");}
+        doc.setDrawColor(225,230,240);doc.setLineWidth(.2);doc.line(mg,ry+rowH,mg+cw,ry+rowH);
+        doc.line(mg+empColW,ry,mg+empColW,ry+rowH);
+        doc.line(mg+empColW+daysInMonth*dayColW,ry,mg+empColW+daysInMonth*dayColW,ry+rowH);
+        // Employee cell — name, then role / ID / attendance % stacked below
+        doc.setFontSize(7.3);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+        doc.text((emp.name||"").substring(0,24),mg+3,ry+4);
+        doc.setFontSize(5.6);doc.setFont("helvetica","normal");doc.setTextColor(71,85,105);
+        var subLine=(emp.role||"-")+(emp.eid?" - "+emp.eid:"");
+        doc.text(subLine.substring(0,38),mg+3,ry+7.2);
+        doc.setFont("helvetica","bold");doc.setTextColor(pct>=95?5:pct>=80?180:200,pct>=95?140:pct>=80?100:40,pct>=95?90:pct>=80?0:40);
+        doc.text(pct+"%",mg+empColW-3,ry+rowH/2+1,{align:"right"});
+        // Day cells
+        for(var d3=1;d3<=daysInMonth;d3++){
+          var st=cellStatus[d3-1];
+          if(!st||!STATUS_BY_KEY[st])continue;
+          var meta=STATUS_BY_KEY[st],dx2=mg+empColW+(d3-1)*dayColW;
+          doc.setFillColor(meta[2][0],meta[2][1],meta[2][2]);doc.setGState(new doc.GState({opacity:.16}));
+          doc.rect(dx2+0.3,ry+1,dayColW-0.6,rowH-2,"F");doc.setGState(new doc.GState({opacity:1}));
+          doc.setFontSize(5.6);doc.setFont("helvetica","bold");doc.setTextColor(meta[2][0],meta[2][1],meta[2][2]);
+          doc.text(meta[1],dx2+dayColW/2,ry+rowH/2+1.3,{align:"center"});
+        }
+        // Totals columns
+        var totVals=[counts.present,counts.absent,counts.paid,counts.unpaid,counts.half,counts.holiday];
+        var totColColors=[[5,140,90],[200,40,40],[124,58,237],[79,70,229],[180,100,0],[14,120,165]];
+        totVals.forEach(function(v,i){
+          var tx=mg+empColW+daysInMonth*dayColW+i*totColW;
+          doc.setFontSize(7.2);doc.setFont("helvetica","bold");doc.setTextColor(totColColors[i][0],totColColors[i][1],totColColors[i][2]);
+          doc.text(v>0?String(v):"-",tx+totColW/2,ry+rowH/2+1.3,{align:"center"});
+        });
+        ry+=rowH;
+      });
+    });
+
+    // ── Footer — explicitly no signature required for a computer-generated report ──
+    doc.setFontSize(7.5);doc.setFont("helvetica","italic");doc.setTextColor(71,85,105);
+    doc.text("This is computer generated file, no signature required.",mg,H-12);
+    doc.setDrawColor(210,218,230);doc.setLineWidth(0.4);doc.line(mg,H-8,W-mg,H-8);
+    doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(71,85,105);
+    doc.text(orgName||"",mg,H-3.5);
+    doc.text("Generated by Admin HR",W-mg,H-3.5,{align:"right"});
+
     downloadPDF(doc.output("blob"),"Detailed-Attendance-"+MOS[m]+"-"+y+".pdf");
   },function(){alert("PDF library failed to load.");});
 }
