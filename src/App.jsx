@@ -63,7 +63,7 @@ var ATC={present:GRN,absent:RED,half:AMB,paid:PUR,unpaid:IND,holiday:SKY,unmarke
 var ATL={present:"Present",absent:"Absent",half:"Half Day",paid:"Paid Leave",unpaid:"Unpaid Leave",holiday:"Holiday",unmarked:"Not Marked"};
 var ATO=["present","absent","half","paid","unpaid","holiday","unmarked"];
 var HO=["ID Card","Laptop","Access Card","Office Keys","Company Phone","Uniform","Documents","Other"];
-function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}@keyframes hrIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.25)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(255,255,255,.08)}}@keyframes shineSweep{0%{transform:translateX(-120%) skewX(-18deg)}100%{transform:translateX(220%) skewX(-18deg)}}@keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}@keyframes iconSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes zzzFloat{0%{opacity:0;transform:translateY(2px)}30%{opacity:1;transform:translateY(0)}70%{opacity:1;transform:translateY(-3px)}100%{opacity:0;transform:translateY(-7px)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
+function buildCSS(){return "*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-tap-highlight-color:rgba(0,0,0,0)}html{-webkit-tap-highlight-color:transparent}button,a,div,span{-webkit-tap-highlight-color:transparent;outline:none}button:focus,div:focus,span:focus,a:focus{outline:none}::-webkit-scrollbar{width:0}@keyframes fU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes sU{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}@keyframes blinkBorder{0%,100%{border-color:#FCD34D;box-shadow:0 0 0 2px #FCD34D44}50%{border-color:#F59E0B;box-shadow:0 0 0 4px #F59E0B33}}@keyframes blinkBg{0%,100%{background:rgba(253,211,77,.12)}50%{background:rgba(253,211,77,.22)}}@keyframes ticker{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}@keyframes hrIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,.25)}50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(255,255,255,.08)}}@keyframes shineSweep{0%{transform:translateX(-120%) skewX(-18deg)}100%{transform:translateX(220%) skewX(-18deg)}}@keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}@keyframes iconSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes zzzFloat{0%{opacity:0;transform:translateY(2px)}30%{opacity:1;transform:translateY(0)}70%{opacity:1;transform:translateY(-3px)}100%{opacity:0;transform:translateY(-7px)}}.fd{animation:fU .25s ease}.rh:hover{background:"+T.HOVER+"!important}input{color:"+T.NVY+"!important}textarea{color:"+T.NVY+"!important}select{background:"+T.CARD+";border:1.5px solid "+T.BDR+";border-radius:10px;padding:10px 12px;font-size:13px;color:"+T.NVY+";width:100%;font-family:inherit;outline:none;margin-bottom:10px}select option{background:"+T.CARD+";color:"+T.NVY+"}input::placeholder{color:"+T.MUTED+"}textarea::placeholder{color:"+T.MUTED+"}";}var CSS=buildCSS();
 var SVG_ICONS={
 "emoji_add":"<path d=\"M21 12a9 9 0 1 1-9-9c.9 0 1.77.13 2.59.37\"/><path d=\"M16 5h6\"/><path d=\"M19 2v6\"/><path d=\"M9 9h.01\"/><path d=\"M15 9h.01\"/><path d=\"M8.5 14a4 4 0 0 0 7 0\"/>",
 "book":"<path d=\"M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20\"/>",
@@ -958,7 +958,7 @@ function makeHandbookPDF(entries,org,authPos2,authSign2){
 }
 
 
-function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,onDoc,bonusList,claimTotal,orgPhone,orgWebsite){
+function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,orgAddress,companyLogo,authPos,authSign,onDoc,bonusList,claimTotal,orgPhone,orgWebsite,loanDed){
   loadJsPDFGlobal(function(JsPDF){
     var doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
     var W=210,H=297,mg=16,cw=W-mg*2;
@@ -1022,17 +1022,19 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     if(d.tds>0)deds.push(["TDS","-"+fmtIN(d.tds)]);
     if(d.hi>0)deds.push(["Health Insurance","-"+fmtIN(d.hi)]);
     if(d.cd>0)deds.push(["Custom Deduction","-"+fmtIN(d.cd)]);
+    var loanDedN=Number(loanDed||0);
+    if(loanDedN>0)deds.push(["Loan/Advance EMI","-"+fmtIN(loanDedN)]);
     if(deds.length===0)deds.push(["No Deductions","Nil"]);
     deds.forEach(function(r,i){colRow(c2x,dr+i*rh,cw2,r[0],r[1],[200,30,30],i%2===0);});
     var dt_y=dr+deds.length*rh;
-    var totDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd+d.ad+d.hd+d.ud;
+    var totDed=d.pfE+d.esiE+d.pt+d.tds+d.hi+d.cd+d.ad+d.hd+d.ud+loanDedN;
     colTotal(c2x,dt_y,cw2,"Total Deductions","-"+fmtIN(totDed),[254,236,236],[180,30,30]);
     var net_y=Math.max(gr_y,dt_y)+rh+5;
     doc.setDrawColor(180,195,215);doc.setLineWidth(0.5);doc.line(mg,net_y,mg+cw,net_y);net_y+=5;
     doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
     doc.text("NET TAKE HOME  -  "+MOS[m]+" "+y,mg+4,net_y+5);
     doc.setFontSize(15);doc.setFont("helvetica","bold");doc.setTextColor(5,120,80);
-    doc.text(fmtIN(d.net+bonusSum+claimSum),W-mg-4,net_y+6,{align:"right"});
+    doc.text(fmtIN(Math.max(0,d.net+bonusSum+claimSum-loanDedN)),W-mg-4,net_y+6,{align:"right"});
     net_y+=14;doc.setDrawColor(180,195,215);doc.line(mg,net_y,mg+cw,net_y);
     if(showEmployer){
       var ec_y=net_y+23;
@@ -1047,11 +1049,11 @@ function makePayslipPDF(emp,d,m,y,orgName,orgEmail,orgPos,logoSrc,showEmployer,o
     // Human Resource sign-off, in addition to the Authorised Signatory line the shared footer already adds
     var hrSigY=(showEmployer?ec_y+rh*4:net_y)+12;
     if(hrSigY>H-55){doc.addPage();hrSigY=20;}
-    doc.setDrawColor(180,195,215);doc.setLineWidth(0.4);doc.line(mg,hrSigY,mg+55,hrSigY);
+    doc.setDrawColor(180,195,215);doc.setLineWidth(0.4);doc.line(W-mg-55,hrSigY,W-mg,hrSigY);
     doc.setFontSize(8.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-    doc.text("Human Resource",mg,hrSigY+5);
+    doc.text("Human Resource",W-mg-55,hrSigY+5);
     doc.setFont("helvetica","normal");doc.setTextColor(100,115,135);
-    doc.text(orgName||"",mg,hrSigY+9);
+    doc.text(orgName||"",W-mg-55,hrSigY+9);
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     var suffix=showEmployer?"-Employer":"-Employee";
     if(typeof onDoc==="function"){onDoc(doc);}else{downloadPDF(doc.output("blob"),"Payslip-"+(emp.name||"").replace(/ /g,"-")+suffix+"-"+MOS[m]+"-"+y+".pdf");}
@@ -2356,6 +2358,7 @@ export default function App(){
   var sDeptExpEmp=st(null),deptExpEmp=sDeptExpEmp[0],setDeptExpEmp=sDeptExpEmp[1]; // which employee's row is expanded inside the Payroll Dept tab
   var sBonuses=st([]),bonuses=sBonuses[0],setBonuses=sBonuses[1];
   var sShowBonusForm=st(false),showBonusForm=sShowBonusForm[0],setShowBonusForm=sShowBonusForm[1];
+  var sShowIncForm=st(false),showIncForm=sShowIncForm[0],setShowIncForm=sShowIncForm[1];
   var sBonusEmpId=st(""),bonusEmpId=sBonusEmpId[0],setBonusEmpId=sBonusEmpId[1];
   var sBonusAmt=st(""),bonusAmt=sBonusAmt[0],setBonusAmt=sBonusAmt[1];
   var sBonusPayM=st(-1),bonusPayM=sBonusPayM[0],setBonusPayM=sBonusPayM[1];
@@ -3325,6 +3328,9 @@ export default function App(){
   }
   function getEmpClaimTotal(empId,m2,y){
     return (claims||[]).filter(function(c){return c.employeeId===String(empId)&&c.status==="approved"&&c.month===m2&&c.year===y;}).reduce(function(s,c){return s+(c.amount||0);},0);
+  }
+  function getEmpLoanDed(empId){
+    return (loans||[]).filter(function(l){return (l.employeeId===String(empId)||l.employee_id===String(empId))&&l.status==="active";}).reduce(function(s,l){return s+(l.emi||l.monthlyDeduction||0);},0);
   }
 
   function waNum(emp){
@@ -4837,7 +4843,7 @@ null
               d.esiR>0?h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:2}},h("span",{style:{fontSize:11,color:GRY}},"ESI (Employer)"),h("span",{style:{fontSize:11,fontWeight:600,color:NVY}},fmt(d.esiR))):null,
               h("div",{style:{display:"flex",justifyContent:"space-between",marginTop:4,paddingTop:4,borderTop:"1px solid "+BDR}},h("span",{style:{fontSize:11,fontWeight:700,color:NVY}},"Total CTC"),h("span",{style:{fontSize:12,fontWeight:800,color:NVY}},fmt(d.net+d.pfR+d.esiR)))
             ),
-            h("button",{onClick:function(){if(!isPaid){showT("Download payslip is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}makePayslipPDF(selE,d,curM,curY,org.name,org.contactEmail||org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,null,getEmpBonusesWithOT(selE.id,curM,curY),getEmpClaimTotal(selE.id,curM,curY),org.phone,org.website);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},ic(isPaid?"download":"lock",CARD,14),"Download Payslip")
+            h("button",{onClick:function(){if(!isPaid){showT("Download payslip is a paid feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I would like to subscribe to Admin HR paid features"),"_blank");return;}makePayslipPDF(selE,d,curM,curY,org.name,org.contactEmail||org.email,org.pos,org.logo,false,org.address,null,authPos,authSign,null,getEmpBonusesWithOT(selE.id,curM,curY),getEmpClaimTotal(selE.id,curM,curY),org.phone,org.website,getEmpLoanDed(selE.id));},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:NVY,border:"none",borderRadius:10,padding:"10px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer",marginTop:10}},ic(isPaid?"download":"lock",CARD,14),"Download Payslip")
           );
         }
       ),
@@ -5680,14 +5686,14 @@ null
             {l:"NET PAY",v:fmt(filtNet),op:"=",c:finalC}
           ].filter(Boolean);
           var tight=terms.length>4;
-          var fs=terms.length>=6?9.5:terms.length>4?11:14;
-          return h("div",{style:{display:"flex",alignItems:"center",gap:tight?3:8,marginBottom:14,flexWrap:"wrap",rowGap:6}},
+          var fs=terms.length>=6?10:terms.length>4?11.5:14;
+          return h("div",{style:{display:"flex",alignItems:"flex-start",gap:tight?3:8,marginBottom:14,flexWrap:"wrap",rowGap:8}},
             terms.map(function(t,i){
               return [
-                t.op?h("div",{key:"op"+i,style:{color:sepC,fontSize:tight?14:18,fontWeight:300,flexShrink:0}},t.op):null,
-                h("div",{key:"t"+i,style:{flex:1,minWidth:0,textAlign:"center",overflow:"hidden"}},
+                t.op?h("div",{key:"op"+i,style:{color:sepC,fontSize:tight?14:18,fontWeight:300,flexShrink:0,paddingTop:2}},t.op):null,
+                h("div",{key:"t"+i,style:{flex:1,minWidth:0,textAlign:"center"}},
                   h("div",{style:{fontSize:8.5,fontWeight:700,color:mutedC,letterSpacing:.5,marginBottom:4}},t.l),
-                  h("div",{style:{fontSize:fs,fontWeight:800,color:t.c,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},t.v)
+                  h("div",{style:{fontSize:fs,fontWeight:800,color:t.c,lineHeight:1.15,wordBreak:"break-word"}},t.v)
                 )
               ];
             })
@@ -5696,7 +5702,7 @@ null
         h("div",{style:{height:1,background:themeMode==="light"?"rgba(255,255,255,.08)":"rgba(0,0,0,.10)",marginBottom:10}}),
         h("div",{style:{textAlign:"center"}},
           h("div",{style:{fontSize:10,color:CARD,opacity:.45,marginBottom:3}},"TOTAL TRANSFER THIS MONTH"),
-          h("div",{style:{fontSize:28,fontWeight:900,color:themeMode==="light"?"#4ADE80":"#059669",letterSpacing:-.5}},fmt(filtNet))
+          h("div",{style:{fontSize:21,fontWeight:900,color:themeMode==="light"?"#4ADE80":"#059669",letterSpacing:-.5}},fmt(filtNet))
         )
       ),
       h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:11,padding:3,display:"flex",gap:3,marginBottom:8}},
@@ -5831,91 +5837,17 @@ null
             ),
             isO?h("div",{style:{background:"rgba(0,0,0,0.03)",borderRadius:12,padding:"12px",border:"1px solid "+BDR,marginTop:4}},
               h("div",{style:{display:"flex",gap:5,marginBottom:12}},
-                isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp PDF"):null,
-                isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er PDF"):null,
+                isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website,getEmpLoanDed(e.id));},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:NVY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,CARD,12),"Emp PDF"):null,
+                isPaid?h("button",{onClick:function(){makePayslipPDF(e,d,payM,payY,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,true,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(e.id,payM,payY),getEmpClaimTotal(e.id,payM,payY),org.phone,org.website,getEmpLoanDed(e.id));},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:3,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:NVY,fontSize:10,fontWeight:700,cursor:"pointer"}},ic(ICONS.dl,NVY,12),"Er PDF"):null,
                 !isPaid?h("button",{onClick:needPaid,style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:GRY,border:"none",borderRadius:8,padding:"7px 4px",color:CARD,fontSize:11,fontWeight:600,cursor:"pointer"}},ic("lock",CARD,13),"PDF"):null,
                 h("button",{onClick:function(){if(!isPaid){showT("WhatsApp share is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for WhatsApp payslip sharing"),"_blank");return;}sharePayslip(e,d,payM,payY);},style:{flex:1,minWidth:0,display:"flex",alignItems:"center",justifyContent:"center",gap:4,background:SFT,border:"1px solid "+BDR,borderRadius:8,padding:"7px 4px",color:isPaid?NVY:GRY,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(isPaid?ICONS.wa:"lock",isPaid?"#25D366":GRY,13),"WhatsApp")
               ),
-              h("div",{style:{background:"#05966910",border:"1px solid #05966935",borderRadius:9,padding:10,marginBottom:10}},
-                h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:7}},ic("trending_up","#059669",13),h("span",{style:{fontSize:10,fontWeight:700,color:"#059669",letterSpacing:.3}},"INCENTIVE (Rs.)")),
-                h("div",{style:{display:"flex",gap:6}},
-                  h("input",{type:"number",value:editPayInc,onChange:function(ev){setEditPayInc(ev.target.value);},placeholder:"0",style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
-                  h("button",{onClick:function(){var k=e.id+"_"+payY+"_"+payM;setIncentives(function(p){var o=Object.assign({},p);o[k]=Number(editPayInc)||0;return o;});showT("Saved!");},style:{display:"flex",alignItems:"center",gap:4,background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,CARD,13),"Save")
-                )
-              ),
-              /* ── Bonus add in payroll — sits directly below Incentive ── */
-              (function(){
-                var empBonuses2=(bonuses||[]).filter(function(b){return b.employeeId===String(e.id)&&b.payMonth===payM&&b.payYear===payY;});
-                var BTYPES={festival:"Festival Bonus",performance:"Performance Bonus",annual:"Annual Bonus",advance:"Advance Payment",other:"Other"};
-                var bColors={festival:AMB,performance:"#2563EB",annual:"#10B981",advance:"#7C3AED",other:GRY};
-                return h("div",{style:{marginBottom:10}},
-                  /* Existing bonuses for this month */
-                  empBonuses2.map(function(b){
-                    return h("div",{key:b.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",background:(bColors[b.type]||GRY)+"10",borderRadius:8,marginBottom:4,border:"1px solid "+(bColors[b.type]||GRY)+"25"}},
-                      h("span",{style:{fontSize:10,fontWeight:600,color:NVY}},b.note||(BTYPES[b.type]||b.type)),
-                      h("div",{style:{display:"flex",alignItems:"center",gap:6}},
-                        h("span",{style:{fontSize:11,fontWeight:700,color:bColors[b.type]||GRY}},fmt(b.amount)),
-                        h("button",{onClick:function(){if(!window.confirm("Remove this bonus?"))return;setBonuses(function(p){return p.filter(function(x){return x.id!==b.id;});});_sb.from("bonuses").delete().eq("id",String(b.id)).then(function(){});showT("Removed");},style:{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex"}},ic("delete",RED,11))
-                      )
-                    );
-                  }),
-                  /* Add bonus button + mini form */
-                  showBonusForm&&bonusPayM===payM&&bonusPayY===payY?h("div",{style:{background:AMB+"10",borderRadius:9,padding:10,border:"1px solid "+AMB+"35",marginBottom:6}},
-                    h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:7}},ic("star",AMB,13),h("span",{style:{fontSize:10,fontWeight:700,color:AMB,letterSpacing:.3}},"ADD BONUS")),
-                    h("div",{style:{display:"flex",gap:6,marginBottom:6}},
-                      h("div",{style:{flex:1,minWidth:0}},chipSelectScroll(bonusType,function(v){setBonusType(v);},Object.entries(BTYPES).map(function(t){return {v:t[0],l:t[1]};}))),
-                      h("input",{type:"number",value:bonusAmt,onChange:function(ev){setBonusAmt(ev.target.value);},placeholder:"Amount ₹",style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit"}})
-                    ),
-                    h("input",{type:"text",value:bonusNote,onChange:function(ev){setBonusNote(ev.target.value);},placeholder:"Specific name e.g. Diwali Bonus, Pongal Bonus",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}),
-                    h("div",{style:{display:"flex",gap:6}},
-                      h("button",{onClick:function(){
-                        if(!bonusAmt)return showT("Enter amount","err");
-                        var b={id:Date.now(),employeeId:String(e.id),employeeName:e.name,amount:Number(bonusAmt),type:bonusType,note:bonusNote,date:new Date().toISOString().split("T")[0],payMonth:payM,payYear:payY};
-                        setBonuses(function(p){return [b].concat(p||[]);});
-                        _sb.from("bonuses").insert({id:String(b.id),employer_email:gUser.email,employee_id:String(e.id),employee_name:e.name,amount:b.amount,type:b.type,note:b.note,date:b.date,pay_month:payM,pay_year:payY}).then(function(r){if(r&&r.error)showT("Error","err");else showT("Bonus added to payroll!");});
-                        setBonusAmt("");setBonusNote("");setShowBonusForm(false);setBonusPayM(-1);setBonusPayY(-1);
-                      },style:{flex:2,background:NVY,border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Add to Payroll"),
-                      h("button",{onClick:function(){setShowBonusForm(false);setBonusPayM(-1);setBonusPayY(-1);setBonusAmt("");},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"8px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
-                    )
-                  ):h("button",{onClick:function(){setShowBonusForm(true);setBonusPayM(payM);setBonusPayY(payY);setBonusAmt("");setBonusNote("");},style:{width:"100%",background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:8,padding:"6px",fontSize:10,fontWeight:700,color:AMB,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4}},ic("star",AMB,12),"+ Add Bonus")
-                );
-              })(),
-              // ── Formula: compact single row inside tinted box ──
-              h("div",{style:{background:"rgba(0,0,0,0.04)",borderRadius:10,padding:"10px 8px",marginBottom:10}},
-                h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:1}},
-                  h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
-                    h("div",{style:{fontSize:8,color:GRY,letterSpacing:.4,marginBottom:2}},"ACTUAL"),
-                    h("div",{style:{fontSize:12,fontWeight:800,color:NVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(isFixed?Number(eEff.fixedSalary||eEff.monthlyCTC||0):(Number(eEff.basic)||0)+(Number(eEff.hra)||0)+(Number(eEff.allow)||0)))
-                  ),
-                  attDed>0?h("div",{style:{color:GRY,fontSize:13,paddingBottom:2,flexShrink:0}},"\u2212"):null,
-                  attDed>0?h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
-                    h("div",{style:{fontSize:8,color:AMB,letterSpacing:.4,marginBottom:2}},"ABSENT"),
-                    h("div",{style:{fontSize:12,fontWeight:800,color:AMB,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(attDed))
-                  ):null,
-                  statDed>0?h("div",{style:{color:GRY,fontSize:13,paddingBottom:2,flexShrink:0}},"\u2212"):null,
-                  statDed>0?h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
-                    h("div",{style:{fontSize:8,color:RED,letterSpacing:.4,marginBottom:2}},"TAX/DED"),
-                    h("div",{style:{fontSize:12,fontWeight:800,color:RED,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(statDed))
-                  ):null,
-                  extraPay>0?h("div",{style:{color:GRY,fontSize:13,paddingBottom:2,flexShrink:0}},"+"):null,
-                  extraPay>0?h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
-                    h("div",{style:{fontSize:8,color:"#10B981",letterSpacing:.4,marginBottom:2}},"BONUS"),
-                    h("div",{style:{fontSize:12,fontWeight:800,color:"#10B981",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(extraPay))
-                  ):null,
-                  h("div",{style:{color:GRY,fontSize:13,paddingBottom:2,flexShrink:0}},"="),
-                  h("div",{style:{textAlign:"center",flex:1,minWidth:0,overflow:"hidden"}},
-                    h("div",{style:{fontSize:8,color:"#10B981",letterSpacing:.4,marginBottom:2}},"NET PAY"),
-                    h("div",{style:{fontSize:12,fontWeight:800,color:"#10B981",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},fmt(netWithExtra))
-                  )
-                )
-              ),
-              // ── Earnings breakdown ──
+              // ── EARNINGS ──
               h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4}},"EARNINGS"),
               [
                 isFixed?["Fixed Salary",fmt(Number(eEff.fixedSalary||eEff.monthlyCTC||0)),NVY]:["Basic",fmt(eEff.basic||0),NVY],
                 isFixed?null:["HRA",fmt(eEff.hra||0),NVY],
                 isFixed?null:["Allowances",fmt(eEff.allow||0),NVY],
-                d.inc>0?["Incentive",fmt(d.inc),"#059669"]:null,
                 d.shiftAllow>0?["Shift Allow.",fmt(d.shiftAllow),TEL]:null,
               ].filter(Boolean).map(function(item){
                 return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},
@@ -5923,7 +5855,21 @@ null
                   h("span",{style:{fontSize:11,fontWeight:600,color:item[2]}},item[1])
                 );
               }),
-              attDed>0?h("div",{onClick:function(){setTdsInfoOpen(tdsInfoOpen===("att_"+e.id)?null:"att_"+e.id);},style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid "+BDR+"44",cursor:"pointer"}},
+              // ── Incentive — click to add/edit, same interaction as Bonus ──
+              d.inc>0&&!showIncForm?h("div",{onClick:function(){setShowIncForm(true);},style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid "+BDR+"44",cursor:"pointer"}},
+                h("span",{style:{fontSize:11,color:GRY,display:"flex",alignItems:"center",gap:3}},"Incentive",ic("edit","#059669",11)),
+                h("span",{style:{fontSize:11,fontWeight:600,color:"#059669"}},fmt(d.inc))
+              ):null,
+              showIncForm?h("div",{style:{background:"#05966910",border:"1px solid #05966935",borderRadius:9,padding:10,marginTop:4,marginBottom:6}},
+                h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:7}},ic("trending_up","#059669",13),h("span",{style:{fontSize:10,fontWeight:700,color:"#059669",letterSpacing:.3}},"INCENTIVE (Rs.)")),
+                h("div",{style:{display:"flex",gap:6}},
+                  h("input",{type:"number",value:editPayInc,onChange:function(ev){setEditPayInc(ev.target.value);},placeholder:"0",autoFocus:true,style:{flex:1,background:CARD,border:"1.5px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit"}}),
+                  h("button",{onClick:function(){var k=e.id+"_"+payY+"_"+payM;setIncentives(function(p){var o=Object.assign({},p);o[k]=Number(editPayInc)||0;return o;});setShowIncForm(false);showT("Saved!");},style:{display:"flex",alignItems:"center",gap:4,background:GRN,border:"none",borderRadius:9,padding:"9px 13px",color:CARD,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.save,CARD,13),"Add to Payroll"),
+                  h("button",{onClick:function(){setShowIncForm(false);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",color:GRY,fontSize:11,cursor:"pointer"}},"Cancel")
+                )
+              ):null,
+              d.inc===0&&!showIncForm?h("button",{onClick:function(){setEditPayInc("");setShowIncForm(true);},style:{width:"100%",background:"#05966912",border:"1px solid #05966933",borderRadius:8,padding:"6px",fontSize:10,fontWeight:700,color:"#059669",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginBottom:4}},ic("trending_up","#059669",12),"+ Add Incentive"):null,
+              attDed>0?h("div",{onClick:function(){setTdsInfoOpen(tdsInfoOpen===("att_"+e.id)?null:"att_"+e.id);},style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderBottom:"1px solid "+BDR+"44",cursor:"pointer",marginTop:4}},
                 h("span",{style:{fontSize:11,color:GRY,display:"flex",alignItems:"center",gap:3}},"Absent/Half",ic(tdsInfoOpen===("att_"+e.id)?"expand_less":"expand_more",GRY,13)),
                 h("span",{style:{fontSize:11,fontWeight:600,color:AMB}},"-"+fmt(attDed))
               ):null,
@@ -5932,7 +5878,7 @@ null
                 h("span",{style:{fontSize:11,fontWeight:600,color:NVY}},"Effective Gross"),
                 h("span",{style:{fontSize:11,fontWeight:800,color:NVY}},fmt(d.gr))
               ),
-              // ── Deductions breakdown ──
+              // ── DEDUCTIONS ──
               statDed>0?h("div",null,
                 h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4}},"DEDUCTIONS"),
                 [
@@ -5964,15 +5910,48 @@ null
                   h("span",{style:{fontSize:11,fontWeight:800,color:RED}},"-"+fmt(statDed))
                 )
               ):null,
-              // ── Working days + net ──
-              h("div",{style:{fontSize:10,color:GRY,marginBottom:8}},"Working days: "+(d.wDays||26)+" \u2022 Per day rate: "+fmt(d.pd||0)),
+              // ── ADDITIONS (on top of net) — Reimbursement, Overtime, Bonus (click to add) ──
               (function(){
                 var empClaimTotal=mp.claimTotal,empBonusTotal=mp.bonusTotal,empLoanDed=mp.loanDed,empOT=mp.otTotal,finalNet=mp.netFinal;
+                var empBonuses2=(bonuses||[]).filter(function(b){return b.employeeId===String(e.id)&&b.payMonth===payM&&b.payYear===payY;});
+                var BTYPES={festival:"Festival Bonus",performance:"Performance Bonus",annual:"Annual Bonus",advance:"Advance Payment",other:"Other"};
+                var bColors={festival:AMB,performance:"#2563EB",annual:"#10B981",advance:"#7C3AED",other:GRY};
                 return h("div",null,
+                  (empClaimTotal>0||empOT>0||empBonusTotal>0)?h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:4,marginTop:4}},"ADDITIONS"):null,
                   empClaimTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Reimbursement"),h("span",{style:{fontSize:11,fontWeight:600,color:"#10B981"}},"+"+fmt(empClaimTotal))):null,
                   empOT>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Overtime"),h("span",{style:{fontSize:11,fontWeight:600,color:TEL}},"+"+fmt(empOT))):null,
-                  empBonusTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Bonus"),h("span",{style:{fontSize:11,fontWeight:600,color:AMB}},"+"+fmt(empBonusTotal))):null,
-                  empLoanDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44"}},h("span",{style:{fontSize:11,color:GRY}},"Loan/Advance EMI"),h("span",{style:{fontSize:11,fontWeight:600,color:RED}},"-"+fmt(empLoanDed))):null,
+                  /* Existing bonuses for this month */
+                  empBonuses2.map(function(b){
+                    return h("div",{key:b.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",background:(bColors[b.type]||GRY)+"10",borderRadius:8,marginBottom:4,marginTop:4,border:"1px solid "+(bColors[b.type]||GRY)+"25"}},
+                      h("span",{style:{fontSize:10,fontWeight:600,color:NVY}},b.note||(BTYPES[b.type]||b.type)),
+                      h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                        h("span",{style:{fontSize:11,fontWeight:700,color:bColors[b.type]||GRY}},fmt(b.amount)),
+                        h("button",{onClick:function(){if(!window.confirm("Remove this bonus?"))return;setBonuses(function(p){return p.filter(function(x){return x.id!==b.id;});});_sb.from("bonuses").delete().eq("id",String(b.id)).then(function(){});showT("Removed");},style:{background:"none",border:"none",cursor:"pointer",padding:0,display:"flex"}},ic("delete",RED,11))
+                      )
+                    );
+                  }),
+                  /* Add bonus button + mini form */
+                  showBonusForm&&bonusPayM===payM&&bonusPayY===payY?h("div",{style:{background:AMB+"10",borderRadius:9,padding:10,border:"1px solid "+AMB+"35",marginBottom:6,marginTop:4}},
+                    h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:7}},ic("star",AMB,13),h("span",{style:{fontSize:10,fontWeight:700,color:AMB,letterSpacing:.3}},"ADD BONUS")),
+                    h("div",{style:{display:"flex",gap:6,marginBottom:6}},
+                      h("div",{style:{flex:1,minWidth:0}},chipSelectScroll(bonusType,function(v){setBonusType(v);},Object.entries(BTYPES).map(function(t){return {v:t[0],l:t[1]};}))),
+                      h("input",{type:"number",value:bonusAmt,onChange:function(ev){setBonusAmt(ev.target.value);},placeholder:"Amount ₹",style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit"}})
+                    ),
+                    h("input",{type:"text",value:bonusNote,onChange:function(ev){setBonusNote(ev.target.value);},placeholder:"Specific name e.g. Diwali Bonus, Pongal Bonus",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"7px 8px",fontSize:11,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}),
+                    h("div",{style:{display:"flex",gap:6}},
+                      h("button",{onClick:function(){
+                        if(!bonusAmt)return showT("Enter amount","err");
+                        var b={id:Date.now(),employeeId:String(e.id),employeeName:e.name,amount:Number(bonusAmt),type:bonusType,note:bonusNote,date:new Date().toISOString().split("T")[0],payMonth:payM,payYear:payY};
+                        setBonuses(function(p){return [b].concat(p||[]);});
+                        _sb.from("bonuses").insert({id:String(b.id),employer_email:gUser.email,employee_id:String(e.id),employee_name:e.name,amount:b.amount,type:b.type,note:b.note,date:b.date,pay_month:payM,pay_year:payY}).then(function(r){if(r&&r.error)showT("Error","err");else showT("Bonus added to payroll!");});
+                        setBonusAmt("");setBonusNote("");setShowBonusForm(false);setBonusPayM(-1);setBonusPayY(-1);
+                      },style:{flex:2,background:NVY,border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Add to Payroll"),
+                      h("button",{onClick:function(){setShowBonusForm(false);setBonusPayM(-1);setBonusPayY(-1);setBonusAmt("");},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"8px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
+                    )
+                  ):h("button",{onClick:function(){setShowBonusForm(true);setBonusPayM(payM);setBonusPayY(payY);setBonusAmt("");setBonusNote("");},style:{width:"100%",background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:8,padding:"6px",fontSize:10,fontWeight:700,color:AMB,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:4,marginTop:4,marginBottom:8}},ic("star",AMB,12),"+ Add Bonus"),
+                  empLoanDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR+"44",marginBottom:8}},h("span",{style:{fontSize:11,color:GRY}},"Loan/Advance EMI"),h("span",{style:{fontSize:11,fontWeight:600,color:RED}},"-"+fmt(empLoanDed))):null,
+                  // ── Working days + Net Take Home ──
+                  h("div",{style:{fontSize:10,color:GRY,marginBottom:8}},"Working days: "+(d.wDays||26)+" \u2022 Per day rate: "+fmt(d.pd||0)),
                   h("div",{style:{background:"#0F172A",borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}},
                     h("span",{style:{fontSize:12,fontWeight:600,color:"rgba(255,255,255,.6)"}},"Net Take Home"),
                     h("span",{style:{fontSize:16,fontWeight:800,color:"#4ADE80"}},fmt(finalNet))
