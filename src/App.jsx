@@ -1568,16 +1568,20 @@ function makeEmpPDF(emps,orgName,orgEmail,orgPos,logoSrc,orgAddress,companyLogo,
     var W=297,H=210,mg=14,cw=W-mg*2;
     var nd=new Date();
     var ry=pdfHeader(doc,W,mg,logoSrc,orgName,orgPos,orgEmail,"EMPLOYEE RECORDS",emps.length+" Employees | "+nd.getDate()+"/"+(nd.getMonth()+1)+"/"+nd.getFullYear(),orgAddress||"",companyLogo||"",{phone:orgPhone,website:orgWebsite});
-    var cols=[{label:"MOBILE",align:"l"},{label:"MONTHLY CTC",align:"r"},{label:"STATUS",align:"r"}];
-    var cws=[40,40,30];
+    var cols=[{label:"MOBILE",align:"l"},{label:"EMAIL",align:"l"},{label:"DATE OF JOINING",align:"l"},{label:"PAN",align:"l"},{label:"MONTHLY CTC",align:"r"},{label:"STATUS",align:"r"}];
+    var cws=[28,42,26,22,28,22];
     var empRows=emps.map(function(emp){
+      var joinedFmt=emp.joined?new Date(emp.joined+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"-";
       return {emp:emp,cells:[
         {val:emp.mob||"-"},
+        {val:emp.email||"-"},
+        {val:joinedFmt},
+        {val:emp.pan||"-"},
         {val:fmtIN(emp.monthlyCTC),bold:true,color:[5,140,90]},
         {val:emp.status==="active"?"Active":"Offboarded",bold:true,color:emp.status==="active"?[5,140,90]:[200,40,40]},
       ]};
     });
-    ry=drawGroupedEmployeeTable(doc,mg,cw,H,ry,cols,cws,empRows,{identityW:58});
+    ry=drawGroupedEmployeeTable(doc,mg,cw,H,ry,cols,cws,empRows,{identityW:50});
     pdfFooter(doc,W,mg,H,orgName,orgEmail,logoSrc,authPos,authSign);
     downloadPDF(doc.output("blob"),"Employees-"+nd.getFullYear()+".pdf");
   },function(){alert("PDF library failed to load. Check internet connection.");});
@@ -1863,9 +1867,6 @@ function makeDeptPayrollPDF(deptGroups,m,y,payFn,orgName,orgEmail,orgPos,logoSrc
     ry+=11;
 
     var cols=[
-      {label:"#",align:"c"},
-      {label:"EMPLOYEE NAME",align:"l"},
-      {label:"ROLE",align:"l"},
       {label:"WORK",align:"r"},
       {label:"PAID",align:"r"},
       {label:"BASIC",align:"r"},
@@ -1881,16 +1882,30 @@ function makeDeptPayrollPDF(deptGroups,m,y,payFn,orgName,orgEmail,orgPos,logoSrc
       {label:"ER ESI",align:"r"},
       {label:"NET PAY (Rs.)",align:"r"},
     ];
-    var cws=[7,30,17,12,11,17,14,14,19,14,13,12,13,16,14,14,20];
-    var cwSum=cws.reduce(function(a,b){return a+b;},0);
+    var identityW=46;
     var cw=W-mg*2;
-    var scale=cw/cwSum;
-    cws=cws.map(function(w){return Math.round(w*scale*10)/10;});
+    var cwSum=cols.reduce(function(a,c,i){return a+[12,11,17,14,14,19,14,13,12,13,16,14,14,20][i];},0);
+    var rawCws=[12,11,17,14,14,19,14,13,12,13,16,14,14,20];
+    var scale=(cw-identityW)/rawCws.reduce(function(a,b){return a+b;},0);
+    var cws=rawCws.map(function(w){return w*scale;});
+    var cx=[mg+identityW];for(var ci=0;ci<cws.length-1;ci++)cx.push(cx[ci]+cws[ci]);
+    var rowH=11.5;
+
+    function drawDeptHeader(){
+      doc.setFillColor(26,35,73);doc.rect(mg,ry,cw,9,"F");
+      doc.setFontSize(7.5);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
+      doc.text("EMPLOYEE",mg+3,ry+6);
+      cols.forEach(function(c,i){
+        var tx=c.align==="r"?cx[i]+cws[i]-3:cx[i]+3;
+        doc.text(c.label,tx,ry+6,{align:c.align==="r"?"right":"left"});
+      });
+      ry+=9;
+    }
 
     var grandG=0,grandDed=0,grandN=0,grandCTC=0;
 
     deptGroups.forEach(function(grp,gi){
-      if(ry>250){doc.addPage();ry=14;} else if(gi>0){ry+=8;}
+      if(ry>225){doc.addPage();ry=14;} else if(gi>0){ry+=8;}
       doc.setFontSize(11);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
       doc.text(grp.dept,mg,ry);
       var deptNameW=doc.getTextWidth(grp.dept);
@@ -1899,10 +1914,12 @@ function makeDeptPayrollPDF(deptGroups,m,y,payFn,orgName,orgEmail,orgPos,logoSrc
       ry+=2;
       doc.setDrawColor(180,138,40);doc.setLineWidth(0.8);doc.line(mg,ry+2,mg+40,ry+2);
       ry+=9;
+      drawDeptHeader();
 
-      var rows=[];
       var totW=0,totD=0,totG=0,totH=0,totA=0,totPF=0,totESI=0,totPT=0,totTDS=0,totDed=0,totErPF=0,totErESI=0,totNet=0;
-      grp.emps.slice().sort(function(a,b){return (a.name||"").localeCompare(b.name||"");}).forEach(function(emp,ei){
+      var sortedEmps=grp.emps.slice().sort(function(a,b){return (a.name||"").localeCompare(b.name||"");});
+      sortedEmps.forEach(function(emp,ei){
+        if(ry+rowH>H-18){doc.addPage();ry=14;drawDeptHeader();}
         var mp=payFn(emp,y,m),d=mp.d,ma=mp.ma;
         var daysWork=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.holiday||0));
         var daysPaid=Math.round((ma.present||0)+(ma.half||0)*0.5+(ma.paid||0)+(ma.holiday||0));
@@ -1910,15 +1927,16 @@ function makeDeptPayrollPDF(deptGroups,m,y,payFn,orgName,orgEmail,orgPos,logoSrc
         totW+=daysWork;totD+=daysPaid;totG+=d.gr;totH+=d.hra;totA+=d.allow;
         totPF+=d.pfE;totESI+=d.esiE;totPT+=d.pt;totTDS+=d.tds;totDed+=totalDed;
         totErPF+=d.pfR;totErESI+=d.esiR;totNet+=d.net;
-        rows.push([
-          {val:ei+1,color:[95,105,120]},
-          {val:(emp.name||"").substring(0,20),bold:true},
-          {val:(emp.role||"").substring(0,15),color:[71,85,105]},
-          {val:daysWork},
-          {val:daysPaid},
-          {val:fmtNum(d.eb),color:[60,80,180]},
-          {val:fmtNum(d.hra)},
-          {val:fmtNum(d.allow)},
+        if(ei%2===0){doc.setFillColor(248,250,253);doc.rect(mg,ry,cw,rowH,"F");}
+        doc.setDrawColor(225,230,240);doc.setLineWidth(.2);doc.line(mg,ry+rowH,mg+cw,ry+rowH);
+        doc.line(mg+identityW,ry,mg+identityW,ry+rowH);
+        doc.setFontSize(8.2);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+        doc.text((emp.name||"").substring(0,24),mg+3,ry+rowH/2-1);
+        doc.setFontSize(6.2);doc.setFont("helvetica","normal");doc.setTextColor(71,85,105);
+        doc.text(((emp.role||"-")+(emp.eid?" - "+emp.eid:"")).substring(0,38),mg+3,ry+rowH/2+3.5);
+        var cellVals=[
+          {val:daysWork},{val:daysPaid},
+          {val:fmtNum(d.eb),color:[60,80,180]},{val:fmtNum(d.hra)},{val:fmtNum(d.allow)},
           {val:fmtNum(d.gr),bold:true},
           {val:d.pfE>0?fmtNum(d.pfE):"-",color:[70,100,200]},
           {val:d.esiE>0?fmtNum(d.esiE):"-",color:[5,140,90]},
@@ -1928,30 +1946,43 @@ function makeDeptPayrollPDF(deptGroups,m,y,payFn,orgName,orgEmail,orgPos,logoSrc
           {val:d.pfR>0?fmtNum(d.pfR):"-",color:[71,85,105]},
           {val:d.esiR>0?fmtNum(d.esiR):"-",color:[71,85,105]},
           {val:fmtNum(d.net),bold:true,color:[5,140,90]},
-        ]);
+        ];
+        cellVals.forEach(function(cell,i){
+          doc.setFontSize(7.3);doc.setFont("helvetica",cell.bold?"bold":"normal");
+          doc.setTextColor.apply(doc,cell.color||[15,23,42]);
+          var align=cols[i].align==="r"?"right":"left";
+          var tx=align==="right"?cx[i]+cws[i]-3:cx[i]+3;
+          doc.text(String(cell.val),tx,ry+rowH/2+1.3,{align:align});
+        });
+        ry+=rowH;
       });
-      rows.push([
-        {val:""},{val:grp.dept.toUpperCase()+" TOTAL",bold:true},{val:""},
-        {val:totW,bold:true},{val:totD,bold:true},
-        {val:fmtNum(totG-totH-totA),bold:true,color:[60,80,180]},
-        {val:fmtNum(totH),color:[60,80,180]},
-        {val:fmtNum(totA),color:[60,80,180]},
-        {val:fmtNum(totG),bold:true},
-        {val:fmtNum(totPF),color:[60,80,180]},
-        {val:fmtNum(totESI),color:[5,140,90]},
-        {val:fmtNum(totPT),color:[180,100,0]},
-        {val:fmtNum(totTDS),color:[200,40,40]},
-        {val:fmtNum(totDed),bold:true,color:[200,40,40]},
-        {val:fmtNum(totErPF),color:[71,85,105]},
-        {val:fmtNum(totErESI),color:[71,85,105]},
-        {val:fmtNum(totNet),bold:true,color:[5,140,90]},
-      ]);
+      // Department subtotal row
+      doc.setDrawColor(26,35,73);doc.setLineWidth(.6);doc.line(mg,ry,mg+cw,ry);
+      doc.setFontSize(8.2);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
+      doc.text(grp.dept.toUpperCase()+" TOTAL",mg+3,ry+rowH/2+1.3);
+      var subVals=[
+        {val:totW},{val:totD},
+        {val:fmtNum(totG-totH-totA),color:[60,80,180]},{val:fmtNum(totH),color:[60,80,180]},{val:fmtNum(totA),color:[60,80,180]},
+        {val:fmtNum(totG)},
+        {val:fmtNum(totPF),color:[60,80,180]},{val:fmtNum(totESI),color:[5,140,90]},
+        {val:fmtNum(totPT),color:[180,100,0]},{val:fmtNum(totTDS),color:[200,40,40]},
+        {val:fmtNum(totDed),color:[200,40,40]},
+        {val:fmtNum(totErPF),color:[71,85,105]},{val:fmtNum(totErESI),color:[71,85,105]},
+        {val:fmtNum(totNet),color:[5,140,90]},
+      ];
+      subVals.forEach(function(cell,i){
+        doc.setFontSize(7.3);doc.setFont("helvetica","bold");
+        doc.setTextColor.apply(doc,cell.color||[15,23,42]);
+        var align=cols[i].align==="r"?"right":"left";
+        var tx=align==="right"?cx[i]+cws[i]-3:cx[i]+3;
+        doc.text(String(cell.val),tx,ry+rowH/2+1.3,{align:align});
+      });
+      ry+=rowH;
       grandG+=totG;grandDed+=totDed;grandN+=totNet;grandCTC+=totG+totErPF+totErESI;
-      ry=pdfTable(doc,ry,mg,cols,cws,rows,{rowH:8.5,fontSize:7.3,totalsRow:true,headerColor:[71,85,105]});
     });
 
     // ── Grand summary across all included departments ──
-    if(ry>225){doc.addPage();ry=20;}
+    if(ry>148){doc.addPage();ry=20;}
     ry+=8;
     doc.setFontSize(9.5);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);doc.text("GRAND TOTAL - ALL DEPARTMENTS SHOWN",mg,ry);ry+=2;
     doc.setDrawColor(210,218,230);doc.setLineWidth(0.4);doc.line(mg,ry+2,W-mg,ry+2);ry+=9;
