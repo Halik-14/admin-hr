@@ -2670,23 +2670,12 @@ function loadJsPDFGlobal(cb,onErr){
 }
 function downloadPDF(blob,filename){
   var url=URL.createObjectURL(blob);
-  try{
-    var a=document.createElement("a");
-    a.href=url;a.download=filename;a.style.display="none";a.rel="noopener";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }catch(e){}
-  // Fallback for mobile browsers / installed PWAs where the hidden-anchor download trick is
-  // silently ignored (no save dialog, no error) — opening the blob directly is far more reliably
-  // honoured: it either downloads or opens the PDF in the browser's own viewer, where Share/Save
-  // is always available. We always also try this, since on some devices the anchor click above
-  // is a no-op and this is the only thing that actually surfaces anything to the person.
-  try{
-    var w=window.open(url,"_blank");
-    if(!w){showT("Pop-up blocked — allow pop-ups for this site, then try again","err");}
-  }catch(e2){}
-  setTimeout(function(){URL.revokeObjectURL(url);},60000);
+  var a=document.createElement("a");
+  a.href=url;a.download=filename;a.style.display="none";a.rel="noopener";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},30000);
 }
 function fmtIN(n){var v=Math.round(Number(n||0));if(v<1000)return "Rs."+v;var s=String(v);var last3=s.slice(-3);var rest=s.slice(0,-3);var grouped=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return "Rs."+(grouped?grouped+","+last3:last3);}
 // Plain comma-grouped number, no currency prefix — used inside PDF table cells (the unit is stated once in the title/header instead).
