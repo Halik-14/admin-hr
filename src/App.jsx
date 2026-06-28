@@ -3010,6 +3010,22 @@ export default function App(){
   var sLoanInterest=st(""),loanInterest=sLoanInterest[0],setLoanInterest=sLoanInterest[1];
   var sLoanDate=st(""),loanDate=sLoanDate[0],setLoanDate=sLoanDate[1];
   var sShowWarnForm=st(false),showWarnForm=sShowWarnForm[0],setShowWarnForm=sShowWarnForm[1];
+  // Inline dropdown-style forms for letters that need a few details — these expand in place under
+  // their button instead of opening a full-screen popup.
+  var sNocOpen=st(false),nocOpen=sNocOpen[0],setNocOpen=sNocOpen[1];
+  var sNocPurpose=st(""),nocPurpose=sNocPurpose[0],setNocPurpose=sNocPurpose[1];
+  var sIncOpen=st(false),incOpen=sIncOpen[0],setIncOpen=sIncOpen[1];
+  var sIncRole=st(""),incRole=sIncRole[0],setIncRole=sIncRole[1];
+  var sIncCTC=st(""),incCTC=sIncCTC[0],setIncCTC=sIncCTC[1];
+  var sIncDate=st(""),incDate=sIncDate[0],setIncDate=sIncDate[1];
+  var sIncReason=st(""),incReason=sIncReason[0],setIncReason=sIncReason[1];
+  var sRevOpen=st(false),revOpen=sRevOpen[0],setRevOpen=sRevOpen[1];
+  var sRevCTC=st(""),revCTC=sRevCTC[0],setRevCTC=sRevCTC[1];
+  var sRevDate=st(""),revDate=sRevDate[0],setRevDate=sRevDate[1];
+  var sRevReason=st(""),revReason=sRevReason[0],setRevReason=sRevReason[1];
+  var sConfMenuOpen=st(false),confMenuOpen=sConfMenuOpen[0],setConfMenuOpen=sConfMenuOpen[1];
+  var sConfDateEdit=st(false),confDateEdit=sConfDateEdit[0],setConfDateEdit=sConfDateEdit[1];
+  var sConfNewDate=st(""),confNewDate=sConfNewDate[0],setConfNewDate=sConfNewDate[1];
   var sWarnIncident=st(""),warnIncident=sWarnIncident[0],setWarnIncident=sWarnIncident[1];
   var sWarnDate=st(""),warnDate=sWarnDate[0],setWarnDate=sWarnDate[1];
   var sWarnAction=st(""),warnAction=sWarnAction[0],setWarnAction=sWarnAction[1];
@@ -3285,9 +3301,16 @@ export default function App(){
     return function(){window.removeEventListener("popstate",handleBack);};
   },[screen,tab,selE,editE,offE,sheetE,showPolicyHub,policySel,showRecruitHub,recruitSel]);
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
+  // Preload jsPDF in the background as soon as the app is open, so by the time someone taps a
+  // letter/report button the library is already cached — avoids a known mobile-browser issue
+  // where a download triggered after an async script load (instead of directly inside the tap)
+  // gets silently blocked, even though our own code still shows a "downloaded" toast.
+  se(function(){if(screen==="app")loadJsPDFGlobal(function(){},function(){});},[screen]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
   se(function(){
-    if(selE){setEmpSections({salary:false,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});}
+    if(selE){setEmpSections({salary:false,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});
+      setNocOpen(false);setNocPurpose("");setIncOpen(false);setIncRole("");setIncCTC("");setIncDate("");setIncReason("");
+      setRevOpen(false);setRevCTC("");setRevDate("");setRevReason("");setConfMenuOpen(false);setConfDateEdit(false);setConfNewDate("");}
   },[selE&&selE.id]);
   /* ── Auto-count EMIs monthly ── */
   se(function(){
@@ -6133,59 +6156,25 @@ null
         "Confirmation · Increment · Experience · Verification · NOC · Relieving",
         function(){
           var pInfo=getProbationInfo(selE);
-          function issueConfirmation(){
+          var pm=(policies&&policies.probation&&policies.probation.fields&&policies.probation.fields.probationMonths)||3;
+          function downloadConfirmation(useDate){
             try{
-              var pm=(policies&&policies.probation&&policies.probation.fields&&policies.probation.fields.probationMonths)||3;
-              if(selE.confirmed){
-                askForm("Already Confirmed",[{key:"action",label:"This employee was confirmed on "+(selE.confirmedDate?new Date(selE.confirmedDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"-")+". What would you like to do?",type:"buttons",def:"redownload",opts:[{v:"redownload",l:"Re-download PDF"},{v:"change",l:"Change Date"}]}],function(vals){
-                  try{
-                    if(vals.action==="change"){
-                      askForm("Change Confirmation Date",[{key:"date",label:"Confirmation date",type:"date",def:selE.confirmedDate||todayStr,required:true}],function(v2){
-                        try{
-                          var upd2=Object.assign({},selE,{confirmedDate:v2.date});
-                          setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd2:e;});});
-                          setSelE(upd2);
-                          makeConfirmationLetterPDF(upd2,org,authPos,authSign,pm);
-                        }catch(ex){showT("PDF error: "+ex.message,"err");}
-                      },{submitLabel:"Save & Download"});
-                    }else{
-                      makeConfirmationLetterPDF(selE,org,authPos,authSign,pm);
-                    }
-                  }catch(ex){showT("PDF error: "+ex.message,"err");}
-                },{submitLabel:"Continue"});
-                return;
+              var e2=useDate?Object.assign({},selE,{confirmedDate:useDate}):selE;
+              if(useDate){setEmps(function(p){return p.map(function(x){return x.id===selE.id?e2:x;});});setSelE(e2);}
+              makeConfirmationLetterPDF(e2,org,authPos,authSign,pm);
+              if(!selE.confirmed){
+                var upd=Object.assign({},e2,{confirmed:true,confirmedDate:e2.confirmedDate||new Date().toISOString().slice(0,10)});
+                setEmps(function(p){return p.map(function(x){return x.id===selE.id?upd:x;});});
+                setSelE(upd);
               }
-              makeConfirmationLetterPDF(selE,org,authPos,authSign,pm);
-              var upd=Object.assign({},selE,{confirmed:true,confirmedDate:new Date().toISOString().slice(0,10)});
-              setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd:e;});});
-              setSelE(upd);
+              setConfMenuOpen(false);setConfDateEdit(false);
             }catch(ex){showT("PDF error: "+ex.message,"err");}
           }
-          function issueNOC(){
-            askForm("No Objection Certificate",[{key:"purpose",label:"Purpose of NOC",type:"text",placeholder:"e.g. Bank Loan, Passport, Visa, Vehicle Loan",required:true}],function(vals){
-              try{makeNOCPDF(selE,org,authPos,authSign,vals.purpose);}catch(ex){showT("PDF error: "+ex.message,"err");}
-            },{submitLabel:"Generate NOC"});
+          function toggleBtn(label,icon,onToggle,isOpen){
+            return h("button",{onClick:onToggle,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:isOpen?ACCENT:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:isOpen?ACCENT_FG:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(icon,isOpen?ACCENT_FG:ACCENT,13),label,ic(isOpen?"expand_less":"expand_more",isOpen?ACCENT_FG:ACCENT,13));
           }
-          function issueIncrement(){
-            askForm("Increment / Promotion Letter",[
-              {key:"newRole",label:"New designation",type:"text",def:selE.role||"",placeholder:"Leave unchanged if pure increment"},
-              {key:"newCTC",label:"New monthly CTC (Rs.)",type:"number",def:String(Number(selE.fixedSalary||selE.monthlyCTC||0)),required:true},
-              {key:"effDate",label:"Effective date",type:"date",def:todayStr},
-              {key:"reason",label:"Reason / note (optional)",type:"textarea",placeholder:"Optional"}
-            ],function(vals){
-              if(!Number(vals.newCTC))return showT("Enter a valid amount","err");
-              try{makeIncrementLetterPDF(selE,org,authPos,authSign,vals.newRole,vals.newCTC,vals.effDate,vals.reason||"");}catch(ex){showT("PDF error: "+ex.message,"err");}
-            },{submitLabel:"Generate Letter"});
-          }
-          function issueSalaryRevision(){
-            askForm("Salary Revision Letter",[
-              {key:"newCTC",label:"Revised monthly CTC (Rs.)",type:"number",def:String(Number(selE.fixedSalary||selE.monthlyCTC||0)),required:true},
-              {key:"effDate",label:"Effective date",type:"date",def:todayStr},
-              {key:"reason",label:"Reason / note (optional)",type:"textarea",placeholder:"Optional"}
-            ],function(vals){
-              if(!Number(vals.newCTC))return showT("Enter a valid amount","err");
-              try{makeSalaryRevisionLetterPDF(selE,org,authPos,authSign,vals.newCTC,vals.effDate,vals.reason||"");}catch(ex){showT("PDF error: "+ex.message,"err");}
-            },{submitLabel:"Generate Letter"});
+          function panel(children){
+            return h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:11,display:"flex",flexDirection:"column",gap:8,marginTop:-2}},children);
           }
           return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
             pInfo&&!pInfo.confirmed?h("div",{style:{background:(pInfo.overdue?RED:pInfo.due?AMB:SFT)+(pInfo.overdue||pInfo.due?"12":""),border:"1px solid "+(pInfo.overdue?RED+"33":pInfo.due?AMB+"33":BDR),borderRadius:10,padding:"8px 10px",fontSize:10.5,color:pInfo.overdue?RED:pInfo.due?AMB:GRY,marginBottom:2}},
@@ -6196,18 +6185,72 @@ null
             pInfo&&pInfo.confirmed?h("div",{style:{background:GRN+"10",border:"1px solid "+GRN+"33",borderRadius:10,padding:"8px 10px",fontSize:10.5,color:GRN,marginBottom:2}},
               ic("check_circle",GRN,12)," Confirmed on "+(selE.confirmedDate?new Date(selE.confirmedDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"-")
             ):null,
+
+            // ── Confirmation ──
             h("div",{style:{display:"flex",gap:8}},
-              h("button",{onClick:issueConfirmation,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("how_to_reg",ACCENT,13),"Confirmation"),
+              toggleBtn("Confirmation","how_to_reg",function(){
+                if(!selE.confirmed){downloadConfirmation(null);return;}
+                setConfMenuOpen(!confMenuOpen);setConfDateEdit(false);
+              },confMenuOpen),
               h("button",{onClick:function(){try{makeExperienceLetterPDF(selE,org,authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("workspace_premium",ACCENT,13),"Experience")
             ),
+            confMenuOpen?panel(
+              confDateEdit?[
+                h("div",{key:"l"},lbl("CONFIRMATION DATE"),datePick(confNewDate||selE.confirmedDate||todayStr,function(v){setConfNewDate(v);},{question:"Confirmation date",wrapStyle:{marginBottom:0}})),
+                h("button",{key:"b",onClick:function(){downloadConfirmation(confNewDate||selE.confirmedDate||todayStr);},style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Save & Download")
+              ]:[
+                h("div",{key:"t",style:{fontSize:11,color:GRY}},"Already confirmed on "+(selE.confirmedDate?new Date(selE.confirmedDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"-")+". What would you like to do?"),
+                h("div",{key:"b",style:{display:"flex",gap:8}},
+                  h("button",{onClick:function(){downloadConfirmation(null);},style:{flex:1,background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:11.5,fontWeight:700,cursor:"pointer"}},"Re-download PDF"),
+                  h("button",{onClick:function(){setConfDateEdit(true);setConfNewDate(selE.confirmedDate||todayStr);},style:{flex:1,background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"10px",color:NVY,fontSize:11.5,fontWeight:700,cursor:"pointer"}},"Change Date")
+                )
+              ]
+            ):null,
+
+            // ── Verification / NOC ──
             h("div",{style:{display:"flex",gap:8}},
               h("button",{onClick:function(){try{makeEmploymentVerificationPDF(selE,org,authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("fact_check",ACCENT,13),"Verification"),
-              h("button",{onClick:issueNOC,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("gpp_good",ACCENT,13),"NOC")
+              toggleBtn("NOC","gpp_good",function(){setNocOpen(!nocOpen);},nocOpen)
             ),
+            nocOpen?panel([
+              h("div",{key:"l"},lbl("PURPOSE OF NOC"),h("input",{value:nocPurpose,onChange:function(e){setNocPurpose(e.target.value);},placeholder:"e.g. Bank Loan, Passport, Visa, Vehicle Loan",style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+              h("button",{key:"b",onClick:function(){
+                if(!nocPurpose.trim())return showT("Enter the purpose of NOC","err");
+                try{makeNOCPDF(selE,org,authPos,authSign,nocPurpose);setNocOpen(false);setNocPurpose("");}catch(ex){showT("PDF error: "+ex.message,"err");}
+              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Generate NOC")
+            ]):null,
+
+            // ── Increment / Salary Revision ──
             h("div",{style:{display:"flex",gap:8}},
-              h("button",{onClick:issueIncrement,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("trending_up",ACCENT,13),"Increment/Promotion"),
-              h("button",{onClick:issueSalaryRevision,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("payments",ACCENT,13),"Salary Revision")
+              toggleBtn("Increment/Promotion","trending_up",function(){
+                if(!incOpen){setIncRole(selE.role||"");setIncCTC(String(Number(selE.fixedSalary||selE.monthlyCTC||0)));setIncDate(todayStr);setIncReason("");}
+                setIncOpen(!incOpen);
+              },incOpen),
+              toggleBtn("Salary Revision","payments",function(){
+                if(!revOpen){setRevCTC(String(Number(selE.fixedSalary||selE.monthlyCTC||0)));setRevDate(todayStr);setRevReason("");}
+                setRevOpen(!revOpen);
+              },revOpen)
             ),
+            incOpen?panel([
+              h("div",{key:"role"},lbl("NEW DESIGNATION (LEAVE UNCHANGED IF PURE INCREMENT)"),h("input",{value:incRole,onChange:function(e){setIncRole(e.target.value);},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+              h("div",{key:"ctc"},lbl("NEW MONTHLY CTC (RS.) *"),h("input",{type:"number",value:incCTC,onChange:function(e){setIncCTC(e.target.value);},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+              h("div",{key:"date"},lbl("EFFECTIVE DATE"),datePick(incDate,function(v){setIncDate(v);},{question:"Effective date",wrapStyle:{marginBottom:0}})),
+              h("div",{key:"reason"},lbl("REASON / NOTE (OPTIONAL)"),h("textarea",{value:incReason,onChange:function(e){setIncReason(e.target.value);},rows:2,style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}})),
+              h("button",{key:"b",onClick:function(){
+                if(!Number(incCTC))return showT("Enter a valid amount","err");
+                try{makeIncrementLetterPDF(selE,org,authPos,authSign,incRole,incCTC,incDate,incReason||"");setIncOpen(false);}catch(ex){showT("PDF error: "+ex.message,"err");}
+              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Generate Letter")
+            ]):null,
+            revOpen?panel([
+              h("div",{key:"ctc"},lbl("REVISED MONTHLY CTC (RS.) *"),h("input",{type:"number",value:revCTC,onChange:function(e){setRevCTC(e.target.value);},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+              h("div",{key:"date"},lbl("EFFECTIVE DATE"),datePick(revDate,function(v){setRevDate(v);},{question:"Effective date",wrapStyle:{marginBottom:0}})),
+              h("div",{key:"reason"},lbl("REASON / NOTE (OPTIONAL)"),h("textarea",{value:revReason,onChange:function(e){setRevReason(e.target.value);},rows:2,style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",resize:"vertical",boxSizing:"border-box"}})),
+              h("button",{key:"b",onClick:function(){
+                if(!Number(revCTC))return showT("Enter a valid amount","err");
+                try{makeSalaryRevisionLetterPDF(selE,org,authPos,authSign,revCTC,revDate,revReason||"");setRevOpen(false);}catch(ex){showT("PDF error: "+ex.message,"err");}
+              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Generate Letter")
+            ]):null,
+
             h("button",{onClick:function(){try{makeRelievingLetterPDF(selE,org,authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("logout",ACCENT,13),"Relieving Letter")
           );
         }
