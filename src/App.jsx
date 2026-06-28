@@ -167,7 +167,12 @@ var SVG_ICONS={
 "home":"<path d=\"m3 9.5 9-7 9 7\"/><path d=\"M19 9.5V20a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V9.5\"/><path d=\"M9 21v-8h6v8\"/>",
 "sunrise":"<path d=\"M12 3v5\"/><path d=\"m5.6 8.6 1.4 1.4\"/><path d=\"m18.4 8.6-1.4 1.4\"/><path d=\"M7.5 19a4.5 4.5 0 0 1 9 0\"/><path d=\"M2 19h20\"/>",
 "sunmid":"<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 3v2\"/><path d=\"M12 19v2\"/><path d=\"M3 12h2\"/><path d=\"M19 12h2\"/><path d=\"m5.6 5.6 1.4 1.4\"/><path d=\"m17 17 1.4 1.4\"/><path d=\"m18.4 5.6-1.4 1.4\"/><path d=\"m7 17-1.4 1.4\"/>",
-"moonstars":"<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/><path d=\"M19 4v2\"/><path d=\"M18 5h2\"/><path d=\"M16 14.5v1.7\"/><path d=\"M15.2 15.3h1.6\"/>"
+"moonstars":"<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\"/><path d=\"M19 4v2\"/><path d=\"M18 5h2\"/><path d=\"M16 14.5v1.7\"/><path d=\"M15.2 15.3h1.6\"/>",
+"gpp_good":"<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/><path d=\"m9 12 2 2 4-4\"/>",
+"assignment_turned_in":"<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14 2 2 4-4\"/>",
+"person_search":"<circle cx=\"10\" cy=\"7\" r=\"4\"/><path d=\"M10.3 15H7a4 4 0 0 0-4 4v2\"/><circle cx=\"17\" cy=\"17\" r=\"3\"/><path d=\"m21 21-1.9-1.9\"/>",
+"gavel":"<path d=\"m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8\"/><path d=\"m16 16 6-6\"/><path d=\"m8 8 6-6\"/><path d=\"m9 7 8 8\"/><path d=\"m21 11-8-8\"/>",
+"chevron_left":"<path d=\"m15 18-6-6 6-6\"/>"
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
@@ -2665,10 +2670,23 @@ function loadJsPDFGlobal(cb,onErr){
 }
 function downloadPDF(blob,filename){
   var url=URL.createObjectURL(blob);
-  var a=document.createElement("a");
-  a.href=url;a.download=filename;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(function(){URL.revokeObjectURL(url);},30000);
+  try{
+    var a=document.createElement("a");
+    a.href=url;a.download=filename;a.style.display="none";a.rel="noopener";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }catch(e){}
+  // Fallback for mobile browsers / installed PWAs where the hidden-anchor download trick is
+  // silently ignored (no save dialog, no error) — opening the blob directly is far more reliably
+  // honoured: it either downloads or opens the PDF in the browser's own viewer, where Share/Save
+  // is always available. We always also try this, since on some devices the anchor click above
+  // is a no-op and this is the only thing that actually surfaces anything to the person.
+  try{
+    var w=window.open(url,"_blank");
+    if(!w){showT("Pop-up blocked — allow pop-ups for this site, then try again","err");}
+  }catch(e2){}
+  setTimeout(function(){URL.revokeObjectURL(url);},60000);
 }
 function fmtIN(n){var v=Math.round(Number(n||0));if(v<1000)return "Rs."+v;var s=String(v);var last3=s.slice(-3);var rest=s.slice(0,-3);var grouped=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return "Rs."+(grouped?grouped+","+last3:last3);}
 // Plain comma-grouped number, no currency prefix — used inside PDF table cells (the unit is stated once in the title/header instead).
