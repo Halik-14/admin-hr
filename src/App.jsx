@@ -32,6 +32,12 @@ function applyTheme(mode){
 }
 var fmt=function(n){return "\u20B9"+Number(n||0).toLocaleString("en-IN");};
 var MOS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+// showT is a toast function that depends on React state (setToast) inside the App component.
+// All the make*PDF generators below are top-level functions outside the component, so they
+// can't see a component-local showT — this module-level binding gets pointed at the real
+// implementation once App() renders (see "showT=function..." inside App), so every call site
+// — inside or outside the component — keeps working unchanged.
+var showT=function(msg,type){console.log("[toast before app ready]",msg);};
 var DEPT_MAP={
   "IT / Software":["Engineering","Product","Design","QA / Testing","DevOps","HR","Sales","Finance","Operations","Marketing","Support"],
   "Institute / Education":["Teaching","Administration","Examination","Library","Sports","Hostel","Transport","Accounts","HR","IT Support","Security"],
@@ -3582,7 +3588,7 @@ export default function App(){
   },[emps,skipB]);
 
 
-  function showT(msg,type){setToast({msg:msg,type:type||"ok"});setTimeout(function(){setToast(null);},2500);}
+  showT=function(msg,type){setToast({msg:msg,type:type||"ok"});setTimeout(function(){setToast(null);},2500);};
   function pastMonths(y){var r=[];for(var m2=0;m2<=(y===curY?curM:11);m2++)r.push(m2);return r;}
   function pastYears(){var r=[];for(var y=2020;y<=curY;y++)r.push(y);return r;}
   function ak(date,id){return date+"_"+id;}
@@ -5335,21 +5341,25 @@ export default function App(){
         })
       ),
       h("div",{style:{display:"flex",gap:10,marginBottom:12}},
-        h("div",{onClick:function(){setShowPolicyHub(true);},style:{flex:1,background:NVY,borderRadius:14,padding:"12px 13px",cursor:"pointer",boxShadow:"0 4px 18px rgba(0,0,0,.3)",position:"relative",overflow:"hidden",border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.12)":"rgba(0,0,0,.12)")}},
+        h("div",{onClick:function(){setShowPolicyHub(true);},style:{flex:1,background:NVY,borderRadius:14,padding:"12px 13px",display:"flex",alignItems:"center",gap:9,cursor:"pointer",boxShadow:"0 4px 18px rgba(0,0,0,.3)",position:"relative",overflow:"hidden",border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.12)":"rgba(0,0,0,.12)")}},
           h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,"+(themeMode==="light"?"rgba(255,255,255,.18)":"rgba(0,0,0,.10)")+",transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
-          h("div",{style:{width:32,height:32,borderRadius:10,background:themeMode==="light"?"rgba(255,255,255,.14)":"rgba(0,0,0,.08)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8,position:"relative"}},
-            ic("contract_edit",CARD,16)
+          h("div",{style:{width:34,height:34,borderRadius:10,background:themeMode==="light"?"rgba(255,255,255,.14)":"rgba(0,0,0,.08)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}},
+            ic("contract_edit",CARD,17)
           ),
-          h("div",{style:{fontSize:12.5,fontWeight:700,color:CARD,position:"relative"}},"HR Policies"),
-          h("div",{style:{fontSize:9.5,color:CARD,opacity:.6,marginTop:2,position:"relative"}},isPaid?"View / edit":"Business plan")
+          h("div",{style:{flex:1,minWidth:0,position:"relative"}},
+            h("div",{style:{fontSize:12.5,fontWeight:700,color:CARD}},"HR Policies"),
+            h("div",{style:{fontSize:9,color:CARD,opacity:.6,marginTop:1,lineHeight:1.25}},isPaid?"Create or update policies":"Business plan")
+          )
         ),
-        h("div",{onClick:function(){setShowRecruitHub(true);},style:{flex:1,background:"#1E3A5F",borderRadius:14,padding:"12px 13px",cursor:"pointer",boxShadow:"0 4px 18px rgba(0,0,0,.3)",position:"relative",overflow:"hidden",border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.12)":"rgba(0,0,0,.12)")}},
+        h("div",{onClick:function(){setShowRecruitHub(true);},style:{flex:1,background:NVY,borderRadius:14,padding:"12px 13px",display:"flex",alignItems:"center",gap:9,cursor:"pointer",boxShadow:"0 4px 18px rgba(0,0,0,.3)",position:"relative",overflow:"hidden",border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.12)":"rgba(0,0,0,.12)")}},
           h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,"+(themeMode==="light"?"rgba(255,255,255,.18)":"rgba(0,0,0,.10)")+",transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
-          h("div",{style:{width:32,height:32,borderRadius:10,background:themeMode==="light"?"rgba(255,255,255,.14)":"rgba(0,0,0,.08)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8,position:"relative"}},
-            ic("person_add",CARD,16)
+          h("div",{style:{width:34,height:34,borderRadius:10,background:themeMode==="light"?"rgba(255,255,255,.14)":"rgba(0,0,0,.08)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,position:"relative"}},
+            ic("person_search",CARD,17)
           ),
-          h("div",{style:{fontSize:12.5,fontWeight:700,color:CARD,position:"relative"}},"Recruit"),
-          h("div",{style:{fontSize:9.5,color:CARD,opacity:.6,marginTop:2,position:"relative"}},"Offer & Appointment")
+          h("div",{style:{flex:1,minWidth:0,position:"relative"}},
+            h("div",{style:{fontSize:12.5,fontWeight:700,color:CARD}},"Recruit"),
+            h("div",{style:{fontSize:9,color:CARD,opacity:.6,marginTop:1,lineHeight:1.25}},"Offer & Appointment letters")
+          )
         )
       ),
       showRemSection?h("div",{style:{marginBottom:12}},
