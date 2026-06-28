@@ -2603,6 +2603,44 @@ var POLICY_DEFS={
   }
 };
 
+// ── Recruit hub — pre-joining documents (Offer/Appointment) that aren't tied to an existing employee record,
+// since the candidate isn't an employee in the system yet. Same pattern as POLICY_DEFS above.
+var RECRUIT_DEFS={
+  offer:{
+    label:"Offer Letter",icon:"mail",color:"#4F46E5",
+    blurb:"Pre-joining offer with role, CTC and joining date.",
+    learnMore:"Sent to a candidate before they join, confirming the role and compensation being offered. This is conditional — the candidate hasn't joined yet, so no employee ID or signed acceptance is expected at this stage.",
+    fields:[
+      {key:"name",label:"Candidate Name",type:"text",def:"",required:true},
+      {key:"role",label:"Position / Designation",type:"text",def:""},
+      {key:"dept",label:"Department",type:"text",def:""},
+      {key:"joined",label:"Proposed Joining Date",type:"date",def:""},
+      {key:"monthlyCTC",label:"Monthly CTC (Rs.)",type:"number",def:""},
+      {key:"leaveEntitlement",label:"Leave Entitlement (days/year, optional)",type:"number",def:""}
+    ],
+    generate:function(form,org,authPos,authSign){
+      makeOfferLetterPDF({name:form.name,role:form.role,dept:form.dept,joined:form.joined,fixedSalary:Number(form.monthlyCTC||0),leaveEntitlement:Number(form.leaveEntitlement||0)},org,authPos,authSign);
+    }
+  },
+  appointment:{
+    label:"Appointment Letter",icon:"assignment_turned_in",color:"#2563EB",
+    blurb:"Issued once the candidate has joined and accepted.",
+    learnMore:"Issued after the candidate has actually joined, confirming the final terms of employment along with their assigned Employee ID. Meant to be signed by both the company and the new employee as acceptance.",
+    fields:[
+      {key:"name",label:"Employee Name",type:"text",def:"",required:true},
+      {key:"eid",label:"Employee ID",type:"text",def:""},
+      {key:"role",label:"Position / Designation",type:"text",def:""},
+      {key:"dept",label:"Department",type:"text",def:""},
+      {key:"joined",label:"Date of Joining",type:"date",def:""},
+      {key:"monthlyCTC",label:"Monthly CTC (Rs.)",type:"number",def:""},
+      {key:"leaveEntitlement",label:"Leave Entitlement (days/year, optional)",type:"number",def:""}
+    ],
+    generate:function(form,org,authPos,authSign){
+      makeAppointmentLetterPDF({name:form.name,eid:form.eid,role:form.role,dept:form.dept,joined:form.joined,fixedSalary:Number(form.monthlyCTC||0),leaveEntitlement:Number(form.leaveEntitlement||0)},org,authPos,authSign);
+    }
+  }
+};
+
 function lsGet(key,def){try{var v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
 function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
 function loadJsPDFGlobal(cb,onErr){
@@ -3176,6 +3214,9 @@ export default function App(){
   var sRemOpen=st(false),remOpen=sRemOpen[0],setRemOpen=sRemOpen[1];
   var sPolicies=st(function(){return lsGet("hr_policies",{});}),policies=sPolicies[0],setPolicies=sPolicies[1];
   var sShowPolicyHub=st(false),showPolicyHub=sShowPolicyHub[0],setShowPolicyHub=sShowPolicyHub[1];
+  var sShowRecruitHub=st(false),showRecruitHub=sShowRecruitHub[0],setShowRecruitHub=sShowRecruitHub[1];
+  var sRecruitSel=st(null),recruitSel=sRecruitSel[0],setRecruitSel=sRecruitSel[1];
+  var sRecruitForm=st({}),recruitForm=sRecruitForm[0],setRecruitForm=sRecruitForm[1];
   var sPolicySel=st(null),policySel=sPolicySel[0],setPolicySel=sPolicySel[1]; // which policy type's form is open, null=list view
   var sPolicyForm=st({}),policyForm=sPolicyForm[0],setPolicyForm=sPolicyForm[1]; // working copy of the field values for the open form
   var sPolicyInfoOpen=st(null),policyInfoOpen=sPolicyInfoOpen[0],setPolicyInfoOpen=sPolicyInfoOpen[1]; // which policy's "Learn more" is expanded in the list
@@ -3218,7 +3259,9 @@ export default function App(){
     var lastBackTime=0;
     function handleBack(e){
       if(policySel){setPolicySel(null);history.pushState(null,"",location.href);return;}
+      if(recruitSel){setRecruitSel(null);history.pushState(null,"",location.href);return;}
       if(showPolicyHub){setShowPolicyHub(false);history.pushState(null,"",location.href);return;}
+      if(showRecruitHub){setShowRecruitHub(false);history.pushState(null,"",location.href);return;}
       if(sheetE){setSheetE(null);history.pushState(null,"",location.href);return;}
       if(selE){setSelE(null);setEditE(null);setOffE(null);history.pushState(null,"",location.href);return;}
       if(editE){setEditE(null);history.pushState(null,"",location.href);return;}
@@ -3234,7 +3277,7 @@ export default function App(){
     history.pushState(null,"",location.href);
     window.addEventListener("popstate",handleBack);
     return function(){window.removeEventListener("popstate",handleBack);};
-  },[screen,tab,selE,editE,offE,sheetE,showPolicyHub,policySel]);
+  },[screen,tab,selE,editE,offE,sheetE,showPolicyHub,policySel,showRecruitHub,recruitSel]);
   se(function(){if(screen!=="app")return;var t=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(t);};},[screen]);
   se(function(){if(window.__hideSplash)window.__hideSplash(LOGO_SRC);},[]);
   se(function(){
@@ -5114,8 +5157,85 @@ export default function App(){
     );
   }
 
+  // ── Recruit hub — Offer/Appointment letters generated from a one-off form, not tied to an existing employee record.
+  function renderRecruitHub(){
+    var recruitKeys=Object.keys(RECRUIT_DEFS);
+
+    function openRecruit(key){
+      var defaults={};
+      RECRUIT_DEFS[key].fields.forEach(function(f){defaults[f.key]=f.def;});
+      setRecruitForm(defaults);
+      setRecruitSel(key);
+    }
+    function generateRecruitDoc(){
+      var def=RECRUIT_DEFS[recruitSel];
+      var missing=def.fields.find(function(f){return f.required&&!String(recruitForm[f.key]||"").trim();});
+      if(missing)return showT("Please fill: "+missing.label,"err");
+      try{
+        def.generate(recruitForm,org,authPos,authSign);
+      }catch(ex){
+        showT("PDF error: "+ex.message,"err");
+      }
+    }
+
+    // ── Form view ──
+    if(recruitSel){
+      var def=RECRUIT_DEFS[recruitSel];
+      return h("div",{className:"fd"},
+        h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},
+          h("button",{onClick:function(){setRecruitSel(null);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("arrow_back",NVY,17)),
+          h("div",null,
+            h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},def.label),
+            h("div",{style:{fontSize:11,color:GRY}},def.blurb)
+          )
+        ),
+        card(h("div",null,
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:10}},"FILL IN THE DETAILS"),
+          def.fields.map(function(f){
+            return h("div",{key:f.key,style:{marginBottom:12}},
+              h("div",{style:{fontSize:11.5,color:NVY,fontWeight:600,marginBottom:5}},f.label+(f.required?" *":"")),
+              f.type==="date"?datePick(recruitForm[f.key],function(v){setRecruitForm(Object.assign({},recruitForm,{[f.key]:v}));},{question:"Choose "+f.label,wrapStyle:{marginBottom:0}})
+              :h("input",{type:f.type==="number"?"number":"text",value:recruitForm[f.key]!==undefined?recruitForm[f.key]:f.def,onChange:function(e){setRecruitForm(Object.assign({},recruitForm,{[f.key]:e.target.value}));},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+            );
+          }),
+          h("button",{onClick:generateRecruitDoc,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:12.5,fontWeight:700,cursor:"pointer",marginTop:6}},ic("download",ACCENT_FG,16),"Generate PDF")
+        ))
+      );
+    }
+
+    // ── List view ──
+    return h("div",{className:"fd"},
+      h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:4}},
+        h("button",{onClick:function(){setShowRecruitHub(false);},style:{background:SFT,border:"1px solid "+BDR,borderRadius:9,width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},ic("arrow_back",NVY,17)),
+        h("div",null,
+          h("div",{style:{fontSize:16,fontWeight:700,color:NVY}},"Recruit"),
+          h("div",{style:{fontSize:11,color:GRY}},"Pre-joining documents for candidates and new joiners")
+        )
+      ),
+      h("div",{style:{margin:"14px 0"}},
+        recruitKeys.map(function(key){
+          var def=RECRUIT_DEFS[key];
+          return h("div",{key:key,style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,marginBottom:9,boxShadow:T.SHADOW,overflow:"hidden"}},
+            h("div",{onClick:function(){openRecruit(key);},style:{display:"flex",alignItems:"center",gap:12,padding:"12px 14px",cursor:"pointer"}},
+              h("div",{style:{width:40,height:40,borderRadius:11,background:def.color+"16",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(def.icon,def.color,20)),
+              h("div",{style:{flex:1,minWidth:0}},
+                h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},def.label),
+                h("div",{style:{fontSize:10.5,color:GRY,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},def.blurb)
+              ),
+              ic(ICONS.chev,GRY,18)
+            )
+          );
+        })
+      ),
+      h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5,padding:"4px 4px 10px"}},
+        "These don't create or change any employee record — they're standalone documents you fill in and download. Once someone has actually joined, manage their ongoing documents from their employee profile instead."
+      )
+    );
+  }
+
   function renderDashboard(){
     if(showPolicyHub)return renderPolicyHub();
+    if(showRecruitHub)return renderRecruitHub();
 
     function expiryCountdown(){
       if(!org.expires_on||!isPaid)return null;
@@ -5214,18 +5334,23 @@ export default function App(){
           );
         })
       ),
-      h("div",{onClick:function(){setShowPolicyHub(true);},style:{background:NVY,borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 18px rgba(0,0,0,.35)",position:"relative",overflow:"hidden",border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.12)":"rgba(0,0,0,.12)")}},
-        h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,"+(themeMode==="light"?"rgba(255,255,255,.18)":"rgba(0,0,0,.10)")+",transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
-        h("div",{style:{width:44,height:44,borderRadius:13,background:themeMode==="light"?"rgba(255,255,255,.14)":"rgba(0,0,0,.08)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,animation:"hrIconPulse 2.4s ease-in-out infinite",position:"relative"}},
-          ic("contract_edit",CARD,22)
+      h("div",{style:{display:"flex",gap:10,marginBottom:12}},
+        h("div",{onClick:function(){setShowPolicyHub(true);},style:{flex:1,background:NVY,borderRadius:14,padding:"12px 13px",cursor:"pointer",boxShadow:"0 4px 18px rgba(0,0,0,.3)",position:"relative",overflow:"hidden",border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.12)":"rgba(0,0,0,.12)")}},
+          h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,"+(themeMode==="light"?"rgba(255,255,255,.18)":"rgba(0,0,0,.10)")+",transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
+          h("div",{style:{width:32,height:32,borderRadius:10,background:themeMode==="light"?"rgba(255,255,255,.14)":"rgba(0,0,0,.08)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8,position:"relative"}},
+            ic("contract_edit",CARD,16)
+          ),
+          h("div",{style:{fontSize:12.5,fontWeight:700,color:CARD,position:"relative"}},"HR Policies"),
+          h("div",{style:{fontSize:9.5,color:CARD,opacity:.6,marginTop:2,position:"relative"}},isPaid?"View / edit":"Business plan")
         ),
-        h("div",{style:{flex:1,textAlign:"left",position:"relative"}},
-          h("div",{style:{fontSize:14,fontWeight:700,color:CARD}},"HR Policies"),
-          h("div",{style:{fontSize:11,color:CARD,opacity:.65,marginTop:2}},
-            isPaid?(Object.keys(policies||{}).length>0?"Want to update your company policies?":"Want to create your company's HR policies?"):"Create professional policy documents - Business plan"
-          )
-        ),
-        h("div",{style:{position:"relative"}},ic(isPaid?ICONS.chev:"lock",CARD,isPaid?20:18))
+        h("div",{onClick:function(){setShowRecruitHub(true);},style:{flex:1,background:"#1E3A5F",borderRadius:14,padding:"12px 13px",cursor:"pointer",boxShadow:"0 4px 18px rgba(0,0,0,.3)",position:"relative",overflow:"hidden",border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.12)":"rgba(0,0,0,.12)")}},
+          h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,"+(themeMode==="light"?"rgba(255,255,255,.18)":"rgba(0,0,0,.10)")+",transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
+          h("div",{style:{width:32,height:32,borderRadius:10,background:themeMode==="light"?"rgba(255,255,255,.14)":"rgba(0,0,0,.08)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:8,position:"relative"}},
+            ic("person_add",CARD,16)
+          ),
+          h("div",{style:{fontSize:12.5,fontWeight:700,color:CARD,position:"relative"}},"Recruit"),
+          h("div",{style:{fontSize:9.5,color:CARD,opacity:.6,marginTop:2,position:"relative"}},"Offer & Appointment")
+        )
       ),
       showRemSection?h("div",{style:{marginBottom:12}},
         bRemind.length>0?h("div",{style:{borderRadius:12,padding:12,marginBottom:8,border:"1.5px solid #FCD34D",animation:bdayUrgent?"blinkBorder 1.2s ease-in-out infinite":"none",background:T.PILL_WARN_SOFT}},
@@ -5995,34 +6120,40 @@ null
 
       /* 9. Letters & Documents */
       accSection("letters","description",ACCENT,"Letters & Documents",
-        "Offer · Appointment · Confirmation · Increment · Experience · Verification · NOC · Relieving",
+        "Confirmation · Increment · Experience · Verification · NOC · Relieving",
         function(){
           var pInfo=getProbationInfo(selE);
           function issueConfirmation(){
-            var pm=(policies&&policies.probation&&policies.probation.fields&&policies.probation.fields.probationMonths)||3;
-            if(selE.confirmed){
-              askForm("Already Confirmed",[{key:"action",label:"This employee was confirmed on "+(selE.confirmedDate?new Date(selE.confirmedDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"-")+". What would you like to do?",type:"buttons",def:"redownload",opts:[{v:"redownload",l:"Re-download PDF"},{v:"change",l:"Change Date"}]}],function(vals){
-                if(vals.action==="change"){
-                  askForm("Change Confirmation Date",[{key:"date",label:"Confirmation date",type:"date",def:selE.confirmedDate||todayStr,required:true}],function(v2){
-                    var upd2=Object.assign({},selE,{confirmedDate:v2.date});
-                    setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd2:e;});});
-                    setSelE(upd2);
-                    makeConfirmationLetterPDF(upd2,org,authPos,authSign,pm);
-                  },{submitLabel:"Save & Download"});
-                }else{
-                  makeConfirmationLetterPDF(selE,org,authPos,authSign,pm);
-                }
-              },{submitLabel:"Continue"});
-              return;
-            }
-            makeConfirmationLetterPDF(selE,org,authPos,authSign,pm);
-            var upd=Object.assign({},selE,{confirmed:true,confirmedDate:new Date().toISOString().slice(0,10)});
-            setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd:e;});});
-            setSelE(upd);
+            try{
+              var pm=(policies&&policies.probation&&policies.probation.fields&&policies.probation.fields.probationMonths)||3;
+              if(selE.confirmed){
+                askForm("Already Confirmed",[{key:"action",label:"This employee was confirmed on "+(selE.confirmedDate?new Date(selE.confirmedDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"-")+". What would you like to do?",type:"buttons",def:"redownload",opts:[{v:"redownload",l:"Re-download PDF"},{v:"change",l:"Change Date"}]}],function(vals){
+                  try{
+                    if(vals.action==="change"){
+                      askForm("Change Confirmation Date",[{key:"date",label:"Confirmation date",type:"date",def:selE.confirmedDate||todayStr,required:true}],function(v2){
+                        try{
+                          var upd2=Object.assign({},selE,{confirmedDate:v2.date});
+                          setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd2:e;});});
+                          setSelE(upd2);
+                          makeConfirmationLetterPDF(upd2,org,authPos,authSign,pm);
+                        }catch(ex){showT("PDF error: "+ex.message,"err");}
+                      },{submitLabel:"Save & Download"});
+                    }else{
+                      makeConfirmationLetterPDF(selE,org,authPos,authSign,pm);
+                    }
+                  }catch(ex){showT("PDF error: "+ex.message,"err");}
+                },{submitLabel:"Continue"});
+                return;
+              }
+              makeConfirmationLetterPDF(selE,org,authPos,authSign,pm);
+              var upd=Object.assign({},selE,{confirmed:true,confirmedDate:new Date().toISOString().slice(0,10)});
+              setEmps(function(p){return p.map(function(e){return e.id===selE.id?upd:e;});});
+              setSelE(upd);
+            }catch(ex){showT("PDF error: "+ex.message,"err");}
           }
           function issueNOC(){
             askForm("No Objection Certificate",[{key:"purpose",label:"Purpose of NOC",type:"text",placeholder:"e.g. Bank Loan, Passport, Visa, Vehicle Loan",required:true}],function(vals){
-              makeNOCPDF(selE,org,authPos,authSign,vals.purpose);
+              try{makeNOCPDF(selE,org,authPos,authSign,vals.purpose);}catch(ex){showT("PDF error: "+ex.message,"err");}
             },{submitLabel:"Generate NOC"});
           }
           function issueIncrement(){
@@ -6033,7 +6164,7 @@ null
               {key:"reason",label:"Reason / note (optional)",type:"textarea",placeholder:"Optional"}
             ],function(vals){
               if(!Number(vals.newCTC))return showT("Enter a valid amount","err");
-              makeIncrementLetterPDF(selE,org,authPos,authSign,vals.newRole,vals.newCTC,vals.effDate,vals.reason||"");
+              try{makeIncrementLetterPDF(selE,org,authPos,authSign,vals.newRole,vals.newCTC,vals.effDate,vals.reason||"");}catch(ex){showT("PDF error: "+ex.message,"err");}
             },{submitLabel:"Generate Letter"});
           }
           function issueSalaryRevision(){
@@ -6043,7 +6174,7 @@ null
               {key:"reason",label:"Reason / note (optional)",type:"textarea",placeholder:"Optional"}
             ],function(vals){
               if(!Number(vals.newCTC))return showT("Enter a valid amount","err");
-              makeSalaryRevisionLetterPDF(selE,org,authPos,authSign,vals.newCTC,vals.effDate,vals.reason||"");
+              try{makeSalaryRevisionLetterPDF(selE,org,authPos,authSign,vals.newCTC,vals.effDate,vals.reason||"");}catch(ex){showT("PDF error: "+ex.message,"err");}
             },{submitLabel:"Generate Letter"});
           }
           return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
@@ -6056,20 +6187,18 @@ null
               ic("check_circle",GRN,12)," Confirmed on "+(selE.confirmedDate?new Date(selE.confirmedDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"-")
             ):null,
             h("div",{style:{display:"flex",gap:8}},
-              h("button",{onClick:function(){makeOfferLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("mail",ACCENT,13),"Offer Letter"),
-              h("button",{onClick:issueConfirmation,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("how_to_reg",ACCENT,13),"Confirmation")
+              h("button",{onClick:issueConfirmation,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("how_to_reg",ACCENT,13),"Confirmation"),
+              h("button",{onClick:function(){try{makeExperienceLetterPDF(selE,org,authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("workspace_premium",ACCENT,13),"Experience")
             ),
             h("div",{style:{display:"flex",gap:8}},
-              h("button",{onClick:function(){makeExperienceLetterPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("workspace_premium",ACCENT,13),"Experience"),
-              h("button",{onClick:function(){makeEmploymentVerificationPDF(selE,org,authPos,authSign);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("fact_check",ACCENT,13),"Verification")
+              h("button",{onClick:function(){try{makeEmploymentVerificationPDF(selE,org,authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("fact_check",ACCENT,13),"Verification"),
+              h("button",{onClick:issueNOC,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("gpp_good",ACCENT,13),"NOC")
             ),
-            h("button",{onClick:issueNOC,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("gpp_good",ACCENT,13),"NOC (No Objection Certificate)"),
-            h("button",{onClick:function(){makeAppointmentLetterPDF(selE,org,authPos,authSign);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("assignment_turned_in",ACCENT,13),"Appointment Letter"),
             h("div",{style:{display:"flex",gap:8}},
               h("button",{onClick:issueIncrement,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("trending_up",ACCENT,13),"Increment/Promotion"),
               h("button",{onClick:issueSalaryRevision,style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("payments",ACCENT,13),"Salary Revision")
             ),
-            h("button",{onClick:function(){makeRelievingLetterPDF(selE,org,authPos,authSign);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("logout",ACCENT,13),"Relieving Letter")
+            h("button",{onClick:function(){try{makeRelievingLetterPDF(selE,org,authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("logout",ACCENT,13),"Relieving Letter")
           );
         }
       )
