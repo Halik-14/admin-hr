@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { jsPDF as _BundledJsPDF } from "jspdf";
+// jsPDF is intentionally NOT statically imported here. A static import bundles its ~360KB straight
+// into the main app file, so the whole app (including people who never download anything that day)
+// has to load and parse that extra weight before it even opens — that's the "feels a bit slow" you
+// noticed. Loading it with import() below makes Vite split it into its own small file, served from
+// your own domain (still no CDN, still no network race) and fetched once, right after the app opens.
 var _sb=createClient("https://lthqbzpbldqthvgdwjrm.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0aHFienBibGRxdGh2Z2R3anJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4Njc2MjgsImV4cCI6MjA5MjQ0MzYyOH0.tai_EmQIPZBdHmyXfeYOlc3tThqc3CGBbSlzumaL1vE");
 
 var h=React.createElement;
@@ -2652,17 +2656,21 @@ var RECRUIT_DEFS={
 
 function lsGet(key,def){try{var v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
 function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
-// jsPDF is now bundled directly into the app (imported at the top), so it's ALWAYS available
-// instantly and synchronously — no CDN fetch, no network dependency, no async race. This is the
-// permanent fix for downloads silently failing: the library can never be "not ready yet" anymore.
-// The function keeps its callback signature so none of the 28 generator call sites need to change.
+// jsPDF is bundled into the app (no CDN), but loaded as its own small chunk via import() instead of
+// being baked into the main file — keeps the app itself fast to open. The chunk is fetched once and
+// cached in this module-level variable; every later call (and every call while it's still loading)
+// resolves from that same cache/promise, so there's no repeat-fetch and no dropped-callback race.
+var _jspdfModPromise=null;
 function loadJsPDFGlobal(cb,onErr){
-  try{
-    cb(_BundledJsPDF);
-  }catch(e){
-    if(typeof showT==="function")showT("PDF error: "+e.message,"err");
+  if(!_jspdfModPromise)_jspdfModPromise=import("jspdf");
+  _jspdfModPromise.then(function(mod){
+    try{ cb(mod.jsPDF); }
+    catch(e){ if(typeof showT==="function")showT("PDF error: "+e.message,"err"); if(onErr)onErr(); }
+  }).catch(function(e){
+    _jspdfModPromise=null; // allow a retry on the next call instead of staying broken forever
+    if(typeof showT==="function")showT("Could not load PDF engine: "+e.message,"err");
     if(onErr)onErr();
-  }
+  });
 }
 // Single hardened download path used by EVERY file export in the app (PDF, CSV, ECR txt, HTML, JSON
 // backup). Centralised so the device-compatibility handling lives in exactly one place.
@@ -10540,7 +10548,21 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
     h("div",{style:{width:"100%",maxWidth:430,minHeight:"100vh",position:"relative",display:"flex",flexDirection:"column"}},
       showUpdate?h("div",{style:{position:"fixed",top:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,zIndex:9999,background:"#0F172A",padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,boxShadow:"0 2px 12px rgba(0,0,0,.3)"}},
         h("div",{style:{fontSize:12,color:CARD,fontWeight:600}},"\u2728 New update available!"),
-        h("button",{onClick:function(){window.location.reload(true);},style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
+        h("button",{onClick:function(){
+          // Belt-and-braces update: wipe every Cache Storage entry and unregister the old service
+          // worker before reloading, so the new version is guaranteed to load fresh — this is what
+          // used to require clearing all browsing data by hand; now "Update Now" does the same thing.
+          var done=function(){window.location.reload(true);};
+          if("caches" in window){
+            caches.keys().then(function(keys){return Promise.all(keys.map(function(k){return caches.delete(k);}));}).catch(function(){}).then(function(){
+              if("serviceWorker" in navigator){
+                navigator.serviceWorker.getRegistrations().then(function(regs){
+                  Promise.all(regs.map(function(r){return r.unregister();})).catch(function(){}).then(done);
+                }).catch(done);
+              }else{done();}
+            });
+          }else{done();}
+        },style:{background:"#FCD34D",border:"none",borderRadius:8,padding:"6px 14px",fontSize:12,fontWeight:700,color:"#0F172A",cursor:"pointer",flexShrink:0}},"Update Now")
       ):null,
       // admin panel handled via screen routing below
       renderPFDlPicker(),
