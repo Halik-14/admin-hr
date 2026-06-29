@@ -2207,8 +2207,8 @@ function makeSalaryRegisterPDF(emps,m,y,payFn,orgName,orgEmail,orgPos,logoSrc,or
     });
 
     var totalsCells=[
-      {val:totW},
-      {val:totD},
+      {val:""},
+      {val:""},
       {val:fmtNum(totB),color:[60,80,180]},
       {val:fmtNum(totH),color:[60,80,180]},
       {val:fmtNum(totA),color:[60,80,180]},
@@ -2339,9 +2339,9 @@ function makeDeptPayrollPDF(deptGroups,m,y,payFn,orgName,orgEmail,orgPos,logoSrc
       // Department subtotal row
       doc.setDrawColor(26,35,73);doc.setLineWidth(.6);doc.line(mg,ry,mg+cw,ry);
       doc.setFontSize(8.2);doc.setFont("helvetica","bold");doc.setTextColor(15,23,42);
-      doc.text(grp.dept.toUpperCase()+" TOTAL",mg+3,ry+rowH/2+1.3);
+      doc.text("TOTAL",mg+3,ry+rowH/2+1.3);
       var subVals=[
-        {val:totW},{val:totD},
+        {val:""},{val:""},
         {val:fmtNum(totG-totH-totA),color:[60,80,180]},{val:fmtNum(totH),color:[60,80,180]},{val:fmtNum(totA),color:[60,80,180]},
         {val:fmtNum(totG)},
         {val:fmtNum(totPF),color:[60,80,180]},{val:fmtNum(totESI),color:[5,140,90]},
@@ -5730,8 +5730,7 @@ null
             h("div",{style:{fontSize:10.5,color:CARD,opacity:.7,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},[selE.role,selE.dept].filter(Boolean).join(" - ")||"No designation"),
             h("div",{style:{display:"flex",gap:10,marginTop:3,flexWrap:"wrap"}},
               selE.eid?h("div",{style:{fontSize:9.5,color:CARD,opacity:.55}},"ID: "+selE.eid):null,
-              selE.joined?h("div",{style:{fontSize:9.5,color:CARD,opacity:.55}},"Joined: "+selE.joined):null,
-              selE.confirmed?h("div",{style:{fontSize:9.5,color:"#6EE7B7",opacity:.9}},"Confirmed: "+(selE.confirmedDate||"-")):null
+              selE.joined?h("div",{style:{fontSize:9.5,color:CARD,opacity:.55}},"Joined: "+selE.joined):null
             )
           ),
           (selE.mob||selE.email)?h("div",{style:{display:"flex",gap:6,alignItems:"center",flexShrink:0}},
@@ -5769,6 +5768,13 @@ null
             h("div",{style:{flex:1,background:"#2563EB10",borderRadius:10,padding:"11px 12px",border:"1px solid #2563EB22"}},
               h("div",{style:{fontSize:9,fontWeight:700,color:"#2563EB",letterSpacing:.5,marginBottom:3}},"TENURE"),
               h("div",{style:{fontSize:13,fontWeight:800,color:"#2563EB"}},(function(){if(!selE.joined)return "-";var dj=new Date(selE.joined+"T00:00:00"),nw=new Date();var mo=(nw.getFullYear()-dj.getFullYear())*12+(nw.getMonth()-dj.getMonth());if(mo<0)mo=0;var y=Math.floor(mo/12),mm=mo%12;return (y>0?y+"y ":"")+mm+"m";})())
+            )
+          ),
+          h("div",{style:{background:selE.confirmed?GRN+"10":SFT,borderRadius:10,padding:"11px 12px",marginBottom:8,border:"1px solid "+(selE.confirmed?GRN+"25":BDR),display:"flex",alignItems:"center",gap:8}},
+            ic(selE.confirmed?"check_circle":"hourglass_empty",selE.confirmed?GRN:GRY,16),
+            h("div",null,
+              h("div",{style:{fontSize:9,fontWeight:700,color:selE.confirmed?GRN:GRY,letterSpacing:.5}},"CONFIRMATION STATUS"),
+              h("div",{style:{fontSize:12,fontWeight:700,color:selE.confirmed?GRN:GRY,marginTop:1}},selE.confirmed?("Confirmed on "+(selE.confirmedDate?new Date(selE.confirmedDate+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"-")):"Not yet confirmed")
             )
           ),
           /* Joining package */
