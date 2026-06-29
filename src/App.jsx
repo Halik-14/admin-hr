@@ -366,7 +366,7 @@ function openHTML(html,filename){
   if(win){win.document.write(html);win.document.close();}
   else{
     var blob=new Blob([html],{type:"text/html"});
-    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename.replace(/[^a-z0-9]/gi,"-")+".html";document.body.appendChild(a);a.click();document.body.removeChild(a);
+    downloadBlob(blob,filename.replace(/[^a-z0-9]/gi,"-")+".html");
   }
 }
 function pdfAppHeader(orgName,orgEmail,orgPos,logoSrc){
@@ -2109,7 +2109,7 @@ function generateECR(emps,m,y,payFn){
   // ECR 2.0 format: UAN#MEMBER_NAME#GROSS_WAGES#EPF_WAGES#EPS_WAGES#EDLI_WAGES#EPF_CONTRI#EPS_CONTRI#EPF_EPS_DIFF_REMITTED#NCP_DAYS#REFUNDS
   var eligible=emps.filter(function(e){return e.status==="active"&&e.pf&&e.uan;});
   if(eligible.length===0){
-    alert("No employees found with UAN and PF enabled.\n\nTo generate ECR:\n1. Edit each employee\n2. Enter their UAN number\n3. Make sure PF is enabled\n\nThen try again.");
+    showT("No employees with UAN + PF enabled. Edit employees to add UAN and enable PF, then try again.","err");
     return;
   }
   var lines=["#~#"];
@@ -2138,10 +2138,7 @@ function generateECR(emps,m,y,payFn){
   lines.push("#~#");
   var content=lines.join("\n");
   var blob=new Blob([content],{type:"text/plain"});
-  var a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="ECR-"+MOS[m]+"-"+y+".txt";
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  downloadBlob(blob,"ECR-"+MOS[m]+"-"+y+".txt");
   return eligible.length;
 }
 
@@ -2408,7 +2405,7 @@ function makeAttCSV(att,emps){
 }
 function dlCSV(csv,filename){
   var blob=new Blob([csv],{type:"text/csv"});
-  var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);
+  downloadBlob(blob,filename);
 }
 
 function calcGratuity(emp,asOfDate){
@@ -2668,15 +2665,24 @@ function loadJsPDFGlobal(cb,onErr){
   if(s.dataset.loaded==="1")cb(window.jspdf.jsPDF);
   s.onload=function(){s.dataset.loaded="1";};
 }
-function downloadPDF(blob,filename){
+// Single hardened download path used by EVERY file export in the app (PDF, CSV, ECR txt, HTML, JSON
+// backup). Centralised so the device-compatibility handling lives in exactly one place.
+function downloadBlob(blob,filename){
   var url=URL.createObjectURL(blob);
   var a=document.createElement("a");
-  a.href=url;a.download=filename;a.style.display="none";a.rel="noopener";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  var canDownload="download" in a; // false on some in-app / installed-PWA webviews
+  if(canDownload){
+    a.href=url;a.download=filename;a.style.display="none";a.rel="noopener";
+    document.body.appendChild(a);
+    try{a.click();}catch(e){try{window.open(url,"_blank");}catch(e2){}}
+    document.body.removeChild(a);
+  }else{
+    // Device can't honour the download attribute — open in the viewer so the person can Save/Share.
+    try{window.open(url,"_blank");}catch(e){}
+  }
   setTimeout(function(){URL.revokeObjectURL(url);},30000);
 }
+function downloadPDF(blob,filename){ downloadBlob(blob,filename); }
 function fmtIN(n){var v=Math.round(Number(n||0));if(v<1000)return "Rs."+v;var s=String(v);var last3=s.slice(-3);var rest=s.slice(0,-3);var grouped=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return "Rs."+(grouped?grouped+","+last3:last3);}
 // Plain comma-grouped number, no currency prefix — used inside PDF table cells (the unit is stated once in the title/header instead).
 function fmtNum(n){var v=Math.round(Number(n||0));if(v<1000)return String(v);var s=String(v);var last3=s.slice(-3);var rest=s.slice(0,-3);var grouped=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return grouped?grouped+","+last3:last3;}
@@ -3862,7 +3868,7 @@ export default function App(){
     }else{
       askForm("Termination Letter",[{key:"reason",label:"Reason for termination",type:"textarea",placeholder:"e.g. Repeated policy violations despite warnings",required:true}],function(vals){
         makeTerminationLetterPDF(e,org,authPos,authSign,vals.reason,lastDay,note);
-      },{submitLabel:"Generate Letter"});
+      },{submitLabel:"Download Letter"});
     }
   }
   // Full & Final Settlement — pulls last drawn basic, leave encashment and gratuity automatically; HR fills in pending salary + dues
@@ -3885,7 +3891,7 @@ export default function App(){
     ],function(vals){
       var data={lwd:lwd,pendingSalary:Number(vals.pendingSalary||0),leaveBal:leaveBal,leaveEncash:leaveEncash,gratuity:g,dues:Number(vals.dues||0)};
       makeFnFSettlementPDF(e,org,authPos,authSign,data);
-    },{submitLabel:"Generate Statement"});
+    },{submitLabel:"Download Statement"});
   }
   function handleEmailChange(){
     var newEm=newEmailVal.trim().toLowerCase();
@@ -4032,10 +4038,7 @@ export default function App(){
       holidays2:holidays2,coExp:coExp,salRevisions:salRevisions,bonuses:bonuses
     };
     var blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});
-    var a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="AdminHR-Backup-"+(new Date().toISOString().split("T")[0])+".json";
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    downloadBlob(blob,"AdminHR-Backup-"+(new Date().toISOString().split("T")[0])+".json");
     showT("Backup downloaded!");
   }
 
@@ -5234,7 +5237,7 @@ export default function App(){
               :h("input",{type:f.type==="number"?"number":"text",value:recruitForm[f.key]!==undefined?recruitForm[f.key]:f.def,onChange:function(e){setRecruitForm(Object.assign({},recruitForm,{[f.key]:e.target.value}));},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
             );
           }),
-          h("button",{onClick:generateRecruitDoc,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:12.5,fontWeight:700,cursor:"pointer",marginTop:6}},ic("download",ACCENT_FG,16),"Generate PDF")
+          h("button",{onClick:generateRecruitDoc,style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:12.5,fontWeight:700,cursor:"pointer",marginTop:6}},ic("download",ACCENT_FG,16),"Download PDF")
         ))
       );
     }
@@ -6224,7 +6227,7 @@ null
               h("button",{key:"b",onClick:function(){
                 if(!nocPurpose.trim())return showT("Enter the purpose of NOC","err");
                 try{makeNOCPDF(selE,org,authPos,authSign,nocPurpose);setNocOpen(false);setNocPurpose("");}catch(ex){showT("PDF error: "+ex.message,"err");}
-              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Generate NOC")
+              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Download NOC")
             ]):null,
 
             // ── Increment / Salary Revision ──
@@ -6246,7 +6249,7 @@ null
               h("button",{key:"b",onClick:function(){
                 if(!Number(incCTC))return showT("Enter a valid amount","err");
                 try{makeIncrementLetterPDF(selE,org,authPos,authSign,incRole,incCTC,incDate,incReason||"");setIncOpen(false);}catch(ex){showT("PDF error: "+ex.message,"err");}
-              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Generate Letter")
+              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Download Letter")
             ]):null,
             revOpen?panel([
               h("div",{key:"ctc"},lbl("REVISED MONTHLY CTC (RS.) *"),h("input",{type:"number",value:revCTC,onChange:function(e){setRevCTC(e.target.value);},style:{width:"100%",background:CARD,border:"1.5px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
@@ -6255,7 +6258,7 @@ null
               h("button",{key:"b",onClick:function(){
                 if(!Number(revCTC))return showT("Enter a valid amount","err");
                 try{makeSalaryRevisionLetterPDF(selE,org,authPos,authSign,revCTC,revDate,revReason||"");setRevOpen(false);}catch(ex){showT("PDF error: "+ex.message,"err");}
-              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Generate Letter")
+              },style:{width:"100%",background:ACCENT,border:"none",borderRadius:9,padding:"10px",color:ACCENT_FG,fontSize:12,fontWeight:700,cursor:"pointer"}},"Download Letter")
             ]):null,
 
             h("button",{onClick:function(){try{makeRelievingLetterPDF(selE,org,authPos,authSign);}catch(ex){showT("PDF error: "+ex.message,"err");}},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:600,cursor:"pointer"}},ic("logout",ACCENT,13),"Relieving Letter")
