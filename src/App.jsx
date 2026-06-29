@@ -2651,19 +2651,51 @@ var RECRUIT_DEFS={
 
 function lsGet(key,def){try{var v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
 function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
+// Robust jsPDF loader. The previous version had a race: tapping a download button while the
+// script was still loading (or on the 2nd+ tap) could drop the callback, so the PDF was never
+// generated even though a success toast still showed. This version keeps a single shared state
+// and a queue of every waiting callback, firing them all once the library is ready — and retries
+// from a backup CDN if the first fails.
+var _jspdfState="idle"; // idle | loading | ready | error
+var _jspdfQueue=[];
+var _jspdfCDNs=[
+  "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+  "https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js",
+  "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"
+];
+var _jspdfCDNIndex=0;
+function _jspdfReady(){return window.jspdf&&window.jspdf.jsPDF;}
+function _flushJsPDF(ok){
+  var q=_jspdfQueue;_jspdfQueue=[];
+  q.forEach(function(pair){
+    try{ if(ok)pair.cb(window.jspdf.jsPDF); else if(pair.onErr)pair.onErr(); }
+    catch(e){ if(typeof showT==="function")showT("PDF error: "+e.message,"err"); }
+  });
+}
+function _tryLoadJsPDF(){
+  if(_jspdfCDNIndex>=_jspdfCDNs.length){_jspdfState="error";_flushJsPDF(false);return;}
+  var old=document.getElementById("jspdf-script");
+  if(old&&old.parentNode)old.parentNode.removeChild(old);
+  var s=document.createElement("script");
+  s.id="jspdf-script";
+  s.src=_jspdfCDNs[_jspdfCDNIndex];
+  s.onload=function(){
+    if(_jspdfReady()){_jspdfState="ready";_flushJsPDF(true);}
+    else{ _jspdfCDNIndex++; _tryLoadJsPDF(); } // loaded but global missing — try next CDN
+  };
+  s.onerror=function(){ _jspdfCDNIndex++; _tryLoadJsPDF(); };
+  document.head.appendChild(s);
+}
 function loadJsPDFGlobal(cb,onErr){
-  if(window.jspdf&&window.jspdf.jsPDF){cb(window.jspdf.jsPDF);return;}
-  var s=document.getElementById("jspdf-script");
-  if(!s){
-    s=document.createElement("script");
-    s.id="jspdf-script";
-    s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-    document.head.appendChild(s);
-  }
-  s.addEventListener("load",function(){cb(window.jspdf.jsPDF);},{once:true});
-  s.addEventListener("error",function(){if(onErr)onErr();},{once:true});
-  if(s.dataset.loaded==="1")cb(window.jspdf.jsPDF);
-  s.onload=function(){s.dataset.loaded="1";};
+  // Already loaded — fire immediately, synchronously, inside the user's tap (best for mobile).
+  if(_jspdfReady()){_jspdfState="ready";cb(window.jspdf.jsPDF);return;}
+  // Otherwise queue this callback and ensure a load is in progress.
+  _jspdfQueue.push({cb:cb,onErr:onErr});
+  if(_jspdfState==="loading")return;       // a load is already running; our cb is queued
+  if(_jspdfState==="error"){_jspdfCDNIndex=0;} // previous attempt failed — allow a fresh retry
+  _jspdfState="loading";
+  _jspdfCDNIndex=0;
+  _tryLoadJsPDF();
 }
 // Single hardened download path used by EVERY file export in the app (PDF, CSV, ECR txt, HTML, JSON
 // backup). Centralised so the device-compatibility handling lives in exactly one place.
