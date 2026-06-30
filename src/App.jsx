@@ -4582,6 +4582,10 @@ export default function App(){
           h("div",{style:{display:"flex",gap:10,width:"100%",maxWidth:250}},
             h("button",{onClick:function(){setAuthErr("");setAuthMode("signup");},style:{flex:1,background:ACC,border:"none",borderRadius:10,padding:"12px",fontSize:13,fontWeight:800,color:isDark?"#0F172A":"#FFFFFF",cursor:"pointer"}},"Start Free"),
             h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:CRD,border:"1.5px solid "+BD,borderRadius:10,padding:"12px",fontSize:13,fontWeight:600,color:NV,cursor:"pointer"}},"Sign In")
+          ),
+          h("div",{style:{marginTop:14,fontSize:12,color:GR}},
+            "Invited by your employer? ",
+            h("span",{style:{color:isDark?"#fff":"#0F172A",fontWeight:700,cursor:"pointer",textDecoration:"underline"},onClick:function(){setAuthErr("");setAuthMode("emp-signup");}},"Join as Employee")
           )
         )
       ),
