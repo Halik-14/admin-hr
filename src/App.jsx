@@ -2961,6 +2961,8 @@ export default function App(){
                 setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
                 setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
                 try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
+                try{setLeaveReqs(JSON.parse(dataRes.data.leave_reqs_json||"[]"));}catch(e){}
+                try{setNotifs(JSON.parse(dataRes.data.notifs_json||"[]"));}catch(e){}
                 lsSet("hr_last_sync",dataRes.data.updated_at);
               }
             }catch(e){}
@@ -3423,7 +3425,7 @@ export default function App(){
           // Load employer's org info (company name, logo)
           Promise.all([
             _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email").eq("email",employerEmail).maybeSingle(),
-            _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json,leave_reqs_json,notifs_json").eq("email",employerEmail).maybeSingle(),
             _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
           ]).then(function(empResults){
             var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
@@ -3445,6 +3447,8 @@ export default function App(){
               setAtt(JSON.parse(empData.att_json||"{}"));
               setIncentives(JSON.parse(empData.inc_json||"{}"));
               try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
+              try{setLeaveReqs(JSON.parse(empData.leave_reqs_json||"[]"));}catch(e2){}
+              try{setNotifs(JSON.parse(empData.notifs_json||"[]"));}catch(e2){}
             }catch(e){}}
             _dataLoaded.current=false;
             setDashFresh(true);
@@ -3480,6 +3484,8 @@ export default function App(){
             setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
             setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
                 try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
+                try{setLeaveReqs(JSON.parse(dataRes.data.leave_reqs_json||"[]"));}catch(e){}
+                try{setNotifs(JSON.parse(dataRes.data.notifs_json||"[]"));}catch(e){}
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
           _dataLoaded.current=false;
@@ -3604,6 +3610,30 @@ export default function App(){
     },1200);
     return function(){if(_taskSyncTimer.current)clearTimeout(_taskSyncTimer.current);};
   },[tasks]);
+
+  // Debounced leave-request sync — same pattern as tasks above. This is the fix for leave requests
+  // never reaching the employer: previously nothing ever wrote leaveReqs to Supabase at all.
+  var _leaveSyncTimer=React.useRef(null);
+  var _leaveLoaded=React.useRef(false);
+  se(function(){
+    if(!gUser||!gUser.email)return;
+    if(!_leaveLoaded.current){_leaveLoaded.current=true;return;}
+    if(_leaveSyncTimer.current)clearTimeout(_leaveSyncTimer.current);
+    _leaveSyncTimer.current=setTimeout(function(){syncLeaveReqs(leaveReqs);},1200);
+    return function(){if(_leaveSyncTimer.current)clearTimeout(_leaveSyncTimer.current);};
+  },[leaveReqs]);
+
+  // Debounced notification sync — same pattern. Previously notifications only ever lived in the
+  // creating device's own memory, so the other side never actually received them.
+  var _notifSyncTimer=React.useRef(null);
+  var _notifLoaded=React.useRef(false);
+  se(function(){
+    if(!gUser||!gUser.email)return;
+    if(!_notifLoaded.current){_notifLoaded.current=true;return;}
+    if(_notifSyncTimer.current)clearTimeout(_notifSyncTimer.current);
+    _notifSyncTimer.current=setTimeout(function(){syncNotifs(notifs);},1200);
+    return function(){if(_notifSyncTimer.current)clearTimeout(_notifSyncTimer.current);};
+  },[notifs]);
 
 
 
@@ -4006,13 +4036,33 @@ export default function App(){
     }).catch(function(){setIsSyncing(false);});
   }
 
-  // Persist tasks to Supabase (tasks_json column on user_data) — owner only
+  // The shared user_data row for tasks/leave/notifs is always keyed by the EMPLOYER's email — both
+  // the employer and every one of their linked employees read and write that same row. An employee's
+  // own gUser.email must never be used as the key (that was the bug: employee updates were being
+  // silently blocked, and even if allowed would have written to the wrong row entirely).
+  function _ownerDataEmail(){
+    if(userRole==="employee"||userRole==="terminated_employee")return (org&&org.email)||"";
+    return (gUser&&gUser.email)||lsGet("hr_last_email","");
+  }
+  // Persist tasks to Supabase (tasks_json column on the shared user_data row).
   function syncTasks(tasksData){
-    var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
+    var email=_ownerDataEmail();
     if(!email)return;
-    // Only the owner/employer persists the task list
-    if(userRole&&userRole!=="owner"&&userRole!=="admin")return;
     _sb.from("user_data").upsert({email:email,tasks_json:JSON.stringify(tasksData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
+  }
+  // Persist leave requests the same way — this previously didn't exist at all, which is why an
+  // employee's leave request never reached the employer's device.
+  function syncLeaveReqs(reqsData){
+    var email=_ownerDataEmail();
+    if(!email)return;
+    _sb.from("user_data").upsert({email:email,leave_reqs_json:JSON.stringify(reqsData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
+  }
+  // Persist notifications the same way — this also previously didn't exist, so neither side ever
+  // actually received a notification on a different device/session than the one that created it.
+  function syncNotifs(notifsData){
+    var email=_ownerDataEmail();
+    if(!email)return;
+    _sb.from("user_data").upsert({email:email,notifs_json:JSON.stringify(notifsData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
   }
 
   function loadFromSupabase(email,cb){
@@ -7532,7 +7582,7 @@ null
         // Now load employer's data so employee dashboard has everything
         return Promise.all([
           _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email").eq("email",inviteData.employerEmail).maybeSingle(),
-          _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",inviteData.employerEmail).maybeSingle(),
+          _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json,leave_reqs_json,notifs_json").eq("email",inviteData.employerEmail).maybeSingle(),
           _sb.from("user_plans").select("plan,emp_limit").eq("email",inviteData.employerEmail).maybeSingle()
         ]).then(function(empResults){
           var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
@@ -7562,6 +7612,8 @@ null
             setAtt(JSON.parse(empData.att_json||"{}"));
             setIncentives(JSON.parse(empData.inc_json||"{}"));
             try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
+            try{setLeaveReqs(JSON.parse(empData.leave_reqs_json||"[]"));}catch(e2){}
+            try{setNotifs(JSON.parse(empData.notifs_json||"[]"));}catch(e2){}
           }catch(e){}}
           _dataLoaded.current=false;
           setDashFresh(true);
