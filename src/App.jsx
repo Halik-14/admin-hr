@@ -2961,12 +2961,11 @@ export default function App(){
                 setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
                 setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
                 try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
-                try{setLeaveReqs(JSON.parse(dataRes.data.leave_reqs_json||"[]"));}catch(e){}
-                try{setNotifs(JSON.parse(dataRes.data.notifs_json||"[]"));}catch(e){}
                 lsSet("hr_last_sync",dataRes.data.updated_at);
               }
             }catch(e){}
           }
+          loadLeaveAndNotifs(email,"owner",null);
         });
       });
     });
@@ -3425,7 +3424,7 @@ export default function App(){
           // Load employer's org info (company name, logo)
           Promise.all([
             _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email").eq("email",employerEmail).maybeSingle(),
-            _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json,leave_reqs_json,notifs_json").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",employerEmail).maybeSingle(),
             _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
           ]).then(function(empResults){
             var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
@@ -3447,9 +3446,8 @@ export default function App(){
               setAtt(JSON.parse(empData.att_json||"{}"));
               setIncentives(JSON.parse(empData.inc_json||"{}"));
               try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
-              try{setLeaveReqs(JSON.parse(empData.leave_reqs_json||"[]"));}catch(e2){}
-              try{setNotifs(JSON.parse(empData.notifs_json||"[]"));}catch(e2){}
             }catch(e){}}
+            loadLeaveAndNotifs(em,"employee",employerEmail);
             _dataLoaded.current=false;
             setDashFresh(true);
             setScreen("app"); // routes to renderEmployeeDashboard() via userRole check
@@ -3484,10 +3482,9 @@ export default function App(){
             setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
             setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
                 try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
-                try{setLeaveReqs(JSON.parse(dataRes.data.leave_reqs_json||"[]"));}catch(e){}
-                try{setNotifs(JSON.parse(dataRes.data.notifs_json||"[]"));}catch(e){}
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
+          loadLeaveAndNotifs(em,"owner",null);
           _dataLoaded.current=false;
           setDashFresh(true);
           setScreen("app");
@@ -3610,30 +3607,9 @@ export default function App(){
     },1200);
     return function(){if(_taskSyncTimer.current)clearTimeout(_taskSyncTimer.current);};
   },[tasks]);
-
-  // Debounced leave-request sync — same pattern as tasks above. This is the fix for leave requests
-  // never reaching the employer: previously nothing ever wrote leaveReqs to Supabase at all.
-  var _leaveSyncTimer=React.useRef(null);
-  var _leaveLoaded=React.useRef(false);
-  se(function(){
-    if(!gUser||!gUser.email)return;
-    if(!_leaveLoaded.current){_leaveLoaded.current=true;return;}
-    if(_leaveSyncTimer.current)clearTimeout(_leaveSyncTimer.current);
-    _leaveSyncTimer.current=setTimeout(function(){syncLeaveReqs(leaveReqs);},1200);
-    return function(){if(_leaveSyncTimer.current)clearTimeout(_leaveSyncTimer.current);};
-  },[leaveReqs]);
-
-  // Debounced notification sync — same pattern. Previously notifications only ever lived in the
-  // creating device's own memory, so the other side never actually received them.
-  var _notifSyncTimer=React.useRef(null);
-  var _notifLoaded=React.useRef(false);
-  se(function(){
-    if(!gUser||!gUser.email)return;
-    if(!_notifLoaded.current){_notifLoaded.current=true;return;}
-    if(_notifSyncTimer.current)clearTimeout(_notifSyncTimer.current);
-    _notifSyncTimer.current=setTimeout(function(){syncNotifs(notifs);},1200);
-    return function(){if(_notifSyncTimer.current)clearTimeout(_notifSyncTimer.current);};
-  },[notifs]);
+  // Leave requests and notifications no longer use a debounced whole-array sync — they now write
+  // directly to their own dedicated Supabase tables (leave_requests, notifications) the moment each
+  // action happens (apply/approve/reject, create notification), same as how KPIs already work.
 
 
 
@@ -4036,9 +4012,9 @@ export default function App(){
     }).catch(function(){setIsSyncing(false);});
   }
 
-  // The shared user_data row for tasks/leave/notifs is always keyed by the EMPLOYER's email — both
-  // the employer and every one of their linked employees read and write that same row. An employee's
-  // own gUser.email must never be used as the key (that was the bug: employee updates were being
+  // The shared user_data row for tasks is always keyed by the EMPLOYER's email — both the employer
+  // and every one of their linked employees read and write that same row. An employee's own
+  // gUser.email must never be used as the key (that was the bug: employee task updates were being
   // silently blocked, and even if allowed would have written to the wrong row entirely).
   function _ownerDataEmail(){
     if(userRole==="employee"||userRole==="terminated_employee")return (org&&org.email)||"";
@@ -4050,19 +4026,29 @@ export default function App(){
     if(!email)return;
     _sb.from("user_data").upsert({email:email,tasks_json:JSON.stringify(tasksData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
   }
-  // Persist leave requests the same way — this previously didn't exist at all, which is why an
-  // employee's leave request never reached the employer's device.
-  function syncLeaveReqs(reqsData){
-    var email=_ownerDataEmail();
-    if(!email)return;
-    _sb.from("user_data").upsert({email:email,leave_reqs_json:JSON.stringify(reqsData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
-  }
-  // Persist notifications the same way — this also previously didn't exist, so neither side ever
-  // actually received a notification on a different device/session than the one that created it.
-  function syncNotifs(notifsData){
-    var email=_ownerDataEmail();
-    if(!email)return;
-    _sb.from("user_data").upsert({email:email,notifs_json:JSON.stringify(notifsData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
+  // Leave requests and notifications now live in their own dedicated Supabase tables
+  // (leave_requests, notifications) — see applyLeave/approveLeave/rejectLeave/addNotif, which write
+  // directly to them, and loadLeaveAndNotifs below, which reads them back.
+
+  // Loads leave requests + notifications from their own dedicated tables for whoever is logged in.
+  // Owners/admins see every leave request raised against their account; employees see only their
+  // own requests to their linked employer. Both see only notifications addressed to themselves.
+  function loadLeaveAndNotifs(myEmail,role,employerEmailForQuery){
+    if(!myEmail)return;
+    var leaveQuery=(role==="owner"||role==="admin")
+      ? _sb.from("leave_requests").select("*").eq("employer_email",myEmail)
+      : _sb.from("leave_requests").select("*").eq("employer_email",employerEmailForQuery||"").eq("employee_email",myEmail);
+    var notifQuery=_sb.from("notifications").select("*").eq("to_email",myEmail).order("created_at",{ascending:false}).limit(100);
+    Promise.all([leaveQuery,notifQuery]).then(function(results){
+      var leaveRes=results[0],notifRes=results[1];
+      if(leaveRes&&leaveRes.data){
+        setLeaveReqs(leaveRes.data.map(function(r){return {id:r.id,employeeEmail:r.employee_email,employerEmail:r.employer_email,leaveType:r.leave_type,fromDate:r.from_date,toDate:r.to_date,reason:r.reason||"",status:r.status,adminReply:r.admin_reply||"",createdAt:r.created_at};}));
+      }
+      if(notifRes&&notifRes.data){
+        setNotifs(notifRes.data.map(function(n){return {id:n.id,to:n.to_email,from:n.from_email,type:n.type,title:n.title,message:n.message,refId:n.ref_id,refType:n.ref_type,read:n.read,createdAt:n.created_at};}));
+        setUnreadNotifs(notifRes.data.filter(function(n){return !n.read;}).length);
+      }
+    }).catch(function(){});
   }
 
   function loadFromSupabase(email,cb){
@@ -4888,10 +4874,23 @@ export default function App(){
 
 
   // ── Pro: Notification helpers ──────────────────────────────────────────
+  // Writes to the real `notifications` table (to_email/from_email columns) so the recipient's own
+  // device — which loads its notifications by querying to_email = their own address — actually
+  // receives it. Previously this only ever updated the creating device's own local state.
   function addNotif(toEmail,fromEmail,type,title,message,refId,refType){
     var n={id:Date.now(),to:toEmail,from:fromEmail,type:type,title:title,message:message,refId:refId||"",refType:refType||"general",read:false,createdAt:new Date().toISOString()};
-    setNotifs(function(p){return [n].concat(p);});
-    setUnreadNotifs(function(c){return c+1;});
+    // Only reflect it locally right away if it's for the current device's own inbox — otherwise it
+    // will show up for the recipient the next time their notifications load/refresh from Supabase.
+    if(gUser&&gUser.email&&toEmail===gUser.email){
+      setNotifs(function(p){return [n].concat(p);});
+      setUnreadNotifs(function(c){return c+1;});
+    }
+    _sb.from("notifications").insert({
+      id:n.id,to_email:toEmail,from_email:fromEmail,type:type,title:title,message:message,
+      ref_id:refId||"",ref_type:refType||"general",read:false
+    }).then(function(r){
+      if(r&&r.error)console.error("Notification save failed:",r.error.message);
+    });
   }
 
   // ── Pro: Task functions ─────────────────────────────────────────────────
@@ -5005,8 +5004,16 @@ export default function App(){
     var req={id:Date.now(),employeeEmail:gUser.email,employerEmail:empEmployerEmail,leaveType:leaveType,fromDate:leaveFrom,toDate:leaveTo,reason:leaveReason.trim(),status:"pending",adminReply:"",createdAt:new Date().toISOString()};
     setLeaveReqs(function(p){return [req].concat(p);});
     setLeaveFrom("");setLeaveTo("");setLeaveReason("");setShowLeaveForm(false);
-    addNotif(empEmployerEmail,gUser.email,"leave_requested","Leave request",gUser.email.split("@")[0]+" applied for "+LEAVE_TYPES[leaveType].name,String(req.id),"leave");
-    showT("Leave request sent!");
+    // Persists to the real leave_requests table so the employer's device — which loads from this
+    // same table — actually receives it. Previously this only ever existed in local state.
+    _sb.from("leave_requests").insert({
+      id:req.id,employee_email:req.employeeEmail,employer_email:req.employerEmail,leave_type:req.leaveType,
+      from_date:req.fromDate,to_date:req.toDate,reason:req.reason,status:"pending",admin_reply:""
+    }).then(function(r){
+      if(r&&r.error){showT("Could not send leave request: "+r.error.message,"err");setLeaveReqs(function(p){return p.filter(function(x){return x.id!==req.id;});});return;}
+      addNotif(empEmployerEmail,gUser.email,"leave_requested","Leave request",gUser.email.split("@")[0]+" applied for "+LEAVE_TYPES[leaveType].name,String(req.id),"leave");
+      showT("Leave request sent!");
+    });
   }
 
   function approveLeave(reqId){
@@ -5029,15 +5036,21 @@ export default function App(){
       return Object.assign({},r,{status:"approved"});
     });});
     var req=leaveReqs.find(function(r){return r.id===reqId;});
-    if(req)addNotif(req.employeeEmail,gUser.email,"leave_approved","Leave approved","Your "+LEAVE_TYPES[req.leaveType].name+" has been approved",String(reqId),"leave");
-    showT("Leave approved! Attendance auto-marked.");
+    _sb.from("leave_requests").update({status:"approved"}).eq("id",reqId).then(function(r){
+      if(r&&r.error){showT("Could not save approval: "+r.error.message,"err");return;}
+      if(req)addNotif(req.employeeEmail,gUser.email,"leave_approved","Leave approved","Your "+LEAVE_TYPES[req.leaveType].name+" has been approved",String(reqId),"leave");
+      showT("Leave approved! Attendance auto-marked.");
+    });
   }
 
   function rejectLeave(reqId,reply){
     setLeaveReqs(function(p){return p.map(function(r){return r.id===reqId?Object.assign({},r,{status:"rejected",adminReply:reply||""}):r;});});
     var req=leaveReqs.find(function(r){return r.id===reqId;});
-    if(req)addNotif(req.employeeEmail,gUser.email,"leave_rejected","Leave rejected","Your leave request was not approved",String(reqId),"leave");
-    showT("Leave rejected.");
+    _sb.from("leave_requests").update({status:"rejected",admin_reply:reply||""}).eq("id",reqId).then(function(r){
+      if(r&&r.error){showT("Could not save rejection: "+r.error.message,"err");return;}
+      if(req)addNotif(req.employeeEmail,gUser.email,"leave_rejected","Leave rejected","Your leave request was not approved",String(reqId),"leave");
+      showT("Leave rejected.");
+    });
   }
 
   // ── Pro: Invite functions ───────────────────────────────────────────────
@@ -5792,6 +5805,9 @@ null
       ),
 
       /* Action buttons */
+      selE.status==="active"&&!selE.appLinked?h("div",{style:{marginBottom:6}},
+        h("button",{onClick:function(){setInviteEmpId(selE.id);setInviteEmail(selE.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"10px",color:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("forward_to_inbox",ACCENT,14),"Invite to App")
+      ):null,
       h("div",{style:{display:"flex",gap:6,marginBottom:8}},
         h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:10,padding:"10px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
         h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1.5px solid "+RED,borderRadius:10,padding:"10px",color:RED,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard")
@@ -7582,7 +7598,7 @@ null
         // Now load employer's data so employee dashboard has everything
         return Promise.all([
           _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email").eq("email",inviteData.employerEmail).maybeSingle(),
-          _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json,leave_reqs_json,notifs_json").eq("email",inviteData.employerEmail).maybeSingle(),
+          _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",inviteData.employerEmail).maybeSingle(),
           _sb.from("user_plans").select("plan,emp_limit").eq("email",inviteData.employerEmail).maybeSingle()
         ]).then(function(empResults){
           var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
@@ -7612,9 +7628,8 @@ null
             setAtt(JSON.parse(empData.att_json||"{}"));
             setIncentives(JSON.parse(empData.inc_json||"{}"));
             try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
-            try{setLeaveReqs(JSON.parse(empData.leave_reqs_json||"[]"));}catch(e2){}
-            try{setNotifs(JSON.parse(empData.notifs_json||"[]"));}catch(e2){}
           }catch(e){}}
+          loadLeaveAndNotifs(user.email,"employee",inviteData.employerEmail);
           _dataLoaded.current=false;
           setDashFresh(true);
           setScreen("app");
