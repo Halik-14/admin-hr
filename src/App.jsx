@@ -3171,6 +3171,15 @@ export default function App(){
   var sUnreadNotifs=st(0),unreadNotifs=sUnreadNotifs[0],setUnreadNotifs=sUnreadNotifs[1];
   var sShowNotifs=st(false),showNotifs=sShowNotifs[0],setShowNotifs=sShowNotifs[1];
   var sShowInvite=st(false),showInvite=sShowInvite[0],setShowInvite=sShowInvite[1];
+  // Set App Login modal — employer sets email + PIN for an employee's app access.
+  var sShowSetLogin=st(false),showSetLogin=sShowSetLogin[0],setShowSetLogin=sShowSetLogin[1];
+  var sSetLoginEmp=st(null),setLoginEmp=sSetLoginEmp[0],setSetLoginEmp=sSetLoginEmp[1];
+  var sSetLoginEmail=st(""),setLoginEmail=sSetLoginEmail[0],setSetLoginEmail=sSetLoginEmail[1];
+  var sSetLoginPin=st(""),setLoginPin=sSetLoginPin[0],setSetLoginPin=sSetLoginPin[1];
+  var sSetLoginPin2=st(""),setLoginPin2=sSetLoginPin2[0],setSetLoginPin2=sSetLoginPin2[1];
+  var sSetLoginLoading=st(false),setLoginLoading=sSetLoginLoading[0],setSetLoginLoading=sSetLoginLoading[1];
+  var sSetLoginErr=st(""),setLoginErr=sSetLoginErr[0],setSetLoginErr=sSetLoginErr[1];
+  var sSetLoginDone=st(false),setLoginDone=sSetLoginDone[0],setSetLoginDone=sSetLoginDone[1];
   var sInviteEmail=st(""),inviteEmail=sInviteEmail[0],setInviteEmail=sInviteEmail[1];
   var sInviteCode=st(""),inviteCode=sInviteCode[0],setInviteCode=sInviteCode[1];
   var sShowInviteCode=st(false),showInviteCode=sShowInviteCode[0],setShowInviteCode=sShowInviteCode[1];
@@ -3921,8 +3930,25 @@ export default function App(){
   function cancelEmailChange(){
     setShowEmailChange(false);setNewEmailVal("");setEmailChangeStep(1);setEmailChangeErr("");
   }
+  // Calls the manage-employee-auth Edge Function which holds the service role key safely
+  // server-side. This is the only safe way for the app to create or reset employee logins
+  // without shipping the powerful service key inside the app's own bundle.
+  function callEmployeeAuth(action,employeeEmail,pin,cb,onErr){
+    _sb.auth.getSession().then(function(res){
+      var token=res&&res.data&&res.data.session&&res.data.session.access_token;
+      if(!token){onErr("Not logged in");return;}
+      fetch("https://lthqbzpbldqthvgdwjrm.supabase.co/functions/v1/manage-employee-auth",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0aHFienBibGRxdGh2Z2R3anJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4Njc2MjgsImV4cCI6MjA5MjQ0MzYyOH0.tai_EmQIPZBdHmyXfeYOlc3tThqc3CGBbSlzumaL1vE"},
+        body:JSON.stringify({action:action,employeeEmail:employeeEmail,pin:pin})
+      }).then(function(r){return r.json();}).then(function(data){
+        if(data.error){onErr(data.error);}else{cb(data);}
+      }).catch(function(e){onErr(e.message||"Network error");});
+    });
+  }
+
   function loadAdminUsers(){
-    _sb.from("admin_user_overview").select("*")
+    _sb.rpc("admin_list_users")
     .then(function(res){
       if(res.error){showT("Load error: "+res.error.message,"err");return;}
       Promise.all([
@@ -4584,8 +4610,8 @@ export default function App(){
             h("button",{onClick:function(){setAuthErr("");setAuthMode("signin");},style:{flex:1,background:CRD,border:"1.5px solid "+BD,borderRadius:10,padding:"12px",fontSize:13,fontWeight:600,color:NV,cursor:"pointer"}},"Sign In")
           ),
           h("div",{style:{marginTop:14,fontSize:12,color:GR}},
-            "Invited by your employer? ",
-            h("span",{style:{color:isDark?"#fff":"#0F172A",fontWeight:700,cursor:"pointer",textDecoration:"underline"},onClick:function(){setAuthErr("");setAuthMode("emp-signup");}},"Join as Employee")
+            "Employee? ",
+            h("span",{style:{color:isDark?"#fff":"#0F172A",fontWeight:700,cursor:"pointer",textDecoration:"underline"},onClick:function(){setAuthErr("");setAuthMode("emp-signup");}},"Employee Login")
           )
         )
       ),
@@ -4831,29 +4857,54 @@ export default function App(){
   ),true);
 
   // ── Employee signup screen ──
+  // Employee login — email + PIN set by their employer. No OTP, no invite codes.
+  // The app stays logged in automatically, so employees only need to do this once per device.
+  var sEmpLoginPin=st(""),empLoginPin=sEmpLoginPin[0],setEmpLoginPin=sEmpLoginPin[1];
+  var sEmpLoginLoading=st(false),empLoginLoading=sEmpLoginLoading[0],setEmpLoginLoading=sEmpLoginLoading[1];
+
+  function handleEmployeeLogin(){
+    if(!authEmail.trim()||!authEmail.includes("@"))return setAuthErr("Enter your work email");
+    if(empLoginPin.length<6)return setAuthErr("Enter your 6-digit PIN");
+    setEmpLoginLoading(true);setAuthErr("");
+    _sb.auth.signInWithPassword({email:authEmail.trim(),password:empLoginPin})
+    .then(function(res){
+      setEmpLoginLoading(false);
+      if(res.error){
+        if(res.error.message.toLowerCase().includes("invalid")){setAuthErr("Incorrect email or PIN. Check with your employer.");}
+        else{setAuthErr(res.error.message);}
+        return;
+      }
+      // Login succeeded — the normal session-restore flow will pick up the role and load data.
+      setAuthErr(""); setEmpLoginPin("");
+    }).catch(function(e){setEmpLoginLoading(false);setAuthErr(e.message||"Error");});
+  }
+
   var empSignupScreen=authWrap(h("div",{key:"empsignup"},
     h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:24}},
-      h("button",{onClick:function(){setAuthMode("landing");setAuthErr("");},style:{background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:20,padding:0,lineHeight:1}},"\u2190"),
+      h("button",{onClick:function(){setAuthMode("landing");setAuthErr("");setEmpLoginPin("");},style:{background:"none",border:"none",cursor:"pointer",color:T.AUTH_LABEL,fontSize:20,padding:0,lineHeight:1}},"\u2190"),
       h("div",null,
-        h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT}},"Join Organisation"),
-        h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:2}},"Enter the invite code from your employer")
+        h("div",{style:{fontSize:20,fontWeight:800,color:T.AUTH_TEXT}},"Employee Login"),
+        h("div",{style:{fontSize:12,color:T.AUTH_LABEL,marginTop:2}},"Use the email and PIN set by your employer")
       )
     ),
     h("div",{style:{background:ACCENT+"10",border:"1px solid "+ACCENT+"33",borderRadius:12,padding:"10px 14px",marginBottom:16,display:"flex",gap:8,alignItems:"flex-start"}},
       ic("info",ACCENT,16),
-      h("div",{style:{fontSize:12,color:T.AUTH_TEXT,lineHeight:1.5}},"Your employer must invite you first and share a 6-digit code with you.")
+      h("div",{style:{fontSize:12,color:T.AUTH_TEXT,lineHeight:1.5}},"Your employer sets up your login. Contact them if you don't have credentials yet.")
     ),
-    authLbl("YOUR FULL NAME"),
-    inp("text",suName,function(e){setSuName(e.target.value);setAuthErr("");},"Your full name"),
-    authLbl("YOUR WORK EMAIL"),
+    authLbl("WORK EMAIL"),
     inp("email",authEmail,function(e){setAuthEmail(e.target.value);setAuthErr("");},"you@company.com",!!authErr),
-    authLbl("6-DIGIT INVITE CODE"),
-    h("input",{type:"number",value:signupInviteCode,onChange:function(e){setSignupInviteCode(e.target.value.slice(0,6));setAuthErr("");},placeholder:"000000",style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),borderRadius:10,padding:"13px",fontSize:24,color:T.AUTH_TEXT,outline:"none",fontFamily:"monospace",textAlign:"center",letterSpacing:8,marginBottom:10,boxSizing:"border-box"}}),
+    authLbl("6-DIGIT PIN"),
+    h("input",{type:"password",inputMode:"numeric",maxLength:6,value:empLoginPin,
+      onChange:function(e){setEmpLoginPin(e.target.value.replace(/\D/g,"").slice(0,6));setAuthErr("");},
+      placeholder:"\u2022\u2022\u2022\u2022\u2022\u2022",
+      style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),
+        borderRadius:10,padding:"13px",fontSize:24,color:T.AUTH_TEXT,outline:"none",fontFamily:"monospace",
+        textAlign:"center",letterSpacing:10,marginBottom:10,boxSizing:"border-box"}}),
     authErr2(),
-    authBtn(authLoading?"Verifying code...":"Continue",handleEmployeeSignupSendOTP),
+    authBtn(empLoginLoading?"Signing in...":"Sign In",handleEmployeeLogin),
     h("div",{style:{textAlign:"center",fontSize:12,color:T.AUTH_LABEL,marginTop:8}},
       "Are you an employer? ",
-      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:700},onClick:function(){setAuthErr("");setAuthMode("signup");}},"Create Account")
+      h("span",{style:{color:TEL,cursor:"pointer",fontWeight:700},onClick:function(){setAuthErr("");setEmpLoginPin("");setAuthMode("signin");}},"Employer Sign In")
     )
   ));
 
@@ -5809,8 +5860,19 @@ null
       ),
 
       /* Action buttons */
-      selE.status==="active"&&!selE.appLinked?h("div",{style:{marginBottom:6}},
-        h("button",{onClick:function(){setInviteEmpId(selE.id);setInviteEmail(selE.email||"");setShowInviteCode(false);setInviteCode("");setShowInvite(true);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"10px",color:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},ic("forward_to_inbox",ACCENT,14),"Invite to App")
+      selE.status==="active"?h("div",{style:{marginBottom:6}},
+        h("button",{onClick:function(){
+          setSetLoginEmp(selE);
+          setSetLoginEmail(selE.appEmail||selE.email||"");
+          setSetLoginPin("");setSetLoginPin2("");setSetLoginErr("");setSetLoginDone(false);
+          setShowSetLogin(true);
+        },style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,
+          background:selE.appLinked?GRN+"12":ACCENT+"12",
+          border:"1.5px solid "+(selE.appLinked?GRN+"30":ACCENT+"30"),
+          borderRadius:10,padding:"10px",color:selE.appLinked?GRN:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},
+          ic(selE.appLinked?"lock_reset":"smartphone",selE.appLinked?GRN:ACCENT,14),
+          selE.appLinked?"Reset App PIN":"Set App Login"
+        )
       ):null,
       h("div",{style:{display:"flex",gap:6,marginBottom:8}},
         h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:10,padding:"10px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
@@ -7537,25 +7599,27 @@ null
     if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return setAuthErr("Enter a valid email");
     if(!signupInviteCode.trim()||signupInviteCode.trim().length!==6)return setAuthErr("Enter the 6-digit invite code from your employer");
     setAuthLoading(true);setAuthErr("");
-    // Verify invite code in Supabase
-    _sb.from("invite_codes")
-      .select("*")
-      .eq("code",signupInviteCode.trim())
-      .eq("employee_email",email)
-      .eq("used",false)
-      .maybeSingle()
+    // Verify invite code — uses a narrow database function instead of a direct table read, since at
+    // this point the person hasn't logged in yet and a normal row-level-secured read would correctly
+    // refuse to show invite codes to someone with no session at all.
+    _sb.rpc("check_invite_code",{p_code:signupInviteCode.trim(),p_email:email})
     .then(function(res){
-      if(!res.data){
+      var row=res.data&&res.data[0];
+      if(res.error||!row){
         setAuthErr("Invalid invite code. Please check and try again.");
         setAuthLoading(false);return;
       }
-      if(new Date(res.data.expires_at)<new Date()){
+      if(row.used){
+        setAuthErr("This invite code has already been used.");
+        setAuthLoading(false);return;
+      }
+      if(new Date(row.expires_at)<new Date()){
         setAuthErr("This invite code has expired. Ask your employer to generate a new one.");
         setAuthLoading(false);return;
       }
       // Verify email matches (or allow if employer entered different email)
-      if(res.data.employee_email&&res.data.employee_email!==email){
-        setAuthErr("This invite code was sent to a different email ("+res.data.employee_email+"). Use that email or ask employer to resend.");
+      if(row.employee_email&&row.employee_email!==email){
+        setAuthErr("This invite code was sent to a different email ("+row.employee_email+"). Use that email or ask employer to resend.");
         setAuthLoading(false);return;
       }
       // Code valid — check email not already registered
@@ -7569,7 +7633,7 @@ null
           if(r.error){setAuthErr(r.error.message);return;}
           setOtpSent(true);setAuthMode("emp-otp");
           lsSet("hr_last_email",email);
-          lsSet("hr_emp_invite",JSON.stringify({code:signupInviteCode.trim(),employerEmail:res.data.employer_email}));
+          lsSet("hr_emp_invite",JSON.stringify({code:signupInviteCode.trim(),employerEmail:row.employer_email}));
         });
       });
     }).catch(function(e){setAuthErr(e.message||"Error");setAuthLoading(false);});
@@ -8503,6 +8567,64 @@ null
   }
 
   // ── Pro: Invite employee ────────────────────────────────────────────────
+  function renderSetLoginModal(){
+    if(!showSetLogin||!setLoginEmp)return null;
+    var isReset=!!(setLoginEmp.appLinked);
+    function submit(){
+      if(!setLoginEmail.trim()||!setLoginEmail.includes("@"))return setSetLoginErr("Enter a valid email address");
+      if(setLoginPin.length<6)return setSetLoginErr("PIN must be 6 digits");
+      if(setLoginPin!==setLoginPin2)return setSetLoginErr("PINs do not match");
+      setSetLoginErr("");setSetLoginLoading(true);
+      callEmployeeAuth(
+        isReset?"reset_pin":"create",
+        setLoginEmail.trim(),
+        setLoginPin,
+        function(data){
+          setSetLoginLoading(false);setSetLoginDone(true);
+          var upd=Object.assign({},setLoginEmp,{appLinked:true,appEmail:setLoginEmail.trim()});
+          setEmps(function(p){return p.map(function(e){return e.id===setLoginEmp.id?upd:e;});});
+          if(selE&&selE.id===setLoginEmp.id)setSelE(upd);
+          showT(isReset?"PIN reset successfully!":"App login created! Share credentials with employee.");
+          setTimeout(function(){setShowSetLogin(false);setSetLoginDone(false);setSetLoginPin("");setSetLoginPin2("");setSetLoginErr("");},2000);
+        },
+        function(err){setSetLoginLoading(false);setSetLoginErr(err||"Failed. Try again.");}
+      );
+    }
+    function handleRevoke(){
+      if(!window.confirm("Revoke "+setLoginEmp.name+"'s app access? They will be unable to log in. Their HR data stays intact."))return;
+      setSetLoginLoading(true);
+      callEmployeeAuth("revoke",setLoginEmail.trim(),"",
+        function(){
+          setSetLoginLoading(false);
+          var upd=Object.assign({},setLoginEmp,{appLinked:false,appEmail:""});
+          setEmps(function(p){return p.map(function(e){return e.id===setLoginEmp.id?upd:e;});});
+          if(selE&&selE.id===setLoginEmp.id)setSelE(upd);
+          setShowSetLogin(false);showT("App access revoked.");
+        },
+        function(err){setSetLoginLoading(false);showT(err,"err");}
+      );
+    }
+    return h(Modal,{title:isReset?"Reset App PIN":"Set App Login",onClose:function(){if(!setLoginLoading){setShowSetLogin(false);setSetLoginErr("");setSetLoginPin("");setSetLoginPin2("");}},footer:h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+        h("button",{type:"button",onClick:submit,disabled:setLoginLoading,style:{width:"100%",background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:setLoginLoading?.6:1}},
+          setLoginLoading?"Saving...":(setLoginDone?"Done!":isReset?"Reset PIN":"Create Login")
+        ),
+        isReset?h("button",{type:"button",onClick:handleRevoke,disabled:setLoginLoading,style:{width:"100%",background:"none",border:"1px solid "+RED,borderRadius:10,padding:"10px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},"Revoke App Access"):null
+      )},
+      h("div",{style:{fontSize:11,color:GRY,marginBottom:12,lineHeight:1.5}},
+        isReset
+          ?"Change "+setLoginEmp.name+"'s PIN. Share the new one with them directly."
+          :"This gives "+setLoginEmp.name+" login access to the employee app. Share the email and PIN with them directly — they will use these every time they log in."
+      ),
+      lbl("LOGIN EMAIL"),
+      h("input",{type:"email",value:setLoginEmail,onChange:function(e){setSetLoginEmail(e.target.value);setSetLoginErr("");},placeholder:"employee@email.com",disabled:isReset,style:{width:"100%",background:isReset?PAGE:SFT,border:"1.5px solid "+(setLoginErr&&!setLoginEmail.includes("@")?RED:BDR),borderRadius:10,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box",opacity:isReset?.6:1}}),
+      lbl((isReset?"NEW ":"")+"6-DIGIT PIN"),
+      h("input",{type:"password",inputMode:"numeric",maxLength:6,value:setLoginPin,onChange:function(e){setSetLoginPin(e.target.value.replace(/\D/g,"").slice(0,6));setSetLoginErr("");},placeholder:"6 digits",style:{width:"100%",background:SFT,border:"1.5px solid "+(setLoginErr&&setLoginPin.length<6?RED:BDR),borderRadius:10,padding:"11px 13px",fontSize:20,color:NVY,outline:"none",fontFamily:"monospace",letterSpacing:8,textAlign:"center",marginBottom:12,boxSizing:"border-box"}}),
+      lbl("CONFIRM PIN"),
+      h("input",{type:"password",inputMode:"numeric",maxLength:6,value:setLoginPin2,onChange:function(e){setSetLoginPin2(e.target.value.replace(/\D/g,"").slice(0,6));setSetLoginErr("");},placeholder:"Repeat PIN",style:{width:"100%",background:SFT,border:"1.5px solid "+(setLoginErr&&setLoginPin!==setLoginPin2?RED:BDR),borderRadius:10,padding:"11px 13px",fontSize:20,color:NVY,outline:"none",fontFamily:"monospace",letterSpacing:8,textAlign:"center",boxSizing:"border-box"}}),
+      setLoginErr?h("div",{style:{fontSize:11,color:RED,marginTop:8,textAlign:"center"}},setLoginErr):null
+    );
+  }
+
   function renderInviteModal(){
     if(!showInvite)return null;
     var invEmp=inviteEmpId?emps.find(function(e){return e.id===inviteEmpId;}):null;
@@ -10650,6 +10772,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       appContent,
       renderNotifPanel(),
       renderInviteModal(),
+      renderSetLoginModal(),
       renderAskModal()
     )
   );
