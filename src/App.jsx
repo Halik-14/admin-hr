@@ -3584,7 +3584,14 @@ export default function App(){
   
   se(function(){
     if(!gUser||!gUser.email){_lastLoadedEmail.current=null;return;}
-    var em=gUser.email;
+    // These records (loans, revisions, bonuses, warnings, KPIs, etc.) are always stored keyed by
+    // the EMPLOYER's email. For an owner session that's just their own email — but for an employee
+    // session, querying by their own login email matched nothing at all, so salary revisions,
+    // loans, bonuses, overtime, warnings, holidays and KPIs were all silently loading empty for
+    // every employee. This is why a salary revision never showed up on the employee's own screen.
+    var isEmpSession=userRole==="employee"||userRole==="terminated_employee";
+    var em=isEmpSession?empEmployerEmail:gUser.email;
+    if(!em)return; // employee role known but employer email not resolved yet — effect re-runs once it is
     if(_lastLoadedEmail.current===em)return;
     _lastLoadedEmail.current=em;
     var safe=function(t,c,v){try{return _sb.from(t).select("*").eq(c,v).then(function(r){if(r&&r.error){console.error("Load failed for "+t+":",r.error);return null;}return r.data||[];}).catch(function(e){console.error("Load failed for "+t+":",e);return null;});}catch(e){return Promise.resolve(null);}};
@@ -3603,7 +3610,7 @@ export default function App(){
       try{if(res[9]!==null)setKpis((res[9]||[]).map(function(k){return {id:k.id,employerEmail:k.employer_email,assignType:k.assign_type,assignTarget:k.assign_target,title:k.title,name:k.title,targetValue:Number(k.target_value||0),target:Number(k.target_value||0),currentProgress:Number(k.current_progress||0),unit:k.unit,startDate:k.start_date,dueDate:k.due_date,status:k.status,followUpRemarks:k.follow_up_remarks||"",createdAt:k.created_at};}));}catch(e){}
       try{if(res[10]!==null)setKpiUpdates((res[10]||[]).map(function(u){return {id:u.id,kpiId:u.kpi_id,progress:Number(u.progress||0),remark:u.remark||"",createdAt:u.created_at};}));}catch(e){}
     }).catch(function(){});
-  },[gUser&&gUser.email]);
+  },[gUser&&gUser.email,userRole,empEmployerEmail]);
 
   se(function(){
     lsSet("hr_org",org); // cache org for offline/fast-load — safe to do on every change
@@ -3850,6 +3857,8 @@ export default function App(){
         var rev={id:Date.now(),employeeId:String(editE.id),employeeName:editE.name||"",effectiveDate:new Date().toISOString().split("T")[0],oldCtc:oldCtc2,newCtc:newCtc2,reason:""};
         setSalRevisions(function(p){return [rev].concat(p||[]);});
         _sb.from("salary_revisions").insert({id:String(rev.id),employer_email:em,employee_id:rev.employeeId,employee_name:rev.employeeName,effective_date:rev.effectiveDate,old_ctc:rev.oldCtc,new_ctc:rev.newCtc,reason:rev.reason}).then(function(){});
+        var notifTo2=updated.appEmail||updated.email;
+        if(notifTo2)addNotif(notifTo2,em,"salary_revised","Salary Updated","Your salary has been revised to "+fmtIN(newCtc2)+" per month, effective "+rev.effectiveDate,String(rev.id),"salary");
       }
     }
     setEmps(newEmps);
@@ -6222,7 +6231,12 @@ null
           var rev={id:newId,employeeId:String(selE.id),employeeName:selE.name,effectiveDate:mo,oldCtc:oldC,newCtc:newC,reason:rs};
           setSalRevisions(function(p){return [rev].concat(p||[]);});
           _sb.from("salary_revisions").insert({id:newId,employer_email:gUser.email,employee_id:String(selE.id),employee_name:selE.name,effective_date:mo,old_ctc:oldC,new_ctc:newC,reason:rs})
-            .then(function(r){if(r&&r.error)showT("Error: "+r.error.message,"err");else showT("Revision saved");});
+            .then(function(r){
+              if(r&&r.error){showT("Error: "+r.error.message,"err");return;}
+              showT("Revision saved");
+              var notifTo3=selE.appEmail||selE.email;
+              if(notifTo3)addNotif(notifTo3,gUser.email,"salary_revised","Salary Updated","Your salary has been revised to "+fmtIN(newC)+" per month, effective "+mo,newId,"salary");
+            });
           setShowRevForm(false);
         }
 
@@ -10556,6 +10570,8 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       var rev={id:Date.now(),employeeId:String(emp.id),employeeName:emp.name,effectiveDate:revNewDate,oldCtc:oldC,newCtc:newC,reason:revNewReason};
       setSalRevisions(function(p){return [rev].concat(p||[]);});
       _sb.from("salary_revisions").insert({id:String(rev.id),employer_email:gUser.email,employee_id:String(emp.id),employee_name:emp.name,effective_date:revNewDate,old_ctc:oldC,new_ctc:newC,reason:revNewReason}).then(function(){});
+      var notifTo4=emp.appEmail||emp.email;
+      if(notifTo4)addNotif(notifTo4,gUser.email,"salary_revised","Salary Updated","Your salary has been revised to "+fmtIN(newC)+" per month, effective "+revNewDate,String(rev.id),"salary");
       setRevNewDate("");setRevNewOldCtc("");setRevNewCtc("");setRevNewReason("");setShowRevForm(false);
       showT("Revision added");
     }
