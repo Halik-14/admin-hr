@@ -7837,9 +7837,15 @@ null
   // ── Employee dashboard ──────────────────────────────────────────────────
   function renderEmployeeDashboard(){
     var myEmail=gUser&&gUser.email?gUser.email:"";
+    // Match on the actual app login email set via "Set App Login" first — this is the authoritative
+    // link between who's logged in and which employee record they are. Falling back to the
+    // employee's original work email covers older records set up before appEmail existed. The
+    // previous version also guessed by comparing login email to employee NAME as a last resort —
+    // that's unreliable and could silently match a different employee's record (and therefore show
+    // their salary/data), so it's removed entirely rather than left as a source of wrong data.
     var myRecord=emps.find(function(e){
-      return (e.email&&e.email.toLowerCase()===myEmail.toLowerCase())||
-             e.name.toLowerCase()===myEmail.split("@")[0].toLowerCase();
+      return (e.appEmail&&e.appEmail.toLowerCase()===myEmail.toLowerCase())||
+             (e.email&&e.email.toLowerCase()===myEmail.toLowerCase());
     });
     var myTasks=tasks.filter(function(t){
       return t.assignTarget===myEmail||

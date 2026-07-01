@@ -1,4 +1,4 @@
-const CACHE = "adminhr-v17";
+const CACHE = "adminhr-v18";
 const ASSETS = ["/", "/index.html"];
 
 self.addEventListener("install", function(e) {
