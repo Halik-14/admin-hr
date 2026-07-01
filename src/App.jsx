@@ -177,7 +177,9 @@ var SVG_ICONS={
 "assignment_turned_in":"<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"m9 14 2 2 4-4\"/>",
 "person_search":"<circle cx=\"10\" cy=\"7\" r=\"4\"/><path d=\"M10.3 15H7a4 4 0 0 0-4 4v2\"/><circle cx=\"17\" cy=\"17\" r=\"3\"/><path d=\"m21 21-1.9-1.9\"/>",
 "gavel":"<path d=\"m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8\"/><path d=\"m16 16 6-6\"/><path d=\"m8 8 6-6\"/><path d=\"m9 7 8 8\"/><path d=\"m21 11-8-8\"/>",
-"chevron_left":"<path d=\"m15 18-6-6 6-6\"/>"
+"chevron_left":"<path d=\"m15 18-6-6 6-6\"/>",
+"block":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>",
+"lock_reset":"<circle cx=\"12\" cy=\"16\" r=\"1\"/><rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 9.9-1\"/>"
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
@@ -3845,6 +3847,14 @@ export default function App(){
         if(!r.error)console.log("Employee app access set to terminate in 10 days");
       });
     }
+    // If this employee had real app login access, block it immediately — offboarding should stop
+    // app access right away, not leave their login active after they've left.
+    if(offEmp&&offEmp.appLinked&&offEmp.appEmail){
+      callEmployeeAuth("block",offEmp.appEmail,"",function(){
+        var blocked=newEmps.map(function(e){return e.id===offEmp.id?Object.assign({},e,{appBlocked:true}):e;});
+        setEmps(blocked);
+      },function(){/* offboarding still completes even if this call fails */});
+    }
   }
   // Runs once per load: settles anyone whose scheduled last working date has now passed,
   // flipping them from "still active, offboarding pending" to actually offboarded.
@@ -3866,6 +3876,11 @@ export default function App(){
       if(offEmp.email){
         _sb.from("user_plans").update({role:"terminated_employee",terminated_at:todayStr}).eq("employer_email",em).eq("email",offEmp.email).then(function(){});
       }
+      if(offEmp.appLinked&&offEmp.appEmail){
+        callEmployeeAuth("block",offEmp.appEmail,"",function(){
+          setEmps(function(p){return p.map(function(x){return x.id===offEmp.id?Object.assign({},x,{appBlocked:true}):x;});});
+        },function(){});
+      }
     });
   }
   // Brings a previously-offboarded employee back to active status — clears the termination record.
@@ -3878,6 +3893,12 @@ export default function App(){
     var rejoinedEmp=newEmps.find(function(e){return e.id===empId;});
     if(rejoinedEmp&&rejoinedEmp.email){
       _sb.from("user_plans").update({role:"employee",terminated_at:null}).eq("employer_email",em).eq("email",rejoinedEmp.email).then(function(){});
+    }
+    // If they had an app login that got auto-blocked when they left, restore it now that they're back.
+    if(rejoinedEmp&&rejoinedEmp.appLinked&&rejoinedEmp.appBlocked&&rejoinedEmp.appEmail){
+      callEmployeeAuth("unblock",rejoinedEmp.appEmail,"",function(){
+        setEmps(function(p){return p.map(function(x){return x.id===empId?Object.assign({},x,{appBlocked:false}):x;});});
+      },function(){});
     }
     showT(rejoinedEmp.name+" rejoined — active again");
   }
@@ -4862,15 +4883,20 @@ export default function App(){
   var sEmpLoginPin=st(""),empLoginPin=sEmpLoginPin[0],setEmpLoginPin=sEmpLoginPin[1];
   var sEmpLoginLoading=st(false),empLoginLoading=sEmpLoginLoading[0],setEmpLoginLoading=sEmpLoginLoading[1];
 
+  // Same deterministic padding as the Edge Function — a 4-digit PIN becomes a 6-character password
+  // under the hood, since Supabase Auth requires at least 6 characters. The employee never sees or
+  // types more than 4 digits; this just maps it to what's actually stored.
+  function padPin(pin){return pin.length===4?pin+pin.slice(0,2):pin;}
   function handleEmployeeLogin(){
     if(!authEmail.trim()||!authEmail.includes("@"))return setAuthErr("Enter your work email");
-    if(empLoginPin.length<6)return setAuthErr("Enter your 6-digit PIN");
+    if(empLoginPin.length!==4)return setAuthErr("Enter your 4-digit PIN");
     setEmpLoginLoading(true);setAuthErr("");
-    _sb.auth.signInWithPassword({email:authEmail.trim(),password:empLoginPin})
+    _sb.auth.signInWithPassword({email:authEmail.trim(),password:padPin(empLoginPin)})
     .then(function(res){
       setEmpLoginLoading(false);
       if(res.error){
         if(res.error.message.toLowerCase().includes("invalid")){setAuthErr("Incorrect email or PIN. Check with your employer.");}
+        else if(res.error.message.toLowerCase().includes("banned")||res.error.message.toLowerCase().includes("blocked")){setAuthErr("Your app access has been blocked. Contact your employer.");}
         else{setAuthErr(res.error.message);}
         return;
       }
@@ -4893,10 +4919,10 @@ export default function App(){
     ),
     authLbl("WORK EMAIL"),
     inp("email",authEmail,function(e){setAuthEmail(e.target.value);setAuthErr("");},"you@company.com",!!authErr),
-    authLbl("6-DIGIT PIN"),
-    h("input",{type:"password",inputMode:"numeric",maxLength:6,value:empLoginPin,
-      onChange:function(e){setEmpLoginPin(e.target.value.replace(/\D/g,"").slice(0,6));setAuthErr("");},
-      placeholder:"\u2022\u2022\u2022\u2022\u2022\u2022",
+    authLbl("4-DIGIT PIN"),
+    h("input",{type:"password",inputMode:"numeric",maxLength:4,value:empLoginPin,
+      onChange:function(e){setEmpLoginPin(e.target.value.replace(/\D/g,"").slice(0,4));setAuthErr("");},
+      placeholder:"\u2022\u2022\u2022\u2022",
       style:{width:"100%",background:T.AUTH_INPUT_BG,border:"1.5px solid "+(authErr?RED:T.AUTH_INPUT_BDR),
         borderRadius:10,padding:"13px",fontSize:24,color:T.AUTH_TEXT,outline:"none",fontFamily:"monospace",
         textAlign:"center",letterSpacing:10,marginBottom:10,boxSizing:"border-box"}}),
@@ -5860,20 +5886,6 @@ null
       ),
 
       /* Action buttons */
-      selE.status==="active"?h("div",{style:{marginBottom:6}},
-        h("button",{onClick:function(){
-          setSetLoginEmp(selE);
-          setSetLoginEmail(selE.appEmail||selE.email||"");
-          setSetLoginPin("");setSetLoginPin2("");setSetLoginErr("");setSetLoginDone(false);
-          setShowSetLogin(true);
-        },style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,
-          background:selE.appLinked?GRN+"12":ACCENT+"12",
-          border:"1.5px solid "+(selE.appLinked?GRN+"30":ACCENT+"30"),
-          borderRadius:10,padding:"10px",color:selE.appLinked?GRN:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},
-          ic(selE.appLinked?"lock_reset":"smartphone",selE.appLinked?GRN:ACCENT,14),
-          selE.appLinked?"Reset App PIN":"Set App Login"
-        )
-      ):null,
       h("div",{style:{display:"flex",gap:6,marginBottom:8}},
         h("button",{onClick:function(){openEdit(selE);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:NVY,border:"none",borderRadius:10,padding:"10px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.edit,CARD,13),"Edit"),
         h("button",{onClick:function(){setOffE(selE);setOffStep(1);setOffData({reason:"",type:"resigned",handover:[],note:"",resignDate:""});},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:CARD,border:"1.5px solid "+RED,borderRadius:10,padding:"10px",color:RED,fontSize:12,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Offboard")
@@ -6305,6 +6317,34 @@ null
         empBonuses2.length>0?"Total: "+fmt(bonusTotal)+" · "+empBonuses2.length+" record"+(empBonuses2.length>1?"s":""):"No bonuses recorded",
         function(){return renderBonusSection(selE);}
       ),
+
+      /* App Login */
+      selE.status==="active"?accSection("applogin","smartphone",selE.appLinked?GRN:ACCENT,"App Login",
+        selE.appLinked?(selE.appBlocked?"Blocked":"Active — "+(selE.appEmail||"")):"Not set up",
+        function(){
+          return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+            selE.appLinked?h("div",{style:{background:selE.appBlocked?AMB+"12":GRN+"10",border:"1px solid "+(selE.appBlocked?AMB+"33":GRN+"33"),borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:8}},
+              ic(selE.appBlocked?"block":"check_circle",selE.appBlocked?AMB:GRN,16),
+              h("div",null,
+                h("div",{style:{fontSize:11.5,fontWeight:700,color:selE.appBlocked?AMB:GRN}},selE.appBlocked?"Access Blocked":"Login Active"),
+                h("div",{style:{fontSize:10.5,color:GRY,marginTop:1}},selE.appEmail||"")
+              )
+            ):h("div",{style:{fontSize:11,color:GRY,lineHeight:1.5}},"Give "+selE.name+" access to the employee app — punch attendance, apply leave, view payslips, and more."),
+            h("button",{onClick:function(){
+              setSetLoginEmp(selE);
+              setSetLoginEmail(selE.appEmail||selE.email||"");
+              setSetLoginPin("");setSetLoginPin2("");setSetLoginErr("");setSetLoginDone(false);
+              setShowSetLogin(true);
+            },style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,
+              background:selE.appLinked?GRN+"12":ACCENT+"12",
+              border:"1.5px solid "+(selE.appLinked?GRN+"30":ACCENT+"30"),
+              borderRadius:10,padding:"11px",color:selE.appLinked?GRN:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},
+              ic(selE.appLinked?"lock_reset":"smartphone",selE.appLinked?GRN:ACCENT,14),
+              selE.appLinked?"Manage Login (Reset / Block)":"Set Up App Login"
+            )
+          );
+        }
+      ):null,
 
       /* 9. Letters & Documents */
       accSection("letters","description",ACCENT,"Letters & Documents",
@@ -8570,9 +8610,10 @@ null
   function renderSetLoginModal(){
     if(!showSetLogin||!setLoginEmp)return null;
     var isReset=!!(setLoginEmp.appLinked);
+    var isBlocked=!!(setLoginEmp.appBlocked);
     function submit(){
       if(!setLoginEmail.trim()||!setLoginEmail.includes("@"))return setSetLoginErr("Enter a valid email address");
-      if(setLoginPin.length<6)return setSetLoginErr("PIN must be 6 digits");
+      if(setLoginPin.length!==4)return setSetLoginErr("PIN must be exactly 4 digits");
       if(setLoginPin!==setLoginPin2)return setSetLoginErr("PINs do not match");
       setSetLoginErr("");setSetLoginLoading(true);
       callEmployeeAuth(
@@ -8581,7 +8622,7 @@ null
         setLoginPin,
         function(data){
           setSetLoginLoading(false);setSetLoginDone(true);
-          var upd=Object.assign({},setLoginEmp,{appLinked:true,appEmail:setLoginEmail.trim()});
+          var upd=Object.assign({},setLoginEmp,{appLinked:true,appEmail:setLoginEmail.trim(),appBlocked:false});
           setEmps(function(p){return p.map(function(e){return e.id===setLoginEmp.id?upd:e;});});
           if(selE&&selE.id===setLoginEmp.id)setSelE(upd);
           showT(isReset?"PIN reset successfully!":"App login created! Share credentials with employee.");
@@ -8590,13 +8631,26 @@ null
         function(err){setSetLoginLoading(false);setSetLoginErr(err||"Failed. Try again.");}
       );
     }
+    function handleBlockToggle(){
+      setSetLoginLoading(true);
+      callEmployeeAuth(isBlocked?"unblock":"block",setLoginEmail.trim(),"",
+        function(){
+          setSetLoginLoading(false);
+          var upd=Object.assign({},setLoginEmp,{appBlocked:!isBlocked});
+          setEmps(function(p){return p.map(function(e){return e.id===setLoginEmp.id?upd:e;});});
+          if(selE&&selE.id===setLoginEmp.id)setSelE(upd);
+          showT(isBlocked?"App access restored.":"App access blocked. Employee cannot log in.");
+        },
+        function(err){setSetLoginLoading(false);showT(err,"err");}
+      );
+    }
     function handleRevoke(){
-      if(!window.confirm("Revoke "+setLoginEmp.name+"'s app access? They will be unable to log in. Their HR data stays intact."))return;
+      if(!window.confirm("Revoke "+setLoginEmp.name+"'s app access permanently? They will be unable to log in. Their HR data stays intact."))return;
       setSetLoginLoading(true);
       callEmployeeAuth("revoke",setLoginEmail.trim(),"",
         function(){
           setSetLoginLoading(false);
-          var upd=Object.assign({},setLoginEmp,{appLinked:false,appEmail:""});
+          var upd=Object.assign({},setLoginEmp,{appLinked:false,appEmail:"",appBlocked:false});
           setEmps(function(p){return p.map(function(e){return e.id===setLoginEmp.id?upd:e;});});
           if(selE&&selE.id===setLoginEmp.id)setSelE(upd);
           setShowSetLogin(false);showT("App access revoked.");
@@ -8604,12 +8658,16 @@ null
         function(err){setSetLoginLoading(false);showT(err,"err");}
       );
     }
-    return h(Modal,{title:isReset?"Reset App PIN":"Set App Login",onClose:function(){if(!setLoginLoading){setShowSetLogin(false);setSetLoginErr("");setSetLoginPin("");setSetLoginPin2("");}},footer:h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+    return h(Modal,{title:isReset?"Manage App Login":"Set App Login",onClose:function(){if(!setLoginLoading){setShowSetLogin(false);setSetLoginErr("");setSetLoginPin("");setSetLoginPin2("");}},footer:h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
         h("button",{type:"button",onClick:submit,disabled:setLoginLoading,style:{width:"100%",background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:setLoginLoading?.6:1}},
           setLoginLoading?"Saving...":(setLoginDone?"Done!":isReset?"Reset PIN":"Create Login")
         ),
-        isReset?h("button",{type:"button",onClick:handleRevoke,disabled:setLoginLoading,style:{width:"100%",background:"none",border:"1px solid "+RED,borderRadius:10,padding:"10px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},"Revoke App Access"):null
+        isReset?h("div",{style:{display:"flex",gap:8}},
+          h("button",{type:"button",onClick:handleBlockToggle,disabled:setLoginLoading,style:{flex:1,background:"none",border:"1px solid "+(isBlocked?GRN:AMB),borderRadius:10,padding:"10px",color:isBlocked?GRN:AMB,fontSize:12,fontWeight:600,cursor:"pointer"}},isBlocked?"Unblock Access":"Block Access"),
+          h("button",{type:"button",onClick:handleRevoke,disabled:setLoginLoading,style:{flex:1,background:"none",border:"1px solid "+RED,borderRadius:10,padding:"10px",color:RED,fontSize:12,fontWeight:600,cursor:"pointer"}},"Revoke")
+        ):null
       )},
+      isBlocked?h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"33",borderRadius:10,padding:"10px 12px",marginBottom:12,fontSize:11.5,color:AMB,fontWeight:600,display:"flex",alignItems:"center",gap:6}},ic("block",AMB,14),"App access is currently blocked"):null,
       h("div",{style:{fontSize:11,color:GRY,marginBottom:12,lineHeight:1.5}},
         isReset
           ?"Change "+setLoginEmp.name+"'s PIN. Share the new one with them directly."
@@ -8617,10 +8675,10 @@ null
       ),
       lbl("LOGIN EMAIL"),
       h("input",{type:"email",value:setLoginEmail,onChange:function(e){setSetLoginEmail(e.target.value);setSetLoginErr("");},placeholder:"employee@email.com",disabled:isReset,style:{width:"100%",background:isReset?PAGE:SFT,border:"1.5px solid "+(setLoginErr&&!setLoginEmail.includes("@")?RED:BDR),borderRadius:10,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:12,boxSizing:"border-box",opacity:isReset?.6:1}}),
-      lbl((isReset?"NEW ":"")+"6-DIGIT PIN"),
-      h("input",{type:"password",inputMode:"numeric",maxLength:6,value:setLoginPin,onChange:function(e){setSetLoginPin(e.target.value.replace(/\D/g,"").slice(0,6));setSetLoginErr("");},placeholder:"6 digits",style:{width:"100%",background:SFT,border:"1.5px solid "+(setLoginErr&&setLoginPin.length<6?RED:BDR),borderRadius:10,padding:"11px 13px",fontSize:20,color:NVY,outline:"none",fontFamily:"monospace",letterSpacing:8,textAlign:"center",marginBottom:12,boxSizing:"border-box"}}),
+      lbl((isReset?"NEW ":"")+"4-DIGIT PIN"),
+      h("input",{type:"text",inputMode:"numeric",maxLength:4,value:setLoginPin,onChange:function(e){setSetLoginPin(e.target.value.replace(/\D/g,"").slice(0,4));setSetLoginErr("");},placeholder:"4 digits",style:{width:"100%",background:SFT,border:"1.5px solid "+(setLoginErr&&setLoginPin.length!==4?RED:BDR),borderRadius:10,padding:"11px 13px",fontSize:20,color:NVY,outline:"none",fontFamily:"monospace",letterSpacing:8,textAlign:"center",marginBottom:12,boxSizing:"border-box"}}),
       lbl("CONFIRM PIN"),
-      h("input",{type:"password",inputMode:"numeric",maxLength:6,value:setLoginPin2,onChange:function(e){setSetLoginPin2(e.target.value.replace(/\D/g,"").slice(0,6));setSetLoginErr("");},placeholder:"Repeat PIN",style:{width:"100%",background:SFT,border:"1.5px solid "+(setLoginErr&&setLoginPin!==setLoginPin2?RED:BDR),borderRadius:10,padding:"11px 13px",fontSize:20,color:NVY,outline:"none",fontFamily:"monospace",letterSpacing:8,textAlign:"center",boxSizing:"border-box"}}),
+      h("input",{type:"text",inputMode:"numeric",maxLength:4,value:setLoginPin2,onChange:function(e){setSetLoginPin2(e.target.value.replace(/\D/g,"").slice(0,4));setSetLoginErr("");},placeholder:"Repeat PIN",style:{width:"100%",background:SFT,border:"1.5px solid "+(setLoginErr&&setLoginPin!==setLoginPin2?RED:BDR),borderRadius:10,padding:"11px 13px",fontSize:20,color:NVY,outline:"none",fontFamily:"monospace",letterSpacing:8,textAlign:"center",boxSizing:"border-box"}}),
       setLoginErr?h("div",{style:{fontSize:11,color:RED,marginTop:8,textAlign:"center"}},setLoginErr):null
     );
   }
