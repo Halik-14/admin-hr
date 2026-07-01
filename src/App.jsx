@@ -183,7 +183,9 @@ var SVG_ICONS={
 "location_on":"<path d=\"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/>",
 "location_off":"<path d=\"M12 21s-7-6.5-9-11a9 9 0 0 1 1.72-5.28\"/><path d=\"M14.9 4.24A9 9 0 0 1 21 10c0 4-3 8-6.4 10.5\"/><path d=\"M9 9a3 3 0 0 0 4.24 4.24\"/><line x1=\"2\" x2=\"22\" y1=\"2\" y2=\"22\"/>",
 "my_location":"<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2v4\"/><path d=\"M12 18v4\"/><path d=\"M2 12h4\"/><path d=\"M18 12h4\"/><circle cx=\"12\" cy=\"12\" r=\"8\"/>",
-"fingerprint":"<path d=\"M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4\"/><path d=\"M14 13.12c0 2.38 0 6.38-1 8.88\"/><path d=\"M17.29 21.02c.12-.6.43-2.3.5-3.02\"/><path d=\"M2 12a10 10 0 0 1 18-6\"/><path d=\"M2 16h.01\"/><path d=\"M21.8 16c.2-2 .131-5.354 0-6\"/><path d=\"M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2\"/><path d=\"M8.65 22c.21-.66.45-1.32.57-2\"/><path d=\"M9 6.8a6 6 0 0 1 9 5.2v2\"/>"
+"fingerprint":"<path d=\"M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4\"/><path d=\"M14 13.12c0 2.38 0 6.38-1 8.88\"/><path d=\"M17.29 21.02c.12-.6.43-2.3.5-3.02\"/><path d=\"M2 12a10 10 0 0 1 18-6\"/><path d=\"M2 16h.01\"/><path d=\"M21.8 16c.2-2 .131-5.354 0-6\"/><path d=\"M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2\"/><path d=\"M8.65 22c.21-.66.45-1.32.57-2\"/><path d=\"M9 6.8a6 6 0 0 1 9 5.2v2\"/>",
+"login":"<path d=\"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4\"/><polyline points=\"10 17 15 12 10 7\"/><line x1=\"15\" x2=\"3\" y1=\"12\" y2=\"12\"/>",
+"schedule":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/>"
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
@@ -2989,6 +2991,28 @@ export default function App(){
   var sA=st({}),att=sA[0],setAtt=sA[1];
   var sI=st({}),incentives=sI[0],setIncentives=sI[1];
   var sSE=st(null),selE=sSE[0],setSelE=sSE[1];
+  // Self check-in summary (total working hours) for whichever employee the employer is currently
+  // viewing — fetched here, at the top level, not inside the accordion's render callback, so this
+  // hook always runs the same way on every render regardless of whether that section is expanded.
+  var sSelfCheckinSummary=st(null),selfCheckinSummary=sSelfCheckinSummary[0],setSelfCheckinSummary=sSelfCheckinSummary[1];
+  se(function(){
+    if(!selE||!selE.appEmail){setSelfCheckinSummary(null);return;}
+    var y=curY,m=curM;
+    _sb.from("attendance_checkins").select("*").eq("employee_email",selE.appEmail)
+      .gte("checkin_date",y+"-"+String(m+1).padStart(2,"0")+"-01")
+      .lte("checkin_date",y+"-"+String(m+1).padStart(2,"0")+"-31")
+    .then(function(res){
+      if(!res.data){setSelfCheckinSummary(null);return;}
+      var totalMin=0,days=0;
+      res.data.forEach(function(c){
+        if(c.check_in_at&&c.check_out_at){
+          var mins=(new Date(c.check_out_at)-new Date(c.check_in_at))/60000;
+          if(mins>0){totalMin+=mins;days++;}
+        }
+      });
+      setSelfCheckinSummary({totalMin:totalMin,days:days,rows:res.data});
+    });
+  },[selE&&selE.id,selE&&selE.appEmail,curY,curM]);
   var sEE=st(null),editE=sEE[0],setEditE=sEE[1];
   var sEP=st(null),editPayE=sEP[0],setEditPayE=sEP[1];
   var sPM=st(curM),payM=sPM[0],setPayM=sPM[1];
@@ -3159,6 +3183,7 @@ export default function App(){
   var sCheckinToday=st(null),checkinToday=sCheckinToday[0],setCheckinToday=sCheckinToday[1];
   var sCheckinLoading=st(false),checkinLoading=sCheckinLoading[0],setCheckinLoading=sCheckinLoading[1];
   var sCheckinMonth=st([]),checkinMonth=sCheckinMonth[0],setCheckinMonth=sCheckinMonth[1];
+  var sShowAttTimes=st(false),showAttTimes=sShowAttTimes[0],setShowAttTimes=sShowAttTimes[1];
   se(function(){
     if(!gUser||!gUser.email||(userRole!=="employee"&&userRole!=="terminated_employee"))return;
     _sb.from("attendance_checkins").select("*").eq("employee_email",gUser.email)
@@ -4148,6 +4173,24 @@ export default function App(){
       }
     }).catch(function(){});
   }
+  // Periodically re-fetch leave requests + notifications while the app is open, for whoever is
+  // currently logged in — without this, a request submitted by an employee only ever reached the
+  // employer's screen on their NEXT full login, since loadLeaveAndNotifs previously only ran once
+  // at session start. This is what actually makes "employer not receiving it" feel fixed, since the
+  // data was always arriving correctly (verified directly against the database) — it just never
+  // refreshed into view while someone was already using the app.
+  se(function(){
+    if(!gUser||!gUser.email)return;
+    var isEmpSession3=userRole==="employee"||userRole==="terminated_employee";
+    var pollEmail=gUser.email;
+    var pollRole=isEmpSession3?"employee":userRole;
+    var pollEmployerEmail=isEmpSession3?empEmployerEmail:null;
+    if(isEmpSession3&&!pollEmployerEmail)return; // wait until employer link resolves
+    var t=setInterval(function(){
+      loadLeaveAndNotifs(pollEmail,pollRole,pollEmployerEmail);
+    },25000);
+    return function(){clearInterval(t);};
+  },[gUser&&gUser.email,userRole,empEmployerEmail]);
 
   function loadFromSupabase(email,cb){
     _sb.from("user_data").select("*").eq("email",email).maybeSingle()
@@ -5156,22 +5199,29 @@ export default function App(){
     PTL:{name:"Paternity Leave",paid:true,needsReason:false}
   };
 
+  var sLeaveSubmitting=st(false),leaveSubmitting=sLeaveSubmitting[0],setLeaveSubmitting=sLeaveSubmitting[1];
   function applyLeave(){
+    if(leaveSubmitting)return;
     if(!leaveFrom||!leaveTo)return showT("Select date range","err");
     if(LEAVE_TYPES[leaveType].needsReason&&!leaveReason.trim())return showT("Reason required for "+LEAVE_TYPES[leaveType].name,"err");
+    setLeaveSubmitting(true);
     var req={id:Date.now(),employeeEmail:gUser.email,employerEmail:empEmployerEmail,leaveType:leaveType,fromDate:leaveFrom,toDate:leaveTo,reason:leaveReason.trim(),status:"pending",adminReply:"",createdAt:new Date().toISOString()};
-    setLeaveReqs(function(p){return [req].concat(p);});
-    setLeaveFrom("");setLeaveTo("");setLeaveReason("");setShowLeaveForm(false);
     // Persists to the real leave_requests table so the employer's device — which loads from this
-    // same table — actually receives it. Previously this only ever existed in local state.
+    // same table — actually receives it. The form now stays open with a visible "Sending..." state
+    // until this genuinely succeeds or fails — previously the form closed and cleared immediately
+    // on tap, before the request had actually reached the server, which is what made a failed
+    // submission look like it "worked" with no way to tell.
     _sb.from("leave_requests").insert({
       id:req.id,employee_email:req.employeeEmail,employer_email:req.employerEmail,leave_type:req.leaveType,
       from_date:req.fromDate,to_date:req.toDate,reason:req.reason,status:"pending",admin_reply:""
     }).then(function(r){
-      if(r&&r.error){showT("Could not send leave request: "+r.error.message,"err");setLeaveReqs(function(p){return p.filter(function(x){return x.id!==req.id;});});return;}
+      setLeaveSubmitting(false);
+      if(r&&r.error){showT("Could not send leave request: "+r.error.message,"err");return;}
+      setLeaveReqs(function(p){return [req].concat(p);});
+      setLeaveFrom("");setLeaveTo("");setLeaveReason("");setShowLeaveForm(false);
       addNotif(empEmployerEmail,gUser.email,"leave_requested","Leave request",gUser.email.split("@")[0]+" applied for "+LEAVE_TYPES[leaveType].name,String(req.id),"leave");
       showT("Leave request sent!");
-    });
+    }).catch(function(e){setLeaveSubmitting(false);showT("Network error — try again","err");});
   }
 
   function approveLeave(reqId){
@@ -6424,6 +6474,36 @@ null
               ic(selE.appLinked?"lock_reset":"smartphone",selE.appLinked?GRN:ACCENT,14),
               selE.appLinked?"Manage Login (Reset / Block)":"Set Up App Login"
             )
+          );
+        }
+      ):null,
+
+      /* Self Check-in — GPS attendance log, visible to the employer too */
+      selE.appLinked?accSection("selfcheckin","schedule",TEL,"Self Check-in",
+        selfCheckinSummary?Math.floor(selfCheckinSummary.totalMin/60)+"h "+Math.round(selfCheckinSummary.totalMin%60)+"m this month":"No data yet",
+        function(){
+          if(!selfCheckinSummary)return h("div",{style:{fontSize:11,color:GRY,padding:"6px 0"}},"No self check-in records for "+MOS[curM]+" "+curY+".");
+          var hrs=Math.floor(selfCheckinSummary.totalMin/60),mins=Math.round(selfCheckinSummary.totalMin%60);
+          return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+            h("div",{style:{background:NVY,borderRadius:12,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+              h("div",null,
+                h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.5)"}},"Total working hours — "+MOS[curM]),
+                h("div",{style:{fontSize:17,fontWeight:800,color:"#fff",marginTop:2}},hrs+"h "+mins+"m")
+              ),
+              h("div",{style:{textAlign:"right"}},
+                h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.5)"}},"Days"),
+                h("div",{style:{fontSize:14,fontWeight:700,color:"#fff",marginTop:2}},selfCheckinSummary.days)
+              )
+            ),
+            selfCheckinSummary.rows.slice(0,8).map(function(c){
+              var inT=c.check_in_at?new Date(c.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"-";
+              var outT=c.check_out_at?new Date(c.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"-";
+              return h("div",{key:c.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid "+BDR}},
+                h("span",{style:{fontSize:11.5,color:NVY,fontWeight:600}},c.checkin_date),
+                h("span",{style:{fontSize:11,color:GRY}},inT+" \u2192 "+outT),
+                c.work_mode==="office"&&c.within_range===false?h("span",{style:{fontSize:9,color:RED,fontWeight:700}},"OUT OF RANGE"):null
+              );
+            })
           );
         }
       ):null,
@@ -7999,34 +8079,51 @@ null
     // ── Home tab ──
     function empHome(){
       var now=new Date();
+      var emp2=myRecord;
       var isCheckedIn=!!(checkinToday&&checkinToday.check_in_at);
       var isCheckedOut=!!(checkinToday&&checkinToday.check_out_at);
-      var workMode=(myRecord&&myRecord.workMode)||"office";
+      var workMode=(emp2&&emp2.workMode)||"office";
       var checkInTime=isCheckedIn?new Date(checkinToday.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):null;
       var checkOutTime=isCheckedOut?new Date(checkinToday.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):null;
-      var urgentTask=activeTasks.find(function(t){return t.priority==="high";});
-      urgentTask=urgentTask||activeTasks[0];
       return h("div",null,
-        // ── Hero: greeting + check-in, matching the app's established navy hero language ──
-        h("div",{style:{background:NVY,borderRadius:18,padding:"16px 16px 14px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:"0 4px 18px rgba(0,0,0,.3)"}},
+        // ── Digital ID Card — badge layout: employer strip on top, photo/initial + name/role/ID/dept below ──
+        h("div",{style:{background:NVY,borderRadius:18,marginBottom:14,position:"relative",overflow:"hidden",boxShadow:"0 4px 18px rgba(0,0,0,.3)"}},
           h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
-          h("div",{style:{position:"relative"}},
-            h("div",{style:{fontSize:11,color:"rgba(255,255,255,.55)",marginBottom:2}},now.getHours()<12?"Good morning":now.getHours()<17?"Good afternoon":"Good evening"),
-            h("div",{style:{fontSize:19,fontWeight:800,color:"#fff",marginBottom:14}},suName||(myRecord&&myRecord.name)||"Employee"),
-            h("div",{style:{background:"rgba(255,255,255,.08)",borderRadius:14,padding:"12px 14px"}},
-              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:isCheckedIn?10:0}},
-                h("div",null,
-                  h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)"}},workMode==="remote"?"Remote — no location check":"Office check-in"),
-                  h("div",{style:{fontSize:13,fontWeight:700,color:"#fff",marginTop:2}},isCheckedOut?"Checked out "+checkOutTime:isCheckedIn?"Checked in "+checkInTime:"Not checked in yet")
-                ),
-                !isCheckedIn?h("button",{onClick:doCheckIn,disabled:checkinLoading,style:{background:"#fff",border:"none",borderRadius:10,padding:"10px 18px",color:NVY,fontSize:12.5,fontWeight:700,cursor:"pointer",opacity:checkinLoading?.6:1,display:"flex",alignItems:"center",gap:6}},checkinLoading?"Locating...":[ic("fingerprint",NVY,15),"Check In"]):
-                (!isCheckedOut?h("button",{onClick:doCheckOut,disabled:checkinLoading,style:{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",borderRadius:10,padding:"10px 18px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer",opacity:checkinLoading?.6:1}},checkinLoading?"...":"Check Out"):
-                h("div",{style:{width:34,height:34,borderRadius:"50%",background:GRN+"30",display:"flex",alignItems:"center",justifyContent:"center"}},ic("check_circle","#6EE7B7",18)))
-              ),
-              isCheckedIn&&workMode==="office"&&checkinToday.distance_m!=null?h("div",{style:{fontSize:10,color:checkinToday.within_range===false?"#FCA5A5":"rgba(255,255,255,.5)",display:"flex",alignItems:"center",gap:4}},ic("location_on",checkinToday.within_range===false?"#FCA5A5":"rgba(255,255,255,.5)",11),checkinToday.within_range===false?"Outside office range — flagged for HR":"Within office range"):null
+          // Employer strip
+          h("div",{style:{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",borderBottom:"1px solid rgba(255,255,255,.1)",position:"relative"}},
+            org.logo?h("img",{src:org.logo,style:{width:20,height:20,borderRadius:5,objectFit:"contain",flexShrink:0}}):ic("business","rgba(255,255,255,.6)",15),
+            h("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.75)",letterSpacing:.3}},org.name||"Company"),
+            h("div",{style:{marginLeft:"auto",fontSize:9,color:"rgba(255,255,255,.4)",fontWeight:600,letterSpacing:.5}},"EMPLOYEE ID CARD")
+          ),
+          // Badge body
+          h("div",{style:{display:"flex",alignItems:"center",gap:14,padding:"16px 14px",position:"relative"}},
+            h("div",{style:{width:58,height:58,borderRadius:14,background:"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,fontWeight:800,color:"#fff",flexShrink:0}},
+              (emp2?emp2.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
+            ),
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:17,fontWeight:800,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},emp2?emp2.name:(suName||gUser.email.split("@")[0])),
+              h("div",{style:{fontSize:11.5,color:"rgba(255,255,255,.6)",marginTop:2}},emp2?(emp2.role||"Employee")+(emp2.dept?" · "+emp2.dept:""):"Employee"),
+              h("div",{style:{display:"flex",gap:10,marginTop:8}},
+                emp2&&emp2.eid?h("div",null,h("div",{style:{fontSize:8,color:"rgba(255,255,255,.4)"}},"ID"),h("div",{style:{fontSize:10.5,color:"#fff",fontWeight:700}},emp2.eid)):null,
+                emp2&&emp2.joined?h("div",null,h("div",{style:{fontSize:8,color:"rgba(255,255,255,.4)"}},"JOINED"),h("div",{style:{fontSize:10.5,color:"#fff",fontWeight:700}},emp2.joined)):null
+              )
             )
           )
         ),
+        // ── Two square check-in / check-out boxes — the only place check-in/out happens ──
+        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
+          h("div",{onClick:function(){if(!isCheckedIn&&!checkinLoading)doCheckIn();},style:{aspectRatio:"1",background:isCheckedIn?GRN+"12":CARD,border:"1.5px solid "+(isCheckedIn?GRN+"40":BDR),borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:isCheckedIn?"default":"pointer",padding:10,textAlign:"center"}},
+            ic(isCheckedIn?"check_circle":"login",isCheckedIn?GRN:GRY,26),
+            h("div",{style:{fontSize:11,fontWeight:700,color:isCheckedIn?GRN:NVY,marginTop:8}},"Check In"),
+            h("div",{style:{fontSize:isCheckedIn?15:10,fontWeight:isCheckedIn?800:500,color:isCheckedIn?GRN:GRY,marginTop:2}},checkinLoading&&!isCheckedIn?"Locating...":isCheckedIn?checkInTime:"Tap to check in")
+          ),
+          h("div",{onClick:function(){if(isCheckedIn&&!isCheckedOut&&!checkinLoading)doCheckOut();},style:{aspectRatio:"1",background:isCheckedOut?ACCENT+"12":CARD,border:"1.5px solid "+(isCheckedOut?ACCENT+"40":BDR),borderRadius:16,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:(isCheckedIn&&!isCheckedOut)?"pointer":"default",padding:10,textAlign:"center",opacity:isCheckedIn?1:.45}},
+            ic(isCheckedOut?"check_circle":"logout",isCheckedOut?ACCENT:GRY,26),
+            h("div",{style:{fontSize:11,fontWeight:700,color:isCheckedOut?ACCENT:NVY,marginTop:8}},"Check Out"),
+            h("div",{style:{fontSize:isCheckedOut?15:10,fontWeight:isCheckedOut?800:500,color:isCheckedOut?ACCENT:GRY,marginTop:2}},checkinLoading&&isCheckedIn&&!isCheckedOut?"...":isCheckedOut?checkOutTime:(isCheckedIn?"Tap to check out":"Check in first"))
+          )
+        ),
+        workMode==="office"&&isCheckedIn&&checkinToday.distance_m!=null?h("div",{style:{fontSize:10,color:checkinToday.within_range===false?RED:GRY,display:"flex",alignItems:"center",gap:4,marginBottom:12,marginTop:-4}},ic("location_on",checkinToday.within_range===false?RED:GRY,11),checkinToday.within_range===false?"Outside office range — flagged for HR":"Within office range"):null,
         // Quick stat cards
         h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
           h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"12px",textAlign:"center"}},
@@ -8053,7 +8150,7 @@ null
           )
         ),
         // Notifications
-        unread>0?h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"14px"}},
+        unread>0?h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"14px",marginBottom:12}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
             h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},
               ic("notifications",ACCENT,15),"Notifications",
@@ -8069,35 +8166,60 @@ null
               )
             );
           })
-        ):null
+        ):null,
+        // ── Personal Details (moved here from Pay page) ──
+        emp2?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,border:"1px solid "+BDR}},
+          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:10}},"PERSONAL DETAILS"),
+          [
+            emp2.eid?["Employee ID",emp2.eid]:null,
+            emp2.mob?["Mobile",emp2.mob]:null,
+            emp2.email?["Email",emp2.email]:null,
+            emp2.joined?["Joined",emp2.joined]:null,
+            emp2.pan?["PAN",emp2.pan.slice(0,3)+"XXXXX"+emp2.pan.slice(-2)]:null,
+            emp2.uan?["UAN",emp2.uan.slice(0,3)+"XXXXX"+emp2.uan.slice(-2)]:null,
+            emp2.aadhar?["Aadhaar","XXXX XXXX "+emp2.aadhar.slice(-4)]:null,
+          ].filter(Boolean).map(function(item){
+            return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid "+BDR}},
+              h("span",{style:{fontSize:12,color:GRY}},item[0]),
+              h("span",{style:{fontSize:12,fontWeight:600,color:NVY}},item[1])
+            );
+          })
+        ):null,
+        // ── Company Details (moved here from Pay page) ──
+        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,border:"1px solid "+BDR}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:org.phone||org.website?10:0}},
+            org.logo?h("img",{src:org.logo,style:{width:40,height:40,borderRadius:10,objectFit:"contain",flexShrink:0}}):
+            h("div",{style:{width:40,height:40,borderRadius:10,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("business",ACCENT,22)),
+            h("div",null,
+              h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},org.name||"Your Company"),
+              org.address?h("div",{style:{fontSize:11,color:GRY,marginTop:2}},org.address):null
+            )
+          ),
+          org.phone?h("div",{style:{display:"flex",gap:6,alignItems:"center",fontSize:12,color:GRY,marginTop:8,paddingTop:8,borderTop:"1px solid "+BDR}},ic("phone",GRY,13),org.phone):null,
+          h("div",{style:{marginTop:8,paddingTop:8,borderTop:"1px solid "+BDR,display:"flex",gap:6,alignItems:"center",fontSize:11,color:GRY}},
+            ic("mail",GRY,13),"Employer: "+empEmployerEmail
+          )
+        )
       );
     }
 
     // ── Attendance tab (read-only calendar) ──
     function empAttendance(){
       var sAttY=empPayYear,sAttM=empPayMonth;
-      var isCheckedIn2=!!(checkinToday&&checkinToday.check_in_at);
-      var isCheckedOut2=!!(checkinToday&&checkinToday.check_out_at);
-      var workMode2=(myRecord&&myRecord.workMode)||"office";
-      return h("div",null,
-        // ── Self check-in card, matching the Home hero language ──
-        h("div",{style:{background:NVY,borderRadius:16,padding:"16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
-          h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
-          h("div",{style:{position:"relative"}},
-            h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:5}},ic(workMode2==="office"?"location_on":"home","rgba(255,255,255,.5)",12),workMode2==="office"?"Office check-in":"Remote — no location check"),
-            h("div",{style:{width:64,height:64,borderRadius:"50%",background:isCheckedIn2?"rgba(110,231,183,.15)":"rgba(255,255,255,.1)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}},
-              ic(isCheckedOut2?"check_circle":"fingerprint",isCheckedIn2?"#6EE7B7":"#fff",30)
-            ),
-            !isCheckedIn2?h("button",{onClick:doCheckIn,disabled:checkinLoading,style:{background:"#fff",border:"none",borderRadius:10,padding:"11px 28px",color:NVY,fontSize:13,fontWeight:700,cursor:"pointer",opacity:checkinLoading?.6:1}},checkinLoading?"Locating...":"Check In"):
-            (!isCheckedOut2?h("button",{onClick:doCheckOut,disabled:checkinLoading,style:{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",borderRadius:10,padding:"11px 28px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",opacity:checkinLoading?.6:1}},checkinLoading?"...":"Check Out"):
-            h("div",{style:{fontSize:12,color:"rgba(255,255,255,.7)"}},"Day complete")),
-            isCheckedIn2?h("div",{style:{fontSize:10.5,color:"rgba(255,255,255,.5)",marginTop:10}},
-              "In "+new Date(checkinToday.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"})+
-              (isCheckedOut2?" — Out "+new Date(checkinToday.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"")
-            ):null
-          )
-        ),
+      // Total working hours this month — computed from real check-in/out timestamps, not the
+      // HR-marked status. Only counts days with both a check-in AND check-out recorded.
+      var totalMinutes=0,daysWithHours=0;
+      checkinMonth.forEach(function(c){
+        if(c.check_in_at&&c.check_out_at){
+          var mins=(new Date(c.check_out_at)-new Date(c.check_in_at))/60000;
+          if(mins>0){totalMinutes+=mins;daysWithHours++;}
+        }
+      });
+      var totalHrs=Math.floor(totalMinutes/60),totalMins=Math.round(totalMinutes%60);
+      var checkinByDate={};
+      checkinMonth.forEach(function(c){checkinByDate[c.checkin_date]=c;});
 
+      return h("div",null,
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
           h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},MOS[sAttM]+" "+sAttY),
           h("div",{style:{fontSize:11,color:GRY}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
@@ -8107,7 +8229,21 @@ null
             return h("button",{key:i,onClick:function(){setEmpPayMonth(i);},style:{flexShrink:0,background:sAttM===i?ACCENT:CARD,border:"1px solid "+(sAttM===i?ACCENT:BDR),borderRadius:15,padding:"4px 10px",color:sAttM===i?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},m);
           })
         ),
-        h("div",{style:{fontSize:10.5,color:GRY,marginBottom:8,display:"flex",alignItems:"center",gap:5}},ic("verified",GRY,12),"Official record — confirmed by HR"),
+        // ── Total working hours — computed from real check-in/out timestamps ──
+        h("div",{style:{background:NVY,borderRadius:14,padding:"14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}},
+          h("div",null,
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)"}},"Total working hours"),
+            h("div",{style:{fontSize:20,fontWeight:800,color:"#fff",marginTop:2}},totalHrs+"h "+totalMins+"m")
+          ),
+          h("div",{style:{textAlign:"right"}},
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)"}},"Days tracked"),
+            h("div",{style:{fontSize:16,fontWeight:700,color:"#fff",marginTop:2}},daysWithHours)
+          )
+        ),
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}},
+          h("div",{style:{fontSize:10.5,color:GRY,display:"flex",alignItems:"center",gap:5}},ic("verified",GRY,12),"Official record — confirmed by HR"),
+          h("button",{onClick:function(){setShowAttTimes(!showAttTimes);},style:{display:"flex",alignItems:"center",gap:4,background:showAttTimes?ACCENT+"12":SFT,border:"1px solid "+(showAttTimes?ACCENT+"30":BDR),borderRadius:8,padding:"4px 9px",color:showAttTimes?ACCENT:GRY,fontSize:10,fontWeight:600,cursor:"pointer"}},ic("schedule",showAttTimes?ACCENT:GRY,11),"Times")
+        ),
         h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:16,padding:"14px",marginBottom:12}},
           h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:8}},
             ["Su","Mo","Tu","We","Th","Fr","Sa"].map(function(d){return h("div",{key:d,style:{fontSize:9,color:GRY,textAlign:"center",fontWeight:700,paddingBottom:3}},d);}),
@@ -8120,9 +8256,12 @@ null
                 var ds=sAttY+"-"+String(sAttM+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
                 var s=myRecord?(att[ds+"_"+myRecord.id]||"unmarked"):"unmarked";
                 var isTd=ds===todayStr;
-                cells.push(h("div",{key:day,style:{aspectRatio:"1",borderRadius:6,background:s==="unmarked"?SFT:ATC[s]+"18",border:isTd?"2px solid "+ACCENT:"1px solid "+(s==="unmarked"?BDR:ATC[s]+"33"),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
+                var ci=checkinByDate[ds];
+                cells.push(h("div",{key:day,style:{aspectRatio:"1",borderRadius:6,background:s==="unmarked"?SFT:ATC[s]+"18",border:isTd?"2px solid "+ACCENT:"1px solid "+(s==="unmarked"?BDR:ATC[s]+"33"),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:2}},
                   h("div",{style:{fontSize:11,fontWeight:isTd?800:500,color:s==="unmarked"?NVY:ATC[s]}},day),
-                  s!=="unmarked"&&s!=="unmarked"?h("div",{style:{fontSize:6,color:ATC[s],fontWeight:700}},ATL[s]?ATL[s].slice(0,2):""):null
+                  showAttTimes&&ci&&ci.check_in_at?h("div",{style:{fontSize:5.5,color:GRY,fontWeight:700,lineHeight:1.2,textAlign:"center"}},
+                    new Date(ci.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}).replace(" ","")
+                  ):(!showAttTimes&&s!=="unmarked"?h("div",{style:{fontSize:6,color:ATC[s],fontWeight:700}},ATL[s]?ATL[s].slice(0,2):""):null)
                 ));
               }
               return cells;
@@ -8339,7 +8478,7 @@ null
             h("textarea",{value:leaveReason,onChange:function(e){setLeaveReason(e.target.value);},placeholder:"Enter reason...",style:{width:"100%",height:60,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"none",marginBottom:8}})
           ):null,
           h("div",{style:{display:"flex",gap:8}},
-            h("button",{onClick:applyLeave,style:{flex:2,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer"}},"Submit"),
+            h("button",{onClick:applyLeave,disabled:leaveSubmitting,style:{flex:2,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",opacity:leaveSubmitting?.6:1}},leaveSubmitting?"Sending...":"Submit"),
             h("button",{onClick:function(){setShowLeaveForm(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"12px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
           )
         ):h("button",{onClick:function(){setShowLeaveForm(true);},style:{width:"100%",background:ACCENT,border:"none",borderRadius:14,padding:"13px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
@@ -8380,22 +8519,52 @@ null
         makePayslipPDF(emp,payData,empPayMonth,empPayYear,org.name,org.contactEmail||org.email,org.position,org.logo,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(emp.id,empPayMonth,empPayYear),getEmpClaimTotal(emp.id,empPayMonth,empPayYear),org.phone,org.website,getEmpLoanDed(emp.id),payMp.ma);
       }
       return h("div",{className:"fd"},
-        // ── Hero: net pay is the headline, matching how a payslip is actually read ──
-        h("div",{style:{background:NVY,borderRadius:18,padding:"18px 16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
-          h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
-          h("div",{style:{position:"relative"}},
-            h("div",{style:{display:"flex",justifyContent:"center",gap:6,marginBottom:10}},
-              h("select",{value:empPayMonth,onChange:function(e){setEmpPayMonth(Number(e.target.value));},style:{fontSize:11,background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:7,padding:"4px 8px",color:"#fff",outline:"none"}},
+        // ── Header: identical formula-row style to the employer's own Payroll page ──
+        h("div",{style:{background:NVY,borderRadius:18,padding:"16px",marginBottom:14,boxShadow:T.SHADOW_LG,border:"1px solid "+(themeMode==="light"?"rgba(255,255,255,.06)":"rgba(0,0,0,.08)")}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+            h("div",{style:{fontSize:11,color:CARD,opacity:.55,letterSpacing:.3}},"Pay period"),
+            h("div",{style:{display:"flex",gap:6}},
+              h("select",{value:empPayMonth,onChange:function(e){setEmpPayMonth(Number(e.target.value));},style:{fontSize:11,background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:7,padding:"3px 7px",color:"#fff",outline:"none"}},
                 MOS.map(function(m,i){return h("option",{key:i,value:i,style:{color:"#000"}},m);})),
-              h("select",{value:empPayYear,onChange:function(e){setEmpPayYear(Number(e.target.value));},style:{fontSize:11,background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:7,padding:"4px 8px",color:"#fff",outline:"none"}},
+              h("select",{value:empPayYear,onChange:function(e){setEmpPayYear(Number(e.target.value));},style:{fontSize:11,background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:7,padding:"3px 7px",color:"#fff",outline:"none"}},
                 [curY-1,curY].map(function(y){return h("option",{key:y,value:y,style:{color:"#000"}},y);}))
-            ),
-            payData?[
-              h("div",{key:"lbl",style:{fontSize:10,color:"rgba(255,255,255,.5)",marginBottom:4}},"Net pay"),
-              h("div",{key:"amt",style:{fontSize:26,fontWeight:800,color:"#fff"}},fmt(payMp.netFinal)),
-              h("div",{key:"sub",style:{fontSize:10,color:"rgba(255,255,255,.4)",marginTop:6}},fmt(payData.gr)+" gross \u2212 "+fmt(totalDed)+" deductions")
-            ]:h("div",{style:{fontSize:12,color:"rgba(255,255,255,.5)",padding:"10px 0"}},"No salary data for this month")
-          )
+            )
+          ),
+          payData?(function(){
+            var negC=themeMode==="light"?"#FCA5A5":"#DC2626";
+            var posC=themeMode==="light"?"#FCD34D":"#B45309";
+            var finalC=themeMode==="light"?"#4ADE80":"#059669";
+            var mutedC=themeMode==="light"?"rgba(255,255,255,.4)":"rgba(0,0,0,.45)";
+            var sepC=themeMode==="light"?"rgba(255,255,255,.3)":"rgba(0,0,0,.3)";
+            var addOns=(payMp.bonusTotal||0)+(payMp.otTotal||0);
+            var terms=[
+              {l:"GROSS",v:fmt(payData.gr),op:null,c:CARD},
+              addOns>0?{l:"BONUS/OT",v:fmt(addOns),op:"+",c:posC}:null,
+              {l:"DEDUCTIONS",v:totalDed>0?fmt(totalDed):"Nil",op:"\u2212",c:negC},
+              payMp.loanDed>0?{l:"LOAN/EMI",v:fmt(payMp.loanDed),op:"\u2212",c:negC}:null,
+              {l:"NET PAY",v:fmt(payMp.netFinal),op:"=",c:finalC}
+            ].filter(Boolean);
+            var tight=terms.length>4;
+            var fs=terms.length>=6?10:terms.length>4?11.5:14;
+            return [
+              h("div",{key:"row",style:{display:"flex",alignItems:"flex-start",justifyContent:"center",gap:tight?4:8,marginBottom:14,flexWrap:"wrap",rowGap:10}},
+                terms.map(function(t,i){
+                  return h("div",{key:"t"+i,style:{display:"flex",alignItems:"center",gap:tight?4:8,flex:"0 1 auto"}},
+                    t.op?h("div",{style:{color:sepC,fontSize:tight?14:18,fontWeight:300,flexShrink:0}},t.op):null,
+                    h("div",{style:{textAlign:"center",minWidth:58}},
+                      h("div",{style:{fontSize:8.5,fontWeight:700,color:mutedC,letterSpacing:.5,marginBottom:4}},t.l),
+                      h("div",{style:{fontSize:fs,fontWeight:800,color:t.c,whiteSpace:"nowrap"}},t.v)
+                    )
+                  );
+                })
+              ),
+              h("div",{key:"hr",style:{height:1,background:themeMode==="light"?"rgba(255,255,255,.08)":"rgba(0,0,0,.10)",marginBottom:10}}),
+              h("div",{key:"tot",style:{textAlign:"center"}},
+                h("div",{style:{fontSize:10,color:CARD,opacity:.45,marginBottom:3}},"NET TAKE HOME"),
+                h("div",{style:{fontSize:21,fontWeight:900,color:themeMode==="light"?"#4ADE80":"#059669",letterSpacing:-.5}},fmt(payMp.netFinal))
+              )
+            ];
+          })():h("div",{style:{fontSize:12,color:"rgba(255,255,255,.5)",textAlign:"center",padding:"10px 0"}},"No salary data for this month")
         ),
         emp&&payData?h("div",null,
           // ── Simple breakdown ──
@@ -8426,38 +8595,6 @@ null
             h("button",{onClick:requestPayslip,style:{background:ACCENT+"12",border:"1px solid "+ACCENT+"30",borderRadius:9,padding:"9px 18px",color:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},"Request from Employer")
           )
         ):h("div",{style:{background:SFT,borderRadius:14,padding:"20px",textAlign:"center",color:GRY,fontSize:12,marginBottom:12}},"Salary details not available yet.\nContact your employer."),
-        // ── Personal details ──
-        emp?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,border:"1px solid "+BDR}},
-          h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:10}},"PERSONAL DETAILS"),
-          [
-            emp.eid?["Employee ID",emp.eid]:null,
-            emp.mob?["Mobile",emp.mob]:null,
-            emp.email?["Email",emp.email]:null,
-            emp.joined?["Joined",emp.joined]:null,
-            emp.pan?["PAN",emp.pan.slice(0,3)+"XXXXX"+emp.pan.slice(-2)]:null,
-            emp.uan?["UAN",emp.uan.slice(0,3)+"XXXXX"+emp.uan.slice(-2)]:null,
-            emp.aadhar?["Aadhaar","XXXX XXXX "+emp.aadhar.slice(-4)]:null,
-          ].filter(Boolean).map(function(item){
-            return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid "+BDR}},
-              h("span",{style:{fontSize:12,color:GRY}},item[0]),
-              h("span",{style:{fontSize:12,fontWeight:600,color:NVY}},item[1])
-            );
-          })
-        ):null,
-        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,border:"1px solid "+BDR}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:org.phone||org.website?10:0}},
-            org.logo?h("img",{src:org.logo,style:{width:40,height:40,borderRadius:10,objectFit:"contain",flexShrink:0}}):
-            h("div",{style:{width:40,height:40,borderRadius:10,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("business",ACCENT,22)),
-            h("div",null,
-              h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},org.name||"Your Company"),
-              org.address?h("div",{style:{fontSize:11,color:GRY,marginTop:2}},org.address):null
-            )
-          ),
-          org.phone?h("div",{style:{display:"flex",gap:6,alignItems:"center",fontSize:12,color:GRY,marginTop:8,paddingTop:8,borderTop:"1px solid "+BDR}},ic("phone",GRY,13),org.phone):null,
-          h("div",{style:{marginTop:8,paddingTop:8,borderTop:"1px solid "+BDR,display:"flex",gap:6,alignItems:"center",fontSize:11,color:GRY}},
-            ic("mail",GRY,13),"Employer: "+empEmployerEmail
-          )
-        ),
         h("button",{onClick:function(){
           _sb.auth.signOut();
           ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
@@ -8520,8 +8657,8 @@ null
         h("div",{style:{overflowY:"auto",maxHeight:"calc(70vh - 48px)"}},
           myNotifs.length===0?h("div",{style:{padding:"24px",textAlign:"center",color:GRY,fontSize:12}},"No notifications yet"):
           myNotifs.map(function(n){
-            var iconMap={task_assigned:"assignment",task_completed:"task_alt",task_verified:"verified",task_rejected:"cancel",task_comment:"chat_bubble",leave_requested:"event_busy",leave_approved:"event_available",leave_rejected:"event_busy",kpi_scored:"insights"};
-            var colorMap={task_assigned:"#4F46E5",task_completed:"#10B981",task_verified:"#10B981",task_rejected:"#EF4444",task_comment:"#4F46E5",leave_requested:"#F59E0B",leave_approved:"#10B981",leave_rejected:"#EF4444",kpi_scored:"#D97706"};
+            var iconMap={task_assigned:"assignment",task_completed:"task_alt",task_verified:"verified",task_rejected:"cancel",task_comment:"chat_bubble",leave_requested:"event_busy",leave_approved:"event_available",leave_rejected:"event_busy",kpi_scored:"insights",salary_revised:"payments",payslip_requested:"receipt_long"};
+            var colorMap={task_assigned:"#4F46E5",task_completed:"#10B981",task_verified:"#10B981",task_rejected:"#EF4444",task_comment:"#4F46E5",leave_requested:"#F59E0B",leave_approved:"#10B981",leave_rejected:"#EF4444",kpi_scored:"#D97706",salary_revised:"#10B981",payslip_requested:"#D97706"};
             return h("div",{key:n.id,style:{display:"flex",gap:10,padding:"10px 14px",borderBottom:"1px solid "+BDR,background:n.read?"transparent":ACCENT+"08",cursor:"pointer"},
               onClick:function(){setNotifs(function(p){return p.map(function(x){return x.id===n.id?Object.assign({},x,{read:true}):x;});});setUnreadNotifs(function(c){return Math.max(0,c-1);});setShowNotifs(false);if(n.refType==="task")setTab("pro");if(n.refType==="leave")setTab("pro");}},
               h("div",{style:{width:34,height:34,borderRadius:"50%",background:(colorMap[n.type]||TEL)+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
@@ -9481,8 +9618,12 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
                 ic("cloud_upload",lastSync?GRN:GRY,18),
               lastSync?h("div",{style:{position:"absolute",top:4,right:4,width:6,height:6,borderRadius:"50%",background:GRN,border:"1px solid "+CARD}}):null
             ),
-            h("button",{onClick:function(){setTab("settings");setSettTab("account");},title:"Settings",style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}},
-              ic("settings",NVY,19)),
+            h("button",{onClick:function(){setShowNotifs(true);},title:"Notifications",style:{width:38,height:38,borderRadius:11,background:SFT,border:"1px solid "+BDR,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",position:"relative"}},
+              ic("notifications",unreadNotifs>0?ACCENT:NVY,19),
+              unreadNotifs>0?h("div",{style:{position:"absolute",top:2,right:2,width:15,height:15,borderRadius:"50%",background:RED,display:"flex",alignItems:"center",justifyContent:"center",border:"1.5px solid "+CARD}},
+                h("div",{style:{fontSize:8,fontWeight:700,color:"#fff"}},unreadNotifs>9?"9+":String(unreadNotifs))
+              ):null
+            ),
             h("div",{style:{position:"relative",flexShrink:0}},
               h("button",{onClick:function(){setProf(function(v){return !v;});},style:{width:38,height:38,borderRadius:11,background:NVY,border:isPaid?"2.5px solid #FCD34D":"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",overflow:"hidden",padding:0,boxShadow:isPaid?"0 0 8px #FCD34D88":"none"}},
                 gUser&&gUser.photo?h("img",{src:gUser.photo,width:38,height:38,style:{borderRadius:9,display:"block"}}):ic(ICONS.user,CARD,19)
@@ -9495,7 +9636,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
             ),
             prof?h("div",{style:{position:"absolute",top:42,right:0,background:CARD,border:"1px solid "+BDR,borderRadius:13,padding:6,minWidth:185,boxShadow:T.SHADOW_LG,zIndex:200}},
               h("div",{style:{padding:"7px 11px",borderBottom:"1px solid "+BDR,marginBottom:3}},h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},gUser?gUser.name:org.position),h("div",{style:{fontSize:11,color:GRY}},org.name),h("div",{style:{fontSize:10,color:GRY}},gUser?gUser.email:"")),
-
+              h("button",{onClick:function(){setTab("settings");setSettTab("account");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:600,color:NVY,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},ic("settings",NVY,14),"Settings"),
               isAdmin?h("button",{onClick:function(){setShowAdmin(true);loadAdminUsers();setTab("settings");setTab("settings");},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:700,color:AMB,cursor:"pointer"}},"Admin Panel"):null,
               h("button",{onClick:function(){window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I need support for Admin HR. My account: "+(gUser?gUser.email:"")),"_blank");setProf(false);},style:{width:"100%",background:"none",border:"none",borderRadius:7,padding:"7px 11px",textAlign:"left",fontSize:12,fontWeight:500,color:TEL,cursor:"pointer",display:"flex",alignItems:"center",gap:6}},ic(ICONS.wa,TEL,14),"Contact Support"),
               h("div",{style:{borderTop:"1px solid "+BDR,marginTop:3,paddingTop:3}},
