@@ -8616,8 +8616,13 @@ null
       if(setLoginPin.length!==4)return setSetLoginErr("PIN must be exactly 4 digits");
       if(setLoginPin!==setLoginPin2)return setSetLoginErr("PINs do not match");
       setSetLoginErr("");setSetLoginLoading(true);
+      // Always use "create" — it's self-healing on the server (creates if missing, updates the PIN
+      // if the account already exists), so this works correctly even if the employer's own screen
+      // is out of sync with the real server state (e.g. after a manual database cleanup). "reset_pin"
+      // used to be called here instead when isReset was true, but that action requires the account to
+      // already genuinely exist and fails hard otherwise — exactly the dead end this replaces.
       callEmployeeAuth(
-        isReset?"reset_pin":"create",
+        "create",
         setLoginEmail.trim(),
         setLoginPin,
         function(data){
@@ -8641,7 +8646,19 @@ null
           if(selE&&selE.id===setLoginEmp.id)setSelE(upd);
           showT(isBlocked?"App access restored.":"App access blocked. Employee cannot log in.");
         },
-        function(err){setSetLoginLoading(false);showT(err,"err");}
+        function(err){
+          setSetLoginLoading(false);
+          // If the server genuinely has no record of this account (e.g. it was cleaned up
+          // directly in the database), this screen's "already linked" state is stale — correct
+          // it locally so the employer sees "Set Up App Login" again instead of staying stuck.
+          if(err&&err.indexOf("not found")>-1){
+            var fixed=Object.assign({},setLoginEmp,{appLinked:false,appEmail:"",appBlocked:false});
+            setEmps(function(p){return p.map(function(e){return e.id===setLoginEmp.id?fixed:e;});});
+            if(selE&&selE.id===setLoginEmp.id)setSelE(fixed);
+            setShowSetLogin(false);
+          }
+          showT(err,"err");
+        }
       );
     }
     function handleRevoke(){
@@ -8655,7 +8672,16 @@ null
           if(selE&&selE.id===setLoginEmp.id)setSelE(upd);
           setShowSetLogin(false);showT("App access revoked.");
         },
-        function(err){setSetLoginLoading(false);showT(err,"err");}
+        function(err){
+          setSetLoginLoading(false);
+          if(err&&err.indexOf("not found")>-1){
+            var fixed=Object.assign({},setLoginEmp,{appLinked:false,appEmail:"",appBlocked:false});
+            setEmps(function(p){return p.map(function(e){return e.id===setLoginEmp.id?fixed:e;});});
+            if(selE&&selE.id===setLoginEmp.id)setSelE(fixed);
+            setShowSetLogin(false);
+          }
+          showT(err,"err");
+        }
       );
     }
     return h(Modal,{title:isReset?"Manage App Login":"Set App Login",onClose:function(){if(!setLoginLoading){setShowSetLogin(false);setSetLoginErr("");setSetLoginPin("");setSetLoginPin2("");}},footer:h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
