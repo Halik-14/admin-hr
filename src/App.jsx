@@ -3152,6 +3152,26 @@ export default function App(){
   var sEmpDT=st("profile"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1]; // employee dashboard tab — starts at profile
   var sEmpData=st(null),empData=sEmpData[0],setEmpData=sEmpData[1]; // full employee record from emps
   var sEmpPayMonth=st(new Date().getMonth()),empPayMonth=sEmpPayMonth[0],setEmpPayMonth=sEmpPayMonth[1];
+  // Self check-in state — declared here (not inside renderEmployeeDashboard) because React hooks
+  // must be called unconditionally on every render. renderEmployeeDashboard only runs for employee
+  // sessions, so putting hooks there crashes the app the instant an employee logs in (hook count
+  // changes between the "before login" and "after login as employee" renders).
+  var sCheckinToday=st(null),checkinToday=sCheckinToday[0],setCheckinToday=sCheckinToday[1];
+  var sCheckinLoading=st(false),checkinLoading=sCheckinLoading[0],setCheckinLoading=sCheckinLoading[1];
+  var sCheckinMonth=st([]),checkinMonth=sCheckinMonth[0],setCheckinMonth=sCheckinMonth[1];
+  se(function(){
+    if(!gUser||!gUser.email||(userRole!=="employee"&&userRole!=="terminated_employee"))return;
+    _sb.from("attendance_checkins").select("*").eq("employee_email",gUser.email)
+      .gte("checkin_date",curY+"-"+String(curM+1).padStart(2,"0")+"-01")
+      .lte("checkin_date",curY+"-"+String(curM+1).padStart(2,"0")+"-31")
+    .then(function(res){
+      if(res.data){
+        setCheckinMonth(res.data);
+        var t=res.data.find(function(r){return r.checkin_date===todayStr;});
+        setCheckinToday(t||null);
+      }
+    });
+  },[gUser&&gUser.email,userRole,curM,curY]);
   var sEmpPayYear=st(new Date().getFullYear()),empPayYear=sEmpPayYear[0],setEmpPayYear=sEmpPayYear[1];
   var sEmpSelTask=st(null),empSelTask=sEmpSelTask[0],setEmpSelTask=sEmpSelTask[1];
   var sEmpTaskComment=st(""),empTaskComment=sEmpTaskComment[0],setEmpTaskComment=sEmpTaskComment[1];
@@ -7879,22 +7899,11 @@ null
     // inside a shared JSON object). This is a real, working log of when they checked in/out, with
     // GPS proof for office-mode employees — HR can see it and reconcile it into official payroll
     // attendance separately.
-    var sCheckinToday=st(null),checkinToday=sCheckinToday[0],setCheckinToday=sCheckinToday[1];
-    var sCheckinLoading=st(false),checkinLoading=sCheckinLoading[0],setCheckinLoading=sCheckinLoading[1];
-    var sCheckinMonth=st([]),checkinMonth=sCheckinMonth[0],setCheckinMonth=sCheckinMonth[1];
-    se(function(){
-      if(!gUser||!gUser.email)return;
-      _sb.from("attendance_checkins").select("*").eq("employee_email",gUser.email)
-        .gte("checkin_date",curY+"-"+String(curM+1).padStart(2,"0")+"-01")
-        .lte("checkin_date",curY+"-"+String(curM+1).padStart(2,"0")+"-31")
-      .then(function(res){
-        if(res.data){
-          setCheckinMonth(res.data);
-          var t=res.data.find(function(r){return r.checkin_date===todayStr;});
-          setCheckinToday(t||null);
-        }
-      });
-    },[gUser&&gUser.email,curM,curY]);
+    // Check-in state now lives at the top of App() (see near empPayMonth) — hooks must be called
+    // unconditionally on every render, and this function only runs for employee sessions, so
+    // declaring them here would violate React's Rules of Hooks and crash the app.
+    // Loading check-in data now happens in a top-level effect (see near empPayMonth) — same
+    // Rules-of-Hooks reason as above.
 
     function doCheckIn(){
       if(!myRecord)return showT("Employee record not found","err");
