@@ -5110,6 +5110,12 @@ export default function App(){
     if(!taskComment.trim())return;
     var comment={id:Date.now(),taskId:taskId,fromEmail:gUser.email,message:taskComment.trim(),createdAt:new Date().toISOString()};
     setTaskComments(function(p){var o=Object.assign({},p);o[taskId]=(o[taskId]||[]).concat([comment]);return o;});
+    // Persist to the real task_comments table so the other side (employer or employee) actually
+    // receives it — this previously only ever updated the sender's own local memory, so neither
+    // side could see an "update message" the other one left, no matter how the UI displayed it.
+    _sb.from("task_comments").insert({id:comment.id,task_id:String(taskId),from_email:comment.fromEmail,message:comment.message}).then(function(r){
+      if(r&&r.error)showT("Comment could not be saved: "+r.error.message,"err");
+    });
     var task=tasks.find(function(t){return t.id===taskId;});
     if(task){
       var toEmail=gUser.email===task.employerEmail?task.assignTarget:task.employerEmail;
@@ -5117,6 +5123,26 @@ export default function App(){
     }
     setTaskComment("");showT("Comment sent");
   }
+  // Loads every comment for every task belonging to the current employer (whether you're the
+  // owner or a linked employee) — matches the same employer-email resolution pattern used for
+  // leave/loans/revisions/KPIs, since task_comments is keyed by task_id, not directly by employer.
+  se(function(){
+    if(!gUser||!gUser.email)return;
+    var isEmpSession2=userRole==="employee"||userRole==="terminated_employee";
+    var myTaskIds=(tasks||[]).filter(function(t){
+      return isEmpSession2?(t.employerEmail===empEmployerEmail):(t.employerEmail===gUser.email);
+    }).map(function(t){return String(t.id);});
+    if(!myTaskIds.length)return;
+    _sb.from("task_comments").select("*").in("task_id",myTaskIds).order("created_at",{ascending:true}).then(function(res){
+      if(!res.data)return;
+      var grouped={};
+      res.data.forEach(function(c){
+        var tid=isNaN(Number(c.task_id))?c.task_id:Number(c.task_id);
+        grouped[tid]=(grouped[tid]||[]).concat([{id:c.id,taskId:tid,fromEmail:c.from_email,message:c.message,createdAt:c.created_at}]);
+      });
+      setTaskComments(grouped);
+    });
+  },[tasks.length,gUser&&gUser.email,userRole,empEmployerEmail]);
 
   // ── Pro: Leave functions ────────────────────────────────────────────────
   var LEAVE_TYPES={
@@ -8134,7 +8160,9 @@ null
               );
             })
           )
-        ):null
+        ):null,
+        h("div",{style:{height:6}}),
+        empLeaveCard()
       );
     }
 
@@ -8265,7 +8293,13 @@ null
     }
 
     // ── Leave tab ──
-    function empLeave(){
+    // ── Leave section — now lives as a card inside the Attendance tab, not its own nav tab.
+    // Rewired to use the SAME state (leaveType/leaveFrom/leaveTo/leaveReason) and the SAME
+    // applyLeave() function that the employer-facing leave flow already uses and that we already
+    // fixed to persist to the real leave_requests table — this screen previously had its own
+    // separate, never-fixed copy of the submission logic that only updated local state and never
+    // actually reached the employer.
+    function empLeaveCard(){
       var entitlement=myRecord?Number(myRecord.leaveEntitlement||12):12;
       var leaveByType={};
       Object.keys(LEAVE_TYPES).forEach(function(lt){
@@ -8273,7 +8307,7 @@ null
         var total=lt==="CL"?Math.round(entitlement*0.4):lt==="SL"?Math.round(entitlement*0.2):lt==="PL"?Math.round(entitlement*0.3):lt==="EL"?2:0;
         leaveByType[lt]={total:total,used:used,left:Math.max(0,total-used)};
       });
-      return h("div",{className:"fd"},
+      return h("div",null,
         h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,border:"1px solid "+BDR}},
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:12,display:"flex",alignItems:"center",gap:6}},ic("event_available",ACCENT,15),"Leave Balance"),
           h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
@@ -8292,31 +8326,23 @@ null
             })
           )
         ),
-        empShowLeave?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,border:"1px solid "+BDR}},
+        showLeaveForm?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,border:"1px solid "+BDR}},
           h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14,display:"flex",alignItems:"center",gap:8}},ic("edit_calendar",ACCENT,16),"Apply for Leave"),
           lbl("LEAVE TYPE"),
-          chipSelect(empLeaveType,function(v){setEmpLeaveType(v);},Object.keys(LEAVE_TYPES).map(function(lt){return {v:lt,l:LEAVE_TYPES[lt].name};}),{question:"Choose the leave type"}),
+          chipSelect(leaveType,function(v){setLeaveType(v);},Object.keys(LEAVE_TYPES).map(function(lt){return {v:lt,l:LEAVE_TYPES[lt].name};}),{question:"Choose the leave type"}),
           h("div",{style:{display:"flex",gap:8,marginBottom:8}},
-            h("div",{style:{flex:1}},lbl("FROM"),datePick(empLeaveFrom,function(v){setEmpLeaveFrom(v);},{question:"Leave from"})),
-            h("div",{style:{flex:1}},lbl("TO"),datePick(empLeaveTo,function(v){setEmpLeaveTo(v);},{question:"Leave to"}))
+            h("div",{style:{flex:1}},lbl("FROM"),datePick(leaveFrom,function(v){setLeaveFrom(v);},{question:"Leave from"})),
+            h("div",{style:{flex:1}},lbl("TO"),datePick(leaveTo,function(v){setLeaveTo(v);},{question:"Leave to"}))
           ),
-          LEAVE_TYPES[empLeaveType]&&LEAVE_TYPES[empLeaveType].needsReason?h("div",null,
+          LEAVE_TYPES[leaveType]&&LEAVE_TYPES[leaveType].needsReason?h("div",null,
             lbl("REASON"),
-            h("textarea",{value:empLeaveReason,onChange:function(e){setEmpLeaveReason(e.target.value);},placeholder:"Enter reason...",style:{width:"100%",height:60,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"none",marginBottom:8}})
+            h("textarea",{value:leaveReason,onChange:function(e){setLeaveReason(e.target.value);},placeholder:"Enter reason...",style:{width:"100%",height:60,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",resize:"none",marginBottom:8}})
           ):null,
           h("div",{style:{display:"flex",gap:8}},
-            h("button",{onClick:function(){
-              if(!empLeaveFrom||!empLeaveTo)return showT("Select dates","err");
-              if(LEAVE_TYPES[empLeaveType]&&LEAVE_TYPES[empLeaveType].needsReason&&!empLeaveReason.trim())return showT("Enter reason","err");
-              var req={id:Date.now(),employeeEmail:myEmail,employerEmail:empEmployerEmail,leaveType:empLeaveType,fromDate:empLeaveFrom,toDate:empLeaveTo,reason:empLeaveReason.trim(),status:"pending",adminReply:"",createdAt:new Date().toISOString()};
-              setLeaveReqs(function(p){return [req].concat(p);});
-              addNotif(empEmployerEmail,myEmail,"leave_requested","Leave request",(gUser?gUser.email.split("@")[0]:""+" applied for "+LEAVE_TYPES[empLeaveType].name),String(req.id),"leave");
-              setEmpLeaveFrom("");setEmpLeaveTo("");setEmpLeaveReason("");setEmpShowLeave(false);
-              showT("Leave request sent!");
-            },style:{flex:2,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer"}},"Submit"),
-            h("button",{onClick:function(){setEmpShowLeave(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"12px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
+            h("button",{onClick:applyLeave,style:{flex:2,background:ACCENT,border:"none",borderRadius:10,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer"}},"Submit"),
+            h("button",{onClick:function(){setShowLeaveForm(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"12px",color:NVY,fontSize:12,cursor:"pointer"}},"Cancel")
           )
-        ):h("button",{onClick:function(){setEmpShowLeave(true);},style:{width:"100%",background:ACCENT,border:"none",borderRadius:14,padding:"13px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+        ):h("button",{onClick:function(){setShowLeaveForm(true);},style:{width:"100%",background:ACCENT,border:"none",borderRadius:14,padding:"13px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
           ic("add",ACCENT_FG,18),"Apply for Leave"
         ),
         myLeaves.length>0?h("div",null,
@@ -8336,27 +8362,78 @@ null
       );
     }
 
-    // ── Profile tab ──
+    // ── Pay tab ──
     function empProfile(){
       var emp=myRecord;
       var payMp=emp?getMonthPay(emp,empPayYear,empPayMonth):null;
       var payData=payMp?payMp.d:null;
+      var totalDed=payData?(payData.pfE+payData.esiE+payData.pt+payData.tds):0;
+      function requestPayslip(){
+        if(!empEmployerEmail)return showT("Employer not linked","err");
+        addNotif(empEmployerEmail,gUser.email,"payslip_requested","Payslip Requested",
+          (emp?emp.name:gUser.email.split("@")[0])+" requested their "+MOS[empPayMonth]+" "+empPayYear+" payslip — share it directly, or upgrade to let employees download their own.",
+          "","payslip");
+        showT("Request sent to your employer!");
+      }
+      function downloadMyPayslip(){
+        if(!emp||!payData)return;
+        makePayslipPDF(emp,payData,empPayMonth,empPayYear,org.name,org.contactEmail||org.email,org.position,org.logo,false,org.address||"",org.logo||"",authPos,authSign,null,getEmpBonusesWithOT(emp.id,empPayMonth,empPayYear),getEmpClaimTotal(emp.id,empPayMonth,empPayYear),org.phone,org.website,getEmpLoanDed(emp.id),payMp.ma);
+      }
       return h("div",{className:"fd"},
-        h("div",{style:{background:"linear-gradient(135deg,#0F172A,#1E293B)",borderRadius:20,padding:"20px 16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
-          h("div",{style:{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,0.04)"}}),
-          h("div",{style:{width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,"+ACCENT+",#7C3AED)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",fontSize:28,fontWeight:800,color:"#fff"}},
-            (emp?emp.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
-          ),
-          h("div",{style:{fontSize:20,fontWeight:800,color:"#fff"}},emp?emp.name:(suName||gUser.email.split("@")[0])),
-          h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.6)",marginTop:4}},emp?(emp.role||"")+(emp.dept?" • "+emp.dept:""):"Employee"),
-          emp&&emp.joined?h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:4}},"Joined: "+emp.joined):null
+        // ── Hero: net pay is the headline, matching how a payslip is actually read ──
+        h("div",{style:{background:NVY,borderRadius:18,padding:"18px 16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
+          h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
+          h("div",{style:{position:"relative"}},
+            h("div",{style:{display:"flex",justifyContent:"center",gap:6,marginBottom:10}},
+              h("select",{value:empPayMonth,onChange:function(e){setEmpPayMonth(Number(e.target.value));},style:{fontSize:11,background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:7,padding:"4px 8px",color:"#fff",outline:"none"}},
+                MOS.map(function(m,i){return h("option",{key:i,value:i,style:{color:"#000"}},m);})),
+              h("select",{value:empPayYear,onChange:function(e){setEmpPayYear(Number(e.target.value));},style:{fontSize:11,background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",borderRadius:7,padding:"4px 8px",color:"#fff",outline:"none"}},
+                [curY-1,curY].map(function(y){return h("option",{key:y,value:y,style:{color:"#000"}},y);}))
+            ),
+            payData?[
+              h("div",{key:"lbl",style:{fontSize:10,color:"rgba(255,255,255,.5)",marginBottom:4}},"Net pay"),
+              h("div",{key:"amt",style:{fontSize:26,fontWeight:800,color:"#fff"}},fmt(payMp.netFinal)),
+              h("div",{key:"sub",style:{fontSize:10,color:"rgba(255,255,255,.4)",marginTop:6}},fmt(payData.gr)+" gross \u2212 "+fmt(totalDed)+" deductions")
+            ]:h("div",{style:{fontSize:12,color:"rgba(255,255,255,.5)",padding:"10px 0"}},"No salary data for this month")
+          )
         ),
+        emp&&payData?h("div",null,
+          // ── Simple breakdown ──
+          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,border:"1px solid "+BDR}},
+            h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:10}},"BREAKDOWN"),
+            (emp.salaryType==="fixed"?[["Fixed Salary",fmt(payData.basic),NVY,1]]:
+              [["Basic",fmt(payData.basic),NVY,1],["HRA",fmt(payData.hra),NVY,1],["Allowances",fmt(payData.allow),NVY,1]])
+            .concat(payData.inc>0?[["Incentive",fmt(payData.inc),GRN,1]]:[])
+            .concat(payMp.bonusTotal>0?[["Bonus",fmt(payMp.bonusTotal),GRN,1]]:[])
+            .concat(payMp.otTotal>0?[["Overtime",fmt(payMp.otTotal),TEL,1]]:[])
+            .concat(payData.pfE>0?[["PF Deduction",fmt(payData.pfE),RED,-1]]:[])
+            .concat(payData.esiE>0?[["ESI Deduction",fmt(payData.esiE),RED,-1]]:[])
+            .concat(payData.pt>0?[["Professional Tax",fmt(payData.pt),AMB,-1]]:[])
+            .concat(payData.tds>0?[["TDS",fmt(payData.tds),RED,-1]]:[])
+            .concat(payMp.loanDed>0?[["Loan/Advance EMI",fmt(payMp.loanDed),RED,-1]]:[])
+            .map(function(item){
+              return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid "+BDR}},
+                h("span",{style:{fontSize:12,color:GRY}},item[0]),
+                h("span",{style:{fontSize:12,fontWeight:600,color:item[2]}},(item[3]<0?"\u2212":"")+item[1])
+              );
+            }),
+            h("div",{style:{fontSize:10,color:GRY,padding:"6px 0 0"}},"Working days: "+(payData.wDays||26))
+          ),
+          // ── Download / Lock+Request ──
+          isPaid?h("button",{onClick:downloadMyPayslip,style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"12px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("download",CARD,16),"Download Payslip"):
+          h("div",{style:{background:SFT,border:"1px solid "+BDR,borderRadius:12,padding:"12px",marginBottom:12,textAlign:"center"}},
+            h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8}},ic("lock",GRY,15),h("span",{style:{fontSize:11.5,color:GRY,fontWeight:600}},"Payslip download not available on your employer's current plan")),
+            h("button",{onClick:requestPayslip,style:{background:ACCENT+"12",border:"1px solid "+ACCENT+"30",borderRadius:9,padding:"9px 18px",color:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},"Request from Employer")
+          )
+        ):h("div",{style:{background:SFT,borderRadius:14,padding:"20px",textAlign:"center",color:GRY,fontSize:12,marginBottom:12}},"Salary details not available yet.\nContact your employer."),
+        // ── Personal details ──
         emp?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,border:"1px solid "+BDR}},
           h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:10}},"PERSONAL DETAILS"),
           [
             emp.eid?["Employee ID",emp.eid]:null,
             emp.mob?["Mobile",emp.mob]:null,
             emp.email?["Email",emp.email]:null,
+            emp.joined?["Joined",emp.joined]:null,
             emp.pan?["PAN",emp.pan.slice(0,3)+"XXXXX"+emp.pan.slice(-2)]:null,
             emp.uan?["UAN",emp.uan.slice(0,3)+"XXXXX"+emp.uan.slice(-2)]:null,
             emp.aadhar?["Aadhaar","XXXX XXXX "+emp.aadhar.slice(-4)]:null,
@@ -8381,80 +8458,6 @@ null
             ic("mail",GRY,13),"Employer: "+empEmployerEmail
           )
         ),
-        emp&&payData?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,border:"1px solid "+BDR}},
-          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
-            h("div",{style:{fontSize:13,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("payments",ACCENT,15),"Salary"),
-            h("div",{style:{display:"flex",gap:5}},
-              h("select",{value:empPayMonth,onChange:function(e){setEmpPayMonth(Number(e.target.value));},style:{fontSize:10,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 6px",color:NVY,outline:"none"}},
-                MOS.map(function(m,i){return h("option",{key:i,value:i},m);})),
-              h("select",{value:empPayYear,onChange:function(e){setEmpPayYear(Number(e.target.value));},style:{fontSize:10,background:SFT,border:"1px solid "+BDR,borderRadius:6,padding:"3px 6px",color:NVY,outline:"none"}},
-                [curY-1,curY].map(function(y){return h("option",{key:y,value:y},y);}))
-            )
-          ),
-          // ── Formula row ──
-          h("div",{style:{display:"flex",alignItems:"stretch",gap:4,marginBottom:14}},
-            h("div",{style:{flex:1,background:ACCENT_SOFT,borderRadius:10,padding:"10px 8px",textAlign:"center"}},
-              h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"GROSS"),
-              h("div",{style:{fontSize:15,fontWeight:800,color:NVY}},fmt(payData.gr))
-            ),
-            (payData.pfE+payData.esiE+payData.pt+payData.tds)>0?h("div",{style:{display:"flex",alignItems:"center",padding:"0 3px",color:GRY,fontSize:16}},["\u2212"]):null,
-            (payData.pfE+payData.esiE+payData.pt+payData.tds)>0?h("div",{style:{flex:1,background:RED+"10",borderRadius:10,padding:"10px 8px",textAlign:"center"}},
-              h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"DEDUCTIONS"),
-              h("div",{style:{fontSize:15,fontWeight:800,color:RED}},fmt(payData.pfE+payData.esiE+payData.pt+payData.tds))
-            ):null,
-            h("div",{style:{display:"flex",alignItems:"center",padding:"0 3px",color:GRY,fontSize:16}},"="),
-            h("div",{style:{flex:1,background:GRN+"12",borderRadius:10,padding:"10px 8px",textAlign:"center"}},
-              h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"NET PAY"),
-              h("div",{style:{fontSize:15,fontWeight:800,color:GRN}},fmt(payMp.netFinal))
-            )
-          ),
-          // ── Earnings breakdown ──
-          h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"EARNINGS"),
-          (emp.salaryType==="fixed"?[["Fixed Salary",fmt(payData.basic),NVY]]:
-            [["Basic",fmt(payData.basic),NVY],["HRA",fmt(payData.hra),NVY],["Allowances",fmt(payData.allow),NVY]])
-          .concat(payData.inc>0?[["Incentive",fmt(payData.inc),"#059669"]]:[])
-          .concat(payData.shiftAllow>0?[["Shift Allowance",fmt(payData.shiftAllow),"#0284C7"]]:[])
-          .concat((payData.ad+payData.hd+payData.ud)>0?[["Absent/Half Day","-"+fmt(payData.ad+payData.hd+payData.ud),AMB]]:[])
-          .map(function(item){
-            return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
-              h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:item[2]}},item[1])
-            );
-          }),
-          h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:10}},
-            h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},"Gross"),
-            h("span",{style:{fontSize:12,fontWeight:800,color:GRN}},fmt(payData.gr))
-          ),
-          // ── Deductions breakdown ──
-          (payData.pfE+payData.esiE+payData.pt+payData.tds)>0?h("div",null,
-            h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:5}},"DEDUCTIONS"),
-            [
-              payData.pfE>0?["PF — Employee (12%)","-"+fmt(payData.pfE),RED]:null,
-              payData.esiE>0?["ESI — Employee (0.75%)","-"+fmt(payData.esiE),RED]:null,
-              payData.pt>0?["Professional Tax","-"+fmt(payData.pt),AMB]:null,
-              payData.tds>0?["TDS","-"+fmt(payData.tds),RED]:null,
-            ].filter(Boolean).map(function(item){
-              return h("div",{key:item[0],style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},
-                h("span",{style:{fontSize:12,color:GRY}},item[0]),h("span",{style:{fontSize:12,fontWeight:600,color:item[2]}},item[1])
-              );
-            })
-          ):h("div",{style:{fontSize:11,color:GRY,padding:"4px 0",marginBottom:8}},"No deductions"),
-          // ── Bonus / Reimbursement / OT / Loan ──
-          payMp.bonusTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Bonus"),h("span",{style:{fontSize:12,fontWeight:600,color:AMB}},"+"+fmt(payMp.bonusTotal))):null,
-          payMp.claimTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Reimbursement"),h("span",{style:{fontSize:12,fontWeight:600,color:GRN}},"+"+fmt(payMp.claimTotal))):null,
-          payMp.otTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Overtime"),h("span",{style:{fontSize:12,fontWeight:600,color:TEL}},"+"+fmt(payMp.otTotal))):null,
-          payMp.loanDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Loan/Advance EMI"),h("span",{style:{fontSize:12,fontWeight:600,color:RED}},"-"+fmt(payMp.loanDed))):null,
-          // ── Working days ──
-          h("div",{style:{fontSize:10,color:GRY,padding:"4px 0",marginBottom:10,borderTop:"1px dashed "+BDR,marginTop:4,paddingTop:6}},
-            "Working days: "+(payData.wDays||26)+" \u2022 Per day: "+fmt(payData.pd||Math.round(payData.gr/(payData.wDays||26)))
-          ),
-          // ── Net take home ──
-          h("div",{style:{background:"#0F172A",borderRadius:14,padding:"14px 16px",marginTop:4,display:"flex",justifyContent:"space-between",alignItems:"center"}},
-            h("div",{style:{fontSize:13,color:"rgba(255,255,255,0.65)"}},"Net Take Home"),
-            h("div",{style:{fontSize:22,fontWeight:800,color:"#4ADE80"}},fmt(payMp.netFinal))
-          ),
-          isPaid?h("button",{onClick:function(){showT("Generating payslip...");},style:{width:"100%",background:NVY,border:"none",borderRadius:12,padding:"11px",color:CARD,fontSize:13,fontWeight:700,cursor:"pointer",marginTop:12,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("download",CARD,16),"Download Payslip"):
-          h("div",{style:{background:AMB+"12",borderRadius:10,padding:"10px",marginTop:10,fontSize:11,color:AMB,textAlign:"center"}},"Payslip download available for Pro employers")
-        ):h("div",{style:{background:SFT,borderRadius:14,padding:"20px",textAlign:"center",color:GRY,fontSize:12,marginBottom:12}},"Salary details not available yet.\nContact your employer."),
         h("button",{onClick:function(){
           _sb.auth.signOut();
           ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
@@ -8476,7 +8479,7 @@ null
         h("div",null,
           h("div",{style:{fontSize:11,color:GRY,fontWeight:500}},org.name||"Admin HR"),
           h("div",{style:{fontSize:17,fontWeight:800,color:NVY}},
-            empDashTab==="home"?"Dashboard":empDashTab==="attendance"?"Attendance":empDashTab==="tasks"?"Tasks":empDashTab==="leave"?"Leave":"Profile"
+            empDashTab==="home"?"Dashboard":empDashTab==="attendance"?"Attendance":empDashTab==="tasks"?"Work":"Pay"
           )
         ),
         h("button",{onClick:function(){setShowNotifs(true);},style:{position:"relative",background:"none",border:"none",cursor:"pointer",padding:4}},
@@ -8492,14 +8495,13 @@ null
         empDashTab==="home"?empHome():
         empDashTab==="attendance"?empAttendance():
         empDashTab==="tasks"?empTasks():
-        empDashTab==="leave"?empLeave():
         empProfile()
       ),
       h("div",{style:{display:"flex",background:CARD,borderTop:"0.5px solid "+BDR,padding:"6px 0 2px",flexShrink:0}},
-        isTerminated?null:empNav("home","Home","grid"),
-        empNav("attendance","Attend","cal"),
-        isTerminated?null:empNav("leave","Leave","event_available"),
-        empNav("profile","Profile","user")
+        isTerminated?null:empNav("home","Dashboard","dashboard"),
+        isTerminated?null:empNav("tasks","Work","task_alt"),
+        empNav("attendance","Attendance","calendar_month"),
+        empNav("profile","Pay","payments")
       ),
       renderNotifPanel(),
       renderInviteModal()
