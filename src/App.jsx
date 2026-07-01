@@ -179,7 +179,11 @@ var SVG_ICONS={
 "gavel":"<path d=\"m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8\"/><path d=\"m16 16 6-6\"/><path d=\"m8 8 6-6\"/><path d=\"m9 7 8 8\"/><path d=\"m21 11-8-8\"/>",
 "chevron_left":"<path d=\"m15 18-6-6 6-6\"/>",
 "block":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>",
-"lock_reset":"<circle cx=\"12\" cy=\"16\" r=\"1\"/><rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 9.9-1\"/>"
+"lock_reset":"<circle cx=\"12\" cy=\"16\" r=\"1\"/><rect width=\"18\" height=\"11\" x=\"3\" y=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0 1 9.9-1\"/>",
+"location_on":"<path d=\"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/>",
+"location_off":"<path d=\"M12 21s-7-6.5-9-11a9 9 0 0 1 1.72-5.28\"/><path d=\"M14.9 4.24A9 9 0 0 1 21 10c0 4-3 8-6.4 10.5\"/><path d=\"M9 9a3 3 0 0 0 4.24 4.24\"/><line x1=\"2\" x2=\"22\" y1=\"2\" y2=\"22\"/>",
+"my_location":"<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M12 2v4\"/><path d=\"M12 18v4\"/><path d=\"M2 12h4\"/><path d=\"M18 12h4\"/><circle cx=\"12\" cy=\"12\" r=\"8\"/>",
+"fingerprint":"<path d=\"M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4\"/><path d=\"M14 13.12c0 2.38 0 6.38-1 8.88\"/><path d=\"M17.29 21.02c.12-.6.43-2.3.5-3.02\"/><path d=\"M2 12a10 10 0 0 1 18-6\"/><path d=\"M2 16h.01\"/><path d=\"M21.8 16c.2-2 .131-5.354 0-6\"/><path d=\"M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2\"/><path d=\"M8.65 22c.21-.66.45-1.32.57-2\"/><path d=\"M9 6.8a6 6 0 0 1 9 5.2v2\"/>"
 };
 var ICONS={
   team:"group",check:"check_circle",rupee:"currency_rupee",trend:"trending_up",
@@ -2692,6 +2696,14 @@ function downloadBlob(blob,filename){
   setTimeout(function(){URL.revokeObjectURL(url);},30000);
 }
 function downloadPDF(blob,filename){ downloadBlob(blob,filename); }
+// Distance in meters between two lat/lng points — used to verify an office-mode employee is
+// actually within range of their workplace when they check in.
+function geoDistanceM(lat1,lng1,lat2,lng2){
+  var R=6371000;
+  var dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
 function fmtIN(n){var v=Math.round(Number(n||0));if(v<1000)return "Rs."+v;var s=String(v);var last3=s.slice(-3);var rest=s.slice(0,-3);var grouped=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return "Rs."+(grouped?grouped+","+last3:last3);}
 // Plain comma-grouped number, no currency prefix — used inside PDF table cells (the unit is stated once in the title/header instead).
 function fmtNum(n){var v=Math.round(Number(n||0));if(v<1000)return String(v);var s=String(v);var last3=s.slice(-3);var rest=s.slice(0,-3);var grouped=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return grouped?grouped+","+last3:last3;}
@@ -3215,6 +3227,9 @@ export default function App(){
   var sOPh=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.phone||"";}),orgPhone=sOPh[0],setOrgPhone=sOPh[1];
   var sOWb=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.website||"";}),orgWebsite=sOWb[0],setOrgWebsite=sOWb[1];
   var sOCE=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return "";var o=lsGet("hr_org_"+gu.email,{});return o.contactEmail||"";}),orgContactEmail=sOCE[0],setOrgContactEmail=sOCE[1];
+  // Office GPS location — used to verify office-mode employees are physically on-site when they check in.
+  var sOGeo=st(function(){var gu=lsGet("hr_guser",null);if(!gu||!gu.email)return {lat:null,lng:null,radius:200};var o=lsGet("hr_org_"+gu.email,{});return {lat:o.officeLat||null,lng:o.officeLng||null,radius:o.geoRadius||200};}),orgGeo=sOGeo[0],setOrgGeo=sOGeo[1];
+  var sGeoCapturing=st(false),geoCapturing=sGeoCapturing[0],setGeoCapturing=sGeoCapturing[1];
   var sSettReview=st(false),settReviewMode=sSettReview[0],setSettReviewMode=sSettReview[1]; // shows a review/confirm step before Company Details actually saves
   var sSQ=st(""),searchQ=sSQ[0],setSearchQ=sSQ[1];
   var sPW=st(""),pwd=sPW[0],setPwd=sPW[1];
@@ -3434,7 +3449,7 @@ export default function App(){
           setSuName(empFullName); // used in employee dashboard greeting
           // Load employer's org info (company name, logo)
           Promise.all([
-            _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email,office_lat,office_lng,geo_radius_m").eq("email",employerEmail).maybeSingle(),
             _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",employerEmail).maybeSingle(),
             _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
           ]).then(function(empResults){
@@ -3449,7 +3464,10 @@ export default function App(){
               website:(empOrg&&empOrg.website)||"",
               email:employerEmail,
               plan:(empPlan&&empPlan.plan)||"free",
-              emp_limit:(empPlan&&empPlan.emp_limit)||null
+              emp_limit:(empPlan&&empPlan.emp_limit)||null,
+              officeLat:(empOrg&&empOrg.office_lat)||null,
+              officeLng:(empOrg&&empOrg.office_lng)||null,
+              geoRadius:(empOrg&&empOrg.geo_radius_m)||200
             });
             // Load employer's employee data
             if(empData){try{
@@ -3477,9 +3495,13 @@ export default function App(){
             logo:(orgRes.data&&orgRes.data.logo_base64)||"",
             phone:(orgRes.data&&orgRes.data.phone)||"",
             website:(orgRes.data&&orgRes.data.website)||"",
-            contactEmail:(orgRes.data&&orgRes.data.contact_email)||""
+            contactEmail:(orgRes.data&&orgRes.data.contact_email)||"",
+            officeLat:(orgRes.data&&orgRes.data.office_lat)||null,
+            officeLng:(orgRes.data&&orgRes.data.office_lng)||null,
+            geoRadius:(orgRes.data&&orgRes.data.geo_radius_m)||200
           };
           lsSet("hr_org_"+em,o);setOrg(o);
+          setOrgGeo({lat:o.officeLat,lng:o.officeLng,radius:o.geoRadius});
           // Load Authorised Signatory + Higher Official WhatsApp from Supabase (synced across devices)
           setAuthSign(orgRes.data.auth_sign||"");lsSet("hr_auth_sign",orgRes.data.auth_sign||"");
           setAuthPos(orgRes.data.auth_pos||"");lsSet("hr_auth_pos",orgRes.data.auth_pos||"");
@@ -4886,7 +4908,7 @@ export default function App(){
   // Same deterministic padding as the Edge Function — a 4-digit PIN becomes a 6-character password
   // under the hood, since Supabase Auth requires at least 6 characters. The employee never sees or
   // types more than 4 digits; this just maps it to what's actually stored.
-  function padPin(pin){return pin.length===4?pin+pin.slice(0,2):pin;}
+  function padPin(pin){return pin.length===4?pin+pin:pin;}
   function handleEmployeeLogin(){
     if(!authEmail.trim()||!authEmail.includes("@"))return setAuthErr("Enter your work email");
     if(empLoginPin.length!==4)return setAuthErr("Enter your 4-digit PIN");
@@ -6495,7 +6517,15 @@ null
         lbl("ROLE / DESIGNATION"),
         chipSelect(editE.role||"",function(v){setField("role",v);},getRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role...",question:"Choose the role"}),
         lbl("DEPARTMENT"),
-        chipSelect(eDept||"",function(v){setEDept(v);},getDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department...",question:"Choose the department"})
+        chipSelect(eDept||"",function(v){setEDept(v);},getDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department...",question:"Choose the department"}),
+        lbl("WORK MODE — FOR APP CHECK-IN"),
+        h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+          [["office","Office","location_on"],["remote","Remote / WFH","home"]].map(function(m){
+            var on=(editE.workMode||"office")===m[0];
+            return h("button",{key:m[0],type:"button",onClick:function(){setField("workMode",m[0]);},style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:on?ACCENT:SFT,border:"1.5px solid "+(on?ACCENT:BDR),borderRadius:10,padding:"10px",color:on?ACCENT_FG:NVY,fontSize:12,fontWeight:600,cursor:"pointer"}},ic(m[2],on?ACCENT_FG:NVY,14),m[1]);
+          })
+        ),
+        h("div",{style:{fontSize:10,color:GRY,marginBottom:2,lineHeight:1.4}},(editE.workMode||"office")==="office"?"Must be near the office location (set in Business Settings) to check in.":"Can check in from anywhere — no location check.")
       )),
       card(h("div",null,
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:9}},"Salary"),
@@ -7332,6 +7362,37 @@ null
         h("div",{style:{height:14}}),
 
         !settReviewMode?h("div",null,
+          // ── Editable: Office Location (GPS attendance) ──
+          sectionTitle("OFFICE LOCATION — FOR GPS ATTENDANCE"),
+          h("div",{style:{fontSize:11,color:GRY,lineHeight:1.5,marginBottom:10}},"Set your workplace location once so office-mode employees can only check in when they're actually on-site. Remote/WFH employees skip this check."),
+          orgGeo.lat?h("div",{style:{background:GRN+"10",border:"1px solid "+GRN+"33",borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",alignItems:"center",gap:8}},
+            ic("location_on",GRN,16),
+            h("div",{style:{flex:1}},
+              h("div",{style:{fontSize:11.5,fontWeight:700,color:GRN}},"Location Set"),
+              h("div",{style:{fontSize:10,color:GRY,marginTop:1}},orgGeo.lat.toFixed(5)+", "+orgGeo.lng.toFixed(5)+" — "+orgGeo.radius+"m radius")
+            )
+          ):h("div",{style:{background:AMB+"10",border:"1px solid "+AMB+"33",borderRadius:10,padding:"10px 12px",marginBottom:10,display:"flex",alignItems:"center",gap:8}},
+            ic("location_off",AMB,16),
+            h("div",{style:{fontSize:11.5,color:AMB,fontWeight:600}},"Not set yet — office check-in won't verify location until you set this")
+          ),
+          h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+            h("button",{onClick:function(){
+              if(!navigator.geolocation)return showT("Location not supported on this device","err");
+              setGeoCapturing(true);
+              navigator.geolocation.getCurrentPosition(function(pos){
+                setOrgGeo(function(p){return Object.assign({},p,{lat:pos.coords.latitude,lng:pos.coords.longitude});});
+                setGeoCapturing(false);
+                showT("Location captured! Remember to save.");
+              },function(err){setGeoCapturing(false);showT("Could not get location: "+err.message,"err");},{enableHighAccuracy:true,timeout:10000});
+            },style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:ACCENT+"12",border:"1.5px solid "+ACCENT+"30",borderRadius:10,padding:"11px",color:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},
+              geoCapturing?"Getting location...":[ic("my_location",ACCENT,15),"Use My Current Location"]
+            )
+          ),
+          orgGeo.lat?h("div",{style:{marginBottom:14}},
+            lbl("CHECK-IN RADIUS (METERS)"),
+            h("input",{type:"number",value:orgGeo.radius,onChange:function(e){setOrgGeo(function(p){return Object.assign({},p,{radius:Number(e.target.value)||200});});},style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+          ):null,
+
           // ── Editable: Address ──
           sectionTitle("COMPANY ADDRESS — SHOWN ON PDFs"),
           h("textarea",{
@@ -7401,7 +7462,7 @@ null
           h("div",{style:{display:"flex",gap:8}},
             h("button",{onClick:function(){setSettReviewMode(false);},style:{flex:1,background:SFT,border:"1.5px solid "+BDR,borderRadius:10,padding:"12px",color:NVY,fontSize:13,fontWeight:700,cursor:"pointer"}},"Back to Edit"),
             h("button",{onClick:function(){
-              var updated=Object.assign({},org,{address:orgAddr,logo:orgLogo,phone:orgPhone,website:orgWebsite,contactEmail:orgContactEmail});
+              var updated=Object.assign({},org,{address:orgAddr,logo:orgLogo,phone:orgPhone,website:orgWebsite,contactEmail:orgContactEmail,officeLat:orgGeo.lat,officeLng:orgGeo.lng,geoRadius:orgGeo.radius});
               setOrg(updated);
               lsSet("hr_org_"+(gUser?gUser.email:""),updated);
               _sb.from("user_orgs").upsert({
@@ -7413,7 +7474,10 @@ null
                 logo_base64:orgLogo,
                 phone:orgPhone,
                 website:orgWebsite,
-                contact_email:orgContactEmail
+                contact_email:orgContactEmail,
+                office_lat:orgGeo.lat,
+                office_lng:orgGeo.lng,
+                geo_radius_m:orgGeo.radius
               },{onConflict:"email"}).then(function(res){
                 if(res&&res.error){showT("Could not save — please try again","err");return;}
                 setSettReviewMode(false);
@@ -7705,7 +7769,7 @@ null
       ]).then(function(){
         // Now load employer's data so employee dashboard has everything
         return Promise.all([
-          _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email").eq("email",inviteData.employerEmail).maybeSingle(),
+          _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email,office_lat,office_lng,geo_radius_m").eq("email",inviteData.employerEmail).maybeSingle(),
           _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",inviteData.employerEmail).maybeSingle(),
           _sb.from("user_plans").select("plan,emp_limit").eq("email",inviteData.employerEmail).maybeSingle()
         ]).then(function(empResults){
@@ -7728,7 +7792,10 @@ null
             website:(empOrg&&empOrg.website)||"",
             email:inviteData.employerEmail,
             plan:(empPlan&&empPlan.plan)||"free",
-            emp_limit:(empPlan&&empPlan.emp_limit)||null
+            emp_limit:(empPlan&&empPlan.emp_limit)||null,
+            officeLat:(empOrg&&empOrg.office_lat)||null,
+            officeLng:(empOrg&&empOrg.office_lng)||null,
+            geoRadius:(empOrg&&empOrg.geo_radius_m)||200
           });
           // Load employer's employee list so employee can find their own record
           if(empData){try{
@@ -7805,55 +7872,133 @@ null
       );
     }
 
+    // ── GPS Check-in ──
+    // Self check-in lives in its own dedicated table (attendance_checkins), NOT the payroll
+    // att_json blob — an employee genuinely cannot be given write access to that (it's protected
+    // for security reasons, and there's no safe way to restrict them to only their own entries
+    // inside a shared JSON object). This is a real, working log of when they checked in/out, with
+    // GPS proof for office-mode employees — HR can see it and reconcile it into official payroll
+    // attendance separately.
+    var sCheckinToday=st(null),checkinToday=sCheckinToday[0],setCheckinToday=sCheckinToday[1];
+    var sCheckinLoading=st(false),checkinLoading=sCheckinLoading[0],setCheckinLoading=sCheckinLoading[1];
+    var sCheckinMonth=st([]),checkinMonth=sCheckinMonth[0],setCheckinMonth=sCheckinMonth[1];
+    se(function(){
+      if(!gUser||!gUser.email)return;
+      _sb.from("attendance_checkins").select("*").eq("employee_email",gUser.email)
+        .gte("checkin_date",curY+"-"+String(curM+1).padStart(2,"0")+"-01")
+        .lte("checkin_date",curY+"-"+String(curM+1).padStart(2,"0")+"-31")
+      .then(function(res){
+        if(res.data){
+          setCheckinMonth(res.data);
+          var t=res.data.find(function(r){return r.checkin_date===todayStr;});
+          setCheckinToday(t||null);
+        }
+      });
+    },[gUser&&gUser.email,curM,curY]);
+
+    function doCheckIn(){
+      if(!myRecord)return showT("Employee record not found","err");
+      var workMode=myRecord.workMode||"office";
+      setCheckinLoading(true);
+      function saveCheckin(lat,lng,distanceM,withinRange){
+        var row={id:Date.now(),employee_email:gUser.email,employer_email:empEmployerEmail||org.email,checkin_date:todayStr,check_in_at:new Date().toISOString(),check_in_lat:lat,check_in_lng:lng,distance_m:distanceM,work_mode:workMode,within_range:withinRange};
+        _sb.from("attendance_checkins").upsert(row,{onConflict:"employee_email,checkin_date"}).then(function(res){
+          setCheckinLoading(false);
+          if(res.error){showT("Check-in failed: "+res.error.message,"err");return;}
+          setCheckinToday(row);
+          setCheckinMonth(function(p){return [row].concat(p.filter(function(r){return r.checkin_date!==todayStr;}));});
+          showT(withinRange===false?"Checked in — outside office range, flagged for HR review":"Checked in!");
+        });
+      }
+      if(workMode==="remote"){saveCheckin(null,null,null,null);return;}
+      if(!navigator.geolocation){saveCheckin(null,null,null,null);return;}
+      navigator.geolocation.getCurrentPosition(function(pos){
+        var lat=pos.coords.latitude,lng=pos.coords.longitude;
+        if(org.officeLat&&org.officeLng){
+          var dist=geoDistanceM(lat,lng,org.officeLat,org.officeLng);
+          var within=dist<=(org.geoRadius||200);
+          if(!within){
+            setCheckinLoading(false);
+            showT("You're "+Math.round(dist)+"m from the office (limit "+(org.geoRadius||200)+"m). Move closer, or contact HR.","err");
+            return;
+          }
+          saveCheckin(lat,lng,Math.round(dist),true);
+        }else{
+          saveCheckin(lat,lng,null,null); // office location not set by employer yet — allow through
+        }
+      },function(err){setCheckinLoading(false);showT("Could not get your location: "+err.message,"err");},{enableHighAccuracy:true,timeout:10000});
+    }
+    function doCheckOut(){
+      if(!checkinToday)return;
+      setCheckinLoading(true);
+      _sb.from("attendance_checkins").update({check_out_at:new Date().toISOString()}).eq("id",checkinToday.id).then(function(res){
+        setCheckinLoading(false);
+        if(res.error){showT("Check-out failed: "+res.error.message,"err");return;}
+        var upd=Object.assign({},checkinToday,{check_out_at:new Date().toISOString()});
+        setCheckinToday(upd);
+        setCheckinMonth(function(p){return p.map(function(r){return r.id===upd.id?upd:r;});});
+        showT("Checked out. Have a good day!");
+      });
+    }
+
     // ── Home tab ──
     function empHome(){
       var now=new Date();
-      var todayKey=todayStr+"_"+(myRecord?myRecord.id:"");
-      var todayAtt=myRecord?(att[todayKey]||"unmarked"):"unmarked";
-      var attColors={"present":"#10B981","absent":RED,"half":AMB,"pl":"#4F46E5","ul":GRY,"holiday":"#7C3AED","unmarked":GRY};
-      var attLabels={"present":"Present","absent":"Absent","half":"Half Day","pl":"Paid Leave","ul":"Unpaid Leave","holiday":"Holiday","unmarked":"Not marked"};
+      var isCheckedIn=!!(checkinToday&&checkinToday.check_in_at);
+      var isCheckedOut=!!(checkinToday&&checkinToday.check_out_at);
+      var workMode=(myRecord&&myRecord.workMode)||"office";
+      var checkInTime=isCheckedIn?new Date(checkinToday.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):null;
+      var checkOutTime=isCheckedOut?new Date(checkinToday.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):null;
       var urgentTask=activeTasks.find(function(t){return t.priority==="high";});
       urgentTask=urgentTask||activeTasks[0];
       return h("div",null,
-        // Greeting card
-        h("div",{style:{background:"linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%)",borderRadius:20,padding:"18px 16px 16px",marginBottom:14,color:"#fff",position:"relative",overflow:"hidden"}},
-          h("div",{style:{position:"absolute",top:-20,right:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.08)"}}),
-          h("div",{style:{position:"absolute",bottom:-30,right:20,width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.05)"}}),
-          h("div",{style:{fontSize:12,opacity:.75,marginBottom:3}},now.getHours()<12?"Good morning":now.getHours()<17?"Good afternoon":"Good evening"),
-          h("div",{style:{fontSize:22,fontWeight:800,marginBottom:12,lineHeight:1.2}},suName||(myRecord&&myRecord.name)||"Employee"),
-          h("div",{style:{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"6px 12px"}},
-            h("div",{style:{width:8,height:8,borderRadius:"50%",background:attColors[todayAtt]||"#fff",flexShrink:0}}),
-            h("div",{style:{fontSize:12,fontWeight:600}},attLabels[todayAtt]||"Unknown"),
-            h("div",{style:{fontSize:11,opacity:.7}},"\u2022 Today")
+        // ── Hero: greeting + check-in, matching the app's established navy hero language ──
+        h("div",{style:{background:NVY,borderRadius:18,padding:"16px 16px 14px",marginBottom:14,position:"relative",overflow:"hidden",boxShadow:"0 4px 18px rgba(0,0,0,.3)"}},
+          h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
+          h("div",{style:{position:"relative"}},
+            h("div",{style:{fontSize:11,color:"rgba(255,255,255,.55)",marginBottom:2}},now.getHours()<12?"Good morning":now.getHours()<17?"Good afternoon":"Good evening"),
+            h("div",{style:{fontSize:19,fontWeight:800,color:"#fff",marginBottom:14}},suName||(myRecord&&myRecord.name)||"Employee"),
+            h("div",{style:{background:"rgba(255,255,255,.08)",borderRadius:14,padding:"12px 14px"}},
+              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:isCheckedIn?10:0}},
+                h("div",null,
+                  h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)"}},workMode==="remote"?"Remote — no location check":"Office check-in"),
+                  h("div",{style:{fontSize:13,fontWeight:700,color:"#fff",marginTop:2}},isCheckedOut?"Checked out "+checkOutTime:isCheckedIn?"Checked in "+checkInTime:"Not checked in yet")
+                ),
+                !isCheckedIn?h("button",{onClick:doCheckIn,disabled:checkinLoading,style:{background:"#fff",border:"none",borderRadius:10,padding:"10px 18px",color:NVY,fontSize:12.5,fontWeight:700,cursor:"pointer",opacity:checkinLoading?.6:1,display:"flex",alignItems:"center",gap:6}},checkinLoading?"Locating...":[ic("fingerprint",NVY,15),"Check In"]):
+                (!isCheckedOut?h("button",{onClick:doCheckOut,disabled:checkinLoading,style:{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",borderRadius:10,padding:"10px 18px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer",opacity:checkinLoading?.6:1}},checkinLoading?"...":"Check Out"):
+                h("div",{style:{width:34,height:34,borderRadius:"50%",background:GRN+"30",display:"flex",alignItems:"center",justifyContent:"center"}},ic("check_circle","#6EE7B7",18)))
+              ),
+              isCheckedIn&&workMode==="office"&&checkinToday.distance_m!=null?h("div",{style:{fontSize:10,color:checkinToday.within_range===false?"#FCA5A5":"rgba(255,255,255,.5)",display:"flex",alignItems:"center",gap:4}},ic("location_on",checkinToday.within_range===false?"#FCA5A5":"rgba(255,255,255,.5)",11),checkinToday.within_range===false?"Outside office range — flagged for HR":"Within office range"):null
+            )
           )
         ),
-        // Stats row
-        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}},
-          h("div",{style:{background:CARD,borderRadius:14,padding:"12px 8px",textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-            h("div",{style:{fontSize:22,fontWeight:800,color:"#10B981"}},present+(halfDays>0?"+":"")),
-            h("div",{style:{fontSize:9,color:GRY,marginTop:2,lineHeight:1.3}},"Days\nPresent")
+        // Quick stat cards
+        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
+          h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"12px",textAlign:"center"}},
+            h("div",{style:{fontSize:20,fontWeight:800,color:GRN}},present+(halfDays>0?"+":"")),
+            h("div",{style:{fontSize:9.5,color:GRY,marginTop:2}},"Days Present")
           ),
-          h("div",{style:{background:CARD,borderRadius:14,padding:"12px 8px",textAlign:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-            h("div",{style:{fontSize:22,fontWeight:800,color:leaveLeft>3?ACCENT:RED}},leaveLeft),
-            h("div",{style:{fontSize:9,color:GRY,marginTop:2,lineHeight:1.3}},"Leaves\nRemaining")
+          h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"12px",textAlign:"center"}},
+            h("div",{style:{fontSize:20,fontWeight:800,color:leaveLeft>3?ACCENT:RED}},leaveLeft),
+            h("div",{style:{fontSize:9.5,color:GRY,marginTop:2}},"Leaves Left")
           )
         ),
         // Performance snapshot
-        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
-          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("insights","#D97706",15),"Performance — "+MOS[mo]),
-            h("div",{style:{fontSize:11,fontWeight:700,color:attPct>=90?"#10B981":attPct>=70?ACCENT:RED}},attPct+"%")
+        h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"14px",marginBottom:12}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+            h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("insights",AMB,15),"Performance — "+MOS[mo]),
+            h("div",{style:{fontSize:12,fontWeight:700,color:attPct>=90?GRN:attPct>=70?ACCENT:RED}},attPct+"%")
           ),
           h("div",{style:{height:6,background:SFT,borderRadius:3,overflow:"hidden",marginBottom:8}},
-            h("div",{style:{height:"100%",background:attPct>=90?"#10B981":attPct>=70?ACCENT:RED,borderRadius:3,width:attPct+"%",transition:"width 0.8s"}})
+            h("div",{style:{height:"100%",background:attPct>=90?GRN:attPct>=70?ACCENT:RED,borderRadius:3,width:attPct+"%",transition:"width 0.8s"}})
           ),
-          h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10,color:GRY}},
-            h("span","Attendance "+attPct+"%"),
-            h("span",completedThisMonth+" tasks done this month")
+          h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10.5,color:GRY}},
+            h("span",null,"Attendance "+attPct+"%"),
+            h("span",null,completedThisMonth+" tasks done this month")
           )
         ),
         // Notifications
-        unread>0?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+        unread>0?h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"14px"}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
             h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},
               ic("notifications",ACCENT,15),"Notifications",
@@ -7876,7 +8021,28 @@ null
     // ── Attendance tab (read-only calendar) ──
     function empAttendance(){
       var sAttY=empPayYear,sAttM=empPayMonth;
+      var isCheckedIn2=!!(checkinToday&&checkinToday.check_in_at);
+      var isCheckedOut2=!!(checkinToday&&checkinToday.check_out_at);
+      var workMode2=(myRecord&&myRecord.workMode)||"office";
       return h("div",null,
+        // ── Self check-in card, matching the Home hero language ──
+        h("div",{style:{background:NVY,borderRadius:16,padding:"16px",marginBottom:14,textAlign:"center",position:"relative",overflow:"hidden"}},
+          h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
+          h("div",{style:{position:"relative"}},
+            h("div",{style:{fontSize:10,color:"rgba(255,255,255,.5)",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"center",gap:5}},ic(workMode2==="office"?"location_on":"home","rgba(255,255,255,.5)",12),workMode2==="office"?"Office check-in":"Remote — no location check"),
+            h("div",{style:{width:64,height:64,borderRadius:"50%",background:isCheckedIn2?"rgba(110,231,183,.15)":"rgba(255,255,255,.1)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px"}},
+              ic(isCheckedOut2?"check_circle":"fingerprint",isCheckedIn2?"#6EE7B7":"#fff",30)
+            ),
+            !isCheckedIn2?h("button",{onClick:doCheckIn,disabled:checkinLoading,style:{background:"#fff",border:"none",borderRadius:10,padding:"11px 28px",color:NVY,fontSize:13,fontWeight:700,cursor:"pointer",opacity:checkinLoading?.6:1}},checkinLoading?"Locating...":"Check In"):
+            (!isCheckedOut2?h("button",{onClick:doCheckOut,disabled:checkinLoading,style:{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",borderRadius:10,padding:"11px 28px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",opacity:checkinLoading?.6:1}},checkinLoading?"...":"Check Out"):
+            h("div",{style:{fontSize:12,color:"rgba(255,255,255,.7)"}},"Day complete")),
+            isCheckedIn2?h("div",{style:{fontSize:10.5,color:"rgba(255,255,255,.5)",marginTop:10}},
+              "In "+new Date(checkinToday.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"})+
+              (isCheckedOut2?" — Out "+new Date(checkinToday.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"")
+            ):null
+          )
+        ),
+
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
           h("div",{style:{fontSize:15,fontWeight:700,color:NVY}},MOS[sAttM]+" "+sAttY),
           h("div",{style:{fontSize:11,color:GRY}},today.toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"}))
@@ -7886,7 +8052,8 @@ null
             return h("button",{key:i,onClick:function(){setEmpPayMonth(i);},style:{flexShrink:0,background:sAttM===i?ACCENT:CARD,border:"1px solid "+(sAttM===i?ACCENT:BDR),borderRadius:15,padding:"4px 10px",color:sAttM===i?ACCENT_FG:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},m);
           })
         ),
-        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)",marginBottom:12}},
+        h("div",{style:{fontSize:10.5,color:GRY,marginBottom:8,display:"flex",alignItems:"center",gap:5}},ic("verified",GRY,12),"Official record — confirmed by HR"),
+        h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:16,padding:"14px",marginBottom:12}},
           h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:8}},
             ["Su","Mo","Tu","We","Th","Fr","Sa"].map(function(d){return h("div",{key:d,style:{fontSize:9,color:GRY,textAlign:"center",fontWeight:700,paddingBottom:3}},d);}),
             (function(){
@@ -7916,7 +8083,7 @@ null
           )
         ),
         // Summary
-        myRecord?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+        myRecord?h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:16,padding:"14px"}},
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10}},"Monthly Summary"),
           h("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}},
             (function(){
@@ -7930,7 +8097,7 @@ null
                 else if(s2==="half")h2++;
                 else if(s2==="pl"||s2==="ul"||s2==="sl"||s2==="cl")l2++;
               }
-              return [["Present",p2,"#10B981"],["Absent",a2,RED],["Half",h2,AMB],["Leave",l2,ACCENT]];
+              return [["Present",p2,GRN],["Absent",a2,RED],["Half",h2,AMB],["Leave",l2,ACCENT]];
             })().map(function(item){
               return h("div",{key:item[0],style:{background:item[2]+"10",borderRadius:10,padding:"10px",textAlign:"center"}},
                 h("div",{style:{fontSize:20,fontWeight:800,color:item[2]}},item[1]),
@@ -7953,7 +8120,7 @@ null
           h("button",{onClick:function(){setEmpSelTask(null);},style:{display:"flex",alignItems:"center",gap:6,background:"none",border:"none",cursor:"pointer",color:ACCENT,fontSize:13,fontWeight:600,padding:"0 0 14px"}},
             ic("arrow_back",ACCENT,16),"Back"
           ),
-          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 12px rgba(0,0,0,0.08)",marginBottom:8}},
+          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",border:"1px solid "+BDR,marginBottom:8}},
             h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:6}},
               h("div",{style:{fontSize:15,fontWeight:700,color:NVY,flex:1,marginRight:8,lineHeight:1.4}},t.title),
               h("div",{style:{fontSize:9,fontWeight:700,padding:"3px 9px",borderRadius:20,flexShrink:0,background:t.priority==="high"?"#FEE2E2":t.priority==="medium"?"#FEF3C7":"#D1FAE5",color:t.priority==="high"?"#991B1B":t.priority==="medium"?"#92400E":"#065F46"}},t.priority.toUpperCase())
@@ -7967,12 +8134,12 @@ null
                 var isDone=i<=curIdx;var isCur=i===curIdx;
                 return [
                   h("div",{key:s,style:{display:"flex",flexDirection:"column",alignItems:"center",gap:2}},
-                    h("div",{style:{width:22,height:22,borderRadius:"50%",background:isDone?(isCur?ACCENT:"#10B981"):"#E2E8F0",display:"flex",alignItems:"center",justifyContent:"center"}},
+                    h("div",{style:{width:22,height:22,borderRadius:"50%",background:isDone?(isCur?ACCENT:GRN):"#E2E8F0",display:"flex",alignItems:"center",justifyContent:"center"}},
                       isDone&&!isCur?ic("check","#fff",11):h("div",{style:{width:7,height:7,borderRadius:"50%",background:isCur?"#fff":"#94A3B8"}})
                     ),
                     h("div",{style:{fontSize:7,color:isCur?ACCENT:GRY,fontWeight:isCur?700:400,textAlign:"center",maxWidth:38,marginTop:2}},s.replace("_"," "))
                   ),
-                  i<3?h("div",{key:s+"l",style:{flex:1,height:2,background:i<curIdx?"#10B981":"#E2E8F0",borderRadius:1,margin:"0 2px",marginBottom:14}}):null
+                  i<3?h("div",{key:s+"l",style:{flex:1,height:2,background:i<curIdx?GRN:"#E2E8F0",borderRadius:1,margin:"0 2px",marginBottom:14}}):null
                 ];
               })
             ),
@@ -7985,8 +8152,8 @@ null
             h("div",null,h("div",{style:{fontSize:11,fontWeight:700,color:RED}},"Revision needed"),h("div",{style:{fontSize:11,color:RED,marginTop:2}},t.rejectionReason))
           ):null,
           t.status==="assigned"?h("button",{onClick:function(){updateTaskStatus(t.id,"in_progress");setEmpSelTask(Object.assign({},t,{status:"in_progress"}));showT("Started!");},style:{width:"100%",background:ACCENT,border:"none",borderRadius:12,padding:"12px",color:ACCENT_FG,fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("play_arrow",ACCENT_FG,18),"Start Task"):null,
-          (t.status==="in_progress"||t.status==="rejected")&&t.assignType==="individual"?h("button",{onClick:function(){askForm("Mark Task Complete",[{key:"note",label:"Completion note (optional)",type:"textarea",placeholder:"Optional"}],function(vals){var note=vals.note||"";updateTaskStatus(t.id,"completed",note);setEmpSelTask(Object.assign({},t,{status:"completed",completionNote:note}));showT("Marked complete!");},{submitLabel:"Mark Complete"});},style:{width:"100%",background:"#10B981",border:"none",borderRadius:12,padding:"12px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("task_alt","#fff",18),"Mark Complete"):null,
-          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+          (t.status==="in_progress"||t.status==="rejected")&&t.assignType==="individual"?h("button",{onClick:function(){askForm("Mark Task Complete",[{key:"note",label:"Completion note (optional)",type:"textarea",placeholder:"Optional"}],function(vals){var note=vals.note||"";updateTaskStatus(t.id,"completed",note);setEmpSelTask(Object.assign({},t,{status:"completed",completionNote:note}));showT("Marked complete!");},{submitLabel:"Mark Complete"});},style:{width:"100%",background:GRN,border:"none",borderRadius:12,padding:"12px",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginBottom:10,display:"flex",alignItems:"center",justifyContent:"center",gap:8}},ic("task_alt","#fff",18),"Mark Complete"):null,
+          h("div",{style:{background:CARD,borderRadius:16,padding:"14px",border:"1px solid "+BDR}},
             h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:10,display:"flex",alignItems:"center",gap:6}},ic("forum",NVY,15),"Status Updates ("+((t.statusHistory||[]).length)+")"),
             h("div",{style:{maxHeight:200,overflowY:"auto",marginBottom:10}},
               (!t.statusHistory||t.statusHistory.length===0)?h("div",{style:{textAlign:"center",padding:"16px 0",color:GRY,fontSize:12}},"No status updates yet."):
@@ -8036,7 +8203,7 @@ null
               h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"ACTIVE"),
               active.map(function(t){
                 var isOverdue=t.deadline&&new Date(t.deadline)<new Date();
-                return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",borderLeft:"3px solid "+(t.status==="rejected"?RED:t.priority==="high"?RED:t.priority==="medium"?AMB:"#10B981")}},
+                return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,border:"1px solid "+BDR,cursor:"pointer",borderLeft:"3px solid "+(t.status==="rejected"?RED:t.priority==="high"?RED:t.priority==="medium"?AMB:GRN)}},
                   h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
                     h("div",{style:{fontSize:12,fontWeight:700,color:NVY,flex:1,marginRight:8}},t.title),
                     t.status==="rejected"?h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:"#FEE2E2",color:"#991B1B"}},"Revision"):
@@ -8055,7 +8222,7 @@ null
             done.length>0?h("div",null,
               h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"COMPLETED"),
               done.map(function(t){
-                return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",cursor:"pointer",opacity:.7,borderLeft:"3px solid "+(t.status==="verified"?"#10B981":ACCENT)}},
+                return h("div",{key:t.id,onClick:function(){setEmpSelTask(t);},style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,border:"1px solid "+BDR,cursor:"pointer",opacity:.7,borderLeft:"3px solid "+(t.status==="verified"?GRN:ACCENT)}},
                   h("div",{style:{display:"flex",justifyContent:"space-between"}},
                     h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},t.title),
                     h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:t.status==="verified"?"#D1FAE5":"#EFF6FF",color:t.status==="verified"?"#065F46":"#1E40AF"}},t.status==="verified"?"Verified":"Submitted")
@@ -8078,7 +8245,7 @@ null
         leaveByType[lt]={total:total,used:used,left:Math.max(0,total-used)};
       });
       return h("div",{className:"fd"},
-        h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+        h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,border:"1px solid "+BDR}},
           h("div",{style:{fontSize:12,fontWeight:700,color:NVY,marginBottom:12,display:"flex",alignItems:"center",gap:6}},ic("event_available",ACCENT,15),"Leave Balance"),
           h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
             [["CL","Casual Leave"],["SL","Sick Leave"],["PL","Paid Leave"],["EL","Emergency"]].map(function(item){
@@ -8096,7 +8263,7 @@ null
             })
           )
         ),
-        empShowLeave?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+        empShowLeave?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:14,border:"1px solid "+BDR}},
           h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14,display:"flex",alignItems:"center",gap:8}},ic("edit_calendar",ACCENT,16),"Apply for Leave"),
           lbl("LEAVE TYPE"),
           chipSelect(empLeaveType,function(v){setEmpLeaveType(v);},Object.keys(LEAVE_TYPES).map(function(lt){return {v:lt,l:LEAVE_TYPES[lt].name};}),{question:"Choose the leave type"}),
@@ -8126,7 +8293,7 @@ null
         myLeaves.length>0?h("div",null,
           h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:8}},"LEAVE HISTORY"),
           myLeaves.map(function(r){
-            return h("div",{key:r.id,style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,boxShadow:"0 2px 8px rgba(0,0,0,0.06)",borderLeft:"3px solid "+(r.status==="approved"?"#10B981":r.status==="rejected"?RED:AMB)}},
+            return h("div",{key:r.id,style:{background:CARD,borderRadius:14,padding:"12px 14px",marginBottom:8,border:"1px solid "+BDR,borderLeft:"3px solid "+(r.status==="approved"?GRN:r.status==="rejected"?RED:AMB)}},
               h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:4}},
                 h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},LEAVE_TYPES[r.leaveType]?LEAVE_TYPES[r.leaveType].name:r.leaveType),
                 h("div",{style:{fontSize:10,fontWeight:700,padding:"2px 9px",borderRadius:20,background:r.status==="approved"?"#D1FAE5":r.status==="rejected"?"#FEE2E2":"#FEF3C7",color:r.status==="approved"?"#065F46":r.status==="rejected"?"#991B1B":"#92400E"}},r.status.charAt(0).toUpperCase()+r.status.slice(1))
@@ -8155,7 +8322,7 @@ null
           h("div",{style:{fontSize:12,color:"rgba(255,255,255,0.6)",marginTop:4}},emp?(emp.role||"")+(emp.dept?" • "+emp.dept:""):"Employee"),
           emp&&emp.joined?h("div",{style:{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:4}},"Joined: "+emp.joined):null
         ),
-        emp?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+        emp?h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,border:"1px solid "+BDR}},
           h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:1,marginBottom:10}},"PERSONAL DETAILS"),
           [
             emp.eid?["Employee ID",emp.eid]:null,
@@ -8171,7 +8338,7 @@ null
             );
           })
         ):null,
-        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+        h("div",{style:{background:CARD,borderRadius:16,padding:"14px",marginBottom:12,border:"1px solid "+BDR}},
           h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:org.phone||org.website?10:0}},
             org.logo?h("img",{src:org.logo,style:{width:40,height:40,borderRadius:10,objectFit:"contain",flexShrink:0}}):
             h("div",{style:{width:40,height:40,borderRadius:10,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("business",ACCENT,22)),
@@ -8185,7 +8352,7 @@ null
             ic("mail",GRY,13),"Employer: "+empEmployerEmail
           )
         ),
-        emp&&payData?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}},
+        emp&&payData?h("div",{style:{background:CARD,borderRadius:16,padding:"16px",marginBottom:12,border:"1px solid "+BDR}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}},
             h("div",{style:{fontSize:13,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("payments",ACCENT,15),"Salary"),
             h("div",{style:{display:"flex",gap:5}},
@@ -8207,9 +8374,9 @@ null
               h("div",{style:{fontSize:15,fontWeight:800,color:RED}},fmt(payData.pfE+payData.esiE+payData.pt+payData.tds))
             ):null,
             h("div",{style:{display:"flex",alignItems:"center",padding:"0 3px",color:GRY,fontSize:16}},"="),
-            h("div",{style:{flex:1,background:"#10B981"+"12",borderRadius:10,padding:"10px 8px",textAlign:"center"}},
+            h("div",{style:{flex:1,background:GRN+"12",borderRadius:10,padding:"10px 8px",textAlign:"center"}},
               h("div",{style:{fontSize:9,color:GRY,letterSpacing:.5,marginBottom:2}},"NET PAY"),
-              h("div",{style:{fontSize:15,fontWeight:800,color:"#10B981"}},fmt(payMp.netFinal))
+              h("div",{style:{fontSize:15,fontWeight:800,color:GRN}},fmt(payMp.netFinal))
             )
           ),
           // ── Earnings breakdown ──
@@ -8226,7 +8393,7 @@ null
           }),
           h("div",{style:{display:"flex",justifyContent:"space-between",padding:"5px 0",marginBottom:10}},
             h("span",{style:{fontSize:12,fontWeight:700,color:NVY}},"Gross"),
-            h("span",{style:{fontSize:12,fontWeight:800,color:"#10B981"}},fmt(payData.gr))
+            h("span",{style:{fontSize:12,fontWeight:800,color:GRN}},fmt(payData.gr))
           ),
           // ── Deductions breakdown ──
           (payData.pfE+payData.esiE+payData.pt+payData.tds)>0?h("div",null,
@@ -8244,7 +8411,7 @@ null
           ):h("div",{style:{fontSize:11,color:GRY,padding:"4px 0",marginBottom:8}},"No deductions"),
           // ── Bonus / Reimbursement / OT / Loan ──
           payMp.bonusTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Bonus"),h("span",{style:{fontSize:12,fontWeight:600,color:AMB}},"+"+fmt(payMp.bonusTotal))):null,
-          payMp.claimTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Reimbursement"),h("span",{style:{fontSize:12,fontWeight:600,color:"#10B981"}},"+"+fmt(payMp.claimTotal))):null,
+          payMp.claimTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Reimbursement"),h("span",{style:{fontSize:12,fontWeight:600,color:GRN}},"+"+fmt(payMp.claimTotal))):null,
           payMp.otTotal>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Overtime"),h("span",{style:{fontSize:12,fontWeight:600,color:TEL}},"+"+fmt(payMp.otTotal))):null,
           payMp.loanDed>0?h("div",{style:{display:"flex",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+BDR}},h("span",{style:{fontSize:12,color:GRY}},"Loan/Advance EMI"),h("span",{style:{fontSize:12,fontWeight:600,color:RED}},"-"+fmt(payMp.loanDed))):null,
           // ── Working days ──
