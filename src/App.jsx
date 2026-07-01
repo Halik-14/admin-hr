@@ -9246,7 +9246,10 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
     authMode==="signin"?signinScreen:
     landingScreen;
   else if(screen==="setup")appContent=setupScreen;
-  // ── Route to employee dashboard if role is employee ──
+  // ── Route to employee dashboard if role is employee — this check was previously missing
+  // entirely, which meant every employee login fell straight through to the owner/HR-admin tabs
+  // below and saw the employer's own business dashboard instead of their own employee view.
+  else if(userRole==="employee"||userRole==="terminated_employee")appContent=renderEmployeeDashboard();
   else if(showAdmin)appContent=renderAdminPanel();
   else if(screen==="loading")appContent=loadingScreen;
   else{
