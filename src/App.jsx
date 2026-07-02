@@ -8205,12 +8205,14 @@ null
         org.address?["Company Address",org.address]:null,
         ["Employer Contact",empEmployerEmail]
       ].filter(Boolean);
-      // Fixed dark navy — a deliberate literal color for these two cards (not the theme's NVY
+      // Fixed dark navy — a deliberate literal color for the wish card (not the theme's NVY
       // token, which flips to white in dark mode since it's used as a text color elsewhere).
       var DKNVY="#0F172A";
       return h("div",null,
         // ── Wish card — greeting + name + role/ID + Sign Out, dark navy, no letter avatar ──
-        h("div",{style:{background:DKNVY,borderRadius:18,padding:"16px",marginBottom:12,boxShadow:T.SHADOW_LG,position:"relative"}},
+        // Bottom corners are squared off so the profile panel below can look physically attached,
+        // tucked in behind it (negative top margin + matching side/bottom radius only).
+        h("div",{style:{background:DKNVY,borderRadius:"18px 18px "+(empDetailsOpen?"0 0":"18px 18px"),padding:"16px",position:"relative",boxShadow:T.SHADOW_LG,zIndex:2}},
           h("button",{onClick:function(){
             _sb.auth.signOut();
             ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
@@ -8223,32 +8225,40 @@ null
             emp2&&emp2.eid?h("div",{style:{fontSize:10,color:"rgba(255,255,255,.45)",fontFamily:"monospace"}},"· ID "+emp2.eid):null
           )
         ),
-        // ── Employee Profile — no dropdown, always expanded, company details removed ──
-        h("div",{style:{background:SFT,borderRadius:18,marginBottom:12,boxShadow:neuLight,overflow:"hidden"}},
-          h("div",{style:{padding:"14px 16px",display:"flex",alignItems:"center",gap:10}},
-            h("div",{style:{width:34,height:34,borderRadius:10,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center"}},ic("person",ACCENT,18)),
-            h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Employee Profile")
+        // ── Employee Profile — tucked in behind/below the wish card as one visually joined unit,
+        // collapsed by default, expands as a dropdown ──
+        h("div",{style:{background:SFT,borderRadius:"0 0 18px 18px",marginBottom:12,boxShadow:T.SHADOW,overflow:"hidden",border:"1px solid "+BDR,borderTop:"none"}},
+          h("button",{onClick:function(){setEmpDetailsOpen(!empDetailsOpen);},style:{width:"100%",background:"transparent",border:"none",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}},
+            h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+              h("div",{style:{width:28,height:28,borderRadius:8,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center"}},ic("person",ACCENT,15)),
+              h("div",{style:{fontSize:12,fontWeight:700,color:NVY,textAlign:"left"}},"Employee Profile")
+            ),
+            ic(empDetailsOpen?"expand_less":"expand_more",GRY,18)
           ),
-          h("div",{style:{padding:"0 16px 14px"}},
+          empDetailsOpen?h("div",{style:{padding:"0 16px 14px"}},
             allRows.length?allRows.map(function(row){
               return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:10,padding:"7px 0",borderBottom:"1px solid "+BDR}},
                 h("span",{style:{fontSize:11,color:GRY,flexShrink:0}},row[0]),
                 h("span",{style:{fontSize:11,color:NVY,fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},row[1])
               );
             }):h("div",{style:{fontSize:11,color:GRY,padding:"6px 0"}},"No details available")
-          )
+          ):null
         ),
-        // ── Two separate check-in / check-out boxes — reduced size, dark navy ──
+        // ── Check-in / Check-out — list-card style matching HR Policy / Recruit tabs ──
         h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
-          h("div",{onClick:function(){if(!isCheckedIn&&!checkinLoading)doCheckIn();},style:{aspectRatio:"1.6",maxHeight:92,background:DKNVY,borderRadius:14,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:isCheckedIn?"default":"pointer",padding:8,textAlign:"center",opacity:isCheckedIn?1:.92}},
-            ic(isCheckedIn?"check_circle":"login",isCheckedIn?"#4ADE80":"rgba(255,255,255,.6)",19),
-            h("div",{style:{fontSize:10,fontWeight:700,color:isCheckedIn?"#4ADE80":"#fff",marginTop:5}},"Check In"),
-            h("div",{style:{fontSize:isCheckedIn?12:9,fontWeight:isCheckedIn?800:500,color:isCheckedIn?"#4ADE80":"rgba(255,255,255,.5)",marginTop:1}},checkinLoading&&!isCheckedIn?"Locating...":isCheckedIn?checkInTime:"Tap to check in")
+          h("div",{onClick:function(){if(!isCheckedIn&&!checkinLoading)doCheckIn();},style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,boxShadow:T.SHADOW,padding:"12px 12px",display:"flex",alignItems:"center",gap:10,cursor:isCheckedIn?"default":"pointer",opacity:isCheckedIn?1:1}},
+            h("div",{style:{width:36,height:36,borderRadius:10,background:(isCheckedIn?"#059669":ACCENT)+"16",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(isCheckedIn?"check_circle":"login",isCheckedIn?"#059669":ACCENT,18)),
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:11.5,fontWeight:700,color:NVY}},"Check In"),
+              h("div",{style:{fontSize:9.5,color:GRY,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},checkinLoading&&!isCheckedIn?"Locating...":isCheckedIn?checkInTime:"Tap to check in")
+            )
           ),
-          h("div",{onClick:function(){if(isCheckedIn&&!isCheckedOut&&!checkinLoading)doCheckOut();},style:{aspectRatio:"1.6",maxHeight:92,background:DKNVY,borderRadius:14,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:(isCheckedIn&&!isCheckedOut)?"pointer":"default",padding:8,textAlign:"center",opacity:isCheckedIn?1:.45}},
-            ic(isCheckedOut?"check_circle":"logout",isCheckedOut?"#4ADE80":"rgba(255,255,255,.6)",19),
-            h("div",{style:{fontSize:10,fontWeight:700,color:isCheckedOut?"#4ADE80":"#fff",marginTop:5}},"Check Out"),
-            h("div",{style:{fontSize:isCheckedOut?12:9,fontWeight:isCheckedOut?800:500,color:isCheckedOut?"#4ADE80":"rgba(255,255,255,.5)",marginTop:1}},checkinLoading&&isCheckedIn&&!isCheckedOut?"...":isCheckedOut?checkOutTime:(isCheckedIn?"Tap to check out":"Check in first"))
+          h("div",{onClick:function(){if(isCheckedIn&&!isCheckedOut&&!checkinLoading)doCheckOut();},style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,boxShadow:T.SHADOW,padding:"12px 12px",display:"flex",alignItems:"center",gap:10,cursor:(isCheckedIn&&!isCheckedOut)?"pointer":"default",opacity:isCheckedIn?1:.55}},
+            h("div",{style:{width:36,height:36,borderRadius:10,background:(isCheckedOut?"#059669":AMB)+"16",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(isCheckedOut?"check_circle":"logout",isCheckedOut?"#059669":AMB,18)),
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:11.5,fontWeight:700,color:NVY}},"Check Out"),
+              h("div",{style:{fontSize:9.5,color:GRY,marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},checkinLoading&&isCheckedIn&&!isCheckedOut?"...":isCheckedOut?checkOutTime:(isCheckedIn?"Tap to check out":"Check in first"))
+            )
           )
         ),
         workMode==="office"&&isCheckedIn&&checkinToday.distance_m!=null?h("div",{style:{fontSize:10,color:checkinToday.within_range===false?RED:GRY,display:"flex",alignItems:"center",gap:4,marginBottom:12,marginTop:-4}},ic("location_on",checkinToday.within_range===false?RED:GRY,11),checkinToday.within_range===false?"Outside office range — flagged for HR":"Within office range"):null,
@@ -9621,6 +9631,9 @@ null
     return h("div",{className:"fd"},
       // ── Work inner tabs ──
       h("div",{style:{display:"flex",background:SFT,borderRadius:12,padding:3,marginBottom:14,gap:3}},
+        h("button",{onClick:function(){setProTab("tasks");},style:{flex:1,background:proTab==="tasks"||!proTab?CARD:"transparent",border:(proTab==="tasks"||!proTab)?"1px solid "+BDR:"1px solid transparent",borderRadius:9,padding:"9px",color:(proTab==="tasks"||!proTab)?NVY:GRY,fontSize:11,fontWeight:(proTab==="tasks"||!proTab)?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,boxShadow:(proTab==="tasks"||!proTab)?T.SHADOW:"none"}},
+          ic("assignment",(proTab==="tasks"||!proTab)?(ACCENT==="#FFFFFF"?NVY:ACCENT):GRY,14),"Tasks"
+        ),
 h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTab==="kpi"?CARD:"transparent",border:proTab==="kpi"?"1px solid "+BDR:"1px solid transparent",borderRadius:9,padding:"9px",color:proTab==="kpi"?NVY:GRY,fontSize:11,fontWeight:proTab==="kpi"?700:500,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,boxShadow:proTab==="kpi"?T.SHADOW:"none"}},
           ic("insights",proTab==="kpi"?(ACCENT==="#FFFFFF"?NVY:ACCENT):GRY,14),"KPI"
         ),
@@ -9628,7 +9641,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           ic("account_balance_wallet",proTab==="expenses"?(ACCENT==="#FFFFFF"?NVY:ACCENT):GRY,14),"Expenses"
         )
       ),
-      proTab==="expenses"?renderCompanyExpenses():renderKpiSection());
+      proTab==="expenses"?renderCompanyExpenses():proTab==="kpi"?renderKpiSection():renderTasks());
   }
 
   function renderKpiSection(){
