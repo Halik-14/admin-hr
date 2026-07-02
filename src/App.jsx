@@ -2977,7 +2977,7 @@ export default function App(){
                 setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
                 setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
                 try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
-                try{setAttKpi(dataRes.data.attendance_kpi_json?JSON.parse(dataRes.data.attendance_kpi_json):null);}catch(e){}
+                try{setAttKpi(dataRes.data.attendance_kpi_json?JSON.parse(dataRes.data.attendance_kpi_json):null);_attKpiHydrated.current=true;}catch(e){}
                 lsSet("hr_last_sync",dataRes.data.updated_at);
               }
             }catch(e){}
@@ -3256,6 +3256,10 @@ export default function App(){
   // single object in attendance_kpi_json on the shared user_data row — same lightweight pattern as
   // tasks_json, since this is one record, not a list needing its own table.
   var sAttKpi=st(null),attKpi=sAttKpi[0],setAttKpi=sAttKpi[1];
+  // Flips true only when a real Supabase load has actually populated attKpi (successfully or with
+  // a confirmed-empty result) — the sync effect below refuses to write until this is true, so it
+  // can never fire on the initial null before the real value has had a chance to load.
+  var _attKpiHydrated=React.useRef(false);
   // Team-wide self check-in log, fetched only while an attendance KPI rule needs hours data —
   // separate from selfCheckinSummary above, which is scoped to one employee's detail page.
   var sTeamCheckins=st([]),teamCheckins=sTeamCheckins[0],setTeamCheckins=sTeamCheckins[1];
@@ -3280,6 +3284,8 @@ export default function App(){
   var sAttKpiMinHours=st(""),attKpiMinHours=sAttKpiMinHours[0],setAttKpiMinHours=sAttKpiMinHours[1];
   var sAttKpiDailyTrack=st(false),attKpiDailyTrack=sAttKpiDailyTrack[0],setAttKpiDailyTrack=sAttKpiDailyTrack[1];
   var sAttKpiExpiry=st(""),attKpiExpiry=sAttKpiExpiry[0],setAttKpiExpiry=sAttKpiExpiry[1];
+  var sAttKpiViewM=st(new Date().getMonth()),attKpiViewM=sAttKpiViewM[0],setAttKpiViewM=sAttKpiViewM[1];
+  var sAttKpiViewY=st(new Date().getFullYear()),attKpiViewY=sAttKpiViewY[0],setAttKpiViewY=sAttKpiViewY[1];
   var sTaskTab=st("all"),taskTab=sTaskTab[0],setTaskTab=sTaskTab[1];
   var sLeaveTab=st("pending"),leaveTab=sLeaveTab[0],setLeaveTab=sLeaveTab[1];
   var sAttTab=st("mark"),attTab=sAttTab[0],setAttTab=sAttTab[1];
@@ -3543,7 +3549,7 @@ export default function App(){
               setAtt(JSON.parse(empData.att_json||"{}"));
               setIncentives(JSON.parse(empData.inc_json||"{}"));
               try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
-              try{setAttKpi(empData.attendance_kpi_json?JSON.parse(empData.attendance_kpi_json):null);}catch(e2){}
+              try{setAttKpi(empData.attendance_kpi_json?JSON.parse(empData.attendance_kpi_json):null);_attKpiHydrated.current=true;}catch(e2){}
             }catch(e){}}
             loadLeaveAndNotifs(em,"employee",employerEmail);
             _dataLoaded.current=false;
@@ -3584,7 +3590,7 @@ export default function App(){
             setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
             setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
                 try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
-                try{setAttKpi(dataRes.data.attendance_kpi_json?JSON.parse(dataRes.data.attendance_kpi_json):null);}catch(e){}
+                try{setAttKpi(dataRes.data.attendance_kpi_json?JSON.parse(dataRes.data.attendance_kpi_json):null);_attKpiHydrated.current=true;}catch(e){}
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
           loadLeaveAndNotifs(em,"owner",null);
@@ -3718,11 +3724,16 @@ export default function App(){
     return function(){if(_taskSyncTimer.current)clearTimeout(_taskSyncTimer.current);};
   },[tasks]);
   // Debounced attendance-KPI-rule sync — same pattern as tasks, its own small persisted blob.
+  // IMPORTANT: uses _attKpiHydrated (set explicitly by the load calls below) rather than a
+  // skip-first-render guess. A render-count guard is fragile here — if gUser resolves from cache
+  // and this effect fires before the real Supabase fetch completes, a "skip once" guard gets
+  // consumed by that spurious render and the next real state change (still just the initial null)
+  // gets synced, silently overwriting the saved rule with null. Gating on an explicit "data has
+  // actually arrived" flag closes that window entirely.
   var _attKpiSyncTimer=React.useRef(null);
-  var _attKpiLoaded=React.useRef(false);
   se(function(){
     if(!gUser||!gUser.email)return;
-    if(!_attKpiLoaded.current){_attKpiLoaded.current=true;return;}
+    if(!_attKpiHydrated.current)return;
     if(_attKpiSyncTimer.current)clearTimeout(_attKpiSyncTimer.current);
     _attKpiSyncTimer.current=setTimeout(function(){
       syncAttKpi(attKpi);
@@ -3730,18 +3741,28 @@ export default function App(){
     return function(){if(_attKpiSyncTimer.current)clearTimeout(_attKpiSyncTimer.current);};
   },[attKpi]);
   // Fetches every linked employee's self check-in log — when the active attendance-KPI rule needs
-  // working-hours data, when the Attendance Sheet's Self Check-in tab is opened, or whenever an
-  // individual employee's attendance sheet (sheetE) is opened, since it has its own Check-in dropdown.
+  // working-hours data, when the Attendance Sheet's Self Check-in tab is opened, when an individual
+  // employee's attendance sheet (sheetE) is opened, or when browsing a past month's Attendance KPI
+  // history in the KPI section (attKpiViewM/Y differing from the current month).
   se(function(){
     if(userRole==="employee"||userRole==="terminated_employee")return; // only the employer's own screen needs this
+    var now3=new Date();
+    var viewingHistory=attKpiViewM!=null&&attKpiViewY!=null&&!(attKpiViewM===now3.getMonth()&&attKpiViewY===now3.getFullYear());
     var needsForRule=attKpi&&attKpi.active&&attKpi.minHours;
-    if(!needsForRule&&!wantTeamCheckins&&!sheetE){setTeamCheckins([]);return;}
+    if(!needsForRule&&!wantTeamCheckins&&!sheetE&&!viewingHistory){setTeamCheckins([]);return;}
     var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
     if(!email)return;
     var q=_sb.from("attendance_checkins").select("employee_email,checkin_date,check_in_at,check_out_at").eq("employer_email",email);
-    if(needsForRule&&!wantTeamCheckins&&!sheetE){var now3=new Date();q=q.gte("checkin_date",now3.getFullYear()+"-"+String(now3.getMonth()+1).padStart(2,"0")+"-01");} // rule-only fetch stays scoped to the current month, matching the KPI's monthly auto-reset
+    if(viewingHistory){
+      var hStart=attKpiViewY+"-"+String(attKpiViewM+1).padStart(2,"0")+"-01";
+      var hEndDate=new Date(attKpiViewY,attKpiViewM+1,0);
+      var hEnd=attKpiViewY+"-"+String(attKpiViewM+1).padStart(2,"0")+"-"+String(hEndDate.getDate()).padStart(2,"0");
+      q=q.gte("checkin_date",hStart).lte("checkin_date",hEnd);
+    }else if(needsForRule&&!wantTeamCheckins&&!sheetE){
+      q=q.gte("checkin_date",now3.getFullYear()+"-"+String(now3.getMonth()+1).padStart(2,"0")+"-01"); // rule-only fetch stays scoped to the current month, matching the KPI's monthly auto-reset
+    }
     q.then(function(res){if(res&&res.data)setTeamCheckins(res.data);}).catch(function(){});
-  },[attKpi&&attKpi.active,attKpi&&attKpi.minHours,attKpi&&attKpi.startDate,gUser&&gUser.email,userRole,wantTeamCheckins,sheetE&&sheetE.id]);
+  },[attKpi&&attKpi.active,attKpi&&attKpi.minHours,attKpi&&attKpi.startDate,gUser&&gUser.email,userRole,wantTeamCheckins,sheetE&&sheetE.id,attKpiViewM,attKpiViewY]);
   // Leave requests and notifications no longer use a debounced whole-array sync — they now write
   // directly to their own dedicated Supabase tables (leave_requests, notifications) the moment each
   // action happens (apply/approve/reject, create notification), same as how KPIs already work.
@@ -4200,9 +4221,11 @@ export default function App(){
     _sb.from("user_data").upsert({email:email,tasks_json:JSON.stringify(tasksData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
   }
   // Persist the attendance KPI rule (attendance_kpi_json column on the shared user_data row).
-  // Employee sessions never write this — only the employer creates/edits/deletes the rule — but
-  // using the same _ownerDataEmail() helper keeps this consistent with the rest of the sync code.
+  // Employee sessions never write this — only the employer creates/edits/deletes the rule. Guarded
+  // explicitly here (not just by hydration timing) so an employee session can never overwrite it
+  // even if this function were ever called from somewhere unexpected.
   function syncAttKpi(ruleData){
+    if(userRole==="employee"||userRole==="terminated_employee")return;
     var email=_ownerDataEmail();
     if(!email)return;
     _sb.from("user_data").upsert({email:email,attendance_kpi_json:ruleData?JSON.stringify(ruleData):null},{onConflict:"email"}).then(function(){}).catch(function(){});
@@ -5416,16 +5439,20 @@ export default function App(){
   // Uses the same real data already driving the rest of the app: `att` (present/absent/half/holiday
   // calendar marks) for attendance %, and `attendance_checkins` (self check-in GPS log) for hours.
   // Returns null if there's no active rule or it's expired, so callers can skip rendering entirely.
-  function computeAttKpiStatus(emp,teamCheckins){
-    if(!attKpi||!attKpi.active)return null;
-    if(attKpi.expiryDate&&attKpi.expiryDate<todayStr)return null;
-    // Auto-resets every calendar month: the window is always 1st-of-this-month through today,
-    // regardless of when the rule was originally created. This is what "monthly" means for this
-    // KPI — last month's attendance never carries over or drags down the current month's status.
-    var now2=new Date();
-    var monthStart=now2.getFullYear()+"-"+String(now2.getMonth()+1).padStart(2,"0")+"-01";
+  function computeAttKpiStatus(emp,teamCheckins,viewM,viewY){
+    if(!attKpi)return null;
+    var isCurrentMonth=(viewM==null||viewY==null)||(viewM===new Date().getMonth()&&viewY===new Date().getFullYear());
+    // For the live current month, respect active/expiry so the badge disappears the moment the
+    // rule is turned off or expires. For a past month being browsed for history, still show it —
+    // whether the rule is active *today* shouldn't hide what happened in an earlier month.
+    if(isCurrentMonth&&(!attKpi.active||(attKpi.expiryDate&&attKpi.expiryDate<todayStr)))return null;
+    var vm=viewM==null?new Date().getMonth():viewM;
+    var vy=viewY==null?new Date().getFullYear():viewY;
+    var monthStart=vy+"-"+String(vm+1).padStart(2,"0")+"-01";
+    var monthEndDate=new Date(vy,vm+1,0); // last real day of that month
+    var monthEnd=vy+"-"+String(vm+1).padStart(2,"0")+"-"+String(monthEndDate.getDate()).padStart(2,"0");
     var start=monthStart;
-    var end=todayStr;
+    var end=isCurrentMonth?todayStr:monthEnd; // don't count days that haven't happened yet for the current month
     // ── Attendance % — present + half(0.5) days out of marked working days (holidays excluded) ──
     var marked=0,earned=0;
     var d=new Date(start+"T00:00:00"),endD=new Date(end+"T00:00:00");
@@ -8280,7 +8307,7 @@ null
             setAtt(JSON.parse(empData.att_json||"{}"));
             setIncentives(JSON.parse(empData.inc_json||"{}"));
             try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
-            try{setAttKpi(empData.attendance_kpi_json?JSON.parse(empData.attendance_kpi_json):null);}catch(e2){}
+            try{setAttKpi(empData.attendance_kpi_json?JSON.parse(empData.attendance_kpi_json):null);_attKpiHydrated.current=true;}catch(e2){}
           }catch(e){}}
           loadLeaveAndNotifs(user.email,"employee",inviteData.employerEmail);
           _dataLoaded.current=false;
@@ -9266,7 +9293,10 @@ null
         return h("div",{key:t.id,onClick:function(){setSelTask(t);},style:{background:CARD,border:"1px solid "+(t.status==="completed"?TEL:t.status==="verified"?"#10B981":t.status==="rejected"?RED:BDR),borderRadius:12,padding:"11px 12px",marginBottom:8,cursor:"pointer"}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:5}},
             h("div",{style:{fontSize:12,fontWeight:600,color:NVY,flex:1,marginRight:8}},t.title),
-            h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:t.priority==="high"?"#FEE2E2":t.priority==="medium"?"#FEF3C7":"#D1FAE5",color:t.priority==="high"?"#991B1B":t.priority==="medium"?"#92400E":"#065F46",flexShrink:0}},t.priority.toUpperCase())
+            h("div",{style:{display:"flex",alignItems:"center",gap:6,flexShrink:0}},
+              h("div",{style:{fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,background:t.priority==="high"?"#FEE2E2":t.priority==="medium"?"#FEF3C7":"#D1FAE5",color:t.priority==="high"?"#991B1B":t.priority==="medium"?"#92400E":"#065F46"}},t.priority.toUpperCase()),
+              h("button",{onClick:function(ev){ev.stopPropagation();if(window.confirm("Delete this task permanently? This cannot be undone."))deleteTask(t.id);},style:{background:"none",border:"none",cursor:"pointer",padding:2,display:"flex"}},ic(ICONS.del,RED,14))
+            )
           ),
           h("div",{style:{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
             h("div",{style:{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:20,background:t.status==="verified"?"#D1FAE5":t.status==="completed"?"#EFF6FF":t.status==="rejected"?"#FEE2E2":"#FEF3C7",color:t.status==="verified"?"#065F46":t.status==="completed"?"#1E40AF":t.status==="rejected"?"#991B1B":"#92400E"}},t.status.replace("_"," ")),
@@ -9937,8 +9967,16 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
               setShowAttKpiForm(true);
             },style:{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",borderRadius:8,padding:"5px 10px",color:"#fff",fontSize:10.5,fontWeight:600,cursor:"pointer",flexShrink:0}},"Edit")
           ),
+          // ── Month/Year selector to browse history — defaults to the current month ──
+          h("div",{style:{display:"flex",gap:6,marginBottom:8}},
+            h("select",{value:attKpiViewM,onChange:function(e){setAttKpiViewM(Number(e.target.value));},style:{fontSize:10.5,fontWeight:600,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:7,padding:"5px 8px",color:"#fff",outline:"none"}},
+              MOS.map(function(m,i){return h("option",{key:i,value:i,style:{color:"#000"}},m);})),
+            h("select",{value:attKpiViewY,onChange:function(e){setAttKpiViewY(Number(e.target.value));},style:{fontSize:10.5,fontWeight:600,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:7,padding:"5px 8px",color:"#fff",outline:"none"}},
+              [curY-1,curY].map(function(y){return h("option",{key:y,value:y,style:{color:"#000"}},y);})),
+            (attKpiViewM!==new Date().getMonth()||attKpiViewY!==new Date().getFullYear())?h("button",{onClick:function(){setAttKpiViewM(new Date().getMonth());setAttKpiViewY(new Date().getFullYear());},style:{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:7,padding:"5px 10px",color:"#fff",fontSize:10,fontWeight:600,cursor:"pointer"}},"Current"):null
+          ),
           (function(){
-            var statuses=activeEmpsK.map(function(e){return computeAttKpiStatus(e,teamCheckins);}).filter(Boolean);
+            var statuses=activeEmpsK.map(function(e){return computeAttKpiStatus(e,teamCheckins,attKpiViewM,attKpiViewY);}).filter(Boolean);
             var met=statuses.filter(function(s){return s.met;}).length;
             return h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}},
               h("div",{style:{background:"rgba(16,185,129,.15)",borderRadius:8,padding:"3px 9px",fontSize:10,fontWeight:700,color:"#34D399"}},met+" Met"),
@@ -9966,24 +10004,27 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         )
       ):null,
       // ── Per-employee Met/Not Met badges for the attendance rule, shown independent of regular KPIs ──
-      (attKpi&&attKpi.active&&!(attKpi.expiryDate&&attKpi.expiryDate<todayStr))?h("div",{style:{marginBottom:16}},
-        h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:8}},"ATTENDANCE KPI \u2014 PER EMPLOYEE"),
-        h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:12,overflow:"hidden"}},
-          activeEmpsK.map(function(e,i){
-            var st2=computeAttKpiStatus(e,teamCheckins);
-            if(!st2)return null;
-            return h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderBottom:i<activeEmpsK.length-1?"1px solid "+BDR:"none"}},
-              av(e,26),
-              h("div",{style:{flex:1,minWidth:0}},
-                h("div",{style:{fontSize:11.5,fontWeight:600,color:NVY}},e.name),
-                h("div",{style:{fontSize:9.5,color:GRY,marginTop:1}},
-                  [st2.pct!==null?st2.pct+"% attendance":null,st2.hasHoursData?(st2.avgHrs).toFixed(1)+"h avg":null].filter(Boolean).join(" · ")||"No data yet"
-                )
-              ),
-              h("div",{style:{fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:20,background:st2.met?"#D1FAE5":"#FEE2E2",color:st2.met?"#065F46":"#991B1B",flexShrink:0}},st2.met?"MET":"NOT MET")
-            );
-          })
-        )
+      attKpi?h("div",{style:{marginBottom:16}},
+        h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:8}},"ATTENDANCE KPI \u2014 "+MOS[attKpiViewM]+" "+attKpiViewY),
+        (function(){
+          var rows=activeEmpsK.map(function(e){return {e:e,st:computeAttKpiStatus(e,teamCheckins,attKpiViewM,attKpiViewY)};}).filter(function(r){return r.st;});
+          if(rows.length===0)return h("div",{style:{fontSize:11,color:GRY,padding:"10px 2px"}},"No attendance data for this month");
+          return h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:12,overflow:"hidden"}},
+            rows.map(function(r,i){
+              var e=r.e,st2=r.st;
+              return h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderBottom:i<rows.length-1?"1px solid "+BDR:"none"}},
+                av(e,26),
+                h("div",{style:{flex:1,minWidth:0}},
+                  h("div",{style:{fontSize:11.5,fontWeight:600,color:NVY}},e.name),
+                  h("div",{style:{fontSize:9.5,color:GRY,marginTop:1}},
+                    [st2.pct!==null?st2.pct+"% attendance":null,st2.hasHoursData?(st2.avgHrs).toFixed(1)+"h avg":null].filter(Boolean).join(" · ")||"No data yet"
+                  )
+                ),
+                h("div",{style:{fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:20,background:st2.met?"#D1FAE5":"#FEE2E2",color:st2.met?"#065F46":"#991B1B",flexShrink:0}},st2.met?"MET":"NOT MET")
+              );
+            })
+          );
+        })()
       ):null,
       allKpiStatuses2.length>0?h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:7,marginBottom:16}},
         h("div",{style:{background:GRN+"10",border:"1px solid "+GRN+"25",borderRadius:12,padding:"11px 6px",textAlign:"center"}},
