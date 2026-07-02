@@ -5266,10 +5266,11 @@ export default function App(){
       var attKey=LEAVE_TYPES[r.leaveType].paid?"pl":"ul";
       setAtt(function(a){
         var o=Object.assign({},a);
+        // Match on the real login email first (appEmail), falling back to the employee's original
+        // work email — never guess by name, which could silently mark the wrong person's attendance.
+        var emp=emps.find(function(e){return (e.appEmail&&e.appEmail===r.employeeEmail)||e.email===r.employeeEmail;});
         while(d<=end){
           var ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-          // find employee id
-          var emp=emps.find(function(e){return e.email===r.employeeEmail||e.name.toLowerCase()===r.employeeEmail.split("@")[0].toLowerCase();});
           if(emp)o[ds+"_"+emp.id]=attKey;
           d.setDate(d.getDate()+1);
         }
@@ -6541,6 +6542,38 @@ null
           );
         }
       ):null,
+
+      /* Leave Requests — scoped to just this employee, with Approve/Reject right here */
+      (function(){
+        var empLeaves=leaveReqs.filter(function(r){return (selE.appEmail&&r.employeeEmail===selE.appEmail)||r.employeeEmail===selE.email;});
+        var pendingCount=empLeaves.filter(function(r){return r.status==="pending";}).length;
+        if(!empLeaves.length)return null;
+        return accSection("leaverequests","event_available",AMB,"Leave Requests",
+          pendingCount>0?pendingCount+" pending":empLeaves.length+" total",
+          function(){
+            return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+              empLeaves.slice(0,10).map(function(r){
+                return h("div",{key:r.id,style:{background:SFT,borderRadius:12,padding:"11px 13px",border:"1px solid "+BDR,borderLeft:"3px solid "+(r.status==="approved"?GRN:r.status==="rejected"?RED:AMB)}},
+                  h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}},
+                    h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},LEAVE_TYPES[r.leaveType]?LEAVE_TYPES[r.leaveType].name:r.leaveType),
+                    h("div",{style:{fontSize:9.5,fontWeight:700,padding:"2px 9px",borderRadius:20,background:r.status==="approved"?"#D1FAE5":r.status==="rejected"?"#FEE2E2":"#FEF3C7",color:r.status==="approved"?"#065F46":r.status==="rejected"?"#991B1B":"#92400E"}},r.status.charAt(0).toUpperCase()+r.status.slice(1))
+                  ),
+                  h("div",{style:{display:"flex",gap:10,marginBottom:r.reason?5:0}},
+                    h("div",{style:{fontSize:11,color:GRY}},r.fromDate+(r.toDate!==r.fromDate?" \u2192 "+r.toDate:"")),
+                    h("div",{style:{fontSize:11,color:GRY}},LEAVE_TYPES[r.leaveType]&&LEAVE_TYPES[r.leaveType].paid?"\u2022 Paid":"\u2022 Unpaid")
+                  ),
+                  r.reason?h("div",{style:{fontSize:11,color:GRY,marginBottom:6,fontStyle:"italic"}},"\u201c"+r.reason+"\u201d"):null,
+                  r.adminReply?h("div",{style:{background:RED+"10",borderRadius:7,padding:"5px 8px",fontSize:11,color:RED,marginBottom:6}},"Reply: "+r.adminReply):null,
+                  r.status==="pending"?h("div",{style:{display:"flex",gap:8,marginTop:6}},
+                    h("button",{onClick:function(){approveLeave(r.id);},style:{flex:1,background:GRN,border:"none",borderRadius:9,padding:"8px",color:"#fff",fontSize:11.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},ic("check_circle","#fff",13),"Approve"),
+                    h("button",{onClick:function(){askForm("Reject Leave Request",[{key:"reply",label:"Rejection reason",type:"textarea",placeholder:"Shown to employee"}],function(vals){rejectLeave(r.id,vals.reply);},{submitLabel:"Reject"});},style:{flex:1,background:RED,border:"none",borderRadius:9,padding:"8px",color:"#fff",fontSize:11.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},ic("cancel","#fff",13),"Reject")
+                  ):null
+                );
+              })
+            );
+          }
+        );
+      })(),
 
       /* 9. Letters & Documents */
       accSection("letters","description",ACCENT,"Letters & Documents",
@@ -8676,10 +8709,32 @@ null
             var iconMap={task_assigned:"assignment",task_completed:"task_alt",task_verified:"verified",task_rejected:"cancel",task_comment:"chat_bubble",leave_requested:"event_busy",leave_approved:"event_available",leave_rejected:"event_busy",kpi_scored:"insights",salary_revised:"payments",payslip_requested:"receipt_long"};
             var colorMap={task_assigned:"#4F46E5",task_completed:"#10B981",task_verified:"#10B981",task_rejected:"#EF4444",task_comment:"#4F46E5",leave_requested:"#F59E0B",leave_approved:"#10B981",leave_rejected:"#EF4444",kpi_scored:"#D97706",salary_revised:"#10B981",payslip_requested:"#D97706"};
             return h("div",{key:n.id,style:{display:"flex",gap:10,padding:"10px 14px",borderBottom:"1px solid "+BDR,background:n.read?"transparent":ACCENT+"08"}},
-              h("div",{onClick:function(){markNotifRead(n.id);setShowNotifs(false);if(n.refType==="task")setTab("pro");if(n.refType==="leave")setTab("pro");},style:{width:34,height:34,borderRadius:"50%",background:(colorMap[n.type]||TEL)+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}},
+              h("div",{onClick:function(){
+                markNotifRead(n.id);setShowNotifs(false);
+                if(n.refType==="task")setTab("pro");
+                if(n.refType==="leave"){
+                  if(userRole==="employee"||userRole==="terminated_employee"){setEmpDashTab("attendance");}
+                  else{
+                    var lr=leaveReqs.find(function(r){return String(r.id)===String(n.refId);});
+                    var emp=lr?emps.find(function(e){return (e.appEmail&&e.appEmail===lr.employeeEmail)||e.email===lr.employeeEmail;}):null;
+                    if(emp){setTab("employees");setSelE(emp);}else{setTab("pro");}
+                  }
+                }
+              },style:{width:34,height:34,borderRadius:"50%",background:(colorMap[n.type]||TEL)+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}},
                 ic(iconMap[n.type]||"notifications",colorMap[n.type]||TEL,16)
               ),
-              h("div",{onClick:function(){markNotifRead(n.id);setShowNotifs(false);if(n.refType==="task")setTab("pro");if(n.refType==="leave")setTab("pro");},style:{flex:1,cursor:"pointer"}},
+              h("div",{onClick:function(){
+                markNotifRead(n.id);setShowNotifs(false);
+                if(n.refType==="task")setTab("pro");
+                if(n.refType==="leave"){
+                  if(userRole==="employee"||userRole==="terminated_employee"){setEmpDashTab("attendance");}
+                  else{
+                    var lr2=leaveReqs.find(function(r){return String(r.id)===String(n.refId);});
+                    var emp2b=lr2?emps.find(function(e){return (e.appEmail&&e.appEmail===lr2.employeeEmail)||e.email===lr2.employeeEmail;}):null;
+                    if(emp2b){setTab("employees");setSelE(emp2b);}else{setTab("pro");}
+                  }
+                }
+              },style:{flex:1,cursor:"pointer"}},
                 h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},n.title),
                 h("div",{style:{fontSize:11,color:GRY,marginTop:2,lineHeight:1.4}},n.message),
                 h("div",{style:{fontSize:10,color:GRY,marginTop:3}},new Date(n.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}))
@@ -8858,80 +8913,112 @@ null
     var expanded=kpiExpandId===k.id;
     var updating=kpiUpdateOpenId===k.id;
     var history=getKpiHistory(k.id);
-    return h("div",{key:k.id,style:{background:CARD,border:"1px solid "+BDR,borderRadius:12,padding:"11px 12px",marginBottom:8}},
+    return h("div",{key:k.id,style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"13px 14px",marginBottom:9,boxShadow:expanded?"0 2px 10px rgba(0,0,0,.06)":"none"}},
       h("div",{onClick:function(){setKpiExpandId(expanded?null:k.id);},style:{cursor:"pointer"}},
-        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},
+        h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}},
           h("div",{style:{flex:1,minWidth:0}},
-            h("div",{style:{fontSize:12.5,fontWeight:700,color:NVY}},k.title||k.name),
-            h("div",{style:{fontSize:10,color:GRY,marginTop:1}},k.assignType==="individual"?"Individual":k.assignType==="department"?"Dept: "+k.assignTarget:"Role: "+k.assignTarget)
+            h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},k.title||k.name),
+            h("div",{style:{fontSize:10,color:GRY,marginTop:2,display:"flex",alignItems:"center",gap:4}},
+              ic(k.assignType==="individual"?"person":k.assignType==="department"?"groups":"badge",GRY,11),
+              k.assignType==="individual"?"Individual":k.assignType==="department"?"Dept: "+k.assignTarget:"Role: "+k.assignTarget
+            )
           ),
           h("div",{style:{display:"flex",alignItems:"center",gap:6,flexShrink:0}},
-            h("div",{style:{fontSize:9,fontWeight:700,padding:"3px 9px",borderRadius:20,background:meta.bg,color:meta.color}},meta.label),
-            ic(expanded?"expand_less":"expand_more",GRY,16)
+            h("div",{style:{fontSize:9,fontWeight:800,padding:"4px 10px",borderRadius:20,background:meta.bg,color:meta.color,letterSpacing:.3}},meta.label.toUpperCase()),
+            ic(expanded?"expand_less":"expand_more",GRY,17)
           )
         ),
-        h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:3}},
-          h("div",{style:{fontSize:10.5,color:GRY}},prog+" / "+target+" "+k.unit),
-          h("div",{style:{fontSize:10.5,fontWeight:700,color:meta.color}},pct+"%")
+        h("div",{style:{display:"flex",alignItems:"baseline",justifyContent:"space-between",marginBottom:6}},
+          h("div",{style:{fontSize:11,color:GRY}},h("span",{style:{fontSize:16,fontWeight:800,color:NVY}},prog)," / "+target+" "+k.unit),
+          h("div",{style:{fontSize:15,fontWeight:800,color:meta.color}},pct+"%")
         ),
-        h("div",{style:{height:6,background:SFT,borderRadius:3,overflow:"hidden"}},
-          h("div",{style:{height:"100%",background:meta.color,borderRadius:3,width:pct+"%",transition:"width .3s"}})
+        h("div",{style:{height:8,background:SFT,borderRadius:4,overflow:"hidden"}},
+          h("div",{style:{height:"100%",background:"linear-gradient(90deg,"+meta.color+"cc,"+meta.color+")",borderRadius:4,width:pct+"%",transition:"width .4s ease"}})
         )
       ),
-      expanded?h("div",{style:{borderTop:"1px solid "+BDR,marginTop:10,paddingTop:10}},
-        h("div",{style:{display:"flex",gap:14,marginBottom:8,flexWrap:"wrap"}},
-          h("div",null,h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:.3}},"START DATE"),h("div",{style:{fontSize:11,color:NVY,fontWeight:600,marginTop:2}},k.startDate||"-")),
-          h("div",null,h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:.3}},"DUE DATE"),h("div",{style:{fontSize:11,color:NVY,fontWeight:600,marginTop:2}},k.dueDate||"-")),
-          h("div",null,h("div",{style:{fontSize:9,color:GRY,fontWeight:700,letterSpacing:.3}},"UNIT"),h("div",{style:{fontSize:11,color:NVY,fontWeight:600,marginTop:2}},k.unit))
+      expanded?h("div",{style:{borderTop:"1px solid "+BDR,marginTop:12,paddingTop:12}},
+        h("div",{style:{display:"flex",gap:8,marginBottom:10}},
+          h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"8px 10px"}},h("div",{style:{fontSize:8.5,color:GRY,fontWeight:700,letterSpacing:.3}},"START"),h("div",{style:{fontSize:11.5,color:NVY,fontWeight:700,marginTop:2}},k.startDate||"-")),
+          h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"8px 10px"}},h("div",{style:{fontSize:8.5,color:GRY,fontWeight:700,letterSpacing:.3}},"DUE"),h("div",{style:{fontSize:11.5,color:NVY,fontWeight:700,marginTop:2}},k.dueDate||"-")),
+          h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"8px 10px"}},h("div",{style:{fontSize:8.5,color:GRY,fontWeight:700,letterSpacing:.3}},"UNIT"),h("div",{style:{fontSize:11.5,color:NVY,fontWeight:700,marginTop:2}},k.unit))
         ),
-        k.followUpRemarks?h("div",{style:{background:SFT,borderRadius:8,padding:"8px 10px",marginBottom:8,fontSize:11,color:GRY}},h("b",{style:{color:NVY}},"Latest remark: "),k.followUpRemarks):null,
+        k.followUpRemarks?h("div",{style:{background:ACCENT+"0D",border:"1px solid "+ACCENT+"22",borderRadius:10,padding:"9px 11px",marginBottom:10,fontSize:11.5,color:NVY,lineHeight:1.4}},h("b",{style:{color:ACCENT}},"Latest remark: "),k.followUpRemarks):null,
         // ── Update progress ──
-        updating?h("div",{style:{background:TEL+"0D",border:"1px solid "+TEL+"35",borderRadius:9,padding:10,marginBottom:10}},
-          h("div",{style:{fontSize:10,fontWeight:700,color:TEL,marginBottom:6,letterSpacing:.3}},"LOG PROGRESS UPDATE"),
-          h("input",{type:"number",value:kpiProgressInput,onChange:function(ev){setKpiProgressInput(ev.target.value);},placeholder:"Current progress ("+k.unit+")",autoFocus:true,style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"8px 9px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}),
-          h("input",{type:"text",value:kpiRemarkInput,onChange:function(ev){setKpiRemarkInput(ev.target.value);},placeholder:"Follow-up remark (optional)",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:7,padding:"8px 9px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:6,boxSizing:"border-box"}}),
-          h("div",{style:{display:"flex",gap:6}},
+        updating?h("div",{style:{background:TEL+"0D",border:"1px solid "+TEL+"35",borderRadius:12,padding:12,marginBottom:10}},
+          h("div",{style:{fontSize:10,fontWeight:700,color:TEL,marginBottom:8,letterSpacing:.3}},"LOG PROGRESS UPDATE"),
+          h("input",{type:"number",value:kpiProgressInput,onChange:function(ev){setKpiProgressInput(ev.target.value);},placeholder:"Current progress ("+k.unit+")",autoFocus:true,style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:7,boxSizing:"border-box"}}),
+          h("input",{type:"text",value:kpiRemarkInput,onChange:function(ev){setKpiRemarkInput(ev.target.value);},placeholder:"Follow-up remark (optional)",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:8,boxSizing:"border-box"}}),
+          h("div",{style:{display:"flex",gap:7}},
             h("button",{onClick:function(){
               if(kpiProgressInput===""||isNaN(Number(kpiProgressInput)))return showT("Enter a progress value","err");
               addKpiUpdate(k,kpiProgressInput,kpiRemarkInput);
               setKpiUpdateOpenId(null);setKpiProgressInput("");setKpiRemarkInput("");
-            },style:{flex:2,background:NVY,border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Update"),
-            h("button",{onClick:function(){setKpiUpdateOpenId(null);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:7,padding:"8px",fontSize:11,color:GRY,cursor:"pointer"}},"Cancel")
+            },style:{flex:2,background:NVY,border:"none",borderRadius:9,padding:"9px",fontSize:12,fontWeight:700,color:CARD,cursor:"pointer"}},"Save Update"),
+            h("button",{onClick:function(){setKpiUpdateOpenId(null);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px",fontSize:12,color:GRY,cursor:"pointer"}},"Cancel")
           )
-        ):h("button",{onClick:function(){setKpiUpdateOpenId(k.id);setKpiProgressInput(String(prog));setKpiRemarkInput("");},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:TEL+"12",border:"1px solid "+TEL+"33",borderRadius:8,padding:"7px",fontSize:11,fontWeight:700,color:TEL,cursor:"pointer",marginBottom:8}},ic("edit",TEL,12),"Update Progress"),
+        ):h("button",{onClick:function(){setKpiUpdateOpenId(k.id);setKpiProgressInput(String(prog));setKpiRemarkInput("");},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:TEL+"12",border:"1.5px solid "+TEL+"30",borderRadius:11,padding:"10px",fontSize:12,fontWeight:700,color:TEL,cursor:"pointer",marginBottom:10}},ic("edit",TEL,14),"Update Progress"),
         // ── Review/update history ──
-        history.length>0?h("div",{style:{marginBottom:8}},
-          h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.3,marginBottom:5}},"UPDATE HISTORY"),
+        history.length>0?h("div",{style:{marginBottom:10}},
+          h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.3,marginBottom:6}},"UPDATE HISTORY"),
           history.map(function(u){
-            return h("div",{key:u.id,style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"5px 0",borderBottom:"1px solid "+BDR+"44"}},
+            return h("div",{key:u.id,style:{display:"flex",gap:8,alignItems:"flex-start",padding:"6px 0",borderBottom:"1px solid "+BDR}},
+              h("div",{style:{width:6,height:6,borderRadius:"50%",background:ACCENT,flexShrink:0,marginTop:5}}),
               h("div",{style:{flex:1}},
-                h("div",{style:{fontSize:10.5,fontWeight:600,color:NVY}},u.progress+" "+k.unit+(u.remark?" - "+u.remark:"")),
-                h("div",{style:{fontSize:9,color:GRY,marginTop:1}},new Date(u.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+" "+new Date(u.createdAt).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}))
+                h("div",{style:{fontSize:11,fontWeight:600,color:NVY}},u.progress+" "+k.unit+(u.remark?" — "+u.remark:"")),
+                h("div",{style:{fontSize:9.5,color:GRY,marginTop:1}},new Date(u.createdAt).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})+" "+new Date(u.createdAt).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}))
               )
             );
           })
-        ):h("div",{style:{fontSize:10.5,color:GRY,marginBottom:8}},"No updates logged yet."),
-        h("button",{onClick:function(){if(window.confirm("Delete this KPI permanently?"))deleteKpi(k.id);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:T.PILL_DANGER_BG,border:"1px solid "+RED,borderRadius:8,padding:"7px",color:RED,fontSize:11,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,12),"Delete KPI")
+        ):h("div",{style:{fontSize:10.5,color:GRY,marginBottom:10}},"No updates logged yet."),
+        h("button",{onClick:function(){if(window.confirm("Delete this KPI permanently?"))deleteKpi(k.id);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:T.PILL_DANGER_BG,border:"1px solid "+RED,borderRadius:10,padding:"8px",color:RED,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Delete KPI")
       ):null
     );
   }
   function renderKPI(){
     if(!isPaid)return null;
     var actEmpsKpi=emps.filter(function(e){return e.status==="active";});
+    // ── Team-wide summary — how many KPIs are on-track/at-risk/behind at a glance ──
+    var allKpiStatuses=actEmpsKpi.reduce(function(acc,e){
+      var eks=getEmpKpis(e.email||e.name,e.dept,e.role);
+      return acc.concat(eks.map(function(k){return computeKpiStatus(k);}));
+    },[]);
+    var achieved=allKpiStatuses.filter(function(s){return s==="achieved";}).length;
+    var inProgress=allKpiStatuses.filter(function(s){return s==="in_progress";}).length;
+    var missed=allKpiStatuses.filter(function(s){return s==="missed";}).length;
+    var notStarted=allKpiStatuses.filter(function(s){return s==="not_started";}).length;
     return h("div",null,
-      h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"KPI & Performance — "+MOS[curM]+" "+curY),
+      h("div",{style:{fontSize:14,fontWeight:800,color:NVY,marginBottom:4}},"KPI & Performance"),
+      h("div",{style:{fontSize:11,color:GRY,marginBottom:14}},MOS[curM]+" "+curY+" · "+allKpiStatuses.length+" active KPIs across "+actEmpsKpi.length+" employees"),
+      allKpiStatuses.length>0?h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:7,marginBottom:16}},
+        h("div",{style:{background:GRN+"10",border:"1px solid "+GRN+"25",borderRadius:12,padding:"11px 6px",textAlign:"center"}},
+          h("div",{style:{fontSize:18,fontWeight:800,color:GRN}},achieved),
+          h("div",{style:{fontSize:8.5,color:GRY,marginTop:2,fontWeight:600}},"Achieved")
+        ),
+        h("div",{style:{background:TEL+"10",border:"1px solid "+TEL+"25",borderRadius:12,padding:"11px 6px",textAlign:"center"}},
+          h("div",{style:{fontSize:18,fontWeight:800,color:TEL}},inProgress),
+          h("div",{style:{fontSize:8.5,color:GRY,marginTop:2,fontWeight:600}},"In Progress")
+        ),
+        h("div",{style:{background:GRY+"10",border:"1px solid "+GRY+"25",borderRadius:12,padding:"11px 6px",textAlign:"center"}},
+          h("div",{style:{fontSize:18,fontWeight:800,color:GRY}},notStarted),
+          h("div",{style:{fontSize:8.5,color:GRY,marginTop:2,fontWeight:600}},"Not Started")
+        ),
+        h("div",{style:{background:RED+"10",border:"1px solid "+RED+"25",borderRadius:12,padding:"11px 6px",textAlign:"center"}},
+          h("div",{style:{fontSize:18,fontWeight:800,color:RED}},missed),
+          h("div",{style:{fontSize:8.5,color:GRY,marginTop:2,fontWeight:600}},"Missed")
+        )
+      ):null,
       actEmpsKpi.map(function(e){
         var empKpis=getEmpKpis(e.email||e.name,e.dept,e.role);
-        return h("div",{key:e.id,style:{marginBottom:10}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:8}},
+        return h("div",{key:e.id,style:{marginBottom:14}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:9,background:SFT,borderRadius:12,padding:"9px 11px"}},
             av(e,32),
-            h("div",{style:{flex:1}},
-              h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
-              h("div",{style:{fontSize:10,color:GRY}},e.role||e.dept||"")
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:12.5,fontWeight:700,color:NVY}},e.name),
+              h("div",{style:{fontSize:10,color:GRY}},(e.role||e.dept||"")+(empKpis.length?" · "+empKpis.length+" KPI"+(empKpis.length>1?"s":""):""))
             ),
-            h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"none",color:TEL,fontSize:11,fontWeight:600,cursor:"pointer",padding:0}},"+ Add KPI")
+            h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:ACCENT+"14",border:"1px solid "+ACCENT+"30",borderRadius:9,padding:"6px 11px",color:ACCENT,fontSize:11,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}},ic("add",ACCENT,13),"KPI")
           ),
-          empKpis.length>0?empKpis.map(function(k){return renderKpiCard(k);}):h("div",{style:{fontSize:10.5,color:GRY,paddingLeft:42,marginBottom:4}},"No KPIs set")
+          empKpis.length>0?empKpis.map(function(k){return renderKpiCard(k);}):h("div",{style:{fontSize:10.5,color:GRY,paddingLeft:6,marginBottom:4}},"No KPIs set")
         );
       }),
       showKpiForm?card(h("div",null,
