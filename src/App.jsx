@@ -3150,7 +3150,7 @@ export default function App(){
   var sRevNewOldCtc=st(""),revNewOldCtc=sRevNewOldCtc[0],setRevNewOldCtc=sRevNewOldCtc[1];
   var sRevNewCtc=st(""),revNewCtc=sRevNewCtc[0],setRevNewCtc=sRevNewCtc[1];
   var sRevNewReason=st(""),revNewReason=sRevNewReason[0],setRevNewReason=sRevNewReason[1];
-  var sEmpSections=st({joined:false,personal:false,salary:false,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false});
+  var sEmpSections=st({joined:false,personal:false,salary:false,leave:false,loans:false,gratuity:false,history:false,warnings:false,bonus:false,letters:false,shift:false,attsheet_ot:false,attsheet_checkin:false,attsheet_leave:false});
   var empSections=sEmpSections[0],setEmpSections=sEmpSections[1];
   var sAnnEmpId=st(""),annEmpId=sAnnEmpId[0],setAnnEmpId=sAnnEmpId[1];
   var curFY2=new Date().getMonth()>=3?new Date().getFullYear():new Date().getFullYear()-1;
@@ -3729,19 +3729,19 @@ export default function App(){
     },1200);
     return function(){if(_attKpiSyncTimer.current)clearTimeout(_attKpiSyncTimer.current);};
   },[attKpi]);
-  // Fetches every linked employee's self check-in log — either when the active attendance-KPI rule
-  // needs working-hours data, or when the Attendance Sheet's Self Check-in tab is opened. Avoids
-  // pulling this team-wide table on every employer session otherwise.
+  // Fetches every linked employee's self check-in log — when the active attendance-KPI rule needs
+  // working-hours data, when the Attendance Sheet's Self Check-in tab is opened, or whenever an
+  // individual employee's attendance sheet (sheetE) is opened, since it has its own Check-in dropdown.
   se(function(){
     if(userRole==="employee"||userRole==="terminated_employee")return; // only the employer's own screen needs this
     var needsForRule=attKpi&&attKpi.active&&attKpi.minHours;
-    if(!needsForRule&&!wantTeamCheckins){setTeamCheckins([]);return;}
+    if(!needsForRule&&!wantTeamCheckins&&!sheetE){setTeamCheckins([]);return;}
     var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
     if(!email)return;
     var q=_sb.from("attendance_checkins").select("employee_email,checkin_date,check_in_at,check_out_at").eq("employer_email",email);
-    if(needsForRule&&!wantTeamCheckins)q=q.gte("checkin_date",attKpi.startDate||todayStr); // rule-only fetch stays scoped to the rule's period
+    if(needsForRule&&!wantTeamCheckins&&!sheetE){var now3=new Date();q=q.gte("checkin_date",now3.getFullYear()+"-"+String(now3.getMonth()+1).padStart(2,"0")+"-01");} // rule-only fetch stays scoped to the current month, matching the KPI's monthly auto-reset
     q.then(function(res){if(res&&res.data)setTeamCheckins(res.data);}).catch(function(){});
-  },[attKpi&&attKpi.active,attKpi&&attKpi.minHours,attKpi&&attKpi.startDate,gUser&&gUser.email,userRole,wantTeamCheckins]);
+  },[attKpi&&attKpi.active,attKpi&&attKpi.minHours,attKpi&&attKpi.startDate,gUser&&gUser.email,userRole,wantTeamCheckins,sheetE&&sheetE.id]);
   // Leave requests and notifications no longer use a debounced whole-array sync — they now write
   // directly to their own dedicated Supabase tables (leave_requests, notifications) the moment each
   // action happens (apply/approve/reject, create notification), same as how KPIs already work.
@@ -5419,8 +5419,13 @@ export default function App(){
   function computeAttKpiStatus(emp,teamCheckins){
     if(!attKpi||!attKpi.active)return null;
     if(attKpi.expiryDate&&attKpi.expiryDate<todayStr)return null;
-    var start=attKpi.startDate||todayStr;
-    var end=(attKpi.expiryDate&&attKpi.expiryDate<todayStr)?attKpi.expiryDate:todayStr;
+    // Auto-resets every calendar month: the window is always 1st-of-this-month through today,
+    // regardless of when the rule was originally created. This is what "monthly" means for this
+    // KPI — last month's attendance never carries over or drags down the current month's status.
+    var now2=new Date();
+    var monthStart=now2.getFullYear()+"-"+String(now2.getMonth()+1).padStart(2,"0")+"-01";
+    var start=monthStart;
+    var end=todayStr;
     // ── Attendance % — present + half(0.5) days out of marked working days (holidays excluded) ──
     var marked=0,earned=0;
     var d=new Date(start+"T00:00:00"),endD=new Date(end+"T00:00:00");
@@ -6666,7 +6671,7 @@ null
                 h("div",{style:{fontSize:14,fontWeight:700,color:"#fff",marginTop:2}},selfCheckinSummary.days)
               )
             ),
-            h("button",{onClick:function(){setTab("attendance");setSheetE(null);setAttRptRange("selfcheckin");setWantTeamCheckins(true);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:TEL+"12",border:"1px solid "+TEL+"30",borderRadius:9,padding:"9px",color:TEL,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic("open_in_new",TEL,13),"View full log in Attendance Sheet")
+            h("button",{onClick:function(){setSheetE(selE);setWantTeamCheckins(true);setEmpSections(function(p){return Object.assign({},p,{attsheet_checkin:true});});},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:TEL+"12",border:"1px solid "+TEL+"30",borderRadius:9,padding:"9px",color:TEL,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic("open_in_new",TEL,13),"View full log in Attendance Sheet")
           );
         }
       ):null,
@@ -6690,7 +6695,7 @@ null
                   h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"Total")
                 )
               ),
-              h("button",{onClick:function(){setTab("attendance");setSheetE(null);setAttRptRange("leaves");},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"12",border:"1px solid "+AMB+"30",borderRadius:9,padding:"9px",color:AMB,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic("open_in_new",AMB,13),"View & manage in Attendance Sheet")
+              h("button",{onClick:function(){setSheetE(selE);setEmpSections(function(p){return Object.assign({},p,{attsheet_leave:true});});},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"12",border:"1px solid "+AMB+"30",borderRadius:9,padding:"9px",color:AMB,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic("open_in_new",AMB,13),"View & manage in Attendance Sheet")
             );
           }
         );
@@ -6967,11 +6972,14 @@ null
         h("button",{onClick:function(){setAttView("calendar");},style:{flex:1,background:attView==="calendar"?CARD:"transparent",border:attView==="calendar"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="calendar"?NVY:GRY,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
           ic("calendar_month",attView==="calendar"?ACCENT:GRY,15),"Attendance"
         ),
+        h("button",{onClick:function(){setAttView("report");},style:{flex:1,background:attView==="report"?CARD:"transparent",border:attView==="report"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="report"?NVY:GRY,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
+          ic("insights",attView==="report"?ACCENT:GRY,15),"Report"
+        ),
         h("button",{onClick:function(){setAttView("holidays");},style:{flex:1,background:attView==="holidays"?CARD:"transparent",border:attView==="holidays"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="holidays"?NVY:GRY,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
           ic("event_available",attView==="holidays"?ACCENT:GRY,15),"Holidays"
         )
       ),
-      attView==="holidays"?renderHolidayCalendar():h("div",null,
+      attView==="report"?renderAttendanceReport():attView==="holidays"?renderHolidayCalendar():h("div",null,
         h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
           chipSelect(attY,function(v){var y=Number(v);setAttY(y);if(y===curY&&attM>curM)setAttM(curM);},pastYears().reverse(),{question:"Choose the year",btnLabel:"Okay",triggerStyle:{width:"auto",flex:"0 0 auto"},wrapStyle:{marginBottom:0}}),
           h("div",{style:{display:"flex",gap:5,flex:1,overflowX:"auto"}},
@@ -7268,77 +7276,153 @@ null
           Object.entries(ATL).filter(function(kv){return kv[0]!=="unmarked";}).map(function(kv){return h("div",{key:kv[0],style:{display:"flex",alignItems:"center",gap:3}},h("div",{style:{width:8,height:8,borderRadius:2,background:ATC[kv[0]]}}),h("span",{style:{fontSize:9,color:GRY}},kv[1]));})
         )
       ),0),
-      // ── Overtime marking card (day-wise) ──
-      (proRata(sheetE,yr,mo).notYetJoined||proRata(sheetE,yr,mo).alreadyLeft)?null:card((function(){
-        var entries=getOTEntries(sheetE.id,mo,yr);
-        var otTotal=getOTAmount(sheetE.id,mo,yr);
-        var otHrs=getOTHoursTotal(sheetE.id,mo,yr);
-        return h("div",null,
-          h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:11}},
-            h("div",{style:{width:30,height:30,borderRadius:8,background:TEL+"15",display:"flex",alignItems:"center",justifyContent:"center"}},ic("clock",TEL,15)),
-            h("div",{style:{flex:1}},
-              h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},"Overtime \u2014 "+MOS[mo]+" "+yr),
-              otTotal>0?h("div",{style:{fontSize:10,color:TEL,fontWeight:600}},entries.length+" day"+(entries.length>1?"s":"")+(otHrs>0?" \u00b7 "+otHrs+" hrs":"")+" \u00b7 "+fmt(otTotal)):h("div",{style:{fontSize:10,color:GRY}},"No overtime recorded")
-            )
-          ),
-          entries.length>0?h("div",{style:{marginBottom:11}},entries.map(function(o){
-            return h("div",{key:o.id,style:{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",background:SFT,borderRadius:9,marginBottom:5}},
-              h("div",{style:{width:30,height:30,borderRadius:7,background:TEL+"18",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}},
-                h("div",{style:{fontSize:12,fontWeight:800,color:TEL,lineHeight:1}},o.day),
-                h("div",{style:{fontSize:6,color:TEL,fontWeight:600}},MOS[mo].slice(0,3).toUpperCase())
-              ),
+      // ── Local dropdown helper for this page — same visual pattern as the employee profile's
+      // accSection, using the shared empSections state under attsheet_* keys so it persists
+      // correctly when navigated to directly (e.g. from the summary buttons above). ──
+      (function(){
+        function sheetAccSection(key,icon,iconColor,title,summary,renderContent){
+          var open=empSections[key];
+          return h("div",{style:{background:CARD,borderRadius:13,border:"1px solid "+BDR,marginBottom:8,overflow:"hidden"}},
+            h("div",{onClick:function(){setEmpSections(function(p){return Object.assign({},p,{[key]:!p[key]});});},style:{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",cursor:"pointer",background:open?SFT:CARD,borderBottom:open?"1px solid "+BDR:"none"}},
+              h("div",{style:{width:32,height:32,borderRadius:9,background:iconColor+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic(icon,iconColor,16)),
               h("div",{style:{flex:1,minWidth:0}},
-                h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:1}},
-                  h("div",{style:{fontSize:8,fontWeight:800,letterSpacing:.3,color:o.mode==="hours"?"#2563EB":AMB,background:(o.mode==="hours"?"#2563EB":AMB)+"18",borderRadius:4,padding:"1px 5px"}},o.mode==="hours"?"HOURLY":"FLAT"),
-                  h("div",{style:{fontSize:11.5,fontWeight:600,color:NVY}},o.mode==="hours"?(o.hours+" hrs \u00d7 "+fmt(o.rate)):"Flat amount")
-                ),
-                h("div",{style:{fontSize:9.5,color:GRY}},o.mode==="hours"?"Overtime pay":"Fixed overtime pay")
+                h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},title),
+                h("div",{style:{fontSize:10,color:GRY,marginTop:1}},summary)
               ),
-              h("div",{style:{fontSize:12.5,fontWeight:800,color:TEL,flexShrink:0}},fmt(otEntryAmount(o))),
-              h("button",{onClick:function(){deleteOTEntry(o.id);},style:{background:"none",border:"none",cursor:"pointer",padding:2,flexShrink:0,display:"flex"}},ic("delete",RED,13))
-            );
-          })):null,
-          (function(){
-            var empRate=Number(sheetE.otRate||0);
-            var empFlat=Number(sheetE.otFlat||0);
-            if(!empRate&&!empFlat){
-              return h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"30",borderRadius:10,padding:"13px 14px",display:"flex",gap:10,alignItems:"center"}},
-                ic("info",AMB,18),
-                h("div",null,
-                  h("div",{style:{fontSize:11.5,fontWeight:700,color:NVY,marginBottom:2}},"OT pay not set up"),
-                  h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5}},"Set "+sheetE.name+"'s overtime rates in their profile \u2192 Shift + OT tab, then add overtime here.")
-                )
+              h("div",{style:{transform:open?"rotate(180deg)":"rotate(0deg)",transition:"transform .25s"}},ic("expand_more",GRY,18))
+            ),
+            open?h("div",{style:{padding:"12px 14px"}},renderContent()):null
+          );
+        }
+        var notActive=proRata(sheetE,yr,mo).notYetJoined||proRata(sheetE,yr,mo).alreadyLeft;
+        // ── Overtime ──
+        var otBlock=notActive?null:(function(){
+          var entries=getOTEntries(sheetE.id,mo,yr);
+          var otTotal=getOTAmount(sheetE.id,mo,yr);
+          var otHrs=getOTHoursTotal(sheetE.id,mo,yr);
+          return sheetAccSection("attsheet_ot","clock",TEL,"Overtime",
+            otTotal>0?entries.length+" day"+(entries.length>1?"s":"")+(otHrs>0?" \u00b7 "+otHrs+" hrs":"")+" \u00b7 "+fmt(otTotal):"No overtime recorded",
+            function(){
+              return h("div",null,
+                entries.length>0?h("div",{style:{marginBottom:11}},entries.map(function(o){
+                  return h("div",{key:o.id,style:{display:"flex",alignItems:"center",gap:9,padding:"8px 10px",background:SFT,borderRadius:9,marginBottom:5}},
+                    h("div",{style:{width:30,height:30,borderRadius:7,background:TEL+"18",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0}},
+                      h("div",{style:{fontSize:12,fontWeight:800,color:TEL,lineHeight:1}},o.day),
+                      h("div",{style:{fontSize:6,color:TEL,fontWeight:600}},MOS[mo].slice(0,3).toUpperCase())
+                    ),
+                    h("div",{style:{flex:1,minWidth:0}},
+                      h("div",{style:{display:"flex",alignItems:"center",gap:5,marginBottom:1}},
+                        h("div",{style:{fontSize:8,fontWeight:800,letterSpacing:.3,color:o.mode==="hours"?"#2563EB":AMB,background:(o.mode==="hours"?"#2563EB":AMB)+"18",borderRadius:4,padding:"1px 5px"}},o.mode==="hours"?"HOURLY":"FLAT"),
+                        h("div",{style:{fontSize:11.5,fontWeight:600,color:NVY}},o.mode==="hours"?(o.hours+" hrs \u00d7 "+fmt(o.rate)):"Flat amount")
+                      ),
+                      h("div",{style:{fontSize:9.5,color:GRY}},o.mode==="hours"?"Overtime pay":"Fixed overtime pay")
+                    ),
+                    h("div",{style:{fontSize:12.5,fontWeight:800,color:TEL,flexShrink:0}},fmt(otEntryAmount(o))),
+                    h("button",{onClick:function(){deleteOTEntry(o.id);},style:{background:"none",border:"none",cursor:"pointer",padding:2,flexShrink:0,display:"flex"}},ic("delete",RED,13))
+                  );
+                })):null,
+                (function(){
+                  var empRate=Number(sheetE.otRate||0);
+                  var empFlat=Number(sheetE.otFlat||0);
+                  if(!empRate&&!empFlat){
+                    return h("div",{style:{background:AMB+"12",border:"1px solid "+AMB+"30",borderRadius:10,padding:"13px 14px",display:"flex",gap:10,alignItems:"center"}},
+                      ic("info",AMB,18),
+                      h("div",null,
+                        h("div",{style:{fontSize:11.5,fontWeight:700,color:NVY,marginBottom:2}},"OT pay not set up"),
+                        h("div",{style:{fontSize:10.5,color:GRY,lineHeight:1.5}},"Set "+sheetE.name+"'s overtime rates in their profile \u2192 Shift + OT tab, then add overtime here.")
+                      )
+                    );
+                  }
+                  var todayStr2=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+                  return h("div",{style:{background:SFT,borderRadius:10,padding:11}},
+                    h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"ADD OVERTIME"),
+                    h("div",{style:{display:"flex",gap:6,marginBottom:7}},
+                      h("button",{onClick:function(){setOtDateMode("today");},style:{flex:1,background:otDateMode==="today"?TEL:CARD,border:"1px solid "+(otDateMode==="today"?TEL:BDR),borderRadius:8,padding:"8px",fontSize:11,fontWeight:700,color:otDateMode==="today"?"#fff":GRY,cursor:"pointer"}},"Today"),
+                      h("button",{onClick:function(){setOtDateMode("pick");},style:{flex:1,background:otDateMode==="pick"?TEL:CARD,border:"1px solid "+(otDateMode==="pick"?TEL:BDR),borderRadius:8,padding:"8px",fontSize:11,fontWeight:700,color:otDateMode==="pick"?"#fff":GRY,cursor:"pointer"}},"Pick Date")
+                    ),
+                    otDateMode==="pick"?datePick(otPickedDate,function(v){setOtPickedDate(v);},{question:"Choose date",wrapStyle:{marginBottom:7}}):h("div",{style:{fontSize:10,color:GRY,marginBottom:7}},"For today, "+todayStr2),
+                    h("div",{style:{display:"flex",gap:6,marginBottom:8,background:CARD,borderRadius:9,padding:3}},
+                      [["hours","Hourly"],["amount","Flat"]].map(function(t){
+                        var on=otMarkMode===t[0];
+                        var dis=t[0]==="hours"?!empRate:!empFlat;
+                        return h("button",{key:t[0],onClick:function(){if(!dis)setOtMarkMode(t[0]);},style:{flex:1,background:on?TEL:"transparent",border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:dis?BDR:(on?"#fff":GRY),cursor:dis?"not-allowed":"pointer"}},t[1]+(t[0]==="hours"&&empRate?" \u00b7 "+fmt(empRate)+"/hr":"")+(t[0]==="amount"&&empFlat?" \u00b7 "+fmt(empFlat):""));
+                      })
+                    ),
+                    otMarkMode==="hours"?h("div",{style:{marginBottom:8}},
+                      h("input",{type:"number",value:otHours,onChange:function(e){setOtHours(e.target.value);},placeholder:"Enter hours, e.g. 3",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
+                    ):null,
+                    otMarkMode==="hours"&&otHours?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:8,textAlign:"center"}},otHours+" hrs \u00d7 "+fmt(empRate)+" = "+fmt(Math.round(Number(otHours)*empRate))):null,
+                    otMarkMode==="amount"?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:8,textAlign:"center"}},"Flat overtime: "+fmt(empFlat)):null,
+                    h("button",{onClick:function(){addOTEntry(sheetE,mo,yr);},style:{width:"100%",background:TEL,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"+ Add Overtime")
+                  );
+                })()
               );
             }
-            var todayStr2=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"});
-            return h("div",{style:{background:SFT,borderRadius:10,padding:11}},
-              h("div",{style:{fontSize:9,fontWeight:700,color:GRY,letterSpacing:.6,marginBottom:8}},"ADD OVERTIME"),
-              /* Date: Today / Pick */
-              h("div",{style:{display:"flex",gap:6,marginBottom:7}},
-                h("button",{onClick:function(){setOtDateMode("today");},style:{flex:1,background:otDateMode==="today"?TEL:CARD,border:"1px solid "+(otDateMode==="today"?TEL:BDR),borderRadius:8,padding:"8px",fontSize:11,fontWeight:700,color:otDateMode==="today"?"#fff":GRY,cursor:"pointer"}},"Today"),
-                h("button",{onClick:function(){setOtDateMode("pick");},style:{flex:1,background:otDateMode==="pick"?TEL:CARD,border:"1px solid "+(otDateMode==="pick"?TEL:BDR),borderRadius:8,padding:"8px",fontSize:11,fontWeight:700,color:otDateMode==="pick"?"#fff":GRY,cursor:"pointer"}},"Pick Date")
+          );
+        })();
+        // ── Check-in ──
+        var myCheckinRows=teamCheckins.filter(function(c){return c.employee_email===sheetE.appEmail;}).sort(function(a,b){return b.checkin_date<a.checkin_date?-1:1;});
+        var thisMonthRows=myCheckinRows.filter(function(c){return c.checkin_date.slice(0,7)===yr+"-"+String(mo+1).padStart(2,"0");});
+        var ciTotalMin=0,ciDays=0;
+        thisMonthRows.forEach(function(c){if(c.check_in_at&&c.check_out_at){var mins=(new Date(c.check_out_at)-new Date(c.check_in_at))/60000;if(mins>0){ciTotalMin+=mins;ciDays++;}}});
+        var ciHrs=Math.floor(ciTotalMin/60),ciMins=Math.round(ciTotalMin%60);
+        var checkinBlock=sheetE.appLinked?sheetAccSection("attsheet_checkin","schedule",TEL,"Self Check-in",
+          ciDays>0?ciHrs+"h "+ciMins+"m \u00b7 "+ciDays+" day"+(ciDays>1?"s":"")+" this month":"No self check-in records this month",
+          function(){
+            return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+              h("div",{style:{background:NVY,borderRadius:12,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+                h("div",null,
+                  h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.5)"}},"Total working hours \u2014 "+MOS[mo]),
+                  h("div",{style:{fontSize:17,fontWeight:800,color:"#fff",marginTop:2}},ciHrs+"h "+ciMins+"m")
+                ),
+                h("div",{style:{textAlign:"right"}},
+                  h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.5)"}},"Days"),
+                  h("div",{style:{fontSize:14,fontWeight:700,color:"#fff",marginTop:2}},ciDays)
+                )
               ),
-              otDateMode==="pick"?datePick(otPickedDate,function(v){setOtPickedDate(v);},{question:"Choose date",wrapStyle:{marginBottom:7}}):h("div",{style:{fontSize:10,color:GRY,marginBottom:7}},"For today, "+todayStr2),
-              /* Hourly / Flat toggle */
-              h("div",{style:{display:"flex",gap:6,marginBottom:8,background:CARD,borderRadius:9,padding:3}},
-                [["hours","Hourly"],["amount","Flat"]].map(function(t){
-                  var on=otMarkMode===t[0];
-                  var dis=t[0]==="hours"?!empRate:!empFlat;
-                  return h("button",{key:t[0],onClick:function(){if(!dis)setOtMarkMode(t[0]);},style:{flex:1,background:on?TEL:"transparent",border:"none",borderRadius:7,padding:"8px",fontSize:11,fontWeight:700,color:dis?BDR:(on?"#fff":GRY),cursor:dis?"not-allowed":"pointer"}},t[1]+(t[0]==="hours"&&empRate?" \u00b7 "+fmt(empRate)+"/hr":"")+(t[0]==="amount"&&empFlat?" \u00b7 "+fmt(empFlat):""));
-                })
-              ),
-              /* Hours input only when hourly */
-              otMarkMode==="hours"?h("div",{style:{marginBottom:8}},
-                h("input",{type:"number",value:otHours,onChange:function(e){setOtHours(e.target.value);},placeholder:"Enter hours, e.g. 3",style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"9px 10px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})
-              ):null,
-              /* Preview */
-              otMarkMode==="hours"&&otHours?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:8,textAlign:"center"}},otHours+" hrs \u00d7 "+fmt(empRate)+" = "+fmt(Math.round(Number(otHours)*empRate))):null,
-              otMarkMode==="amount"?h("div",{style:{fontSize:11,color:TEL,fontWeight:600,marginBottom:8,textAlign:"center"}},"Flat overtime: "+fmt(empFlat)):null,
-              h("button",{onClick:function(){addOTEntry(sheetE,mo,yr);},style:{width:"100%",background:TEL,border:"none",borderRadius:9,padding:"10px",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer"}},"+ Add Overtime")
+              myCheckinRows.length===0?h("div",{style:{fontSize:11,color:GRY,padding:"6px 0"}},"No records yet"):
+              myCheckinRows.slice(0,15).map(function(c,i){
+                var inT=c.check_in_at?new Date(c.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"-";
+                var outT=c.check_out_at?new Date(c.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"-";
+                return h("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid "+BDR}},
+                  h("span",{style:{fontSize:11.5,color:NVY,fontWeight:600}},c.checkin_date),
+                  h("span",{style:{fontSize:11,color:GRY}},inT+" \u2192 "+outT),
+                  c.work_mode==="office"&&c.within_range===false?h("span",{style:{fontSize:9,color:RED,fontWeight:700}},"OUT OF RANGE"):null
+                );
+              })
             );
-          })()
+          }
+        ):null;
+        // ── Leave ──
+        var myLeaves=leaveReqs.filter(function(r){return (sheetE.appEmail&&r.employeeEmail===sheetE.appEmail)||r.employeeEmail===sheetE.email;});
+        var myPendingLeaves=myLeaves.filter(function(r){return r.status==="pending";});
+        var leaveBlock=myLeaves.length===0?null:sheetAccSection("attsheet_leave","event_available",AMB,"Leave Requests",
+          myPendingLeaves.length>0?myPendingLeaves.length+" pending":myLeaves.length+" total",
+          function(){
+            return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+              myLeaves.slice(0,10).map(function(r){
+                return h("div",{key:r.id,style:{background:SFT,borderRadius:12,padding:"11px 13px",border:"1px solid "+BDR,borderLeft:"3px solid "+(r.status==="approved"?GRN:r.status==="rejected"?RED:AMB)}},
+                  h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}},
+                    h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},LEAVE_TYPES[r.leaveType]?LEAVE_TYPES[r.leaveType].name:r.leaveType),
+                    h("div",{style:{fontSize:9.5,fontWeight:700,padding:"2px 9px",borderRadius:20,background:r.status==="approved"?"#D1FAE5":r.status==="rejected"?"#FEE2E2":"#FEF3C7",color:r.status==="approved"?"#065F46":r.status==="rejected"?"#991B1B":"#92400E"}},r.status.charAt(0).toUpperCase()+r.status.slice(1))
+                  ),
+                  h("div",{style:{display:"flex",gap:10,marginBottom:r.reason?5:0}},
+                    h("div",{style:{fontSize:11,color:GRY}},r.fromDate+(r.toDate!==r.fromDate?" \u2192 "+r.toDate:"")),
+                    h("div",{style:{fontSize:11,color:GRY}},LEAVE_TYPES[r.leaveType]&&LEAVE_TYPES[r.leaveType].paid?"\u2022 Paid":"\u2022 Unpaid")
+                  ),
+                  r.reason?h("div",{style:{fontSize:11,color:GRY,marginBottom:6,fontStyle:"italic"}},"\u201c"+r.reason+"\u201d"):null,
+                  r.adminReply?h("div",{style:{background:RED+"10",borderRadius:7,padding:"5px 8px",fontSize:11,color:RED,marginBottom:6}},"Reply: "+r.adminReply):null,
+                  r.status==="pending"?h("div",{style:{display:"flex",gap:8,marginTop:8}},
+                    h("button",{onClick:function(){approveLeave(r.id);},style:{flex:1,background:GRN,border:"none",borderRadius:9,padding:"8px",color:"#fff",fontSize:11.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},ic("check_circle","#fff",13),"Approve"),
+                    h("button",{onClick:function(){askForm("Reject Leave Request",[{key:"reply",label:"Rejection reason",type:"textarea",placeholder:"Shown to employee"}],function(vals){rejectLeave(r.id,vals.reply);},{submitLabel:"Reject"});},style:{flex:1,background:RED,border:"none",borderRadius:9,padding:"8px",color:"#fff",fontSize:11.5,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},ic("cancel","#fff",13),"Reject")
+                  ):null
+                );
+              })
+            );
+          }
         );
-      })(),0)
+        return h("div",null,otBlock,checkinBlock,leaveBlock);
+      })()
     );
   }
 
@@ -9842,7 +9926,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
                 [attKpi.minPct!=null?"Min "+attKpi.minPct+"% attendance":null,attKpi.minHours!=null?"Min "+attKpi.minHours+"h/day":null].filter(Boolean).join(" · ")
               ),
               h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.45)",marginTop:3}},
-                (attKpi.dailyTrack?"Daily tracking":"One-time, over full period")+(attKpi.expiryDate?" · Expires "+new Date(attKpi.expiryDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):" · No expiry")
+                (attKpi.dailyTrack?"Checked daily":"Checked monthly")+" \u00b7 resets every month"+(attKpi.expiryDate?" \u00b7 Expires "+new Date(attKpi.expiryDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):"")
               )
             ),
             h("button",{onClick:function(){
@@ -9871,7 +9955,8 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         ),
         h("div",{style:{fontSize:10,color:GRY,marginBottom:10,lineHeight:1.4}},"Set either one, or both. Minimum hours only applies to employees using self check-in."),
         lbl("TRACKING"),
-        chipSelect(attKpiDailyTrack?"daily":"onetime",function(v){setAttKpiDailyTrack(v==="daily");},[{v:"onetime",l:"One-time (overall %)"},{v:"daily",l:"Daily (every day's hours)"}],{question:"How should this rule be checked"}),
+        chipSelect(attKpiDailyTrack?"daily":"onetime",function(v){setAttKpiDailyTrack(v==="daily");},[{v:"onetime",l:"Monthly average"},{v:"daily",l:"Every day's hours"}],{question:"How should this rule be checked"}),
+        h("div",{style:{fontSize:10,color:GRY,marginTop:-4,marginBottom:10,lineHeight:1.4}},"This resets automatically every calendar month \u2014 last month never carries over."),
         lbl("EXPIRY (OPTIONAL)"),
         datePick(attKpiExpiry,function(v){setAttKpiExpiry(v);},{question:"Rule expires on",wrapStyle:{marginBottom:10}}),
         h("div",{style:{display:"flex",gap:8,marginTop:4}},
@@ -10073,7 +10158,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
     var tabContent;
     if(tab==="dashboard")tabContent=renderDashboard();
     else if(tab==="employees")tabContent=renderEmployees();
-    else if(tab==="attendance")tabContent=renderAttendanceWithReport();
+    else if(tab==="attendance")tabContent=renderAttendance();
     else if(tab==="payroll")tabContent=renderPayroll();
     else if(tab==="pro")tabContent=renderPro();
     else tabContent=renderSettings();
