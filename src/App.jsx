@@ -5425,6 +5425,22 @@ export default function App(){
     showT("KPI created!");
   }
 
+  // Merges the static role/department catalog for this org type with any custom values an employer
+  // has actually typed onto real employee records (via the "allowCustom" role/dept picker when
+  // adding/editing an employee). Without this, a custom role or department only ever existed on
+  // that one employee's record — every other picker in the app (Task assignment, KPI assignment,
+  // filters, new-employee form) only offered the fixed catalog and had no way to see or reuse it.
+  function getAllRoles(orgType){
+    var base=getRoles(orgType);
+    var custom=[...new Set(emps.map(function(e){return e.role;}).filter(function(r){return r&&base.indexOf(r)===-1;}))];
+    return base.concat(custom);
+  }
+  function getAllDepts(orgType){
+    var base=getDepts(orgType);
+    var custom=[...new Set(emps.map(function(e){return e.dept;}).filter(function(d){return d&&base.indexOf(d)===-1;}))];
+    return base.concat(custom);
+  }
+
   function getEmpKpis(empEmail,empDept,empRole){
     return kpis.filter(function(k){
       return k.employerEmail===gUser.email&&(
@@ -6875,9 +6891,9 @@ null
         lbl("UAN NUMBER"),edInp("uan","text","UAN for PF filing"),
         lbl("AADHAR NUMBER"),edInp("aadhar","text","12-digit Aadhar"),
         lbl("ROLE / DESIGNATION"),
-        chipSelect(editE.role||"",function(v){setField("role",v);},getRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role...",question:"Choose the role"}),
+        chipSelect(editE.role||"",function(v){setField("role",v);},getAllRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role...",question:"Choose the role"}),
         lbl("DEPARTMENT"),
-        chipSelect(eDept||"",function(v){setEDept(v);},getDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department...",question:"Choose the department"}),
+        chipSelect(eDept||"",function(v){setEDept(v);},getAllDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department...",question:"Choose the department"}),
         lbl("WORK MODE — FOR APP CHECK-IN"),
         h("div",{style:{display:"flex",gap:8,marginBottom:10}},
           [["office","Office","location_on"],["remote","Remote / WFH","home"]].map(function(m){
@@ -7454,7 +7470,7 @@ null
   }
 
   function renderPayroll(){
-    var depts=[""].concat(getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}));
+    var depts=[""].concat(getAllDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}));
     var filtEmpsRaw=payFilt==="dept"&&payDept?actEmpsForPayroll.filter(function(e){return e.dept===payDept;}):actEmpsForPayroll;
     // One pay computation per employee — every number on this page derives from this single array,
     // so Gross/Absent/Tax/Bonus/Loan/Net are guaranteed to add up exactly (no separately-recalculated figures to drift apart).
@@ -7520,17 +7536,17 @@ null
       ),
       repV==="dept"?h("div",null,
         h("div",{style:{display:"flex",gap:7,marginBottom:11,alignItems:"center"}},
-          chipSelect(payDept,function(v){setPayDept(v);},[{v:"",l:"All Departments"}].concat(getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}).map(function(d){return {v:d,l:d};})),{question:"Choose the department",btnLabel:"Okay",wrapStyle:{flex:1,marginBottom:0}}),
+          chipSelect(payDept,function(v){setPayDept(v);},[{v:"",l:"All Departments"}].concat(getAllDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});}).map(function(d){return {v:d,l:d};})),{question:"Choose the department",btnLabel:"Okay",wrapStyle:{flex:1,marginBottom:0}}),
           h("button",{onClick:function(){
             if(!isPaid){showT("PDF download is a Pro feature","info");window.open("https://wa.me/918072293384?text="+encodeURIComponent("Hi, I want to upgrade to Admin HR Pro for PDF downloads"),"_blank");return;}
-            var deptListPdf=payDept?[payDept]:getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
+            var deptListPdf=payDept?[payDept]:getAllDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
             var deptGroups=deptListPdf.map(function(d){return {dept:d,emps:actEmps.filter(function(e){return e.dept===d;})};}).filter(function(g){return g.emps.length>0;});
             if(deptGroups.length===0)return showT("No employees to include","err");
             makeDeptPayrollPDF(deptGroups,payM,payY,getMonthPay,org.name,org.contactEmail||org.email,org.position,LOGO_SRC,org.address||"",org.logo||"",authPos,authSign,org.phone,org.website);
           },style:{flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:isPaid?ACCENT:SFT,border:"1px solid "+(isPaid?ACCENT:BDR),borderRadius:9,padding:"9px 12px",color:isPaid?ACCENT_FG:GRY,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic(isPaid?"download":"lock",isPaid?ACCENT_FG:GRY,14),"PDF")
         ),
         (function(){
-          var deptList=payDept?[payDept]:getDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
+          var deptList=payDept?[payDept]:getAllDepts(org.type).filter(function(d){return actEmps.some(function(e){return e.dept===d;});});
           return h("div",null,deptList.map(function(dept){
             var dEmps=actEmps.filter(function(e){return e.dept===dept;});
             var dPD=dEmps.map(function(e){return {emp:e,mp:getMonthPay(e,payY,payM)};}); // one computation per employee — same source as Employee tab
@@ -8948,10 +8964,8 @@ null
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
           h("div",{style:{fontSize:11,fontWeight:700,color:GRY,letterSpacing:.5}},"PAY PERIOD"),
           h("div",{style:{display:"flex",gap:6}},
-            h("select",{value:empPayMonth,onChange:function(e){setEmpPayMonth(Number(e.target.value));},style:{fontSize:11,fontWeight:600,background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"5px 8px",color:NVY,outline:"none"}},
-              MOS.map(function(m,i){return h("option",{key:i,value:i},m);})),
-            h("select",{value:empPayYear,onChange:function(e){setEmpPayYear(Number(e.target.value));},style:{fontSize:11,fontWeight:600,background:CARD,border:"1px solid "+BDR,borderRadius:8,padding:"5px 8px",color:NVY,outline:"none"}},
-              [curY-1,curY].map(function(y){return h("option",{key:y,value:y},y);}))
+            chipSelect(empPayMonth,function(v){setEmpPayMonth(Number(v));},MOS.map(function(m,i){return {v:i,l:m};}),{question:"Choose the month",triggerStyle:{width:"auto",padding:"5px 10px",fontSize:11,marginBottom:0},wrapStyle:{marginBottom:0}}),
+            chipSelect(empPayYear,function(v){setEmpPayYear(Number(v));},[curY-1,curY].map(function(y){return {v:y,l:String(y)};}),{question:"Choose the year",triggerStyle:{width:"auto",padding:"5px 10px",fontSize:11,marginBottom:0},wrapStyle:{marginBottom:0}})
           )
         ),
         // ── Calculation box — formula row only, month/year selector removed from here ──
@@ -9314,13 +9328,9 @@ null
         h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:12}},"New Task"),
         lbl("ASSIGN TO"),
         chipSelect(taskAssignType,function(v){setTaskAssignType(v);setTaskAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}),{question:"Assign this task to"}),
-        taskAssignType==="individual"?h("select",{value:taskAssignTarget,onChange:function(e){setTaskAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
-          [h("option",{key:"",value:""},"Select employee")].concat(emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:e.email||e.name},e.name);}))
-        ):taskAssignType==="department"?h("select",{value:taskAssignTarget,onChange:function(e){setTaskAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
-          [h("option",{key:"",value:""},"Select department")].concat([...new Set(emps.map(function(e){return e.dept;}).filter(Boolean))].map(function(d){return h("option",{key:d,value:d},d);}))
-        ):h("select",{value:taskAssignTarget,onChange:function(e){setTaskAssignTarget(e.target.value);},style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}},
-          [h("option",{key:"",value:""},"Select role")].concat([...new Set(emps.map(function(e){return e.role;}).filter(Boolean))].map(function(r){return h("option",{key:r,value:r},r);}))
-        ),
+        taskAssignType==="individual"?chipSelect(taskAssignTarget,function(v){setTaskAssignTarget(v);},emps.filter(function(e){return e.status==="active";}).map(function(e){return {v:e.email||e.name,l:e.name};}),{question:"Assign to which employee",placeholder:"Select employee"})
+        :taskAssignType==="department"?chipSelect(taskAssignTarget,function(v){setTaskAssignTarget(v);},[...new Set(emps.map(function(e){return e.dept;}).filter(Boolean))],{question:"Assign to which department",placeholder:"Select department"})
+        :chipSelect(taskAssignTarget,function(v){setTaskAssignTarget(v);},[...new Set(emps.map(function(e){return e.role;}).filter(Boolean))],{question:"Assign to which role",placeholder:"Select role"}),
         lbl("TASK TITLE"),
         h("input",{type:"text",value:taskTitle,onChange:function(e){setTaskTitle(e.target.value);},placeholder:"Task title",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
         lbl("DESCRIPTION (OPTIONAL)"),
@@ -9969,10 +9979,8 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           ),
           // ── Month/Year selector to browse history — defaults to the current month ──
           h("div",{style:{display:"flex",gap:6,marginBottom:8}},
-            h("select",{value:attKpiViewM,onChange:function(e){setAttKpiViewM(Number(e.target.value));},style:{fontSize:10.5,fontWeight:600,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:7,padding:"5px 8px",color:"#fff",outline:"none"}},
-              MOS.map(function(m,i){return h("option",{key:i,value:i,style:{color:"#000"}},m);})),
-            h("select",{value:attKpiViewY,onChange:function(e){setAttKpiViewY(Number(e.target.value));},style:{fontSize:10.5,fontWeight:600,background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:7,padding:"5px 8px",color:"#fff",outline:"none"}},
-              [curY-1,curY].map(function(y){return h("option",{key:y,value:y,style:{color:"#000"}},y);})),
+            chipSelect(attKpiViewM,function(v){setAttKpiViewM(Number(v));},MOS.map(function(m,i){return {v:i,l:m};}),{question:"Choose the month",triggerStyle:{width:"auto",background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",padding:"5px 10px",fontSize:10.5,color:"#fff",marginBottom:0},wrapStyle:{marginBottom:0}}),
+            chipSelect(attKpiViewY,function(v){setAttKpiViewY(Number(v));},[curY-1,curY].map(function(y){return {v:y,l:String(y)};}),{question:"Choose the year",triggerStyle:{width:"auto",background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",padding:"5px 10px",fontSize:10.5,color:"#fff",marginBottom:0},wrapStyle:{marginBottom:0}}),
             (attKpiViewM!==new Date().getMonth()||attKpiViewY!==new Date().getFullYear())?h("button",{onClick:function(){setAttKpiViewM(new Date().getMonth());setAttKpiViewY(new Date().getFullYear());},style:{background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.15)",borderRadius:7,padding:"5px 10px",color:"#fff",fontSize:10,fontWeight:600,cursor:"pointer"}},"Current"):null
           ),
           (function(){
@@ -10067,7 +10075,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         lbl("ASSIGN TO"),
         chipSelect(kpiAssignType,function(v){setKpiAssignType(v);setKpiAssignTarget("");},["individual","department","role"].map(function(v){return {v:v,l:v.charAt(0).toUpperCase()+v.slice(1)};}),{question:"Assign this KPI to"}),
         kpiAssignType==="individual"?chipSelect(kpiAssignTarget,function(v){setKpiAssignTarget(v);},emps.filter(function(e){return e.status==="active";}).map(function(e){return {v:e.email||e.name,l:e.name};}),{question:"Choose the employee",placeholder:"Select employee"}):null,
-        kpiAssignType==="department"?chipSelect(kpiAssignTarget,function(v){setKpiAssignTarget(v);},getDepts(org.type),{question:"Choose the department",placeholder:"Select department"}):null,
+        kpiAssignType==="department"?chipSelect(kpiAssignTarget,function(v){setKpiAssignTarget(v);},getAllDepts(org.type),{question:"Choose the department",placeholder:"Select department"}):null,
         kpiAssignType==="role"?h("input",{type:"text",value:kpiAssignTarget,onChange:function(e){setKpiAssignTarget(e.target.value);},placeholder:"e.g. Sales Executive",style:{width:"100%",marginBottom:10,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}):null,
         lbl("KPI TITLE"),
         h("input",{type:"text",value:kpiName,onChange:function(e){setKpiName(e.target.value);},placeholder:"e.g. Monthly sales",style:{width:"100%",marginBottom:8,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"10px 12px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}),
@@ -10101,9 +10109,9 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
         step===2?h("div",null,
           lbl("EMPLOYEE ID"),h("input",{value:fEid,onChange:function(e){setFEid(e.target.value);},placeholder:"e.g. EMP006",style:{width:"100%",background:SFT,border:"1.5px solid "+BDR,borderRadius:11,padding:"11px 13px",fontSize:13,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10}}),
           lbl("ROLE / DESIGNATION *"),
-          chipSelect(fRole,function(v){setFRole(v);},getRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role...",question:"Choose the role"}),
+          chipSelect(fRole,function(v){setFRole(v);},getAllRoles(org.type),{allowCustom:true,customPlaceholder:"Type the role...",question:"Choose the role"}),
           lbl("DEPARTMENT"),
-          chipSelect(dept,function(v){setDept(v);},getDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department...",question:"Choose the department"}),
+          chipSelect(dept,function(v){setDept(v);},getAllDepts(org.type),{allowCustom:true,customPlaceholder:"Type the department...",question:"Choose the department"}),
           lbl("SALARY TYPE"),
           h("div",{style:{display:"flex",background:SFT,borderRadius:11,padding:3,marginBottom:10,gap:3}},
             h("button",{onClick:function(){setFSalType("split");},style:{flex:1,background:fSalType==="split"?CARD:"transparent",border:fSalType==="split"?"1px solid "+BDR:"none",borderRadius:8,padding:"8px",color:fSalType==="split"?NVY:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},"\uD83C\uDFE6 Split (Basic+HRA+Allow)"),
@@ -10347,11 +10355,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
       showExpForm?h("div",{style:{background:SFT,borderRadius:14,padding:14,border:"1px solid "+BDR,marginBottom:14}},
         h("div",{style:{fontSize:11,fontWeight:700,color:NVY,marginBottom:10}},"Record Expense Reimbursement"),
         lbl("EMPLOYEE"),
-        h("select",{value:expEmpId,onChange:function(e){setExpEmpId(e.target.value);},
-          style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}},
-          h("option",{value:""},"Select employee"),
-          emps.filter(function(e){return e.status==="active";}).map(function(e){return h("option",{key:e.id,value:String(e.id)},e.name);})
-        ),
+        chipSelect(expEmpId,function(v){setExpEmpId(v);},emps.filter(function(e){return e.status==="active";}).map(function(e){return {v:String(e.id),l:e.name};}),{question:"Choose the employee",placeholder:"Select employee"}),
         lbl("EXPENSE TITLE"),
         h("input",{value:expTitle,onChange:function(e){setExpTitle(e.target.value);},placeholder:"e.g. Client visit travel",
           style:{width:"100%",background:CARD,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit",marginBottom:10,boxSizing:"border-box"}}),
