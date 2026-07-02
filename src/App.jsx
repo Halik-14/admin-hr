@@ -3186,6 +3186,8 @@ export default function App(){
   var sShowAttTimes=st(false),showAttTimes=sShowAttTimes[0],setShowAttTimes=sShowAttTimes[1];
   var sIdFlipped=st(false),idFlipped=sIdFlipped[0],setIdFlipped=sIdFlipped[1];
   var sIdBackTab=st("emp"),idBackTab=sIdBackTab[0],setIdBackTab=sIdBackTab[1];
+  var sEmpDetailsOpen=st(false),empDetailsOpen=sEmpDetailsOpen[0],setEmpDetailsOpen=sEmpDetailsOpen[1];
+  var sCoDetailsOpen=st(false),coDetailsOpen=sCoDetailsOpen[0],setCoDetailsOpen=sCoDetailsOpen[1];
   se(function(){
     if(!gUser||!gUser.email||(userRole!=="employee"&&userRole!=="terminated_employee"))return;
     _sb.from("attendance_checkins").select("*").eq("employee_email",gUser.email)
@@ -8108,54 +8110,58 @@ null
         ["Contact",empEmployerEmail]
       ].filter(Boolean);
       return h("div",null,
-        // ── Digital ID Card — flips on tap to reveal Employee/Company details on the back.
-        // Check-in status is its own icon badge on the front (separate tap target from the flip)
-        // — tapping it checks in, then checks out, cycling through the day's state in place. ──
-        h("div",{style:{perspective:1200,marginBottom:14}},
-          h("div",{onClick:function(){setIdFlipped(!idFlipped);},style:{position:"relative",width:"100%",height:172,transition:"transform .6s",transformStyle:"preserve-3d",cursor:"pointer",transform:idFlipped?"rotateY(180deg)":"rotateY(0deg)"}},
-            // Front face
-            h("div",{style:{position:"absolute",inset:0,backfaceVisibility:"hidden",background:NVY,borderRadius:18,overflow:"hidden",boxShadow:"0 4px 18px rgba(0,0,0,.3)"}},
-              h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
-              h("div",{style:{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",borderBottom:"1px solid rgba(255,255,255,.1)",position:"relative"}},
-                org.logo?h("img",{src:org.logo,style:{width:20,height:20,borderRadius:5,objectFit:"contain",flexShrink:0}}):ic("business","rgba(255,255,255,.6)",15),
-                h("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.75)",letterSpacing:.3}},org.name||"Company"),
-                h("div",{style:{marginLeft:"auto",fontSize:8.5,color:"rgba(255,255,255,.35)",fontWeight:600,letterSpacing:.4}},"TAP TO FLIP")
-              ),
-              h("div",{style:{display:"flex",alignItems:"center",gap:14,padding:"14px"}},
-                h("div",{style:{width:54,height:54,borderRadius:14,background:"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",flexShrink:0}},
-                  (emp2?emp2.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
-                ),
-                h("div",{style:{flex:1,minWidth:0}},
-                  h("div",{style:{fontSize:16,fontWeight:800,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},emp2?emp2.name:(suName||gUser.email.split("@")[0])),
-                  h("div",{style:{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}},emp2?(emp2.role||"Employee")+(emp2.dept?" · "+emp2.dept:""):"Employee"),
-                  emp2&&emp2.eid?h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.4)",marginTop:5,fontFamily:"monospace"}},"ID "+emp2.eid):null
-                ),
-                // Check-in status badge — its own tap target
-                h("div",{onClick:badgeTap,title:isCheckedOut?"Checked out "+checkOutTime:isCheckedIn?"Tap to check out":"Tap to check in",style:{width:44,height:44,borderRadius:"50%",background:isCheckedOut?ACCENT+"25":isCheckedIn?GRN+"25":"rgba(255,255,255,.1)",border:"1.5px solid "+(isCheckedOut?ACCENT:isCheckedIn?GRN:"rgba(255,255,255,.25)"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-                  ic(isCheckedOut?"check_circle":isCheckedIn?"logout":"fingerprint",isCheckedOut?ACCENT:isCheckedIn?GRN:"#fff",20)
-                )
-              ),
-              (isCheckedIn||isCheckedOut)?h("div",{style:{padding:"0 14px 10px",fontSize:9.5,color:"rgba(255,255,255,.45)",display:"flex",alignItems:"center",gap:5}},
-                isCheckedOut?"In "+checkInTime+" · Out "+checkOutTime:"Checked in "+checkInTime+(workMode==="office"&&checkinToday.distance_m!=null?(checkinToday.within_range===false?" · outside range":" · within range"):"")
-              ):null
+        // ── Digital ID Card — name/role/ID up front, with two collapsible dropdown rows for
+        // Employee/Company details underneath instead of a flip interaction, matching the direction
+        // that was actually approved. Uses the app's real navy/accent theme, not standalone colors. ──
+        h("div",{style:{background:NVY,borderRadius:18,marginBottom:14,overflow:"hidden",boxShadow:"0 4px 18px rgba(0,0,0,.3)"}},
+          h("div",{style:{position:"relative"}},
+            h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
+            h("div",{style:{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",borderBottom:"1px solid rgba(255,255,255,.1)",position:"relative"}},
+              org.logo?h("img",{src:org.logo,style:{width:20,height:20,borderRadius:5,objectFit:"contain",flexShrink:0}}):ic("business","rgba(255,255,255,.6)",15),
+              h("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.75)",letterSpacing:.3}},org.name||"Company"),
+              h("div",{style:{marginLeft:"auto",fontSize:8.5,color:"rgba(255,255,255,.35)",fontWeight:600,letterSpacing:.4}},"EMPLOYEE ID CARD")
             ),
-            // Back face — Employee / Company detail tabs
-            h("div",{onClick:function(e){e.stopPropagation();},style:{position:"absolute",inset:0,backfaceVisibility:"hidden",background:NVY,borderRadius:18,padding:"12px 14px",transform:"rotateY(180deg)",display:"flex",flexDirection:"column"}},
-              h("div",{style:{display:"flex",gap:6,marginBottom:8}},
-                h("button",{onClick:function(e){e.stopPropagation();setIdBackTab("emp");},style:{flex:1,background:idBackTab==="emp"?"rgba(255,255,255,.14)":"transparent",border:"none",borderRadius:8,padding:"6px",fontSize:10.5,fontWeight:600,color:idBackTab==="emp"?"#fff":"rgba(255,255,255,.5)",cursor:"pointer"}},"Employee"),
-                h("button",{onClick:function(e){e.stopPropagation();setIdBackTab("co");},style:{flex:1,background:idBackTab==="co"?"rgba(255,255,255,.14)":"transparent",border:"none",borderRadius:8,padding:"6px",fontSize:10.5,fontWeight:600,color:idBackTab==="co"?"#fff":"rgba(255,255,255,.5)",cursor:"pointer"}},"Company"),
-                h("div",{onClick:function(e){e.stopPropagation();setIdFlipped(false);},style:{width:26,height:26,borderRadius:8,background:"rgba(255,255,255,.08)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexShrink:0}},ic("close","rgba(255,255,255,.6)",13))
+            h("div",{style:{display:"flex",alignItems:"center",gap:14,padding:"14px",position:"relative"}},
+              h("div",{style:{width:54,height:54,borderRadius:14,background:"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",flexShrink:0}},
+                (emp2?emp2.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
               ),
-              h("div",{style:{flex:1,overflowY:"auto"}},
-                (idBackTab==="emp"?empRows:coRows).length?(idBackTab==="emp"?empRows:coRows).map(function(row){
-                  return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:8,padding:"5px 0",borderBottom:"1px solid rgba(255,255,255,.07)"}},
-                    h("span",{style:{fontSize:10.5,color:"rgba(255,255,255,.5)",flexShrink:0}},row[0]),
-                    h("span",{style:{fontSize:10.5,color:"#fff",fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},row[1])
-                  );
-                }):h("div",{style:{fontSize:11,color:"rgba(255,255,255,.4)",padding:"10px 0"}},"No details available")
+              h("div",{style:{flex:1,minWidth:0}},
+                h("div",{style:{fontSize:16,fontWeight:800,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},emp2?emp2.name:(suName||gUser.email.split("@")[0])),
+                h("div",{style:{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}},emp2?(emp2.role||"Employee")+(emp2.dept?" · "+emp2.dept:""):"Employee"),
+                emp2&&emp2.eid?h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.4)",marginTop:5,fontFamily:"monospace"}},"ID "+emp2.eid):null
+              ),
+              h("div",{onClick:badgeTap,title:isCheckedOut?"Checked out "+checkOutTime:isCheckedIn?"Tap to check out":"Tap to check in",style:{width:44,height:44,borderRadius:"50%",background:isCheckedOut?ACCENT+"25":isCheckedIn?GRN+"25":"rgba(255,255,255,.1)",border:"1.5px solid "+(isCheckedOut?ACCENT:isCheckedIn?GRN:"rgba(255,255,255,.25)"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}},
+                ic(isCheckedOut?"check_circle":isCheckedIn?"logout":"fingerprint",isCheckedOut?ACCENT:isCheckedIn?GRN:"#fff",20)
               )
-            )
-          )
+            ),
+            (isCheckedIn||isCheckedOut)?h("div",{style:{padding:"0 14px 10px",fontSize:9.5,color:"rgba(255,255,255,.45)",display:"flex",alignItems:"center",gap:5,position:"relative"}},
+              isCheckedOut?"In "+checkInTime+" · Out "+checkOutTime:"Checked in "+checkInTime+(workMode==="office"&&checkinToday.distance_m!=null?(checkinToday.within_range===false?" · outside range":" · within range"):"")
+            ):null
+          ),
+          // ── Employee details dropdown ──
+          h("button",{onClick:function(){setEmpDetailsOpen(!empDetailsOpen);},style:{width:"100%",background:empDetailsOpen?"rgba(255,255,255,.08)":"rgba(255,255,255,.04)",border:"none",borderTop:"1px solid rgba(255,255,255,.1)",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",color:"rgba(255,255,255,.8)",fontSize:11,fontWeight:600,cursor:"pointer"}},
+            "Employee details",ic(empDetailsOpen?"expand_less":"expand_more","rgba(255,255,255,.6)",15)
+          ),
+          empDetailsOpen?h("div",{style:{padding:"6px 14px 12px"}},
+            empRows.length?empRows.map(function(row){
+              return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:8,padding:"6px 0",borderBottom:"1px solid rgba(255,255,255,.07)"}},
+                h("span",{style:{fontSize:10.5,color:"rgba(255,255,255,.5)",flexShrink:0}},row[0]),
+                h("span",{style:{fontSize:10.5,color:"#fff",fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},row[1])
+              );
+            }):h("div",{style:{fontSize:11,color:"rgba(255,255,255,.4)",padding:"6px 0"}},"No details available")
+          ):null,
+          // ── Company details dropdown ──
+          h("button",{onClick:function(){setCoDetailsOpen(!coDetailsOpen);},style:{width:"100%",background:coDetailsOpen?"rgba(255,255,255,.08)":"rgba(255,255,255,.04)",border:"none",borderTop:"1px solid rgba(255,255,255,.1)",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",color:"rgba(255,255,255,.8)",fontSize:11,fontWeight:600,cursor:"pointer"}},
+            "Company details",ic(coDetailsOpen?"expand_less":"expand_more","rgba(255,255,255,.6)",15)
+          ),
+          coDetailsOpen?h("div",{style:{padding:"6px 14px 12px"}},
+            coRows.length?coRows.map(function(row){
+              return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:8,padding:"6px 0",borderBottom:"1px solid rgba(255,255,255,.07)"}},
+                h("span",{style:{fontSize:10.5,color:"rgba(255,255,255,.5)",flexShrink:0}},row[0]),
+                h("span",{style:{fontSize:10.5,color:"#fff",fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:170}},row[1])
+              );
+            }):h("div",{style:{fontSize:11,color:"rgba(255,255,255,.4)",padding:"6px 0"}},"No details available")
+          ):null
         ),
         // Performance snapshot
         h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"14px",marginBottom:12}},
