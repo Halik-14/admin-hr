@@ -2977,6 +2977,7 @@ export default function App(){
                 setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
                 setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
                 try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
+                try{setAttKpi(dataRes.data.attendance_kpi_json?JSON.parse(dataRes.data.attendance_kpi_json):null);}catch(e){}
                 lsSet("hr_last_sync",dataRes.data.updated_at);
               }
             }catch(e){}
@@ -3251,6 +3252,17 @@ export default function App(){
   var sInviteEmpId=st(null),inviteEmpId=sInviteEmpId[0],setInviteEmpId=sInviteEmpId[1]; // employee record being invited
   var sKpis=st([]),kpis=sKpis[0],setKpis=sKpis[1];
   var sKpiUpdates=st([]),kpiUpdates=sKpiUpdates[0],setKpiUpdates=sKpiUpdates[1]; // review/update history entries
+  // One shared attendance rule, company-wide (not per-employee like regular KPIs). Stored as a
+  // single object in attendance_kpi_json on the shared user_data row — same lightweight pattern as
+  // tasks_json, since this is one record, not a list needing its own table.
+  var sAttKpi=st(null),attKpi=sAttKpi[0],setAttKpi=sAttKpi[1];
+  // Team-wide self check-in log, fetched only while an attendance KPI rule needs hours data —
+  // separate from selfCheckinSummary above, which is scoped to one employee's detail page.
+  var sTeamCheckins=st([]),teamCheckins=sTeamCheckins[0],setTeamCheckins=sTeamCheckins[1];
+  // Set true when the Attendance Sheet's "Self Check-in" tab is opened — the other trigger for
+  // fetching teamCheckins besides an active attendance-KPI rule needing hours data.
+  var sWantTeamCheckins=st(false),wantTeamCheckins=sWantTeamCheckins[0],setWantTeamCheckins=sWantTeamCheckins[1];
+  var sTeamCheckinExpandId=st(null),teamCheckinExpandId=sTeamCheckinExpandId[0],setTeamCheckinExpandId=sTeamCheckinExpandId[1];
   var sShowKpiForm=st(false),showKpiForm=sShowKpiForm[0],setShowKpiForm=sShowKpiForm[1];
   var sKpiName=st(""),kpiName=sKpiName[0],setKpiName=sKpiName[1];
   var sKpiTarget=st(""),kpiTarget=sKpiTarget[0],setKpiTarget=sKpiTarget[1];
@@ -3263,6 +3275,11 @@ export default function App(){
   var sKpiUpdateOpenId=st(null),kpiUpdateOpenId=sKpiUpdateOpenId[0],setKpiUpdateOpenId=sKpiUpdateOpenId[1]; // which KPI's "update progress" form is open
   var sKpiProgressInput=st(""),kpiProgressInput=sKpiProgressInput[0],setKpiProgressInput=sKpiProgressInput[1];
   var sKpiRemarkInput=st(""),kpiRemarkInput=sKpiRemarkInput[0],setKpiRemarkInput=sKpiRemarkInput[1];
+  var sShowAttKpiForm=st(false),showAttKpiForm=sShowAttKpiForm[0],setShowAttKpiForm=sShowAttKpiForm[1];
+  var sAttKpiMinPct=st(""),attKpiMinPct=sAttKpiMinPct[0],setAttKpiMinPct=sAttKpiMinPct[1];
+  var sAttKpiMinHours=st(""),attKpiMinHours=sAttKpiMinHours[0],setAttKpiMinHours=sAttKpiMinHours[1];
+  var sAttKpiDailyTrack=st(false),attKpiDailyTrack=sAttKpiDailyTrack[0],setAttKpiDailyTrack=sAttKpiDailyTrack[1];
+  var sAttKpiExpiry=st(""),attKpiExpiry=sAttKpiExpiry[0],setAttKpiExpiry=sAttKpiExpiry[1];
   var sTaskTab=st("all"),taskTab=sTaskTab[0],setTaskTab=sTaskTab[1];
   var sLeaveTab=st("pending"),leaveTab=sLeaveTab[0],setLeaveTab=sLeaveTab[1];
   var sAttTab=st("mark"),attTab=sAttTab[0],setAttTab=sAttTab[1];
@@ -3501,7 +3518,7 @@ export default function App(){
           // Load employer's org info (company name, logo)
           Promise.all([
             _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email,office_lat,office_lng,geo_radius_m").eq("email",employerEmail).maybeSingle(),
-            _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",employerEmail).maybeSingle(),
+            _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json,attendance_kpi_json").eq("email",employerEmail).maybeSingle(),
             _sb.from("user_plans").select("plan,emp_limit").eq("email",employerEmail).maybeSingle()
           ]).then(function(empResults){
             var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
@@ -3526,6 +3543,7 @@ export default function App(){
               setAtt(JSON.parse(empData.att_json||"{}"));
               setIncentives(JSON.parse(empData.inc_json||"{}"));
               try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
+              try{setAttKpi(empData.attendance_kpi_json?JSON.parse(empData.attendance_kpi_json):null);}catch(e2){}
             }catch(e){}}
             loadLeaveAndNotifs(em,"employee",employerEmail);
             _dataLoaded.current=false;
@@ -3566,6 +3584,7 @@ export default function App(){
             setNotices(JSON.parse(dataRes.data.notices_json||"[]"));
             setRevisions(JSON.parse(dataRes.data.revisions_json||"{}"));
                 try{setTasks(JSON.parse(dataRes.data.tasks_json||"[]"));}catch(e){}
+                try{setAttKpi(dataRes.data.attendance_kpi_json?JSON.parse(dataRes.data.attendance_kpi_json):null);}catch(e){}
             lsSet("hr_last_sync",dataRes.data.updated_at);
           }catch(e){}}
           loadLeaveAndNotifs(em,"owner",null);
@@ -3698,6 +3717,31 @@ export default function App(){
     },1200);
     return function(){if(_taskSyncTimer.current)clearTimeout(_taskSyncTimer.current);};
   },[tasks]);
+  // Debounced attendance-KPI-rule sync — same pattern as tasks, its own small persisted blob.
+  var _attKpiSyncTimer=React.useRef(null);
+  var _attKpiLoaded=React.useRef(false);
+  se(function(){
+    if(!gUser||!gUser.email)return;
+    if(!_attKpiLoaded.current){_attKpiLoaded.current=true;return;}
+    if(_attKpiSyncTimer.current)clearTimeout(_attKpiSyncTimer.current);
+    _attKpiSyncTimer.current=setTimeout(function(){
+      syncAttKpi(attKpi);
+    },1200);
+    return function(){if(_attKpiSyncTimer.current)clearTimeout(_attKpiSyncTimer.current);};
+  },[attKpi]);
+  // Fetches every linked employee's self check-in log — either when the active attendance-KPI rule
+  // needs working-hours data, or when the Attendance Sheet's Self Check-in tab is opened. Avoids
+  // pulling this team-wide table on every employer session otherwise.
+  se(function(){
+    if(userRole==="employee"||userRole==="terminated_employee")return; // only the employer's own screen needs this
+    var needsForRule=attKpi&&attKpi.active&&attKpi.minHours;
+    if(!needsForRule&&!wantTeamCheckins){setTeamCheckins([]);return;}
+    var email=(gUser&&gUser.email)||lsGet("hr_last_email","");
+    if(!email)return;
+    var q=_sb.from("attendance_checkins").select("employee_email,checkin_date,check_in_at,check_out_at").eq("employer_email",email);
+    if(needsForRule&&!wantTeamCheckins)q=q.gte("checkin_date",attKpi.startDate||todayStr); // rule-only fetch stays scoped to the rule's period
+    q.then(function(res){if(res&&res.data)setTeamCheckins(res.data);}).catch(function(){});
+  },[attKpi&&attKpi.active,attKpi&&attKpi.minHours,attKpi&&attKpi.startDate,gUser&&gUser.email,userRole,wantTeamCheckins]);
   // Leave requests and notifications no longer use a debounced whole-array sync — they now write
   // directly to their own dedicated Supabase tables (leave_requests, notifications) the moment each
   // action happens (apply/approve/reject, create notification), same as how KPIs already work.
@@ -4154,6 +4198,14 @@ export default function App(){
     var email=_ownerDataEmail();
     if(!email)return;
     _sb.from("user_data").upsert({email:email,tasks_json:JSON.stringify(tasksData||[])},{onConflict:"email"}).then(function(){}).catch(function(){});
+  }
+  // Persist the attendance KPI rule (attendance_kpi_json column on the shared user_data row).
+  // Employee sessions never write this — only the employer creates/edits/deletes the rule — but
+  // using the same _ownerDataEmail() helper keeps this consistent with the rest of the sync code.
+  function syncAttKpi(ruleData){
+    var email=_ownerDataEmail();
+    if(!email)return;
+    _sb.from("user_data").upsert({email:email,attendance_kpi_json:ruleData?JSON.stringify(ruleData):null},{onConflict:"email"}).then(function(){}).catch(function(){});
   }
   // Leave requests and notifications now live in their own dedicated Supabase tables
   // (leave_requests, notifications) — see applyLeave/approveLeave/rejectLeave/addNotif, which write
@@ -5360,6 +5412,47 @@ export default function App(){
     });
   }
 
+  // ── Attendance KPI rule — computes Met/Not Met for one employee against the shared rule.
+  // Uses the same real data already driving the rest of the app: `att` (present/absent/half/holiday
+  // calendar marks) for attendance %, and `attendance_checkins` (self check-in GPS log) for hours.
+  // Returns null if there's no active rule or it's expired, so callers can skip rendering entirely.
+  function computeAttKpiStatus(emp,teamCheckins){
+    if(!attKpi||!attKpi.active)return null;
+    if(attKpi.expiryDate&&attKpi.expiryDate<todayStr)return null;
+    var start=attKpi.startDate||todayStr;
+    var end=(attKpi.expiryDate&&attKpi.expiryDate<todayStr)?attKpi.expiryDate:todayStr;
+    // ── Attendance % — present + half(0.5) days out of marked working days (holidays excluded) ──
+    var marked=0,earned=0;
+    var d=new Date(start+"T00:00:00"),endD=new Date(end+"T00:00:00");
+    while(d<=endD){
+      var ds=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+      var s=att[ds+"_"+emp.id];
+      if(s&&s!=="holiday"&&s!=="unmarked"){
+        marked++;
+        if(s==="present")earned+=1;
+        else if(s==="half")earned+=0.5;
+      }
+      d.setDate(d.getDate()+1);
+    }
+    var pct=marked>0?Math.round((earned/marked)*100):null;
+    var pctMet=attKpi.minPct==null||pct===null?true:pct>=attKpi.minPct;
+    // ── Working hours — from self check-in GPS log, only meaningful for app-linked employees ──
+    var hoursMet=true,avgHrs=null,worstDayHrs=null;
+    if(attKpi.minHours&&emp.appLinked&&teamCheckins){
+      var myRows=teamCheckins.filter(function(c){return c.employee_email===emp.appEmail;});
+      var withBoth=myRows.filter(function(c){return c.check_in_at&&c.check_out_at&&c.checkin_date>=start&&c.checkin_date<=end;});
+      if(withBoth.length>0){
+        var hrsList=withBoth.map(function(c){return (new Date(c.check_out_at)-new Date(c.check_in_at))/3600000;});
+        avgHrs=hrsList.reduce(function(a,b){return a+b;},0)/hrsList.length;
+        worstDayHrs=Math.min.apply(null,hrsList);
+        hoursMet=attKpi.dailyTrack?worstDayHrs>=attKpi.minHours:avgHrs>=attKpi.minHours;
+      }else{
+        hoursMet=false; // rule requires hours but no check-in data exists yet — treat as not met, not silently passed
+      }
+    }
+    return {met:pctMet&&hoursMet,pct:pct,pctMet:pctMet,avgHrs:avgHrs,worstDayHrs:worstDayHrs,hoursMet:hoursMet,hasHoursData:avgHrs!==null};
+  }
+
   // Status is derived automatically from progress vs target vs due date — never set by hand,
   // so it can never silently go stale the way a manually-picked status field would.
   function computeKpiStatus(k){
@@ -5399,6 +5492,36 @@ export default function App(){
     _sb.from("kpis").delete().eq("id",kpiId).then(function(){});
     _sb.from("kpi_updates").delete().eq("kpi_id",kpiId).then(function(){});
     showT("KPI deleted");
+  }
+
+  // Deletes a task and its comment thread. Tasks live in the shared tasks_json blob (synced via
+  // syncTasks' debounced effect on `tasks` state, same as create/update), so removing it from state
+  // is enough — no separate Supabase delete call needed here, unlike KPIs which have their own table.
+  function deleteTask(taskId){
+    setTasks(function(p){return p.filter(function(t){return t.id!==taskId;});});
+    setTaskComments(function(p){var o=Object.assign({},p);delete o[taskId];return o;});
+    showT("Task deleted");
+  }
+
+  // Creates or updates the one shared attendance rule. minPct/minHours are optional independently —
+  // an employer can set just one of them (e.g. only a minimum working-hours rule, no % requirement).
+  function saveAttKpi(){
+    var minPct=attKpiMinPct===""?null:Number(attKpiMinPct);
+    var minHours=attKpiMinHours===""?null:Number(attKpiMinHours);
+    if(minPct===null&&minHours===null)return showT("Set at least a minimum % or minimum hours","err");
+    if(minPct!==null&&(minPct<0||minPct>100))return showT("Minimum % must be between 0 and 100","err");
+    setAttKpi({
+      active:true,minPct:minPct,minHours:minHours,dailyTrack:attKpiDailyTrack,
+      expiryDate:attKpiExpiry||"",startDate:(attKpi&&attKpi.startDate)||todayStr,
+      createdAt:(attKpi&&attKpi.createdAt)||new Date().toISOString()
+    });
+    setShowAttKpiForm(false);
+    showT("Attendance KPI saved");
+  }
+  function deleteAttKpi(){
+    setAttKpi(null);
+    setShowAttKpiForm(false);
+    showT("Attendance KPI removed");
   }
 
   function needsPro(){
@@ -6526,7 +6649,7 @@ null
         }
       ):null,
 
-      /* Self Check-in — GPS attendance log, visible to the employer too */
+      /* Self Check-in — summary only; full day-by-day log moved to Attendance Sheet > Self Check-in */
       selE.appLinked?accSection("selfcheckin","schedule",TEL,"Self Check-in",
         selfCheckinSummary?Math.floor(selfCheckinSummary.totalMin/60)+"h "+Math.round(selfCheckinSummary.totalMin%60)+"m this month":"No data yet",
         function(){
@@ -6543,20 +6666,12 @@ null
                 h("div",{style:{fontSize:14,fontWeight:700,color:"#fff",marginTop:2}},selfCheckinSummary.days)
               )
             ),
-            selfCheckinSummary.rows.slice(0,8).map(function(c){
-              var inT=c.check_in_at?new Date(c.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"-";
-              var outT=c.check_out_at?new Date(c.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"-";
-              return h("div",{key:c.id,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid "+BDR}},
-                h("span",{style:{fontSize:11.5,color:NVY,fontWeight:600}},c.checkin_date),
-                h("span",{style:{fontSize:11,color:GRY}},inT+" \u2192 "+outT),
-                c.work_mode==="office"&&c.within_range===false?h("span",{style:{fontSize:9,color:RED,fontWeight:700}},"OUT OF RANGE"):null
-              );
-            })
+            h("button",{onClick:function(){setTab("attendance");setSheetE(null);setAttRptRange("selfcheckin");setWantTeamCheckins(true);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:TEL+"12",border:"1px solid "+TEL+"30",borderRadius:9,padding:"9px",color:TEL,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic("open_in_new",TEL,13),"View full log in Attendance Sheet")
           );
         }
       ):null,
 
-      /* Leave Requests — scoped to just this employee, with Approve/Reject right here */
+      /* Leave Requests — summary only; full list with Approve/Reject moved to Attendance Sheet > Leave Requests */
       (function(){
         var empLeaves=leaveReqs.filter(function(r){return (selE.appEmail&&r.employeeEmail===selE.appEmail)||r.employeeEmail===selE.email;});
         var pendingCount=empLeaves.filter(function(r){return r.status==="pending";}).length;
@@ -6565,21 +6680,17 @@ null
           pendingCount>0?pendingCount+" pending":empLeaves.length+" total",
           function(){
             return h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
-              empLeaves.slice(0,10).map(function(r){
-                return h("div",{key:r.id,style:{background:SFT,borderRadius:12,padding:"11px 13px",border:"1px solid "+BDR,borderLeft:"3px solid "+(r.status==="approved"?GRN:r.status==="rejected"?RED:AMB)}},
-                  h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}},
-                    h("div",{style:{fontSize:12,fontWeight:700,color:NVY}},LEAVE_TYPES[r.leaveType]?LEAVE_TYPES[r.leaveType].name:r.leaveType),
-                    h("div",{style:{fontSize:9.5,fontWeight:700,padding:"2px 9px",borderRadius:20,background:r.status==="approved"?"#D1FAE5":r.status==="rejected"?"#FEE2E2":"#FEF3C7",color:r.status==="approved"?"#065F46":r.status==="rejected"?"#991B1B":"#92400E"}},r.status.charAt(0).toUpperCase()+r.status.slice(1))
-                  ),
-                  h("div",{style:{display:"flex",gap:10,marginBottom:r.reason?5:0}},
-                    h("div",{style:{fontSize:11,color:GRY}},r.fromDate+(r.toDate!==r.fromDate?" \u2192 "+r.toDate:"")),
-                    h("div",{style:{fontSize:11,color:GRY}},LEAVE_TYPES[r.leaveType]&&LEAVE_TYPES[r.leaveType].paid?"\u2022 Paid":"\u2022 Unpaid")
-                  ),
-                  r.reason?h("div",{style:{fontSize:11,color:GRY,marginBottom:6,fontStyle:"italic"}},"\u201c"+r.reason+"\u201d"):null,
-                  r.adminReply?h("div",{style:{background:RED+"10",borderRadius:7,padding:"5px 8px",fontSize:11,color:RED,marginBottom:6}},"Reply: "+r.adminReply):null,
-                  r.status==="pending"?h("div",{style:{fontSize:10,color:AMB,marginTop:4,display:"flex",alignItems:"center",gap:4}},ic("info",AMB,12),"Approve/Reject from the Attendance Sheet"):null
-                );
-              })
+              h("div",{style:{display:"flex",gap:8}},
+                h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"9px 11px",textAlign:"center"}},
+                  h("div",{style:{fontSize:16,fontWeight:800,color:pendingCount>0?AMB:NVY}},pendingCount),
+                  h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"Pending")
+                ),
+                h("div",{style:{flex:1,background:SFT,borderRadius:10,padding:"9px 11px",textAlign:"center"}},
+                  h("div",{style:{fontSize:16,fontWeight:800,color:NVY}},empLeaves.length),
+                  h("div",{style:{fontSize:9,color:GRY,marginTop:1}},"Total")
+                )
+              ),
+              h("button",{onClick:function(){setTab("attendance");setSheetE(null);setAttRptRange("leaves");},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:6,background:AMB+"12",border:"1px solid "+AMB+"30",borderRadius:9,padding:"9px",color:AMB,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic("open_in_new",AMB,13),"View & manage in Attendance Sheet")
             );
           }
         );
@@ -6856,14 +6967,11 @@ null
         h("button",{onClick:function(){setAttView("calendar");},style:{flex:1,background:attView==="calendar"?CARD:"transparent",border:attView==="calendar"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="calendar"?NVY:GRY,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
           ic("calendar_month",attView==="calendar"?ACCENT:GRY,15),"Attendance"
         ),
-        h("button",{onClick:function(){setAttView("report");},style:{flex:1,background:attView==="report"?CARD:"transparent",border:attView==="report"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="report"?NVY:GRY,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
-          ic("insights",attView==="report"?ACCENT:GRY,15),"Report"
-        ),
         h("button",{onClick:function(){setAttView("holidays");},style:{flex:1,background:attView==="holidays"?CARD:"transparent",border:attView==="holidays"?"1px solid "+BDR:"none",borderRadius:9,padding:"9px",color:attView==="holidays"?NVY:GRY,fontSize:11,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5}},
           ic("event_available",attView==="holidays"?ACCENT:GRY,15),"Holidays"
         )
       ),
-      attView==="report"?renderAttendanceReport():attView==="holidays"?renderHolidayCalendar():h("div",null,
+      attView==="holidays"?renderHolidayCalendar():h("div",null,
         h("div",{style:{display:"flex",gap:7,marginBottom:10,alignItems:"center"}},
           chipSelect(attY,function(v){var y=Number(v);setAttY(y);if(y===curY&&attM>curM)setAttM(curM);},pastYears().reverse(),{question:"Choose the year",btnLabel:"Okay",triggerStyle:{width:"auto",flex:"0 0 auto"},wrapStyle:{marginBottom:0}}),
           h("div",{style:{display:"flex",gap:5,flex:1,overflowX:"auto"}},
@@ -6979,6 +7087,47 @@ null
         })
       ),0)
       )
+    );
+  }
+
+  // ── Team-wide Self Check-in — every app-linked employee's GPS attendance log, one place ──
+  function renderTeamSelfCheckin(){
+    var linked=emps.filter(function(e){return e.status==="active"&&e.appLinked;});
+    if(linked.length===0)return h("div",{style:{textAlign:"center",padding:"32px 0",color:GRY}},
+      ic("schedule",GRY,32),
+      h("div",{style:{fontSize:13,marginTop:8}},"No employees have app login set up yet")
+    );
+    return h("div",null,
+      linked.map(function(e){
+        var rows=teamCheckins.filter(function(c){return c.employee_email===e.appEmail;}).sort(function(a,b){return b.checkin_date<a.checkin_date?-1:1;});
+        var thisMonth=rows.filter(function(c){return c.checkin_date.slice(0,7)===curY+"-"+String(curM+1).padStart(2,"0");});
+        var totalMin=0,days=0;
+        thisMonth.forEach(function(c){if(c.check_in_at&&c.check_out_at){var mins=(new Date(c.check_out_at)-new Date(c.check_in_at))/60000;if(mins>0){totalMin+=mins;days++;}}});
+        var hrs=Math.floor(totalMin/60),mins=Math.round(totalMin%60);
+        var open=teamCheckinExpandId===e.id;
+        return h("div",{key:e.id,style:{background:CARD,border:"1px solid "+BDR,borderRadius:13,marginBottom:8,overflow:"hidden"}},
+          h("div",{onClick:function(){setTeamCheckinExpandId(open?null:e.id);},style:{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",cursor:"pointer",background:open?SFT:CARD}},
+            av(e,32),
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:12.5,fontWeight:700,color:NVY}},e.name),
+              h("div",{style:{fontSize:10,color:GRY,marginTop:1}},days>0?hrs+"h "+mins+"m \u00b7 "+days+" day"+(days>1?"s":"")+" this month":"No self check-in records this month")
+            ),
+            ic(open?"expand_less":"expand_more",GRY,18)
+          ),
+          open?h("div",{style:{padding:"0 14px 12px"}},
+            rows.length===0?h("div",{style:{fontSize:11,color:GRY,padding:"8px 0"}},"No records yet"):
+            rows.slice(0,15).map(function(c,i){
+              var inT=c.check_in_at?new Date(c.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"-";
+              var outT=c.check_out_at?new Date(c.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):"-";
+              return h("div",{key:i,style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"7px 0",borderBottom:"1px solid "+BDR}},
+                h("span",{style:{fontSize:11.5,color:NVY,fontWeight:600}},c.checkin_date),
+                h("span",{style:{fontSize:11,color:GRY}},inT+" \u2192 "+outT),
+                c.work_mode==="office"&&c.within_range===false?h("span",{style:{fontSize:9,color:RED,fontWeight:700}},"OUT OF RANGE"):null
+              );
+            })
+          ):null
+        );
+      })
     );
   }
 
@@ -8014,7 +8163,7 @@ null
         // Now load employer's data so employee dashboard has everything
         return Promise.all([
           _sb.from("user_orgs").select("org_name,logo_base64,address,phone,website,contact_email,office_lat,office_lng,geo_radius_m").eq("email",inviteData.employerEmail).maybeSingle(),
-          _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json").eq("email",inviteData.employerEmail).maybeSingle(),
+          _sb.from("user_data").select("emps_json,att_json,inc_json,tasks_json,attendance_kpi_json").eq("email",inviteData.employerEmail).maybeSingle(),
           _sb.from("user_plans").select("plan,emp_limit").eq("email",inviteData.employerEmail).maybeSingle()
         ]).then(function(empResults){
           var empOrg=empResults[0].data,empData=empResults[1].data,empPlan=empResults[2].data;
@@ -8047,6 +8196,7 @@ null
             setAtt(JSON.parse(empData.att_json||"{}"));
             setIncentives(JSON.parse(empData.inc_json||"{}"));
             try{setTasks(JSON.parse(empData.tasks_json||"[]"));}catch(e2){}
+            try{setAttKpi(empData.attendance_kpi_json?JSON.parse(empData.attendance_kpi_json):null);}catch(e2){}
           }catch(e){}}
           loadLeaveAndNotifs(user.email,"employee",inviteData.employerEmail);
           _dataLoaded.current=false;
@@ -8985,10 +9135,11 @@ null
           })
         ),
         /* Type a new status */
-        h("div",{style:{display:"flex",gap:8}},
+        h("div",{style:{display:"flex",gap:8,marginBottom:10}},
           h("input",{type:"text",value:taskStatusInput,onChange:function(e){setTaskStatusInput(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addStatusUpdate(t.id);},placeholder:"Type status update...",style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 11px",fontSize:12,color:NVY,outline:"none",fontFamily:"inherit"}}),
           h("button",{onClick:function(){addStatusUpdate(t.id);},style:{background:NVY,border:"none",borderRadius:9,padding:"9px 14px",color:CARD,fontSize:12,fontWeight:700,cursor:"pointer"}},"Update")
-        )
+        ),
+        h("button",{onClick:function(){if(window.confirm("Delete this task permanently? This cannot be undone.")){deleteTask(t.id);setSelTask(null);}},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:T.PILL_DANGER_BG,border:"1px solid "+RED,borderRadius:10,padding:"9px",color:RED,fontSize:11.5,fontWeight:700,cursor:"pointer"}},ic(ICONS.del,RED,13),"Delete Task")
       ),0);
     }
 
@@ -9664,7 +9815,91 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           ic("add","#D97706",14),"Add KPI"
         )
       ),
-      // ── Team-wide summary — how many KPIs are achieved/in progress/not started/missed ──
+      // ── Attendance KPI — one shared rule for everyone, auto-computed from real attendance data ──
+      (function(){
+        var expired=attKpi&&attKpi.expiryDate&&attKpi.expiryDate<todayStr;
+        if(!attKpi||expired){
+          return h("div",{style:{background:"#EEF2FF",border:"1px dashed #4F46E5"+"55",borderRadius:14,padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:10,cursor:"pointer"},onClick:function(){
+            setAttKpiMinPct(attKpi?String(attKpi.minPct!=null?attKpi.minPct:""):"");
+            setAttKpiMinHours(attKpi?String(attKpi.minHours!=null?attKpi.minHours:""):"");
+            setAttKpiDailyTrack(attKpi?!!attKpi.dailyTrack:false);
+            setAttKpiExpiry("");
+            setShowAttKpiForm(true);
+          }},
+            h("div",{style:{width:34,height:34,borderRadius:10,background:"#4F46E5"+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("event_available","#4F46E5",18)),
+            h("div",{style:{flex:1}},
+              h("div",{style:{fontSize:12.5,fontWeight:700,color:NVY}},expired?"Attendance KPI expired":"Set an Attendance KPI"),
+              h("div",{style:{fontSize:10.5,color:GRY,marginTop:1}},expired?"Renew it to keep tracking minimum % / hours for everyone":"Minimum attendance % or working hours, applied to your whole team")
+            ),
+            ic("chevron_right","#4F46E5",18)
+          );
+        }
+        return h("div",{style:{background:"#0F172A",borderRadius:14,padding:"13px 14px",marginBottom:16}},
+          h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}},
+            h("div",null,
+              h("div",{style:{fontSize:9,color:"rgba(255,255,255,.5)",fontWeight:700,letterSpacing:.5}},"ATTENDANCE KPI — WHOLE TEAM"),
+              h("div",{style:{fontSize:12.5,color:"#fff",fontWeight:700,marginTop:3}},
+                [attKpi.minPct!=null?"Min "+attKpi.minPct+"% attendance":null,attKpi.minHours!=null?"Min "+attKpi.minHours+"h/day":null].filter(Boolean).join(" · ")
+              ),
+              h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.45)",marginTop:3}},
+                (attKpi.dailyTrack?"Daily tracking":"One-time, over full period")+(attKpi.expiryDate?" · Expires "+new Date(attKpi.expiryDate).toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"}):" · No expiry")
+              )
+            ),
+            h("button",{onClick:function(){
+              setAttKpiMinPct(attKpi.minPct!=null?String(attKpi.minPct):"");
+              setAttKpiMinHours(attKpi.minHours!=null?String(attKpi.minHours):"");
+              setAttKpiDailyTrack(!!attKpi.dailyTrack);
+              setAttKpiExpiry(attKpi.expiryDate||"");
+              setShowAttKpiForm(true);
+            },style:{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.15)",borderRadius:8,padding:"5px 10px",color:"#fff",fontSize:10.5,fontWeight:600,cursor:"pointer",flexShrink:0}},"Edit")
+          ),
+          (function(){
+            var statuses=activeEmpsK.map(function(e){return computeAttKpiStatus(e,teamCheckins);}).filter(Boolean);
+            var met=statuses.filter(function(s){return s.met;}).length;
+            return h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}},
+              h("div",{style:{background:"rgba(16,185,129,.15)",borderRadius:8,padding:"3px 9px",fontSize:10,fontWeight:700,color:"#34D399"}},met+" Met"),
+              h("div",{style:{background:"rgba(239,68,68,.15)",borderRadius:8,padding:"3px 9px",fontSize:10,fontWeight:700,color:"#F87171"}},(statuses.length-met)+" Not Met")
+            );
+          })()
+        );
+      })(),
+      showAttKpiForm?h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:14,marginBottom:16}},
+        h("div",{style:{fontSize:12.5,fontWeight:700,color:NVY,marginBottom:10}},attKpi?"Edit Attendance KPI":"Set Attendance KPI"),
+        h("div",{style:{display:"flex",gap:8,marginBottom:8}},
+          h("div",{style:{flex:1}},lbl("MIN ATTENDANCE %"),h("input",{type:"number",value:attKpiMinPct,onChange:function(e){setAttKpiMinPct(e.target.value);},placeholder:"e.g. 90",min:0,max:100,style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}})),
+          h("div",{style:{flex:1}},lbl("MIN HOURS/DAY"),h("input",{type:"number",value:attKpiMinHours,onChange:function(e){setAttKpiMinHours(e.target.value);},placeholder:"e.g. 8",min:0,style:{width:"100%",background:SFT,border:"1px solid "+BDR,borderRadius:9,padding:"9px 10px",fontSize:12.5,color:NVY,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}))
+        ),
+        h("div",{style:{fontSize:10,color:GRY,marginBottom:10,lineHeight:1.4}},"Set either one, or both. Minimum hours only applies to employees using self check-in."),
+        lbl("TRACKING"),
+        chipSelect(attKpiDailyTrack?"daily":"onetime",function(v){setAttKpiDailyTrack(v==="daily");},[{v:"onetime",l:"One-time (overall %)"},{v:"daily",l:"Daily (every day's hours)"}],{question:"How should this rule be checked"}),
+        lbl("EXPIRY (OPTIONAL)"),
+        datePick(attKpiExpiry,function(v){setAttKpiExpiry(v);},{question:"Rule expires on",wrapStyle:{marginBottom:10}}),
+        h("div",{style:{display:"flex",gap:8,marginTop:4}},
+          attKpi?h("button",{onClick:function(){if(window.confirm("Remove the attendance KPI rule?"))deleteAttKpi();},style:{background:T.PILL_DANGER_BG,border:"1px solid "+RED,borderRadius:10,padding:"11px 14px",color:RED,fontSize:12,fontWeight:700,cursor:"pointer"}},"Remove"):null,
+          h("button",{onClick:function(){setShowAttKpiForm(false);},style:{flex:1,background:SFT,border:"1px solid "+BDR,borderRadius:10,padding:"11px",color:NVY,fontSize:12.5,fontWeight:700,cursor:"pointer"}},"Cancel"),
+          h("button",{onClick:saveAttKpi,style:{flex:1.4,background:"#4F46E5",border:"none",borderRadius:10,padding:"11px",color:"#fff",fontSize:12.5,fontWeight:700,cursor:"pointer"}},"Save Rule")
+        )
+      ):null,
+      // ── Per-employee Met/Not Met badges for the attendance rule, shown independent of regular KPIs ──
+      (attKpi&&attKpi.active&&!(attKpi.expiryDate&&attKpi.expiryDate<todayStr))?h("div",{style:{marginBottom:16}},
+        h("div",{style:{fontSize:10,fontWeight:700,color:GRY,letterSpacing:.5,marginBottom:8}},"ATTENDANCE KPI \u2014 PER EMPLOYEE"),
+        h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:12,overflow:"hidden"}},
+          activeEmpsK.map(function(e,i){
+            var st2=computeAttKpiStatus(e,teamCheckins);
+            if(!st2)return null;
+            return h("div",{key:e.id,style:{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",borderBottom:i<activeEmpsK.length-1?"1px solid "+BDR:"none"}},
+              av(e,26),
+              h("div",{style:{flex:1,minWidth:0}},
+                h("div",{style:{fontSize:11.5,fontWeight:600,color:NVY}},e.name),
+                h("div",{style:{fontSize:9.5,color:GRY,marginTop:1}},
+                  [st2.pct!==null?st2.pct+"% attendance":null,st2.hasHoursData?(st2.avgHrs).toFixed(1)+"h avg":null].filter(Boolean).join(" · ")||"No data yet"
+                )
+              ),
+              h("div",{style:{fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:20,background:st2.met?"#D1FAE5":"#FEE2E2",color:st2.met?"#065F46":"#991B1B",flexShrink:0}},st2.met?"MET":"NOT MET")
+            );
+          })
+        )
+      ):null,
       allKpiStatuses2.length>0?h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:7,marginBottom:16}},
         h("div",{style:{background:GRN+"10",border:"1px solid "+GRN+"25",borderRadius:12,padding:"11px 6px",textAlign:"center"}},
           h("div",{style:{fontSize:18,fontWeight:800,color:GRN}},ach),
@@ -9683,19 +9918,24 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
           h("div",{style:{fontSize:8.5,color:GRY,marginTop:2,fontWeight:600}},"Missed")
         )
       ):null,
-      activeEmpsK.map(function(e){
+      activeEmpsK.filter(function(e){return getEmpKpis(e.email||e.name,e.dept,e.role).length>0;}).map(function(e){
         var empKpiList=getEmpKpis(e.email||e.name,e.dept,e.role);
         return h("div",{key:e.id,style:{marginBottom:14}},
           h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:9,background:SFT,borderRadius:12,padding:"9px 11px"}},
             av(e,32),
             h("div",{style:{flex:1,minWidth:0}},
               h("div",{style:{fontSize:12.5,fontWeight:700,color:NVY}},e.name),
-              h("div",{style:{fontSize:10,color:GRY}},(e.role||e.dept||"")+(empKpiList.length?" · "+empKpiList.length+" KPI"+(empKpiList.length>1?"s":""):""))
+              h("div",{style:{fontSize:10,color:GRY}},(e.role||e.dept||"")+" · "+empKpiList.length+" KPI"+(empKpiList.length>1?"s":""))
             )
           ),
-          empKpiList.length>0?empKpiList.map(function(k){return renderKpiCard(k);}):h("button",{onClick:function(){setKpiAssignType("individual");setKpiAssignTarget(e.email||e.name);setShowKpiForm(true);},style:{background:"none",border:"1px dashed "+BDR,borderRadius:11,padding:"9px",width:"100%",color:GRY,fontSize:11,cursor:"pointer"}},"+ Set KPI targets")
+          empKpiList.map(function(k){return renderKpiCard(k);})
         );
       }),
+      activeEmpsK.filter(function(e){return getEmpKpis(e.email||e.name,e.dept,e.role).length>0;}).length===0?h("div",{style:{textAlign:"center",padding:"30px 16px",color:GRY}},
+        ic("insights",BDR,40),
+        h("div",{style:{fontSize:12.5,fontWeight:600,color:NVY,marginTop:10}},"No KPIs set yet"),
+        h("div",{style:{fontSize:11,color:GRY,marginTop:3}},"Tap \u201cAdd KPI\u201d above to set a target for an employee, department, or role.")
+      ):null,
       showKpiForm?h("div",{style:{background:CARD,borderRadius:14,padding:16,boxShadow:"0 4px 16px rgba(0,0,0,0.08)",marginTop:8}},
         h("div",{style:{fontSize:13,fontWeight:700,color:NVY,marginBottom:14}},"Add KPI"),
         lbl("ASSIGN TO"),
@@ -9833,7 +10073,7 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
     var tabContent;
     if(tab==="dashboard")tabContent=renderDashboard();
     else if(tab==="employees")tabContent=renderEmployees();
-    else if(tab==="attendance")tabContent=renderAttendance();
+    else if(tab==="attendance")tabContent=renderAttendanceWithReport();
     else if(tab==="payroll")tabContent=renderPayroll();
     else if(tab==="pro")tabContent=renderPro();
     else tabContent=renderSettings();
@@ -10798,16 +11038,26 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
   }
 
   function renderAttendanceWithReport(){
+    var pendingLeaveCount=leaveReqs.filter(function(r){return r.status==="pending";}).length;
     return h("div",{className:"fd"},
-      h("div",{style:{display:"flex",background:SFT,borderRadius:10,padding:3,marginBottom:10,gap:3}},
-        [["calendar","Calendar"],["report","Report"]].map(function(item){
-          var on=attRptRange==="calendar"?item[0]==="calendar":item[0]==="report";
-          return h("button",{key:item[0],onClick:function(){setAttRptRange(item[0]==="calendar"?"calendar_view":"report");},
-            style:{flex:1,background:on?CARD:"transparent",border:on?"1px solid "+BDR:"none",
-              borderRadius:8,padding:"8px 4px",fontSize:11,fontWeight:on?700:500,color:on?NVY:GRY,cursor:"pointer"}},item[1]);
+      h("div",{style:{display:"flex",background:SFT,borderRadius:10,padding:3,marginBottom:10,gap:3,overflowX:"auto"}},
+        [["calendar","Calendar"],["report","Report"],["selfcheckin","Self Check-in"],["leaves","Leave Requests"]].map(function(item){
+          var on=item[0]==="calendar"?(attRptRange==="calendar"||attRptRange==="calendar_view"):attRptRange===item[0];
+          return h("button",{key:item[0],onClick:function(){
+            setAttRptRange(item[0]);
+            if(item[0]==="selfcheckin")setWantTeamCheckins(true);
+          },
+            style:{flexShrink:0,minWidth:item[0]==="leaves"||item[0]==="selfcheckin"?110:70,display:"flex",alignItems:"center",justifyContent:"center",gap:5,background:on?CARD:"transparent",border:on?"1px solid "+BDR:"none",
+              borderRadius:8,padding:"8px 6px",fontSize:11,fontWeight:on?700:500,color:on?NVY:GRY,cursor:"pointer"}},
+            item[1],
+            item[0]==="leaves"&&pendingLeaveCount>0?h("span",{style:{background:RED,color:"#fff",fontSize:9,fontWeight:700,borderRadius:10,padding:"0 5px"}},pendingLeaveCount):null
+          );
         })
       ),
-      attRptRange==="calendar_view"||attRptRange==="calendar"?renderAttendance():renderAttendanceReport()
+      (attRptRange==="calendar_view"||attRptRange==="calendar")?renderAttendance()
+        :attRptRange==="selfcheckin"?renderTeamSelfCheckin()
+        :attRptRange==="leaves"?renderLeavesTab()
+        :renderAttendanceReport()
     );
   }
 
