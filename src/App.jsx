@@ -3169,7 +3169,7 @@ export default function App(){
   var sTeamGroupDept=st(true),teamGroupDept=sTeamGroupDept[0],setTeamGroupDept=sTeamGroupDept[1]; // default ON — group Team list by department, independent of A-Z/Seniority/Salary ordering
   var sESDir=st("asc"),empSortDir=sESDir[0],setEmpSortDir=sESDir[1];
   // ── Pro features state ──
-  var sRole=st("owner"),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee
+  var sRole=st(null),userRole=sRole[0],setUserRole=sRole[1]; // owner/manager/employee — null until the real session-restore check resolves it, so a reload never briefly shows the wrong dashboard
   var sIsEmp=st(false),isEmployeeSignup=sIsEmp[0],setIsEmployeeSignup=sIsEmp[1];
   var sEmpLimit=st(5),empLimit=sEmpLimit[0],setEmpLimit=sEmpLimit[1]; // set by admin per employer
   var sInvCode=st(""),signupInviteCode=sInvCode[0],setSignupInviteCode=sInvCode[1];
@@ -5270,7 +5270,11 @@ export default function App(){
       if(r.id!==reqId)return r;
       // Auto-mark attendance
       var d=new Date(r.fromDate),end=new Date(r.toDate);
-      var attKey=LEAVE_TYPES[r.leaveType].paid?"pl":"ul";
+      // These MUST match the keys used everywhere else in the app (payroll calc, attendance
+      // calendar, ATC/ATL color+label maps) — "paid"/"unpaid", not "pl"/"ul". Writing the wrong
+      // keys here meant an approved leave never actually showed up anywhere: not on the calendar,
+      // not in payroll, on either the employer's or employee's side.
+      var attKey=LEAVE_TYPES[r.leaveType].paid?"paid":"unpaid";
       setAtt(function(a){
         var o=Object.assign({},a);
         // Match on the real login email first (appEmail), falling back to the employee's original
@@ -6948,7 +6952,13 @@ null
             h("div",{className:"rh",style:{display:"flex",alignItems:"center",gap:9,borderRadius:6,padding:"2px 2px"}},
               av(e,36),
               h("div",{style:{flex:1,minWidth:0}},
-                h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
+                h("div",{style:{display:"flex",alignItems:"center",gap:6}},
+                  h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},e.name),
+                  leaveReqs.some(function(r){return r.status==="pending"&&((e.appEmail&&r.employeeEmail===e.appEmail)||r.employeeEmail===e.email);})?
+                    h("div",{style:{display:"flex",alignItems:"center",gap:3,background:AMB+"18",border:"1px solid "+AMB+"40",borderRadius:20,padding:"1px 7px"}},
+                      ic("event_available",AMB,10),h("span",{style:{fontSize:8.5,fontWeight:700,color:AMB}},"Leave")
+                    ):null
+                ),
                 h("div",{style:{fontSize:10,color:GRY}},e.role||"No designation"),
                 empWorkingDays>0?h("div",{style:{fontSize:10,fontWeight:600,color:attRateCol,marginTop:3}},
                   presentDisplay+" / "+empWorkingDays+" days"+(empHalf>0?" (incl. "+empHalf+" half)":"")
@@ -8194,32 +8204,43 @@ null
         ["Employer Contact",empEmployerEmail]
       ].filter(Boolean);
       return h("div",null,
-        // ── Digital ID Card — soft neumorphic, uses the app's own theme colors, no navy fill ──
-        h("div",{style:{background:SFT,borderRadius:20,marginBottom:12,padding:"16px",boxShadow:neuLight}},
-          h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
-            org.logo?h("img",{src:org.logo,style:{width:18,height:18,borderRadius:5,objectFit:"contain",flexShrink:0}}):ic("business",GRY,14),
-            h("div",{style:{fontSize:10.5,fontWeight:700,color:GRY,letterSpacing:.3}},org.name||"Company"),
-            h("div",{style:{marginLeft:"auto",fontSize:8,color:GRY,fontWeight:600,letterSpacing:.5,opacity:.6}},"EMPLOYEE ID")
+        // ── Company branding — bigger, leads the page ──
+        h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:14}},
+          org.logo?h("img",{src:org.logo,style:{width:36,height:36,borderRadius:10,objectFit:"contain",flexShrink:0}}):h("div",{style:{width:36,height:36,borderRadius:10,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},ic("business",ACCENT,20)),
+          h("div",{style:{fontSize:15,fontWeight:800,color:NVY}},org.name||"Company")
+        ),
+        // ── Wish card — warm greeting with name, separate from the compact ID card below ──
+        h("div",{style:{background:SFT,borderRadius:18,padding:"16px",marginBottom:12,boxShadow:neuLight,display:"flex",alignItems:"center",gap:12}},
+          h("div",{style:{width:46,height:46,borderRadius:"50%",background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19,fontWeight:800,color:ACCENT,flexShrink:0,boxShadow:neuInset}},
+            (emp2?emp2.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
           ),
-          h("div",{style:{display:"flex",alignItems:"center",gap:14}},
-            h("div",{style:{width:54,height:54,borderRadius:16,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:ACCENT,flexShrink:0,boxShadow:neuInset}},
-              (emp2?emp2.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
+          h("div",null,
+            h("div",{style:{fontSize:11,color:GRY}},now.getHours()<12?"Good morning":now.getHours()<17?"Good afternoon":"Good evening"),
+            h("div",{style:{fontSize:18,fontWeight:800,color:NVY,marginTop:1}},emp2?emp2.name:(suName||gUser.email.split("@")[0]))
+          )
+        ),
+        // ── Compact ID Card — role, ID, check-in status ──
+        h("div",{style:{background:SFT,borderRadius:18,marginBottom:12,padding:"14px 16px",boxShadow:neuLight,display:"flex",alignItems:"center",gap:12}},
+          h("div",{style:{flex:1,minWidth:0}},
+            h("div",{style:{fontSize:12.5,fontWeight:700,color:NVY}},emp2?(emp2.role||"Employee")+(emp2.dept?" · "+emp2.dept:""):"Employee"),
+            emp2&&emp2.eid?h("div",{style:{fontSize:10,color:GRY,marginTop:3,fontFamily:"monospace"}},"ID "+emp2.eid):null
+          ),
+          ic("badge",GRY,20)
+        ),
+        // ── Employee Profile — its own prominent section, not a buried link ──
+        h("div",{style:{background:SFT,borderRadius:18,marginBottom:12,boxShadow:neuLight,overflow:"hidden"}},
+          h("button",{onClick:function(){setEmpDetailsOpen(!empDetailsOpen);},style:{width:"100%",background:"transparent",border:"none",padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}},
+            h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+              h("div",{style:{width:34,height:34,borderRadius:10,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center"}},ic("person",ACCENT,18)),
+              h("div",{style:{fontSize:13,fontWeight:700,color:NVY,textAlign:"left"}},"Employee Profile")
             ),
-            h("div",{style:{flex:1,minWidth:0}},
-              h("div",{style:{fontSize:16,fontWeight:800,color:NVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},emp2?emp2.name:(suName||gUser.email.split("@")[0])),
-              h("div",{style:{fontSize:11,color:GRY,marginTop:2}},emp2?(emp2.role||"Employee")+(emp2.dept?" · "+emp2.dept:""):"Employee"),
-              emp2&&emp2.eid?h("div",{style:{fontSize:9.5,color:GRY,marginTop:5,fontFamily:"monospace",opacity:.8}},"ID "+emp2.eid):null
-            )
+            ic(empDetailsOpen?"expand_less":"expand_more",GRY,18)
           ),
-          // ── Combined details dropdown — everything (employee + company) in one place ──
-          h("button",{onClick:function(){setEmpDetailsOpen(!empDetailsOpen);},style:{width:"100%",background:"transparent",border:"none",borderTop:"1px solid "+BDR,marginTop:14,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",color:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},
-            "View all details",ic(empDetailsOpen?"expand_less":"expand_more",GRY,15)
-          ),
-          empDetailsOpen?h("div",{style:{paddingTop:8}},
+          empDetailsOpen?h("div",{style:{padding:"0 16px 14px"}},
             allRows.length?allRows.map(function(row){
-              return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:10,padding:"6px 0",borderBottom:"1px solid "+BDR}},
-                h("span",{style:{fontSize:10.5,color:GRY,flexShrink:0}},row[0]),
-                h("span",{style:{fontSize:10.5,color:NVY,fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},row[1])
+              return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:10,padding:"7px 0",borderBottom:"1px solid "+BDR}},
+                h("span",{style:{fontSize:11,color:GRY,flexShrink:0}},row[0]),
+                h("span",{style:{fontSize:11,color:NVY,fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},row[1])
               );
             }):h("div",{style:{fontSize:11,color:GRY,padding:"6px 0"}},"No details available")
           ):null
@@ -9645,6 +9666,11 @@ h("button",{onClick:function(){setProTab("kpi");},style:{flex:1,background:proTa
   try{if(window.__hideSplash)window.__hideSplash("");}catch(e){}
   var appContent;
   if(screen==="loading")appContent=loadingScreen;
+  // A returning session (cached login) jumps straight to screen="app" for a fast reopen, but the
+  // real role check is still async — without this gate, the app briefly rendered as if userRole
+  // were "owner" (its old default) before correcting itself to "employee", which is exactly the
+  // flash of the wrong dashboard on reload. Show the loading screen instead until it's resolved.
+  else if(screen==="app"&&userRole===null)appContent=loadingScreen;
   else if(screen==="login")appContent=isPasswordReset?setPasswordScreen:
     (authMode==="otp"||authMode==="signup-otp")?otpScreen:
     authMode==="emp-otp"?h("div",{key:"empotp",style:{minHeight:"100vh",background:T.AUTH_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 24px 0"}},
