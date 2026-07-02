@@ -3173,7 +3173,7 @@ export default function App(){
   var sIsEmp=st(false),isEmployeeSignup=sIsEmp[0],setIsEmployeeSignup=sIsEmp[1];
   var sEmpLimit=st(5),empLimit=sEmpLimit[0],setEmpLimit=sEmpLimit[1]; // set by admin per employer
   var sInvCode=st(""),signupInviteCode=sInvCode[0],setSignupInviteCode=sInvCode[1];
-  var sEmpDT=st("profile"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1]; // employee dashboard tab — starts at profile
+  var sEmpDT=st("home"),empDashTab=sEmpDT[0],setEmpDashTab=sEmpDT[1]; // employee dashboard tab — starts at Dashboard
   var sEmpData=st(null),empData=sEmpData[0],setEmpData=sEmpData[1]; // full employee record from emps
   var sEmpPayMonth=st(new Date().getMonth()),empPayMonth=sEmpPayMonth[0],setEmpPayMonth=sEmpPayMonth[1];
   // Self check-in state — declared here (not inside renderEmployeeDashboard) because React hooks
@@ -5056,6 +5056,36 @@ export default function App(){
   // Writes to the real `notifications` table (to_email/from_email columns) so the recipient's own
   // device — which loads its notifications by querying to_email = their own address — actually
   // receives it. Previously this only ever updated the creating device's own local state.
+  // Marks one notification read — updates local state AND the database. Previously "read" only
+  // ever changed in local memory, so every reload or 25-second poll re-fetched the same
+  // notification still marked unread from Supabase and put it right back, which looked exactly
+  // like getting the same notification again and again.
+  function markNotifRead(id){
+    setNotifs(function(p){return p.map(function(x){return x.id===id?Object.assign({},x,{read:true}):x;});});
+    setUnreadNotifs(function(c){return Math.max(0,c-1);});
+    _sb.from("notifications").update({read:true}).eq("id",id).then(function(){});
+  }
+  function markAllNotifsRead(){
+    var myEmail=gUser&&gUser.email;
+    var unreadIds=notifs.filter(function(n){return n.to===myEmail&&!n.read;}).map(function(n){return n.id;});
+    setNotifs(function(p){return p.map(function(n){return n.to===myEmail?Object.assign({},n,{read:true}):n;});});
+    setUnreadNotifs(0);
+    if(unreadIds.length)_sb.from("notifications").update({read:true}).in("id",unreadIds).then(function(){});
+  }
+  // Lets a person clear old/unwanted notifications from their own inbox — deletes from the
+  // database too, not just the local list, so it doesn't reappear on the next reload/poll.
+  function deleteNotif(id){
+    setNotifs(function(p){return p.filter(function(x){return x.id!==id;});});
+    _sb.from("notifications").delete().eq("id",id).then(function(){});
+  }
+  function deleteAllReadNotifs(){
+    var myEmail=gUser&&gUser.email;
+    var readIds=notifs.filter(function(n){return n.to===myEmail&&n.read;}).map(function(n){return n.id;});
+    if(!readIds.length)return;
+    setNotifs(function(p){return p.filter(function(n){return !(n.to===myEmail&&n.read);});});
+    _sb.from("notifications").delete().in("id",readIds).then(function(){});
+  }
+
   function addNotif(toEmail,fromEmail,type,title,message,refId,refType){
     var n={id:Date.now(),to:toEmail,from:fromEmail,type:type,title:title,message:message,refId:refId||"",refType:refType||"general",read:false,createdAt:new Date().toISOString()};
     // Only reflect it locally right away if it's for the current device's own inbox — otherwise it
@@ -8089,87 +8119,74 @@ null
       var workMode=(emp2&&emp2.workMode)||"office";
       var checkInTime=isCheckedIn?new Date(checkinToday.check_in_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):null;
       var checkOutTime=isCheckedOut?new Date(checkinToday.check_out_at).toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):null;
-      function badgeTap(e){
-        e.stopPropagation();
-        if(checkinLoading)return;
-        if(!isCheckedIn)doCheckIn();
-        else if(!isCheckedOut)doCheckOut();
-      }
-      var empRows=[
+      // Soft neumorphic shadow pair — light source from the top-left, using genuine dark/light tints
+      // instead of a random gray-blue, so it reads correctly in both this app's light and dark mode.
+      var neuLight=themeMode==="light"?"6px 6px 12px rgba(0,0,0,.09),-6px -6px 12px rgba(255,255,255,.85)":"6px 6px 12px rgba(0,0,0,.45),-4px -4px 10px rgba(255,255,255,.03)";
+      var neuInset=themeMode==="light"?"inset 4px 4px 8px rgba(0,0,0,.08),inset -4px -4px 8px rgba(255,255,255,.8)":"inset 4px 4px 8px rgba(0,0,0,.4),inset -3px -3px 7px rgba(255,255,255,.03)";
+      var allRows=[
         emp2&&emp2.mob?["Mobile",emp2.mob]:null,
         emp2&&emp2.email?["Email",emp2.email]:null,
         emp2&&emp2.joined?["Joined",emp2.joined]:null,
         emp2&&emp2.pan?["PAN",emp2.pan.slice(0,3)+"XXXXX"+emp2.pan.slice(-2)]:null,
         emp2&&emp2.uan?["UAN",emp2.uan.slice(0,3)+"XXXXX"+emp2.uan.slice(-2)]:null,
-        emp2&&emp2.aadhar?["Aadhaar","XXXX XXXX "+emp2.aadhar.slice(-4)]:null
-      ].filter(Boolean);
-      var coRows=[
+        emp2&&emp2.aadhar?["Aadhaar","XXXX XXXX "+emp2.aadhar.slice(-4)]:null,
         ["Employer",org.position||"—"],
-        org.phone?["Phone",org.phone]:null,
-        org.address?["Address",org.address]:null,
-        ["Contact",empEmployerEmail]
+        org.phone?["Company Phone",org.phone]:null,
+        org.address?["Company Address",org.address]:null,
+        ["Employer Contact",empEmployerEmail]
       ].filter(Boolean);
       return h("div",null,
-        // ── Digital ID Card — name/role/ID up front, with two collapsible dropdown rows for
-        // Employee/Company details underneath instead of a flip interaction, matching the direction
-        // that was actually approved. Uses the app's real navy/accent theme, not standalone colors. ──
-        h("div",{style:{background:NVY,borderRadius:18,marginBottom:14,overflow:"hidden",boxShadow:"0 4px 18px rgba(0,0,0,.3)"}},
-          h("div",{style:{position:"relative"}},
-            h("div",{style:{position:"absolute",top:0,bottom:0,width:"35%",background:"linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)",animation:"shineSweep 3.2s ease-in-out infinite",pointerEvents:"none"}}),
-            h("div",{style:{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",borderBottom:"1px solid rgba(255,255,255,.1)",position:"relative"}},
-              org.logo?h("img",{src:org.logo,style:{width:20,height:20,borderRadius:5,objectFit:"contain",flexShrink:0}}):ic("business","rgba(255,255,255,.6)",15),
-              h("div",{style:{fontSize:11,fontWeight:700,color:"rgba(255,255,255,.75)",letterSpacing:.3}},org.name||"Company"),
-              h("div",{style:{marginLeft:"auto",fontSize:8.5,color:"rgba(255,255,255,.35)",fontWeight:600,letterSpacing:.4}},"EMPLOYEE ID CARD")
+        // ── Digital ID Card — soft neumorphic, uses the app's own theme colors, no navy fill ──
+        h("div",{style:{background:SFT,borderRadius:20,marginBottom:12,padding:"16px",boxShadow:neuLight}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:14}},
+            org.logo?h("img",{src:org.logo,style:{width:18,height:18,borderRadius:5,objectFit:"contain",flexShrink:0}}):ic("business",GRY,14),
+            h("div",{style:{fontSize:10.5,fontWeight:700,color:GRY,letterSpacing:.3}},org.name||"Company"),
+            h("div",{style:{marginLeft:"auto",fontSize:8,color:GRY,fontWeight:600,letterSpacing:.5,opacity:.6}},"EMPLOYEE ID")
+          ),
+          h("div",{style:{display:"flex",alignItems:"center",gap:14}},
+            h("div",{style:{width:54,height:54,borderRadius:16,background:ACCENT+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:ACCENT,flexShrink:0,boxShadow:neuInset}},
+              (emp2?emp2.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
             ),
-            h("div",{style:{display:"flex",alignItems:"center",gap:14,padding:"14px",position:"relative"}},
-              h("div",{style:{width:54,height:54,borderRadius:14,background:"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:800,color:"#fff",flexShrink:0}},
-                (emp2?emp2.name:(suName||gUser.email.split("@")[0]))[0].toUpperCase()
-              ),
-              h("div",{style:{flex:1,minWidth:0}},
-                h("div",{style:{fontSize:16,fontWeight:800,color:"#fff",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},emp2?emp2.name:(suName||gUser.email.split("@")[0])),
-                h("div",{style:{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}},emp2?(emp2.role||"Employee")+(emp2.dept?" · "+emp2.dept:""):"Employee"),
-                emp2&&emp2.eid?h("div",{style:{fontSize:9.5,color:"rgba(255,255,255,.4)",marginTop:5,fontFamily:"monospace"}},"ID "+emp2.eid):null
-              ),
-              h("div",{onClick:badgeTap,title:isCheckedOut?"Checked out "+checkOutTime:isCheckedIn?"Tap to check out":"Tap to check in",style:{width:44,height:44,borderRadius:"50%",background:isCheckedOut?ACCENT+"25":isCheckedIn?GRN+"25":"rgba(255,255,255,.1)",border:"1.5px solid "+(isCheckedOut?ACCENT:isCheckedIn?GRN:"rgba(255,255,255,.25)"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}},
-                ic(isCheckedOut?"check_circle":isCheckedIn?"logout":"fingerprint",isCheckedOut?ACCENT:isCheckedIn?GRN:"#fff",20)
-              )
-            ),
-            (isCheckedIn||isCheckedOut)?h("div",{style:{padding:"0 14px 10px",fontSize:9.5,color:"rgba(255,255,255,.45)",display:"flex",alignItems:"center",gap:5,position:"relative"}},
-              isCheckedOut?"In "+checkInTime+" · Out "+checkOutTime:"Checked in "+checkInTime+(workMode==="office"&&checkinToday.distance_m!=null?(checkinToday.within_range===false?" · outside range":" · within range"):"")
-            ):null
+            h("div",{style:{flex:1,minWidth:0}},
+              h("div",{style:{fontSize:16,fontWeight:800,color:NVY,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},emp2?emp2.name:(suName||gUser.email.split("@")[0])),
+              h("div",{style:{fontSize:11,color:GRY,marginTop:2}},emp2?(emp2.role||"Employee")+(emp2.dept?" · "+emp2.dept:""):"Employee"),
+              emp2&&emp2.eid?h("div",{style:{fontSize:9.5,color:GRY,marginTop:5,fontFamily:"monospace",opacity:.8}},"ID "+emp2.eid):null
+            )
           ),
-          // ── Employee details dropdown ──
-          h("button",{onClick:function(){setEmpDetailsOpen(!empDetailsOpen);},style:{width:"100%",background:empDetailsOpen?"rgba(255,255,255,.08)":"rgba(255,255,255,.04)",border:"none",borderTop:"1px solid rgba(255,255,255,.1)",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",color:"rgba(255,255,255,.8)",fontSize:11,fontWeight:600,cursor:"pointer"}},
-            "Employee details",ic(empDetailsOpen?"expand_less":"expand_more","rgba(255,255,255,.6)",15)
+          // ── Combined details dropdown — everything (employee + company) in one place ──
+          h("button",{onClick:function(){setEmpDetailsOpen(!empDetailsOpen);},style:{width:"100%",background:"transparent",border:"none",borderTop:"1px solid "+BDR,marginTop:14,paddingTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",color:GRY,fontSize:11,fontWeight:600,cursor:"pointer"}},
+            "View all details",ic(empDetailsOpen?"expand_less":"expand_more",GRY,15)
           ),
-          empDetailsOpen?h("div",{style:{padding:"6px 14px 12px"}},
-            empRows.length?empRows.map(function(row){
-              return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:8,padding:"6px 0",borderBottom:"1px solid rgba(255,255,255,.07)"}},
-                h("span",{style:{fontSize:10.5,color:"rgba(255,255,255,.5)",flexShrink:0}},row[0]),
-                h("span",{style:{fontSize:10.5,color:"#fff",fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},row[1])
+          empDetailsOpen?h("div",{style:{paddingTop:8}},
+            allRows.length?allRows.map(function(row){
+              return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:10,padding:"6px 0",borderBottom:"1px solid "+BDR}},
+                h("span",{style:{fontSize:10.5,color:GRY,flexShrink:0}},row[0]),
+                h("span",{style:{fontSize:10.5,color:NVY,fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},row[1])
               );
-            }):h("div",{style:{fontSize:11,color:"rgba(255,255,255,.4)",padding:"6px 0"}},"No details available")
-          ):null,
-          // ── Company details dropdown ──
-          h("button",{onClick:function(){setCoDetailsOpen(!coDetailsOpen);},style:{width:"100%",background:coDetailsOpen?"rgba(255,255,255,.08)":"rgba(255,255,255,.04)",border:"none",borderTop:"1px solid rgba(255,255,255,.1)",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",color:"rgba(255,255,255,.8)",fontSize:11,fontWeight:600,cursor:"pointer"}},
-            "Company details",ic(coDetailsOpen?"expand_less":"expand_more","rgba(255,255,255,.6)",15)
-          ),
-          coDetailsOpen?h("div",{style:{padding:"6px 14px 12px"}},
-            coRows.length?coRows.map(function(row){
-              return h("div",{key:row[0],style:{display:"flex",justifyContent:"space-between",gap:8,padding:"6px 0",borderBottom:"1px solid rgba(255,255,255,.07)"}},
-                h("span",{style:{fontSize:10.5,color:"rgba(255,255,255,.5)",flexShrink:0}},row[0]),
-                h("span",{style:{fontSize:10.5,color:"#fff",fontWeight:600,textAlign:"right",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:170}},row[1])
-              );
-            }):h("div",{style:{fontSize:11,color:"rgba(255,255,255,.4)",padding:"6px 0"}},"No details available")
+            }):h("div",{style:{fontSize:11,color:GRY,padding:"6px 0"}},"No details available")
           ):null
         ),
+        // ── Two separate check-in / check-out boxes, below the card ──
+        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},
+          h("div",{onClick:function(){if(!isCheckedIn&&!checkinLoading)doCheckIn();},style:{aspectRatio:"1",background:SFT,borderRadius:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:isCheckedIn?"default":"pointer",padding:10,textAlign:"center",boxShadow:isCheckedIn?neuInset:neuLight}},
+            ic(isCheckedIn?"check_circle":"login",isCheckedIn?GRN:GRY,26),
+            h("div",{style:{fontSize:11,fontWeight:700,color:isCheckedIn?GRN:NVY,marginTop:8}},"Check In"),
+            h("div",{style:{fontSize:isCheckedIn?15:10,fontWeight:isCheckedIn?800:500,color:isCheckedIn?GRN:GRY,marginTop:2}},checkinLoading&&!isCheckedIn?"Locating...":isCheckedIn?checkInTime:"Tap to check in")
+          ),
+          h("div",{onClick:function(){if(isCheckedIn&&!isCheckedOut&&!checkinLoading)doCheckOut();},style:{aspectRatio:"1",background:SFT,borderRadius:18,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",cursor:(isCheckedIn&&!isCheckedOut)?"pointer":"default",padding:10,textAlign:"center",opacity:isCheckedIn?1:.45,boxShadow:isCheckedOut?neuInset:neuLight}},
+            ic(isCheckedOut?"check_circle":"logout",isCheckedOut?ACCENT:GRY,26),
+            h("div",{style:{fontSize:11,fontWeight:700,color:isCheckedOut?ACCENT:NVY,marginTop:8}},"Check Out"),
+            h("div",{style:{fontSize:isCheckedOut?15:10,fontWeight:isCheckedOut?800:500,color:isCheckedOut?ACCENT:GRY,marginTop:2}},checkinLoading&&isCheckedIn&&!isCheckedOut?"...":isCheckedOut?checkOutTime:(isCheckedIn?"Tap to check out":"Check in first"))
+          )
+        ),
+        workMode==="office"&&isCheckedIn&&checkinToday.distance_m!=null?h("div",{style:{fontSize:10,color:checkinToday.within_range===false?RED:GRY,display:"flex",alignItems:"center",gap:4,marginBottom:12,marginTop:-4}},ic("location_on",checkinToday.within_range===false?RED:GRY,11),checkinToday.within_range===false?"Outside office range — flagged for HR":"Within office range"):null,
         // Performance snapshot
-        h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"14px",marginBottom:12}},
+        h("div",{style:{background:SFT,borderRadius:18,padding:"14px",marginBottom:12,boxShadow:neuLight}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
             h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},ic("insights",AMB,15),"Performance — "+MOS[mo]),
             h("div",{style:{fontSize:12,fontWeight:700,color:attPct>=90?GRN:attPct>=70?ACCENT:RED}},attPct+"%")
           ),
-          h("div",{style:{height:6,background:SFT,borderRadius:3,overflow:"hidden",marginBottom:8}},
+          h("div",{style:{height:6,background:BDR,borderRadius:3,overflow:"hidden",marginBottom:8}},
             h("div",{style:{height:"100%",background:attPct>=90?GRN:attPct>=70?ACCENT:RED,borderRadius:3,width:attPct+"%",transition:"width 0.8s"}})
           ),
           h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:10.5,color:GRY}},
@@ -8178,7 +8195,7 @@ null
           )
         ),
         // Notifications
-        unread>0?h("div",{style:{background:CARD,border:"1px solid "+BDR,borderRadius:14,padding:"14px",marginBottom:12}},
+        unread>0?h("div",{style:{background:SFT,borderRadius:18,padding:"14px",marginBottom:12,boxShadow:neuLight}},
           h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
             h("div",{style:{fontSize:12,fontWeight:700,color:NVY,display:"flex",alignItems:"center",gap:6}},
               ic("notifications",ACCENT,15),"Notifications",
@@ -8186,7 +8203,7 @@ null
             )
           ),
           myNotifs.slice(0,3).map(function(n){
-            return h("div",{key:n.id,onClick:function(){setNotifs(function(p){return p.map(function(x){return x.id===n.id?Object.assign({},x,{read:true}):x;});});setUnreadNotifs(function(c){return Math.max(0,c-1);});},style:{display:"flex",gap:8,padding:"6px 0",borderBottom:"1px solid "+BDR,cursor:"pointer",alignItems:"flex-start"}},
+            return h("div",{key:n.id,onClick:function(){markNotifRead(n.id);},style:{display:"flex",gap:8,padding:"6px 0",borderBottom:"1px solid "+BDR,cursor:"pointer",alignItems:"flex-start"}},
               h("div",{style:{width:6,height:6,borderRadius:"50%",background:n.read?"transparent":ACCENT,flexShrink:0,marginTop:5}}),
               h("div",{style:{flex:1}},
                 h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},n.title),
@@ -8194,7 +8211,15 @@ null
               )
             );
           })
-        ):null
+        ):null,
+        // ── Sign Out — moved here from Pay ──
+        h("button",{onClick:function(){
+          _sb.auth.signOut();
+          ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+          setGUser(null);setEmps([]);setAtt({});setScreen("login");setAuthMode("landing");
+        },style:{width:"100%",background:RED+"12",border:"1.5px solid "+RED+"33",borderRadius:14,padding:"12px",color:RED,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+          ic("logout",RED,16),"Sign Out"
+        )
       );
     }
 
@@ -8589,14 +8614,7 @@ null
             h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:8}},ic("lock",GRY,15),h("span",{style:{fontSize:11.5,color:GRY,fontWeight:600}},"Payslip download not available on your employer's current plan")),
             h("button",{onClick:requestPayslip,style:{background:ACCENT+"12",border:"1px solid "+ACCENT+"30",borderRadius:9,padding:"9px 18px",color:ACCENT,fontSize:12,fontWeight:700,cursor:"pointer"}},"Request from Employer")
           )
-        ):h("div",{style:{background:SFT,borderRadius:14,padding:"20px",textAlign:"center",color:GRY,fontSize:12,marginBottom:12}},"Salary details not available yet.\nContact your employer."),
-        h("button",{onClick:function(){
-          _sb.auth.signOut();
-          ["hr_emps","hr_att","hr_inc","hr_revisions","hr_reminders","hr_shifts","hr_notices","hr_org","hr_last_sync","hr_guser","hr_login_time"].forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
-          setGUser(null);setEmps([]);setAtt({});setScreen("login");setAuthMode("landing");
-        },style:{width:"100%",background:RED+"12",border:"1.5px solid "+RED+"33",borderRadius:12,padding:"12px",color:RED,fontSize:13,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
-          ic("logout",RED,16),"Sign Out"
-        )
+        ):h("div",{style:{background:SFT,borderRadius:14,padding:"20px",textAlign:"center",color:GRY,fontSize:12,marginBottom:12}},"Salary details not available yet.\nContact your employer.")
       );
     }
 
@@ -8647,24 +8665,29 @@ null
       h("div",{style:{position:"absolute",top:56,right:8,width:320,maxHeight:"70vh",background:CARD,borderRadius:16,border:"1px solid "+BDR,overflow:"hidden",boxShadow:"0 8px 32px rgba(0,0,0,.15)"},onClick:function(e){e.stopPropagation();}},
         h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",borderBottom:"1px solid "+BDR}},
           h("div",{style:{fontSize:13,fontWeight:700,color:NVY}},"Notifications"),
-          myNotifs.some(function(n){return !n.read;})?h("button",{onClick:function(){setNotifs(function(p){return p.map(function(n){return Object.assign({},n,{read:true});});});setUnreadNotifs(0);},style:{background:"none",border:"none",fontSize:11,color:TEL,cursor:"pointer",fontWeight:600}},"Mark all read"):null
+          h("div",{style:{display:"flex",gap:10}},
+            myNotifs.some(function(n){return n.read;})?h("button",{onClick:deleteAllReadNotifs,style:{background:"none",border:"none",fontSize:11,color:RED,cursor:"pointer",fontWeight:600}},"Clear read"):null,
+            myNotifs.some(function(n){return !n.read;})?h("button",{onClick:markAllNotifsRead,style:{background:"none",border:"none",fontSize:11,color:TEL,cursor:"pointer",fontWeight:600}},"Mark all read"):null
+          )
         ),
         h("div",{style:{overflowY:"auto",maxHeight:"calc(70vh - 48px)"}},
           myNotifs.length===0?h("div",{style:{padding:"24px",textAlign:"center",color:GRY,fontSize:12}},"No notifications yet"):
           myNotifs.map(function(n){
             var iconMap={task_assigned:"assignment",task_completed:"task_alt",task_verified:"verified",task_rejected:"cancel",task_comment:"chat_bubble",leave_requested:"event_busy",leave_approved:"event_available",leave_rejected:"event_busy",kpi_scored:"insights",salary_revised:"payments",payslip_requested:"receipt_long"};
             var colorMap={task_assigned:"#4F46E5",task_completed:"#10B981",task_verified:"#10B981",task_rejected:"#EF4444",task_comment:"#4F46E5",leave_requested:"#F59E0B",leave_approved:"#10B981",leave_rejected:"#EF4444",kpi_scored:"#D97706",salary_revised:"#10B981",payslip_requested:"#D97706"};
-            return h("div",{key:n.id,style:{display:"flex",gap:10,padding:"10px 14px",borderBottom:"1px solid "+BDR,background:n.read?"transparent":ACCENT+"08",cursor:"pointer"},
-              onClick:function(){setNotifs(function(p){return p.map(function(x){return x.id===n.id?Object.assign({},x,{read:true}):x;});});setUnreadNotifs(function(c){return Math.max(0,c-1);});setShowNotifs(false);if(n.refType==="task")setTab("pro");if(n.refType==="leave")setTab("pro");}},
-              h("div",{style:{width:34,height:34,borderRadius:"50%",background:(colorMap[n.type]||TEL)+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+            return h("div",{key:n.id,style:{display:"flex",gap:10,padding:"10px 14px",borderBottom:"1px solid "+BDR,background:n.read?"transparent":ACCENT+"08"}},
+              h("div",{onClick:function(){markNotifRead(n.id);setShowNotifs(false);if(n.refType==="task")setTab("pro");if(n.refType==="leave")setTab("pro");},style:{width:34,height:34,borderRadius:"50%",background:(colorMap[n.type]||TEL)+"18",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}},
                 ic(iconMap[n.type]||"notifications",colorMap[n.type]||TEL,16)
               ),
-              h("div",{style:{flex:1}},
+              h("div",{onClick:function(){markNotifRead(n.id);setShowNotifs(false);if(n.refType==="task")setTab("pro");if(n.refType==="leave")setTab("pro");},style:{flex:1,cursor:"pointer"}},
                 h("div",{style:{fontSize:12,fontWeight:600,color:NVY}},n.title),
                 h("div",{style:{fontSize:11,color:GRY,marginTop:2,lineHeight:1.4}},n.message),
                 h("div",{style:{fontSize:10,color:GRY,marginTop:3}},new Date(n.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}))
               ),
-              !n.read?h("div",{style:{width:8,height:8,borderRadius:"50%",background:ACCENT,flexShrink:0,marginTop:4}}):null
+              h("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:6,flexShrink:0}},
+                !n.read?h("div",{style:{width:8,height:8,borderRadius:"50%",background:ACCENT}}):null,
+                h("button",{onClick:function(e){e.stopPropagation();deleteNotif(n.id);},title:"Delete",style:{background:"none",border:"none",padding:2,cursor:"pointer",display:"flex"}},ic("delete",GRY,14))
+              )
             );
           })
         )
